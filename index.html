@@ -2512,18 +2512,22 @@ function addPhotos(input, prevId) {
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
 
 function mailto(to, subj, body, cc) {
-  // Limiter le corps à 1500 chars pour éviter le blocage mailto
-  const bodyTrimmed = body.length > 1500 ? body.substring(0, 1497) + '...' : body;
-  let url = 'mailto:' + encodeURIComponent(to);
+  // Réduire le corps — Outlook mobile bloque si URL > 2000 chars
+  const bodyTrimmed = body.length > 800 ? body.substring(0, 797) + '...' : body;
+
+  // Outlook mobile n'accepte qu'un seul destinataire dans "to"
+  // On met le premier en TO, les autres en CC avec les vrais CC
+  const toList  = to ? to.split(';').map(s=>s.trim()).filter(Boolean) : [];
+  const firstTo = toList[0] || '';
+  const extraTo = toList.slice(1).join(';');
+  const allCC   = [extraTo, cc].filter(Boolean).join(';');
+
+  let url = 'mailto:' + encodeURIComponent(firstTo);
   url += '?subject=' + encodeURIComponent(subj);
   url += '&body='    + encodeURIComponent(bodyTrimmed);
-  if (cc) url += '&cc=' + encodeURIComponent(cc);
-  // Tenter window.location.href puis fallback window.open
-  try {
-    window.location.href = url;
-  } catch(e) {
-    window.open(url, '_blank');
-  }
+  if (allCC) url += '&cc=' + encodeURIComponent(allCC);
+
+  window.location.href = url;
 }
 
 // Données globales de l'étiquette courante
