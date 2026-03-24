@@ -4308,6 +4308,14 @@ function editRecord(id) {
             <input class="fi" id="edit-statut" value="${r.statut||r.shutdown||''}" style="width:100%">
           </div>
           <div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Type d'équipement</div>
+            <input class="fi" id="edit-typeeqt" value="${r.typeEqt||r.typeeqt||''}" style="width:100%" placeholder="Ex : VANNE / POMPE / ÉCHANGEUR...">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">N° Série</div>
+            <input class="fi" id="edit-serie" value="${r.serie||''}" style="width:100%" placeholder="Ex : SN-2021-047">
+          </div>
+          <div>
             <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
             <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%">
           </div>
@@ -4331,6 +4339,8 @@ async function saveEdit(id) {
   const s             = document.getElementById('edit-statut').value.trim();
   records[idx].statut = s;
   if (records[idx].shutdown) records[idx].shutdown = s;
+  records[idx].typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : (records[idx].typeEqt||'');
+  records[idx].serie  = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : (records[idx].serie||'');
   records[idx].loc    = document.getElementById('edit-loc').value.trim();
   await dbSave(records);
   document.querySelectorAll('[style*="rgba(0,0,0,.5)"]').forEach(el=>el.remove());
