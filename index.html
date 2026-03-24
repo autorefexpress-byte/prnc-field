@@ -354,7 +354,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="photo-zone" onclick="document.getElementById('pl-photos').click()">
         <div class="photo-icon">📷</div><div class="photo-txt">Prendre / importer des photos</div>
       </div>
-      <input type="file" id="pl-photos" accept="image/*" multiple style="display:none" onchange="addPhotos(this,'pl-prev')">
+      <input type="file" id="pl-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'pl-prev')">
       <div class="photo-prev" id="pl-prev"></div>
     </div>
 
@@ -439,7 +439,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="photo-icon">📷</div>
         <div class="photo-txt">Appuyer pour prendre / importer des photos</div>
       </div>
-      <input type="file" id="ar-photos" accept="image/*" multiple style="display:none" onchange="addPhotos(this,'ar-prev')">
+      <input type="file" id="ar-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'ar-prev')">
       <div class="photo-prev" id="ar-prev"></div>
     </div>
 
@@ -511,7 +511,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="photo-zone" onclick="document.getElementById('eq-photos').click()">
         <div class="photo-icon">📷</div><div class="photo-txt">Prendre / importer des photos</div>
       </div>
-      <input type="file" id="eq-photos" accept="image/*" multiple style="display:none" onchange="addPhotos(this,'eq-prev')">
+      <input type="file" id="eq-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'eq-prev')">
       <div class="photo-prev" id="eq-prev"></div>
     </div>
     <button class="send-btn btn-green" onclick="sendEquip()">✅ Envoyer le mail</button>
@@ -575,7 +575,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="photo-zone" onclick="document.getElementById('pt-photos').click()">
         <div class="photo-icon">&#128247;</div><div class="photo-txt">Photo avant traitement — obligatoire pour ETNA</div>
       </div>
-      <input type="file" id="pt-photos" accept="image/*" multiple style="display:none" onchange="addPhotos(this,'pt-prev')">
+      <input type="file" id="pt-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'pt-prev')">
       <div class="photo-prev" id="pt-prev"></div>
     </div>
 
@@ -736,7 +736,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="photo-zone" onclick="document.getElementById('ud-photos').click()">
         <div class="photo-icon">📷</div><div class="photo-txt">Prendre / importer des photos</div>
       </div>
-      <input type="file" id="ud-photos" accept="image/*" multiple style="display:none" onchange="addPhotos(this,'ud-prev')">
+      <input type="file" id="ud-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'ud-prev')">
       <div class="photo-prev" id="ud-prev"></div>
     </div>
 
@@ -2674,21 +2674,19 @@ function sendArrive() {
     const ccAr = state.selectedCC && state.selectedCC.ar ? [...state.selectedCC.ar] : [];
     mailto(allTo[0], subj, body, [...(ccStr?[ccStr]:[]), ...ccAr].join(';'));
     dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, dest:allTo});
-  }); return;
 
     const statColor = isUrg?'background:var(--lred);color:var(--red)':'background:var(--llblue);color:var(--navy2)';
+    const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
 
-  // Données étiquette
-  const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
-
-  resetForm(['ar-wo','ar-wr','ar-sc','ar-tag','ar-desc','ar-serie','ar-loc','ar-date','ar-type-eqt','ar-rem'], [], 'ar');
-  showSuccess('📥','si-purple','Notification envoyée !',
-    'Étiquette prête à imprimer ci-dessous.',
-    `<strong>WR :<\/strong> ${wr}<br><strong>TAG :<\/strong> ${tag}<br>` +
-    `<strong>Statut :<\/strong> <span style="${statColor};padding:2px 8px;border-radius:20px;font-size:11px">${isUrg?'URGENCE':'En attente diag.'}<\/span><br>` +
-    `<strong>Workgroup :<\/strong> <span style="${WG_COLORS[wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
-    `<strong>Localisation :<\/strong> ${loc}<br><strong>À :<\/strong> ${allTo.join(', ')}`,
-    etiqData);
+    resetForm(['ar-wo','ar-wr','ar-sc','ar-tag','ar-desc','ar-serie','ar-loc','ar-date','ar-type-eqt','ar-rem'], [], 'ar');
+    showSuccess('📥','si-purple','Notification envoyée !',
+      'Étiquette prête à imprimer ci-dessous.',
+      `<strong>WR :<\/strong> ${wr}<br><strong>TAG :<\/strong> ${tag}<br>` +
+      `<strong>Statut :<\/strong> <span style="${statColor};padding:2px 8px;border-radius:20px;font-size:11px">${isUrg?'URGENCE':'En attente diag.'}<\/span><br>` +
+      `<strong>Workgroup :<\/strong> <span style="${WG_COLORS[wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
+      `<strong>Localisation :<\/strong> ${loc}<br><strong>À :<\/strong> ${allTo.join(', ')}`,
+      etiqData);
+  });
 }
 
 // ── STATUT ÉQUIP TERMINÉ ─────────────────────────────────
@@ -2830,15 +2828,15 @@ function sendEquip() {
     const allCC = [...new Set([...ccEq, ...cc])];
     mailto(allTo[0], subj, body, [...allTo.slice(1), ...allCC].join(';'));
     dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, dest:allTo});
-  }); return;
 
-  const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
-  resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-rem'], [], 'eq');
-  showSuccess('✅','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
-    `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
-    `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
-    `<strong>Statut :<\/strong> ${statutTxt}<br>` +
-    `<strong>À :<\/strong> ${allTo.join(', ')}`);
+    const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
+    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-rem'], [], 'eq');
+    showSuccess('✅','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
+      `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
+      `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
+      `<strong>Statut :<\/strong> ${statutTxt}<br>` +
+      `<strong>À :<\/strong> ${allTo.join(', ')}`);
+  });
 }
 
 // ── SEND PEINTURE ─────────────────────────────────────────
@@ -3476,17 +3474,15 @@ function sendUsageDirect() {
     const ccUD  = state.selectedCC && state.selectedCC.ud ? [...state.selectedCC.ud] : [];
     mailto(dests[0], subj, body, [...dests.slice(1), ...ccUD].join(';'));
     dbSaveUsage({tag, wo, sc, qty, shutdown:UD_SHUTDOWN_LABELS[_udShutdown], motif, wg:udWGL, dest:dests});
-  }); return;
 
-  resetForm(['ud-wo','ud-tag','ud-qty','ud-sc','ud-desc','ud-motif','ud-nom'], [], 'ud');
-  showSuccess('&#9889;','si-purple','Usage direct envoyé !',
+    resetForm(['ud-wo','ud-tag','ud-qty','ud-sc','ud-desc','ud-motif','ud-nom'], [], 'ud');
+    showSuccess('&#9889;','si-purple','Usage direct envoyé !',
     'Outlook ouvert. Vérifie et envoie.',
     '<strong>WO :</strong> '+wo+'<br><strong>TAG :</strong> '+tag+'<br>'+
     '<strong>QTY :</strong> '+qty+'<br><strong>Shutdown :</strong> '+shutdownLbl+'<br>'+
     '<strong>Signé par :</strong> '+nom+'<br><strong>À :</strong> '+dests.join(', '));
+  });
 }
-
-
 
 // ══════════════════════════════════════════════════════════
 // ── BASE DE DONNÉES — HISTORIQUE PRNC ─────────────────────
