@@ -3479,7 +3479,7 @@ function clearSignature() {
 // Init canvas géré directement dans show()
 
 // ── SEND USAGE DIRECT ─────────────────────────────────────
-function sendUsageDirect() {
+async function sendUsageDirect() {
   if (checkConsultMode()) return;
   const wo    = v('ud-wo');
   const tag   = v('ud-tag');
@@ -3519,12 +3519,32 @@ function sendUsageDirect() {
   body += '  Quantité (QTY) : ' + qty + '\n';
   body += '  Shutdown       : ' + shutdownLbl + '\n';
   body += '\nMotif :\n  ' + motif + '\n';
+  // Sauvegarder la signature dans localStorage avec un ID unique
+  const sigCanvas  = document.getElementById('ud-sig-canvas');
+  const sigDataUrl = sigCanvas ? sigCanvas.toDataURL('image/png') : '';
+  const sigId = 'sig_' + Date.now();
+  // Sauvegarder dans Supabase
+  try {
+    await supaFetch('/rest/v1/signatures', 'POST', {
+      id: sigId, img: sigDataUrl, nom, tag, wo,
+      date: dateStr, shutdown: shutdownLbl, qty: String(qty), wg: udWGL
+    });
+  } catch(e) { console.warn('Supabase sig err', e); }
+  // Backup local
+  try { localStorage.setItem(sigId, JSON.stringify({
+    img: sigDataUrl, nom, tag, wo, date: dateStr, shutdown: shutdownLbl, qty, wg: udWGL
+  })); } catch(e) {}
+
+  const appBase = window.location.href.split('?')[0];
+  const sigLink = appBase + '?sig=' + sigId;
+
   body += '\n──────────────────────────────────────\n';
-  body += '  Signé par : ' + nom + '\n';
+  body += '  Signe par : ' + nom + '\n';
   body += '  Date      : ' + dateStr + '\n';
-  body += '  Signature : [Voir signature jointe via lien app]\n';
+  body += '  Signature : ' + sigLink + '\n';
+  body += '  (Ouvrir le lien depuis Chrome pour voir la signature)\n';
   body += '──────────────────────────────────────\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
 
 
   confirmEnvoi('Confirmer usage direct', [
@@ -3551,30 +3571,85 @@ function sendUsageDirect() {
 
 const DB_KEY = 'prnc-historique';
 
-// Charger depuis storage
+// ── SUPABASE CONFIG ───────────────────────────────────────
+const SUPA_URL = 'https://lfebsggmcopsmaegptyw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZWJzZ2dtY29wc21hZWdwdHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzU0NzgsImV4cCI6MjA4OTk1MTQ3OH0.dVNE7qEdNhuQFxuPjIt_umiXuCZH4kFh8JBiW2KFUAA';
+
+async function supaFetch(path, method, body) {
+  method = method || 'GET';
+  const opts = {
+    method: method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=minimal' : (method === 'PATCH' ? 'return=minimal' : '')
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(SUPA_URL + path, opts);
+  if (method === 'GET') return r.json();
+  return r;
+}
+
+// ── CHARGER depuis Supabase ───────────────────────────────
 async function dbLoad() {
+  try {
+    const data = await supaFetch('/rest/v1/historique?order=created_at.desc&limit=500');
+    if (Array.isArray(data) && data.length >= 0) {
+      return data.map(function(r) {
+        return {
+          id: r.id, type: r.type, tag: r.tag, wo: r.wo, woMtc: r.wo_mtc,
+          wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
+          shutdown: r.shutdown, qty: r.qty, desc: r.designation, serie: r.serie,
+          typeEqt: r.type_eqt, dateRecep: r.date_recep, motif: r.motif,
+          typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
+          date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || []
+        };
+      });
+    }
+  } catch(e) { console.warn('Supabase load err', e); }
+  // Fallback localStorage
   try {
     const raw = localStorage.getItem(DB_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch(e) { return []; }
 }
 
-// Sauvegarder en storage
+// ── SAUVEGARDER (backup local seulement) ─────────────────
 async function dbSave(records) {
-  try {
-    localStorage.setItem(DB_KEY, JSON.stringify(records));
-  } catch(e) { console.warn('DB save err', e); }
+  try { localStorage.setItem(DB_KEY, JSON.stringify(records)); } catch(e) {}
 }
 
-// Ajouter un enregistrement
+// ── AJOUTER un enregistrement ─────────────────────────────
 async function dbAdd(record) {
-  const records = await dbLoad();
-  record.id  = Date.now() + '-' + Math.random().toString(36).slice(2,6);
-  record.ts  = new Date().toISOString();
-  record.date = new Date().toLocaleDateString('fr-FR');
-  record.heure = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  records.unshift(record); // plus récent en premier
-  await dbSave(records);
+  record.id    = Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  record.ts    = new Date().toISOString();
+  record.date  = new Date().toLocaleDateString('fr-FR');
+  record.heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+  // Envoyer vers Supabase
+  try {
+    await supaFetch('/rest/v1/historique', 'POST', {
+      id: record.id, type: record.type, tag: record.tag, wo: record.wo,
+      wo_mtc: record.woMtc || null, wr: record.wr || null, sc: record.sc || null,
+      wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
+      shutdown: record.shutdown || null, qty: record.qty ? String(record.qty) : null,
+      designation: record.desc || null, serie: record.serie || null,
+      type_eqt: record.typeEqt || null, date_recep: record.dateRecep || null,
+      motif: record.motif || null, type_wo: record.typeWO || null,
+      type_transport: record.typeTransport || null, zone: record.zone || null,
+      date: record.date, heure: record.heure,
+      dest: record.dest || [], photos: record.photos || []
+    });
+  } catch(e) { console.warn('Supabase add err', e); }
+
+  // Backup localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    local.unshift(record);
+    localStorage.setItem(DB_KEY, JSON.stringify(local));
+  } catch(e) {}
   return record;
 }
 
@@ -4559,19 +4634,32 @@ function editRecord(id) {
 }
 
 async function saveEdit(id) {
-  const records = await dbLoad();
-  const idx = records.findIndex(r => r.id === id);
-  if (idx < 0) return;
-  records[idx].tag    = document.getElementById('edit-tag').value.trim();
-  records[idx].wo     = document.getElementById('edit-wo').value.trim();
-  const s             = document.getElementById('edit-statut').value.trim();
-  records[idx].statut = s;
-  if (records[idx].shutdown) records[idx].shutdown = s;
-  records[idx].typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : (records[idx].typeEqt||'');
-  records[idx].serie  = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : (records[idx].serie||'');
-  records[idx].loc    = document.getElementById('edit-loc').value.trim();
-  await dbSave(records);
-  document.querySelectorAll('[style*="rgba(0,0,0,.5)"]').forEach(el=>el.remove());
+  const tag     = document.getElementById('edit-tag').value.trim();
+  const wo      = document.getElementById('edit-wo').value.trim();
+  const s       = document.getElementById('edit-statut').value.trim();
+  const typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : '';
+  const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
+  const loc     = document.getElementById('edit-loc').value.trim();
+
+  // Mettre à jour dans Supabase
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
+      tag, wo, statut: s, shutdown: s, type_eqt: typeEqt, serie, loc
+    });
+  } catch(e) { console.warn('Supabase update err', e); }
+
+  // Mettre à jour aussi en localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    const idx = local.findIndex(r => r.id === id);
+    if (idx >= 0) {
+      local[idx].tag = tag; local[idx].wo = wo; local[idx].statut = s;
+      local[idx].typeEqt = typeEqt; local[idx].serie = serie; local[idx].loc = loc;
+      localStorage.setItem(DB_KEY, JSON.stringify(local));
+    }
+  } catch(e) {}
+
+  document.querySelectorAll('.overlay-view,[style*="rgba(0,0,0,.5)"]').forEach(el=>el.remove());
   renderHist();
   renderDashboard();
 }
@@ -4757,6 +4845,69 @@ function setPtTrait(key, label) {
 initSemaines();
 updateStats();
 checkRelances();
+// Vérifier si c'est un lien signature ?sig=
+(async function() {
+  const params = new URLSearchParams(window.location.search);
+  const sigId  = params.get('sig');
+  if (sigId) {
+    try {
+      // Chercher d'abord dans Supabase
+      let d = null;
+      try {
+        const sdata = await supaFetch('/rest/v1/signatures?id=eq.' + encodeURIComponent(sigId));
+        if (Array.isArray(sdata) && sdata.length > 0) d = sdata[0];
+      } catch(e) {}
+      // Fallback localStorage
+      if (!d) {
+        const raw = localStorage.getItem(sigId);
+        if (raw) d = JSON.parse(raw);
+      }
+      if (d) {
+        // Afficher la page signature directement sans PIN
+        document.body.innerHTML = `
+          <div style="margin:0;background:#f0f4f8;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;padding:16px;box-sizing:border-box">
+            <div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.12);text-align:center">
+              <div style="background:#1F3864;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+                <div style="font-size:16px;font-weight:700">Signature — Usage direct</div>
+                <div style="font-size:11px;opacity:.7;margin-top:3px">${d.wg || ''}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;text-align:left">
+                <div style="background:#f8f9fa;border-radius:8px;padding:8px">
+                  <div style="font-size:10px;color:#888;font-weight:700">TAG</div>
+                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.tag||'—'}</div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:8px;padding:8px">
+                  <div style="font-size:10px;color:#888;font-weight:700">WO</div>
+                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.wo||'—'}</div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:8px;padding:8px">
+                  <div style="font-size:10px;color:#888;font-weight:700">QTY</div>
+                  <div style="font-size:13px;font-weight:700;color:#C00000">${d.qty||'—'}</div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:8px;padding:8px">
+                  <div style="font-size:10px;color:#888;font-weight:700">Shutdown</div>
+                  <div style="font-size:12px;font-weight:700;color:#555">${d.shutdown||'—'}</div>
+                </div>
+              </div>
+              <div style="border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fafafa">
+                <div style="background:#e8ecf0;padding:6px;font-size:10px;font-weight:700;color:#555;text-align:left">SIGNATURE</div>
+                <img src="${d.img}" style="width:100%;height:auto;display:block">
+              </div>
+              <div style="background:#e8f5e9;border-radius:8px;padding:10px;font-size:12px;color:#2e7d32">
+                <div style="font-weight:700">Signé par : ${d.nom||'—'}</div>
+                <div style="margin-top:3px;color:#555">${d.date||'—'}</div>
+              </div>
+            </div>
+          </div>`;
+        return; // Ne pas lancer l'app
+      }
+    } catch(e) {}
+    // Si signature non trouvée
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;color:#888;font-size:14px">Signature introuvable ou expirée</div>';
+    return;
+  }
+})();
+
 initPIN();
 // Init mois courant dans rapport
 (function() {
