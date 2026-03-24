@@ -2512,20 +2512,20 @@ function addPhotos(input, prevId) {
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
 
 function mailto(to, subj, body, cc) {
-  // Réduire le corps — Outlook mobile bloque si URL > 2000 chars
-  const bodyTrimmed = body.length > 800 ? body.substring(0, 797) + '...' : body;
+  // Combiner TO + CC en une seule liste de destinataires
+  // Outlook mobile bloque quand le champ cc: contient des adresses encodées
+  const toList = (to  || '').split(';').map(s=>s.trim()).filter(Boolean);
+  const ccList = (cc  || '').split(';').map(s=>s.trim()).filter(Boolean);
+  const allDests = [...new Set([...toList, ...ccList])]; // dédupliquer
 
-  // Outlook mobile n'accepte qu'un seul destinataire dans "to"
-  // On met le premier en TO, les autres en CC avec les vrais CC
-  const toList  = to ? to.split(';').map(s=>s.trim()).filter(Boolean) : [];
-  const firstTo = toList[0] || '';
-  const extraTo = toList.slice(1).join(';');
-  const allCC   = [extraTo, cc].filter(Boolean).join(';');
+  // Corps court — éviter le blocage Outlook mobile
+  const bodyTrimmed = body.length > 600 ? body.substring(0, 597) + '...' : body;
 
-  let url = 'mailto:' + encodeURIComponent(firstTo);
+  // Mettre tout le monde en TO — pas de &cc= qui bloque Outlook mobile
+  const toStr = allDests.join(',');
+  let url = 'mailto:' + toStr;
   url += '?subject=' + encodeURIComponent(subj);
   url += '&body='    + encodeURIComponent(bodyTrimmed);
-  if (allCC) url += '&cc=' + encodeURIComponent(allCC);
 
   window.location.href = url;
 }
