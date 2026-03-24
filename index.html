@@ -2932,7 +2932,7 @@ function sendPeinture() {
 
   const ccFinalPt = [...allTo.slice(1), ...ccList].filter(Boolean).join(';');
   mailto(allTo[0], subj, body, ccFinalPt);
-  dbSavePeinture({tag, wo, trait});
+  dbSavePeinture({tag, wo, trait, photos:getPhotos('pt-prev')});
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
     '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
@@ -3788,7 +3788,7 @@ async function dbSaveTransport(d) {
     loc:d.zch+' → '+d.zdch, dest:[d.to] });
 }
 async function dbSavePeinture(d) {
-  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'] });
+  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'], photos:d.photos||[] });
 }
 
 // Init historique quand on arrive sur l'onglet
