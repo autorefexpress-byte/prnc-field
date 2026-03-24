@@ -3497,15 +3497,15 @@ const DB_KEY = 'prnc-historique';
 // Charger depuis storage
 async function dbLoad() {
   try {
-    const res = await window.storage.get(DB_KEY);
-    return res ? JSON.parse(res.value) : [];
+    const raw = localStorage.getItem(DB_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch(e) { return []; }
 }
 
 // Sauvegarder en storage
 async function dbSave(records) {
   try {
-    await window.storage.set(DB_KEY, JSON.stringify(records));
+    localStorage.setItem(DB_KEY, JSON.stringify(records));
   } catch(e) { console.warn('DB save err', e); }
 }
 
@@ -4147,7 +4147,7 @@ var _pinMode     = 'check'; // 'check' | 'setup'
 
 async function initPIN() {
   let stored;
-  try { const r = await window.storage.get(PIN_KEY); stored = r ? r.value : null; } catch(e) { stored = null; }
+  try { stored = localStorage.getItem(PIN_KEY); } catch(e) { stored = null; }
   const overlay = document.getElementById('pin-overlay');
   if (!overlay) return;
   if (!stored) {
@@ -4186,12 +4186,12 @@ async function validatePIN() {
   const err = document.getElementById('pin-error');
   if (_pinBuffer.length < 4) { err.textContent = 'Code à 4 chiffres requis'; _pinBuffer=''; updatePinDots(); return; }
   if (_pinMode === 'setup') {
-    await window.storage.set(PIN_KEY, _pinBuffer);
+    localStorage.setItem(PIN_KEY, _pinBuffer);
     document.getElementById('pin-overlay').style.display = 'none';
     err.textContent = '';
   } else {
     let stored;
-    try { const r = await window.storage.get(PIN_KEY); stored = r ? r.value : PIN_DEFAULT; } catch(e) { stored = PIN_DEFAULT; }
+    try { stored = localStorage.getItem(PIN_KEY) || PIN_DEFAULT; } catch(e) { stored = PIN_DEFAULT; }
     if (_pinBuffer === stored) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
