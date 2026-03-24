@@ -2626,24 +2626,6 @@ function sendArrive() {
   const wgl  = WG_LABELS[wg];
   const isUrg = state.ar.statut==='urg';
   const statutTxt = isUrg ? '*** URGENCE — TRAITEMENT IMMEDIAT ***' : 'En attente de diagnostic';
-  const ccStr = [...allTo.slice(1),...cc].join(';');
-
-  // ── Construire le lien fiche pré-remplie ──────────────
-  const ficheParams = new URLSearchParams();
-  ficheParams.set('wg',  wg);
-  ficheParams.set('wr',  wr);
-  ficheParams.set('tag', tag);
-  ficheParams.set('loc', loc);
-  if (wo)       ficheParams.set('wo',  wo);
-  if (sc)       ficheParams.set('sc',  sc);
-  if (desc)     ficheParams.set('desc',desc);
-  if (serie)    ficheParams.set('serie',serie);
-  if (typeEqt)  ficheParams.set('typeeqt', typeEqt);
-  if (dateRecep)ficheParams.set('date', dateRecep);
-
-  // L'URL pointe vers la même app avec ?fiche= pour ouvrir la fiche HTML
-  const appBase = window.location.href.split('?')[0];
-  const ficheURL = appBase + '?fiche=' + encodeURIComponent(ficheParams.toString());
 
   // ── Corps du mail ──────────────────────────────────────
   const subj = (isUrg?'[URGENT] ':'')+'['+wgl+'] Arrivée — '+tag+' — WR '+wr+(wo?' — WO '+wo:'');
@@ -2669,30 +2651,18 @@ function sendArrive() {
   body += '  Workgroup      : '+wgl+'\n';
   body += '  Statut         : '+statutTxt+'\n';
   if (rem)  body += '\nRemarques :\n'+rem+'\n';
-
-  // Lien étiquette pour le mail
-  const etiqParams2 = new URLSearchParams();
-  etiqParams2.set('etiq','1'); etiqParams2.set('wg',wg); etiqParams2.set('wr',wr);
-  etiqParams2.set('tag',tag); etiqParams2.set('sc',sc||''); etiqParams2.set('serie',serie||'');
-  etiqParams2.set('loc',loc); etiqParams2.set('date',dateRecep||''); etiqParams2.set('wo',wo||'');
-  if(desc) etiqParams2.set('desc',desc); if(typeEqt) etiqParams2.set('typeeqt',typeEqt);
-  if(isUrg) etiqParams2.set('urg','1');
-  const etiqURL = appBase + '?' + etiqParams2.toString();
-
-  body += '\n──────────────────────────────────────\n';
-  body += '🏷️ ÉTIQUETTE ÉQUIPEMENT — À IMPRIMER :\n';
-  body += '  ' + etiqURL + '\n';
-  body += '  → Ouvre dans Chrome → 🖨️ Imprimer → Format A6 paysage\n';
-  body += '  → Colle ou accroche sur l\'équipement\n';
-  body += '──────────────────────────────────────\n';
-  body += '\nMerci de prendre en compte cet équipement.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
+  body += '\nMerci de prendre en compte cet équipement.\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
 
   confirmEnvoi('Confirmer la notification arrivée', [
     {label:'TAG', value:tag}, {label:'WR', value:wr}, {label:'Workgroup', value:wgl},
     {label:'Statut', value:isUrg?'URGENCE':'En attente diag.'}, {label:'À', value:allTo.join(', ')}
   ], () => {
-    const ccAr = state.selectedCC && state.selectedCC.ar ? [...state.selectedCC.ar] : [];
-    mailto(allTo[0], subj, body, [...(ccStr?[ccStr]:[]), ...ccAr].join(';'));
+    // TO : premier destinataire
+    // CC : tous les autres TO + les CC cochés
+    const ccAr  = state.selectedCC && state.selectedCC.ar ? [...state.selectedCC.ar] : [];
+    const toFirst = allTo[0];
+    const ccFinal = [...allTo.slice(1), ...ccAr].filter(Boolean).join(';');
+    mailto(toFirst, subj, body, ccFinal);
     dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, dest:allTo});
 
     const statColor = isUrg?'background:var(--lred);color:var(--red)':'background:var(--llblue);color:var(--navy2)';
@@ -2845,9 +2815,10 @@ function sendEquip() {
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
     {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'—'}, {label:'À', value:allTo.join(', ')}
   ], () => {
-    const ccEq = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
-    const allCC = [...new Set([...ccEq, ...cc])];
-    mailto(allTo[0], subj, body, [...allTo.slice(1), ...allCC].join(';'));
+    const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
+    const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc].filter(Boolean);
+    const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
+    mailto(allTo[0], subj, body, ccUniqueEq);
     dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, dest:allTo});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
@@ -2894,7 +2865,8 @@ function sendPeinture() {
   if (allTo.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
   const ccList = [...(state.selectedCCpt||new Set())];
 
-  mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccList].join(';'));
+  const ccFinalPt = [...allTo.slice(1), ...ccList].filter(Boolean).join(';');
+  mailto(allTo[0], subj, body, ccFinalPt);
   dbSavePeinture({tag, wo, trait});
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
@@ -3492,8 +3464,9 @@ function sendUsageDirect() {
     {label:'TAG', value:tag}, {label:'WO', value:wo}, {label:'QTY', value:qty},
     {label:'Shutdown', value:UD_SHUTDOWN_LABELS[_udShutdown]}, {label:'Signé par', value:nom}
   ], () => {
-    const ccUD  = state.selectedCC && state.selectedCC.ud ? [...state.selectedCC.ud] : [];
-    mailto(dests[0], subj, body, [...dests.slice(1), ...ccUD].join(';'));
+    const ccUD     = state.selectedCC && state.selectedCC.ud ? [...state.selectedCC.ud] : [];
+    const ccFinalUD = [...dests.slice(1), ...ccUD].filter(Boolean).join(';');
+    mailto(dests[0], subj, body, ccFinalUD);
     dbSaveUsage({tag, wo, sc, qty, shutdown:UD_SHUTDOWN_LABELS[_udShutdown], motif, wg:udWGL, dest:dests});
 
     resetForm(['ud-wo','ud-tag','ud-qty','ud-sc','ud-desc','ud-motif','ud-nom'], [], 'ud');
