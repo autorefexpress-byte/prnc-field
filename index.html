@@ -657,7 +657,15 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="add-manual" onclick="addManual('tr-cc')">+ Ajouter un CC</div>
       <div class="manual-list" id="tr-cc"></div>
     </div>
-    <button class="send-btn btn-navy" onclick="sendTransport()">🚛 Envoyer demande transport</button>
+    <div class="field-grp">
+      <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
+      <div class="photo-zone" onclick="document.getElementById('tr-photos').click()">
+        <div class="photo-icon">📷</div><div class="photo-txt">Prendre / importer des photos</div>
+      </div>
+      <input type="file" id="tr-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'tr-prev')">
+      <div class="photo-prev" id="tr-prev"></div>
+    </div>
+    <button class="send-btn btn-navy" onclick="sendTransport()">&#128665; Envoyer demande transport</button>
   </div>
 </div>
 
@@ -2656,7 +2664,7 @@ function sendPlanning() {
   body += '\nMerci de prendre en compte cet équipement dans votre planning.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
 
   mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
-  dbAdd({ type:'PLANNING', tag, wo, wg:wgl, statut:state.pl.sem, dest:allTo });
+  dbAdd({ type:'PLANNING', tag, wo, wg:wgl, statut:state.pl.sem, dest:allTo, photos:getPhotos('pl-prev') });
 
   resetForm(['pl-wo','pl-tag','pl-loc','pl-infos'], ['pl-sem-select'], 'pl');
   showSuccess('📅','si-teal','Notification planning envoyée !',
@@ -2960,7 +2968,7 @@ function sendTransport() {
   if(info) body+='\nInfos chauffeur :\n'+info+'\n';
   body+='\nDemande : Emmanuel ROSA ASIK | Maint. Centrale | Tél : 46 83 71\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC';
   mailto(to, subj, body, cc);
-  dbSaveTransport({tag:tag||desc, wo, typeTransport:type, zch, zdch, to:dests.join(', ')});
+  dbSaveTransport({tag:tag||desc, wo, typeTransport:type, zch, zdch, to:dests.join(', '), photos:getPhotos('tr-prev')});
   showSuccess('🚛','si-teal','Demande transport ouverte !','Vérifie et envoie depuis Outlook.',
     `<strong>À :<\/strong> ${to}<br><strong>TAG :<\/strong> ${tag||'—'}<br><strong>Date :<\/strong> ${date}<br><strong>Camion :<\/strong> ${camion||'—'}`);
 }
@@ -3785,7 +3793,7 @@ async function dbSaveUsage(d) {
 }
 async function dbSaveTransport(d) {
   await dbAdd({ type:'TRANSPORT', tag:d.tag, wo:d.wo, typeTransport:d.typeTransport,
-    loc:d.zch+' → '+d.zdch, dest:[d.to] });
+    loc:d.zch+' → '+d.zdch, dest:[d.to], photos:d.photos||[] });
 }
 async function dbSavePeinture(d) {
   await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'], photos:d.photos||[] });
@@ -3853,7 +3861,7 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
       : '';
   });
   // Reset photos
-  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev'].forEach(pid => {
+  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev','tr-prev'].forEach(pid => {
     const el = document.getElementById(pid);
     if (el) el.innerHTML = '';
     clearPhotos(pid);
