@@ -2332,12 +2332,13 @@ function renderContacts(prefix, wg) {
   if (!box) return;
 
   // ── TO — destinataires principaux ────────────────────
-  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/décoche</span></div>`;
+  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
   toContacts.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const isSelected = state.selectedTo[prefix] && state.selectedTo[prefix].has(c.mail);
     html += `<div class="contact-row" onclick="toggleContact('${prefix}','${c.mail}','${wg}','${id}')">`;
-    html += `<div class="c-check on-${wg}" id="chk-${prefix}-${id}">&#10003;</div>`;
+    html += `<div class="c-check ${isSelected?'on-'+wg:''}" id="chk-${prefix}-${id}">${isSelected?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
     if (c.self) html += `<span class="c-self">Moi</span>`;
@@ -2377,12 +2378,13 @@ function renderContactsFrom(source, prefix, wg) {
   const box = document.getElementById(prefix+'-contacts');
   if (!box) return;
 
-  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/décoche</span></div>`;
+  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
   toContacts.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const isSelected = state.selectedTo[prefix] && state.selectedTo[prefix].has(c.mail);
     html += `<div class="contact-row" onclick="toggleContact('${prefix}','${c.mail}','${wg}','${id}')">`;
-    html += `<div class="c-check on-${wg}" id="chk-${prefix}-${id}">&#10003;</div>`;
+    html += `<div class="c-check ${isSelected?'on-'+wg:''}" id="chk-${prefix}-${id}">${isSelected?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
     if (c.self) html += `<span class="c-self">Moi</span>`;
@@ -2421,10 +2423,17 @@ function toggleCC(prefix, mail, wg, id) {
 }
 
 function toggleContact(prefix, mail, wg, id) {
+  // Sécuriser si le Set n'existe pas encore
+  if (!state.selectedTo[prefix]) state.selectedTo[prefix] = new Set();
   const set = state.selectedTo[prefix];
   const chk = document.getElementById('chk-'+prefix+'-'+id);
-  if (set.has(mail)) { set.delete(mail); chk.className='c-check'; chk.textContent=''; }
-  else               { set.add(mail); chk.className='c-check on-'+wg; chk.textContent='✓'; }
+  if (set.has(mail)) {
+    set.delete(mail);
+    if (chk) { chk.className='c-check'; chk.textContent=''; }
+  } else {
+    set.add(mail);
+    if (chk) { chk.className='c-check on-'+wg; chk.textContent='\u2713'; }
+  }
   updateBadge(prefix, wg);
 }
 
@@ -2503,11 +2512,18 @@ function addPhotos(input, prevId) {
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
 
 function mailto(to, subj, body, cc) {
+  // Limiter le corps à 1500 chars pour éviter le blocage mailto
+  const bodyTrimmed = body.length > 1500 ? body.substring(0, 1497) + '...' : body;
   let url = 'mailto:' + encodeURIComponent(to);
   url += '?subject=' + encodeURIComponent(subj);
-  url += '&body=' + encodeURIComponent(body);
+  url += '&body='    + encodeURIComponent(bodyTrimmed);
   if (cc) url += '&cc=' + encodeURIComponent(cc);
-  window.location.href = url;
+  // Tenter window.location.href puis fallback window.open
+  try {
+    window.location.href = url;
+  } catch(e) {
+    window.open(url, '_blank');
+  }
 }
 
 // Données globales de l'étiquette courante
@@ -2754,8 +2770,9 @@ function renderEqContacts(wg, statut) {
   data.to.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const isSel2 = state.selectedTo.eq && state.selectedTo.eq.has(c.mail);
     html += `<div class="contact-row" onclick="toggleContact('eq','${c.mail}','${wg}','${id}')">`;
-    html += `<div class="c-check on-${wg}" id="chk-eq-${id}">&#10003;</div>`;
+    html += `<div class="c-check ${isSel2?'on-'+wg:''}" id="chk-eq-${id}">${isSel2?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
     if (c.self) html += `<span class="c-self">Moi</span>`;
