@@ -4626,7 +4626,8 @@ function viewRecord(id) {
       {l:'N° Série',        v: r.serie},
       {l:'Type équipement', v: r.typeEqt || r.typeeqt},
       {l:'Désignation',     v: r.desc},
-      {l:'Statut',          v: r.statut || r.shutdown},
+      {l:'Statut',          v: r.statut},
+      {l:'Shutdown',         v: r.type !== 'TERMINE' ? r.shutdown : null},
       {l:'Localisation',    v: r.loc},
       {l:'QTY',             v: r.qty},
       {l:'Shutdown',        v: r.shutdown},
@@ -4742,7 +4743,7 @@ async function saveEdit(id) {
   // Mettre à jour dans Supabase
   try {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-      tag, wo, wo_mtc: woUsine||null, statut: s, shutdown: s, type_eqt: typeEqt, serie, loc
+      tag, wo, wo_mtc: woUsine||null, statut: s, type_eqt: typeEqt, serie, loc
     });
   } catch(e) { console.warn('Supabase update err', e); }
 
@@ -4752,6 +4753,7 @@ async function saveEdit(id) {
     const idx = local.findIndex(r => r.id === id);
     if (idx >= 0) {
       local[idx].tag = tag; local[idx].wo = wo; local[idx].statut = s;
+      // Ne pas écraser shutdown pour les types qui l'utilisent (USAGE)
       local[idx].typeEqt = typeEqt; local[idx].serie = serie; local[idx].loc = loc;
       if (woUsine) local[idx].woMtc = woUsine;
       localStorage.setItem(DB_KEY, JSON.stringify(local));
