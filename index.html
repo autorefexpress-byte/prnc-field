@@ -343,37 +343,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       </select>
     </div>
 
-    <!-- WO + TAG -->
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="pl-wo" placeholder="Ex : 855376"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="pl-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('pl-tag')"></div>
-    <div class="field-grp"><div class="field-lbl">Localisation</div><input class="fi" type="text" id="pl-loc" placeholder="Ex : Zone A1 / P50 / Atelier instru..."></div>
-
-    <!-- Type WO sans MAGASIN, + POSE IN SITU -->
+    <!-- LISTE ÉQUIPEMENTS -->
     <div class="field-grp">
-      <div class="field-lbl">Type WO</div>
-      <div class="type-grp">
-        <div class="type-btn" id="type-pcusine"    onclick="setTypeWO('pcusine')">PC-USINE</div>
-        <div class="type-btn" id="type-demandeur"  onclick="setTypeWO('demandeur')">DEMANDEUR</div>
-        <div class="type-btn" id="type-posinsitu"  onclick="setTypeWO('posinsitu')">POSE IN SITU</div>
-        <div class="type-btn" id="type-mcmecus"    onclick="setTypeWO('mcmecus')">MCMECUS</div>
-        <div class="type-btn" id="type-na"         onclick="setTypeWO('na')">N/A</div>
-      </div>
-    </div>
-
-    <!-- Commentaire -->
-    <div class="field-grp">
-      <div class="field-lbl">Commentaire</div>
-      <textarea class="fi" id="pl-infos" placeholder="Ex : IR A35166 OK COMPLET / ATT USINAGE LE 04/03..."></textarea>
-    </div>
-
-    <!-- Photos -->
-    <div class="field-grp">
-      <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('pl-photos').click()">
-        <div class="photo-icon">📷</div><div class="photo-txt">Prendre / importer des photos</div>
-      </div>
-      <input type="file" id="pl-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'pl-prev')">
-      <div class="photo-prev" id="pl-prev"></div>
+      <div class="field-lbl"><span class="req">*</span> Équipements à préparer</div>
+      <div id="pl-eqt-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button onclick="addPlanEqt()" style="margin-top:8px;width:100%;padding:10px;background:var(--lteal);color:var(--teal);border:1.5px dashed var(--teal);border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">+ Ajouter un équipement</button>
     </div>
 
     <!-- Destinataires -->
@@ -383,7 +357,22 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="add-manual" onclick="addManual('pl-manual')">+ Ajouter destinataire manuel</div>
       <div class="manual-list" id="pl-manual"></div>
     </div>
-    <button class="send-btn btn-teal" onclick="sendPlanning()">📅 Envoyer notification planning</button>
+    <!-- Signature superviseur -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Validation superviseur</div>
+      <div style="background:#f9f9f9;border:1.5px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span>Le superviseur signe ci-dessous</span>
+          <span style="color:var(--red);font-size:11px;font-weight:600;cursor:pointer" onclick="clearPlanSig()">Effacer</span>
+        </div>
+        <canvas id="pl-sig-canvas" width="340" height="100"
+          style="display:block;width:100%;height:100px;cursor:crosshair;touch-action:none;background:#fff">
+        </canvas>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">Le superviseur dessine sa signature avec le doigt</div>
+    </div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Nom du superviseur</div><input class="fi" type="text" id="pl-sup-nom" placeholder="Ex : BAFUE Pascal"></div>
+    <button class="send-btn btn-teal" onclick="sendPlanning()">&#128197; Envoyer notification planning</button>
   </div>
 </div>
 
@@ -2561,10 +2550,10 @@ function renderEtnaRetourContacts(wg) {
 }
 
 // ── TYPE WO ───────────────────────────────────────────────
-const TYPE_LABELS = {pcusine:'PC-USINE',demandeur:'DEMANDEUR',posinsitu:'POSE IN SITU',mcmecus:'MCMECUS',na:'N/A'};
+const TYPE_LABELS = {pcusine:'PC-USINE',demandeur:'DEMANDEUR',posinsitu:'POSE IN SITU',mcmecus:'MCMECUS',na:'N/A',magasin:'MAGASIN'};
 function setTypeWO(t) {
   state.pl.typeWO = t;
-  ['pcusine','demandeur','posinsitu','mcmecus','na'].forEach(x => {
+  ['pcusine','demandeur','posinsitu','mcmecus','na','magasin'].forEach(x => {
     const el = document.getElementById('type-'+x);
     if (el) el.className = 'type-btn'+(x===t?' on':'');
   });
@@ -2701,40 +2690,175 @@ const WG_COLORS = {
 };
 
 // ── SEND PLANNING ─────────────────────────────────────────
+// ── LISTE ÉQUIPEMENTS PLANNING ────────────────────────────
+var _plEqtList = []; // [{wo, tag, loc, typeWO, infos, photos, prevId}]
+var _plEqtCount = 0;
+
+function addPlanEqt() {
+  var idx = _plEqtCount++;
+  var prevId = 'pl-prev-' + idx;
+  _plEqtList.push({wo:'', tag:'', loc:'', typeWO:'', infos:'', photos:[], prevId:prevId});
+
+  var list = document.getElementById('pl-eqt-list');
+  var card = document.createElement('div');
+  card.id = 'pl-eqt-' + idx;
+  card.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;position:relative';
+  card.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '<span style="font-size:12px;font-weight:700;color:var(--teal)">Équipement ' + (idx+1) + '</span>' +
+      '<span onclick="removePlanEqt(' + idx + ')" style="color:var(--red);font-size:18px;cursor:pointer;font-weight:700">&times;</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WO *</div>' +
+        '<input class="fi" id="pl-wo-' + idx + '" type="text" placeholder="Ex : 855376" style="width:100%"></div>' +
+      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">TAG *</div>' +
+        '<input class="fi" id="pl-tag-' + idx + '" type="text" placeholder="Ex : 220-X-00315" style="width:100%"></div>' +
+    '</div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Localisation</div>' +
+      '<input class="fi" id="pl-loc-' + idx + '" type="text" placeholder="Zone A1 / P50..." style="width:100%"></div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Type WO</div>' +
+      '<select class="fi" id="pl-type-' + idx + '" style="width:100%">' +
+        '<option value="">-- Choisir --</option>' +
+        '<option value="PC-USINE">PC-USINE</option>' +
+        '<option value="DEMANDEUR">DEMANDEUR</option>' +
+        '<option value="POSE IN SITU">POSE IN SITU</option>' +
+        '<option value="MCMECUS">MCMECUS</option>' +
+        '<option value="MAGASIN">MAGASIN</option>' +
+        '<option value="N/A">N/A</option>' +
+      '</select></div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Commentaire</div>' +
+      '<textarea class="fi" id="pl-infos-' + idx + '" placeholder="IR OK / ATT USINAGE..." style="width:100%;height:52px"></textarea></div>' +
+    '<div>' +
+      '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
+      '<div class="photo-zone" onclick="document.getElementById(\'pl-file-' + idx + '\').click()" style="padding:8px">' +
+        '<div class="photo-icon" style="font-size:18px">&#128247;</div>' +
+        '<div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
+      '</div>' +
+      '<input type="file" id="pl-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,\''+prevId+'\')">' +
+      '<div class="photo-prev" id="' + prevId + '"></div>' +
+    '</div>';
+  list.appendChild(card);
+}
+
+function removePlanEqt(idx) {
+  var card = document.getElementById('pl-eqt-' + idx);
+  if (card) card.remove();
+  _plEqtList[idx] = null;
+}
+
+function collectPlanEqts() {
+  var result = [];
+  for (var i = 0; i < _plEqtCount; i++) {
+    var card = document.getElementById('pl-eqt-' + i);
+    if (!card) continue;
+    var wo    = document.getElementById('pl-wo-' + i) ? document.getElementById('pl-wo-' + i).value.trim() : '';
+    var tag   = document.getElementById('pl-tag-' + i) ? document.getElementById('pl-tag-' + i).value.trim() : '';
+    var loc   = document.getElementById('pl-loc-' + i) ? document.getElementById('pl-loc-' + i).value.trim() : '';
+    var type  = document.getElementById('pl-type-' + i) ? document.getElementById('pl-type-' + i).value : '';
+    var infos = document.getElementById('pl-infos-' + i) ? document.getElementById('pl-infos-' + i).value.trim() : '';
+    var prevId = 'pl-prev-' + i;
+    var photos = getPhotos(prevId);
+    if (wo || tag) result.push({wo, tag, loc, type, infos, photos, prevId});
+  }
+  return result;
+}
+
+function resetPlanEqts() {
+  _plEqtList = [];
+  _plEqtCount = 0;
+  var list = document.getElementById('pl-eqt-list');
+  if (list) list.innerHTML = '';
+}
+
+// ── SIGNATURE SUPERVISEUR PLANNING ───────────────────────
+var _plSigCtx = null;
+var _plSigDrawing = false;
+var _plSigHasMark = false;
+
+function initPlanSig() {
+  var canvas = document.getElementById('pl-sig-canvas');
+  if (!canvas || _plSigCtx) return;
+  _plSigCtx = canvas.getContext('2d');
+  _plSigCtx.strokeStyle = '#1F3864';
+  _plSigCtx.lineWidth = 2.5;
+  _plSigCtx.lineCap = 'round';
+
+  function getPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (canvas.width / r.width),
+             y: (src.clientY - r.top)  * (canvas.height / r.height) };
+  }
+  canvas.addEventListener('mousedown',  function(e){ _plSigDrawing=true; var p=getPos(e); _plSigCtx.beginPath(); _plSigCtx.moveTo(p.x,p.y); });
+  canvas.addEventListener('mouseup',    function(){ _plSigDrawing=false; });
+  canvas.addEventListener('mousemove',  function(e){ if(!_plSigDrawing) return; var p=getPos(e); _plSigCtx.lineTo(p.x,p.y); _plSigCtx.stroke(); _plSigHasMark=true; });
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); _plSigDrawing=true; var p=getPos(e); _plSigCtx.beginPath(); _plSigCtx.moveTo(p.x,p.y); }, {passive:false});
+  canvas.addEventListener('touchend',   function(){ _plSigDrawing=false; });
+  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!_plSigDrawing) return; var p=getPos(e); _plSigCtx.lineTo(p.x,p.y); _plSigCtx.stroke(); _plSigHasMark=true; }, {passive:false});
+}
+
+function clearPlanSig() {
+  var canvas = document.getElementById('pl-sig-canvas');
+  if (!canvas || !_plSigCtx) return;
+  _plSigCtx.clearRect(0, 0, canvas.width, canvas.height);
+  _plSigHasMark = false;
+}
+
 function sendPlanning() {
   if (checkConsultMode()) return;
-  const wo     = v('pl-wo');
-  const tag    = v('pl-tag');
-  const loc    = v('pl-loc');
-  const infos  = v('pl-infos');
   const manual = getEmails('pl-manual');
 
   if (!state.pl.wg)  { alert('Sélectionne un Workgroup.'); return; }
   if (!state.pl.sem) { alert('Sélectionne une semaine.'); return; }
-  if (!wo || !tag)   { alert('WO et TAG sont obligatoires.'); return; }
+
+  var eqts = collectPlanEqts();
+  if (eqts.length === 0) { alert('Ajoute au moins un équipement.'); return; }
+  for (var ei = 0; ei < eqts.length; ei++) {
+    if (!eqts[ei].wo || !eqts[ei].tag) { alert('WO et TAG obligatoires pour chaque équipement.'); return; }
+  }
+
+  const supNom = v('pl-sup-nom');
+  if (!_plSigHasMark) { alert('La signature du superviseur est obligatoire.'); return; }
+  if (!supNom)        { alert('Le nom du superviseur est obligatoire.'); return; }
 
 
   const allTo = [...state.selectedTo.pl, ...manual];
   if (allTo.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
   const ccPl = state.selectedCC && state.selectedCC.pl ? [...state.selectedCC.pl] : [];
 
-  const wgl   = WG_LABELS[state.pl.wg];
-  const typel = TYPE_LABELS[state.pl.typeWO] || '—';
-
-  const subj = '['+wgl+'] Planning '+state.pl.sem+' — '+tag+' — WO '+wo;
-  let body = 'Bonjour,\n\nEquipement prévu au planning — '+state.pl.sem+' :\n\n';
-  body += '  WO               : '+wo+'\n';
-  body += '  TAG              : '+tag+'\n';
-  if (loc) body += '  Localisation     : '+loc+'\n';
-  body += '  Workgroup        : '+wgl+'\n';
-  if (state.pl.typeWO) body += '  Type WO          : '+typel+'\n';
-  if (infos)           body += '\nCommentaire :\n  '+infos+'\n';
-  body += '\nMerci de prendre en compte cet équipement dans votre planning.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
+  const wgl = WG_LABELS[state.pl.wg];
+  const subj = '['+wgl+'] Planning '+state.pl.sem+' — '+eqts.length+' équipement'+(eqts.length>1?'s':'')+' — PRNC';
+  let body = 'Bonjour,\n\n';
+  body += eqts.length + ' équipement'+(eqts.length>1?'s':'')+' prévus au planning '+state.pl.sem+' :\n';
+  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  eqts.forEach(function(e, i) {
+    body += (i+1) + '. WO : ' + e.wo + ' — TAG : ' + e.tag + '\n';
+    if (e.loc)   body += '   Localisation : ' + e.loc + '\n';
+    if (e.type)  body += '   Type WO      : ' + e.type + '\n';
+    if (e.infos) body += '   Commentaire  : ' + e.infos + '\n';
+    if (i < eqts.length-1) body += '   ─────────────────────────\n';
+  });
+  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  body += '\nWorkgroup : ' + wgl + '\n';
+  body += '\n──────────────────────────────\n';
+  body += '  Validé par : ' + supNom + '\n';
+  body += '  Date       : ' + new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) + '\n';
+  body += '──────────────────────────────\n';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
 
   mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
-  dbAdd({ type:'PLANNING', tag, wo, wg:wgl, statut:state.pl.sem, dest:allTo, photos:getPhotos('pl-prev') });
 
-  resetForm(['pl-wo','pl-tag','pl-loc','pl-infos'], ['pl-sem-select'], 'pl');
+  // Sauvegarder chaque équipement dans l'historique
+  eqts.forEach(function(e) {
+    dbAdd({ type:'PLANNING', tag:e.tag, wo:e.wo, wg:wgl, statut:state.pl.sem,
+            loc:e.loc, typeWO:e.type, dest:allTo, photos:e.photos||[] });
+    clearPhotos(e.prevId);
+  });
+
+  clearPlanSig(); _plSigHasMark=false;
+  document.getElementById('pl-sup-nom').value='';
+  resetPlanEqts();
+  resetForm([], ['pl-sem-select'], 'pl');
   showSuccess('📅','si-teal','Notification planning envoyée !',
     'Outlook ouvert. Vérifie et envoie.',
     `<strong>WO :</strong> ${wo}<br><strong>TAG :</strong> ${tag}<br>` +
@@ -3814,8 +3938,10 @@ async function renderHist() {
         ${r.loc?`<div style="font-size:10px;color:var(--muted)">${r.loc}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
-        <button onclick="editRecord('${r.id}')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>
-        <button onclick="deleteRecord('${r.id}')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#128465;</button>
+        ${_isConsultMode
+          ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
+          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button><button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>'
+        }
       </div>
     </div>`;
   }).join('');
@@ -4178,8 +4304,10 @@ async function renderDashboard() {
       ${r.loc?`<div style="font-size:11px;color:var(--navy);font-weight:600">&#128205; ${r.loc}</div>`:''}
       <div style="font-size:10px;color:var(--muted)">Arrivé le ${r.date} à ${r.heure}</div>
       <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end">
-        <button onclick="editRecord('${r.id}')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Modifier</button>
-        <button onclick="deleteRecord('${r.id}')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Suppr.</button>
+        ${_isConsultMode
+          ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065; Afficher</button>'
+          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Modifier</button><button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Suppr.</button>'
+        }
       </div>
     </div>`;
   }).join('');
@@ -4765,7 +4893,10 @@ function viewRecord(id) {
           </button>` : ''}
           <div style="display:flex;gap:8px">
             <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
-            <button onclick="this.closest('.overlay-view').remove();editRecord('${id}')" style="flex:1;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>
+            ${!_isConsultMode ? `
+            <button onclick="this.closest('.overlay-view').remove();deleteRecord('${id}')" style="flex:1;padding:12px;background:var(--lred);color:var(--red);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>
+            <button onclick="this.closest('.overlay-view').remove();editRecord('${id}')" style="flex:2;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>
+            ` : ``}
           </div>
         </div>
       </div>`;
