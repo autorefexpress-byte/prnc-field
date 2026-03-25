@@ -692,17 +692,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('fs-tag')"></div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
 
-    <!-- Statut -->
+    <!-- Information -->
     <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Statut / Type WO</div>
-      <div class="type-grp" id="fs-statut-grp">
-        <div class="type-btn" id="fs-st-pcusine"    onclick="setFsStatut('pcusine')">PC-USINE</div>
-        <div class="type-btn" id="fs-st-demandeur"  onclick="setFsStatut('demandeur')">Retour demandeur</div>
-        <div class="type-btn" id="fs-st-posinsitu"  onclick="setFsStatut('posinsitu')">POSE IN SITU</div>
-        <div class="type-btn" id="fs-st-mcmecus"    onclick="setFsStatut('mcmecus')">MCMECUS</div>
-        <div class="type-btn" id="fs-st-magasin"    onclick="setFsStatut('magasin')">MAGASIN</div>
-        <div class="type-btn" id="fs-st-na"         onclick="setFsStatut('na')">N/A</div>
-      </div>
+      <div class="field-lbl"><span class="req">*</span> Information</div>
+      <input class="fi" type="text" id="fs-statut-input" placeholder="Ex : PC-USINE / Retour demandeur / En attente pièces...">
     </div>
 
     <!-- Photo fiche -->
@@ -2891,12 +2884,12 @@ async function saveFichesuiveuse() {
   var dem = v('fs-demandeur');
   var rem = v('fs-rem');
   var wg  = state.fs && state.fs.wg ? state.fs.wg : '';
-  var st  = state.fs && state.fs.statut ? FS_STATUT_LABELS[state.fs.statut] : '';
+  var st = document.getElementById('fs-statut-input') ? document.getElementById('fs-statut-input').value.trim() : '';
 
   if (!wg)  { alert('Sélectionne un Workgroup.'); return; }
   if (!wo)  { alert('Le WO est obligatoire.'); return; }
   if (!tag) { alert('Le TAG est obligatoire.'); return; }
-  if (!st)  { alert('Sélectionne un statut.'); return; }
+  if (!st)  { alert('Le champ Information est obligatoire.'); return; }
 
   var wgl = WG_LABELS[wg];
   var photos = getPhotos('fs-prev');
@@ -2925,11 +2918,9 @@ async function saveFichesuiveuse() {
     var el = document.getElementById(id);
     if(el) el.className = 'wg-btn';
   });
-  Object.keys(FS_STATUT_LABELS).forEach(function(k){
-    var el = document.getElementById('fs-st-' + k);
-    if(el) el.className = 'type-btn';
-  });
-  if(state.fs) { state.fs.wg=''; state.fs.statut=''; }
+  var fsInput = document.getElementById('fs-statut-input');
+  if (fsInput) fsInput.value = '';
+  if(state.fs) { state.fs.wg=''; }
   clearPhotos('fs-prev');
   resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
 
