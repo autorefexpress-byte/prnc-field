@@ -4983,15 +4983,41 @@ function prefillArrivee(wo, tag, wr, wg, sc) {
   }, 200);
 }
 
-function prefillTermine(wo, tag, wr, wg, sc) {
+function prefillTermine(wo, tag, wr, wg, sc, recordId) {
   show('s-equip');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
     if (wgKey) { setWG('eq', wgKey); }
-    if (wo)  { var el=document.getElementById('eq-wo');  if(el) el.value=wo; }
+    if (wo)  { var el=document.getElementById('eq-wo-mtc'); if(el) el.value=wo; }
     if (wr)  { var el=document.getElementById('eq-wr');  if(el) el.value=wr; }
     if (sc)  { var el=document.getElementById('eq-sc');  if(el) el.value=sc; }
     if (tag) { var el=document.getElementById('eq-tag'); if(el) el.value=tag; }
+
+    // Reprendre les photos de la fiche suiveuse
+    if (recordId) {
+      dbLoad().then(function(records) {
+        var rec = records.find(function(r){ return r.id === recordId; });
+        if (rec && rec.photos && rec.photos.length > 0) {
+          var photos = rec.photos.filter(Boolean);
+          if (!_photoStore) _photoStore = {};
+          _photoStore['eq-prev'] = photos.slice();
+          var prev = document.getElementById('eq-prev');
+          if (prev) {
+            prev.innerHTML = '';
+            photos.forEach(function(p, i) {
+              var div = document.createElement('div');
+              div.className = 'photo-thumb';
+              div.dataset.idx = i;
+              var imgEl = document.createElement('img'); imgEl.src = p;
+              var delEl = document.createElement('div'); delEl.className='photo-del'; delEl.textContent='×';
+              (function(ii){ delEl.onclick=function(){ removePhoto('eq-prev', ii, div); }; })(i);
+              div.innerHTML=''; div.appendChild(imgEl); div.appendChild(delEl);
+              prev.appendChild(div);
+            });
+          }
+        }
+      });
+    }
   }, 200);
 }
 
@@ -5006,8 +5032,8 @@ function viewRecord(id) {
       {l:'Type',            v: r.type},
       {l:'Workgroup',       v: r.wg},
       {l:'TAG',             v: r.tag},
-      {l:'WO Usine',        v: r.wo},
-      {l:'WO MTC',          v: r.woMtc},
+      {l: r.type==='FICHE' ? 'WO MTC' : 'WO Usine', v: r.wo},
+      {l:'WO MTC',          v: r.type!=='FICHE' ? r.woMtc : null},
       {l:'WR',              v: r.wr},
       {l:'Stock Code',      v: r.sc},
       {l:'N° Série',        v: r.serie},
@@ -5070,7 +5096,7 @@ function viewRecord(id) {
                 style="flex:1;padding:10px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
                 &#128229; Équipement arrivé
               </button>
-              <button onclick="this.closest('.overlay-view').remove();prefillTermine('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}')"
+              <button onclick="this.closest('.overlay-view').remove();prefillTermine('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}','${r.id||''}')"
                 style="flex:1;padding:10px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
                 &#9989; Équipement terminé
               </button>
@@ -5489,4 +5515,9 @@ initPIN();
 })();
 </script>
 </body>
-</html>
+              var delBtn = document.createElement('div');
+              delBtn.className = 'photo-del';
+              delBtn.textContent = '\u00d7';
+              (function(idx2){ delBtn.onclick = function(){ removePhoto('eq-prev', idx2, div); }; })(i);
+              div.appendChild(document.createElement('img')).src = p;
+              div.appendChild(delBtn);
