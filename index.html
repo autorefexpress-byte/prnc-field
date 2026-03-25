@@ -505,7 +505,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="type-btn" id="eq-st-demandeur"  onclick="setEqStatut('demandeur')">Retour demandeur</div>
         <div class="type-btn" id="eq-st-p99fabric"  onclick="setEqStatut('p99fabric')">P99 Zone fabric.</div>
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
-        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Magasin central</div>
+        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Devant MCCHAUD</div>
         <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Zone P50</div>
         <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
       </div>
@@ -2831,7 +2831,7 @@ const EQ_STATUT_LABELS = {
   demandeur : 'DÉPOSER — Retour demandeur',
   p99fabric  : 'DÉPOSER — P99 Zone fabrication',
   p99vanne   : 'DÉPOSER — P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER — Magasin central',
+  magasin    : 'PRÊT À ENLEVER — Devant MCCHAUD',
   p50        : 'PRÊT À ENLEVER — Zone P50',
   attinfo    : 'EN ATTENTE INFO'
 };
@@ -4608,6 +4608,28 @@ function viewPhotoFull(idx, recordId) {
   });
 }
 
+
+function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone) {
+  var num = '+687969640';
+  var msg = 'Bonjour,\n\n';
+  msg += 'L\'equipement suivant est disponible et pret a etre depose :\n\n';
+  msg += '  TAG        : ' + (tag    || '—') + '\n';
+  if (wo)    msg += '  WO Usine   : ' + wo    + '\n';
+  if (woMtc) msg += '  WO MTC     : ' + woMtc + '\n';
+  msg += '  Statut     : ' + (statut || '—') + '\n';
+  if (loc)  msg += '  Localisation : ' + loc  + '\n';
+  if (zone) msg += '  Zone depot   : ' + zone + '\n';
+  msg += '\nMerci de le deposer dans la bonne zone.\n\nEmmanuel ROSA ASIK — Prepose aux pieces';
+
+  // Modifier le numéro si besoin
+  var newNum = prompt('Numéro WhatsApp du magasinier :', num);
+  if (!newNum) return;
+  newNum = newNum.replace(/[^+0-9]/g, '');
+
+  var url = 'https://wa.me/' + newNum.replace('+','') + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
 function viewRecord(id) {
   dbLoad().then(records => {
     const r = records.find(x => x.id === id);
@@ -4669,9 +4691,16 @@ function viewRecord(id) {
           ${rows || '<div style="color:var(--muted);text-align:center;padding:20px">Aucun détail disponible</div>'}
           ${photosHtml}
         </div>
-        <div style="padding:12px 20px 28px;display:flex;gap:8px;flex-shrink:0;border-top:1px solid var(--border)">
-          <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
-          <button onclick="this.closest('.overlay-view').remove();editRecord('${id}')" style="flex:1;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>
+        <div style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;border-top:1px solid var(--border)">
+          ${r.type==='TERMINE' ? `
+          <button onclick="sendWhatsAppMagasin('${r.tag||''}','${r.statut||''}','${r.loc||''}','${r.wo||''}','${r.woMtc||''}')"
+            style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+            &#128172; WhatsApp Magasinier
+          </button>` : ''}
+          <div style="display:flex;gap:8px">
+            <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
+            <button onclick="this.closest('.overlay-view').remove();editRecord('${id}')" style="flex:1;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>
+          </div>
         </div>
       </div>`;
     overlay.classList.add('overlay-view');
@@ -4720,6 +4749,10 @@ function editRecord(id) {
             <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
             <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%">
           </div>
+          ${r.type==='TERMINE' ? `<div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Zone à déposer</div>
+            <input class="fi" id="edit-zone" value="${r.zone||''}" style="width:100%" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
+          </div>` : ''}
         </div>
         <div style="display:flex;gap:10px;margin-top:16px">
           <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
@@ -4739,11 +4772,12 @@ async function saveEdit(id) {
   const typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : '';
   const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
   const loc     = document.getElementById('edit-loc').value.trim();
+  const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
 
   // Mettre à jour dans Supabase
   try {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-      tag, wo, wo_mtc: woUsine||null, statut: s, type_eqt: typeEqt, serie, loc
+      tag, wo, wo_mtc: woUsine||null, statut: s, type_eqt: typeEqt, serie, loc, zone: zone||null
     });
   } catch(e) { console.warn('Supabase update err', e); }
 
@@ -4756,6 +4790,7 @@ async function saveEdit(id) {
       // Ne pas écraser shutdown pour les types qui l'utilisent (USAGE)
       local[idx].typeEqt = typeEqt; local[idx].serie = serie; local[idx].loc = loc;
       if (woUsine) local[idx].woMtc = woUsine;
+      if (zone) local[idx].zone = zone;
       localStorage.setItem(DB_KEY, JSON.stringify(local));
     }
   } catch(e) {}
@@ -4763,6 +4798,45 @@ async function saveEdit(id) {
   document.querySelectorAll('.overlay-view,[style*="rgba(0,0,0,.5)"]').forEach(el=>el.remove());
   renderHist();
   renderDashboard();
+
+  // Proposer WhatsApp si c'est un équipement TERMINE avec une zone renseignée
+  if (loc || s) {
+    // Récupérer le type de l'enregistrement
+    const records = await dbLoad();
+    const rec = records.find(r => r.id === id);
+    if (rec && rec.type === 'TERMINE') {
+      showWhatsAppPrompt(tag, s, loc, woUsine, wo, zone);
+    }
+  }
+}
+
+function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="background:#25D366;border-radius:10px;padding:8px 12px;font-size:20px">&#128172;</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--navy)">Envoyer via WhatsApp ?</div>
+          <div style="font-size:11px;color:var(--muted)">Notifier le magasinier pour le dépôt</div>
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;font-family:monospace;color:#15803d;line-height:1.8">
+        TAG : <strong>${tag||'—'}</strong><br>
+        ${woUsine?'WO Usine : <strong>'+woUsine+'</strong><br>':''}
+        ${woMtc?'WO MTC : <strong>'+woMtc+'</strong><br>':''}
+        Statut : <strong>${statut||'—'}</strong><br>
+        Zone : <strong>${loc||'—'}</strong><br>
+        ${zone?'Zone depot : <strong>'+zone+'</strong>':''}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button onclick="this.closest('div[style*=rgba]').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Plus tard</button>
+        <button onclick="this.closest('div[style*=rgba]').remove();sendWhatsAppMagasin('${tag}','${statut}','${loc}','${woUsine}','${woMtc}')" style="flex:2;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128172; Envoyer WhatsApp</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 
 // ══════════════════════════════════════════════════════════
