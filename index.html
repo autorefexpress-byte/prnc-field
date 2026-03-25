@@ -4609,17 +4609,22 @@ function viewPhotoFull(idx, recordId) {
 }
 
 
-function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone) {
+function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone, recordId) {
   var num = '+687969640';
-  var msg = 'Bonjour,\n\n';
-  msg += 'L\'equipement suivant est disponible et pret a etre depose :\n\n';
-  msg += '  TAG        : ' + (tag    || '—') + '\n';
-  if (wo)    msg += '  WO Usine   : ' + wo    + '\n';
-  if (woMtc) msg += '  WO MTC     : ' + woMtc + '\n';
-  msg += '  Statut     : ' + (statut || '—') + '\n';
-  if (loc)  msg += '  Localisation : ' + loc  + '\n';
-  if (zone) msg += '  Zone depot   : ' + zone + '\n';
-  msg += '\nMerci de le deposer dans la bonne zone.\n\nEmmanuel ROSA ASIK — Prepose aux pieces';
+  var line = '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+  var msg = line + '\n';
+  msg += '\uD83D\uDD27 EQUIPEMENT DISPONIBLE\n';
+  msg += line + '\n';
+  msg += '\uD83C\uDFF7 TAG       : ' + (tag    || '—') + '\n';
+  if (wo)    msg += '\uD83D\uDCCB WO Usine  : ' + wo    + '\n';
+  if (woMtc) msg += '\uD83D\uDCCB WO MTC    : ' + woMtc + '\n';
+  msg += '\u2705 Statut    : ' + (statut || '—') + '\n';
+  if (loc)  msg += '\uD83D\uDCCD Localisa. : ' + loc   + '\n';
+  if (zone) msg += '\uD83D\uDCE6 Zone depot : ' + zone  + '\n';
+  msg += line + '\n';
+  msg += '\uD83D\uDC4D Merci de deposer dans la bonne zone.\n';
+  msg += line + '\n';
+  msg += 'Emmanuel ROSA ASIK — Prepose aux pieces';
 
   // Modifier le numéro si besoin
   var newNum = prompt('Numéro WhatsApp du magasinier :', num);
@@ -4628,6 +4633,69 @@ function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone) {
 
   var url = 'https://wa.me/' + newNum.replace('+','') + '?text=' + encodeURIComponent(msg);
   window.open(url, '_blank');
+
+  // Afficher la photo en grand si disponible
+  if (recordId) {
+    dbLoad().then(function(records) {
+      var rec = records.find(function(r){ return r.id === recordId; });
+      if (rec && rec.photos && rec.photos.length > 0) {
+        var photos = rec.photos.filter(Boolean);
+        if (photos.length > 0) showPhotoForWhatsApp(photos);
+      }
+    });
+  }
+}
+
+function showPhotoForWhatsApp(photos) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;box-sizing:border-box';
+
+  var idx = 0;
+  function render() {
+    ov.innerHTML = '';
+
+    // Header
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'color:#fff;font-size:13px;font-weight:700;text-align:center;line-height:1.6';
+    hdr.innerHTML = '&#128247; Photo ' + (idx+1) + '/' + photos.length + '<br><span style="font-size:11px;opacity:.7;font-weight:400">Capture + envoie dans WhatsApp</span>';
+    ov.appendChild(hdr);
+
+    // Image
+    var img = document.createElement('img');
+    img.src = photos[idx];
+    img.style.cssText = 'max-width:100%;max-height:60vh;border-radius:12px;object-fit:contain;border:3px solid #25D366';
+    ov.appendChild(img);
+
+    // Navigation si plusieurs photos
+    if (photos.length > 1) {
+      var nav = document.createElement('div');
+      nav.style.cssText = 'display:flex;gap:10px';
+      if (idx > 0) {
+        var prev = document.createElement('button');
+        prev.textContent = '◀ Préc.';
+        prev.style.cssText = 'padding:10px 18px;background:#333;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+        prev.onclick = function(){ idx--; render(); };
+        nav.appendChild(prev);
+      }
+      if (idx < photos.length-1) {
+        var nxt = document.createElement('button');
+        nxt.textContent = 'Suiv. ▶';
+        nxt.style.cssText = 'padding:10px 18px;background:#333;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+        nxt.onclick = function(){ idx++; render(); };
+        nav.appendChild(nxt);
+      }
+      ov.appendChild(nav);
+    }
+
+    // Bouton fermer
+    var close = document.createElement('button');
+    close.textContent = '✓ C\'est fait — Fermer';
+    close.style.cssText = 'padding:12px 28px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+    close.onclick = function(){ ov.remove(); };
+    ov.appendChild(close);
+  }
+  render();
+  document.body.appendChild(ov);
 }
 
 function viewRecord(id) {
