@@ -95,7 +95,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .statut-lbl{font-size:13px;font-weight:600;color:var(--text)}
 .statut-sub{font-size:10px;color:var(--muted);margin-top:2px}
 .statut-btn.on-diag{border-color:var(--blue);background:var(--llblue)}.statut-btn.on-diag .statut-lbl{color:var(--navy2)}
-.statut-btn.on-urg{border-color:var(--red);background:var(--lred)}.statut-btn.on-urg .statut-lbl{color:var(--red)}
+.statut-btn.on-urg{border-color:var(--red);background:var(--lred)}.statut-btn.on-urg .statut-lbl{color:var(--red)}.statut-btn.on-etna{border-color:var(--orange);background:var(--lorange)}.statut-btn.on-etna .statut-lbl{color:var(--orange)}
 /* SEMAINES */
 .sem-grp{display:flex;flex-wrap:wrap;gap:6px}
 .sem-btn{padding:7px 11px;border:2px solid var(--border);border-radius:20px;background:var(--grey);cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:all .15s;white-space:nowrap}
@@ -434,8 +434,9 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Statut à l'arrivée</div>
       <div class="statut-grp">
-        <div class="statut-btn" id="ar-diag" onclick="setStatut('diag')"><div class="statut-icon">🔍</div><div class="statut-lbl">En attente diagnostic</div><div class="statut-sub">Inspection à faire</div></div>
-        <div class="statut-btn" id="ar-urg" onclick="setStatut('urg')"><div class="statut-icon">⚠️</div><div class="statut-lbl" style="color:var(--red)">URGENCE</div><div class="statut-sub">Traitement immédiat</div></div>
+        <div class="statut-btn" id="ar-diag" onclick="setStatut('diag')"><div class="statut-icon">&#128269;</div><div class="statut-lbl">En attente diagnostic</div><div class="statut-sub">Inspection à faire</div></div>
+        <div class="statut-btn" id="ar-urg" onclick="setStatut('urg')"><div class="statut-icon">&#9888;</div><div class="statut-lbl" style="color:var(--red)">URGENCE</div><div class="statut-sub">Traitement immédiat</div></div>
+        <div class="statut-btn" id="ar-etna" onclick="setStatut('etna')"><div class="statut-icon">&#127912;</div><div class="statut-lbl" style="color:var(--orange)">Retour ETNA</div><div class="statut-sub">Check qualité à faire</div></div>
       </div>
     </div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Localisation</div><input class="fi" type="text" id="ar-loc" placeholder="Ex : Zone A1 Maintenance Centrale / P50 / Quai..."></div>
@@ -506,9 +507,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
         <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Magasin central</div>
         <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Zone P50</div>
+        <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
       </div>
     </div>
-    <div class="field-grp"><div class="field-lbl">Zone de retrait précise</div><input class="fi" type="text" id="eq-zone" placeholder="Ex : Rack 3 / Benne B / Allée 4..."></div>
+    <div class="field-grp"><div class="field-lbl">Localisation</div><input class="fi" type="text" id="eq-zone" placeholder="Ex : Rack 3 / Benne B / Zone A1 / P50..."></div>
 
     <!-- Destinataires auto par workgroup -->
     <div class="field-grp">
@@ -2215,6 +2217,19 @@ const EQ_CONTACTS = {
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
     ]
   },
+  // EN ATTENTE INFO — tous workgroups → Abel uniquement
+  chaud_attinfo: {
+    to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
+    cc: [{name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true}]
+  },
+  repar_attinfo: {
+    to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
+    cc: [{name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true}]
+  },
+  strob_attinfo: {
+    to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
+    cc: [{name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true}]
+  },
   // STROB
   strob_p99vanne: {
     to: [
@@ -2480,16 +2495,71 @@ function updateBadge(prefix, wg) {
 // ── STATUT ARRIVÉE ─────────────────────────────────────────
 function setStatut(s) {
   state.ar.statut = s;
-  ['diag','urg'].forEach(x => {
-    document.getElementById('ar-'+x).className = 'statut-btn' + (x===s?' on-'+x:'');
+  ['diag','urg','etna'].forEach(x => {
+    const el = document.getElementById('ar-'+x);
+    if (!el) return;
+    if (x === s) {
+      el.className = 'statut-btn on-' + (x==='etna' ? 'etna' : x);
+    } else {
+      el.className = 'statut-btn';
+    }
   });
+  // Si Retour ETNA — changer les contacts selon workgroup
+  if (s === 'etna') renderEtnaRetourContacts(state.ar.wg || '');
+  else if (state.ar.wg) renderContactsFrom(AR_CONTACTS, 'ar', state.ar.wg);
 }
 
-// ── STT WO ────────────────────────────────────────────────
-const STT_LABELS = {pi:'PI — Att. pièces',od:'OD — En cours',r:'R — Au planning',pr:'PR — Att. prestataire',g:'G — Terminé',d:'D — Att. diagnostic',bc:'BC — Att. crédit'};
-function setSTT(s) {
-  state.pl.stt = s;
-  ['pi','od','r','pr','g','d','bc'].forEach(x => { document.getElementById('stt-'+x).className = 'stt-btn'+(x===s?' on-'+x:''); });
+function renderEtnaRetourContacts(wg) {
+  var toList = [
+    {name:'Abel VENDEGOU',     mail:'abel.vendegou@pronyresources.com'},
+    {name:'David SELEMAEA',    mail:'david.selemaea@pronyresources.com'},
+    {name:'Benjamin DUBREUIL', mail:'benjamin.dubreuil@pronyresources.com'},
+  ];
+  var ccList = [
+    {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
+    {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com'},
+  ];
+
+  state.selectedTo.ar = new Set(toList.map(function(c){return c.mail;}));
+  if (!state.selectedCC) state.selectedCC = {};
+  state.selectedCC.ar = new Set(ccList.map(function(c){return c.mail;}));
+
+  var box = document.getElementById('ar-contacts');
+  if (!box) return;
+
+  var html = '<div class="contacts-hdr"><span style="font-weight:700;color:var(--orange)">Retour ETNA — Check qualité</span><span class="contacts-hint">Coche/décoche</span></div>';
+
+  toList.forEach(function(c) {
+    var id   = btoa(c.mail).replace(/[=+/]/g, '');
+    var init = c.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var rowEl = document.createElement('div');
+    rowEl.className = 'contact-row';
+    rowEl.dataset.mail = c.mail;
+    rowEl.dataset.id = id;
+    rowEl.addEventListener('click', function(){toggleContact('ar', this.dataset.mail, 'chaud', this.dataset.id);});
+    rowEl.innerHTML = '<div class="c-check on-chaud" id="chk-ar-' + id + '">✓</div><div class="c-avatar" style="background:var(--orange)">' + init + '</div><div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
+    // Ajouter dans html via un conteneur temporaire — impossible directement
+    // On utilise un placeholder
+    html += '<div class="contact-row" data-etna-mail="' + c.mail + '" data-etna-id="' + id + '" onclick="toggleContact(\"ar\",this.dataset.etnaMail,\"chaud\",this.dataset.etnaId)">';
+    html += '<div class="c-avatar" style="background:var(--orange)">' + init + '</div>';
+    html += '<div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
+    html += '</div>';
+  });
+
+  html += '<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC</div>';
+  ccList.forEach(function(c) {
+    var id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g, '');
+    var init = c.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    html += '<div class="contact-row">';
+    html += '<div class="c-check" style="font-size:9px">CC</div>';
+    html += '<div class="c-avatar" style="background:var(--navy2);font-size:9px">' + init + '</div>';
+    html += '<div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
+    if (c.self) html += '<span class="c-self">Moi</span>';
+    html += '</div>';
+  });
+
+  box.innerHTML = html;
+  updateBadge('ar', 'chaud');
 }
 
 // ── TYPE WO ───────────────────────────────────────────────
@@ -2695,11 +2765,14 @@ function sendArrive() {
 
   const wg   = state.ar.wg;
   const wgl  = WG_LABELS[wg];
-  const isUrg = state.ar.statut==='urg';
-  const statutTxt = isUrg ? '*** URGENCE — TRAITEMENT IMMEDIAT ***' : 'En attente de diagnostic';
+  const isUrg   = state.ar.statut==='urg';
+  const isEtna  = state.ar.statut==='etna';
+  const statutTxt = isUrg ? '*** URGENCE — TRAITEMENT IMMEDIAT ***'
+                  : isEtna ? 'RETOUR ETNA — CHECK QUALITE A FAIRE'
+                  : 'En attente de diagnostic';
 
   // ── Corps du mail ──────────────────────────────────────
-  const subj = (isUrg?'[URGENT] ':'')+'['+wgl+'] Arrivée — '+tag+' — WR '+wr+(wo?' — WO '+wo:'');
+  const subj = (isUrg?'[URGENT] ':isEtna?'[RETOUR ETNA] ':'')+'['+wgl+'] Arrivée — '+tag+' — WR '+wr+(wo?' — WO '+wo:'');
   let body = 'Bonjour,\n\nRéception équipement à la Maintenance Centrale :\n\n';
 
   if (wg === 'chaud') {
@@ -2722,7 +2795,10 @@ function sendArrive() {
   body += '  Workgroup      : '+wgl+'\n';
   body += '  Statut         : '+statutTxt+'\n';
   if (rem)  body += '\nRemarques :\n'+rem+'\n';
-  body += '\nMerci de prendre en compte cet équipement.\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
+  const msgFin = isEtna
+    ? 'Merci de proceder au check qualite de cet equipement retour ETNA.'
+    : 'Merci de prendre en compte cet equipement.';
+  body += '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
 
   confirmEnvoi('Confirmer la notification arrivée', [
     {label:'TAG', value:tag}, {label:'WR', value:wr}, {label:'Workgroup', value:wgl},
@@ -2756,14 +2832,23 @@ const EQ_STATUT_LABELS = {
   p99fabric  : 'DÉPOSER — P99 Zone fabrication',
   p99vanne   : 'DÉPOSER — P99 Zone vanne',
   magasin    : 'PRÊT À ENLEVER — Magasin central',
-  p50        : 'PRÊT À ENLEVER — Zone P50'
+  p50        : 'PRÊT À ENLEVER — Zone P50',
+  attinfo    : 'EN ATTENTE INFO'
 };
 function setEqStatut(s) {
   state.eq = state.eq || {};
   state.eq.statut = s;
   Object.keys(EQ_STATUT_LABELS).forEach(k => {
     const el = document.getElementById('eq-st-'+k);
-    if (el) el.className = 'type-btn' + (k===s?' on':'');
+    if (!el) return;
+    if (k === s) {
+      el.className = 'type-btn on';
+      if (k === 'attinfo') { el.style.background='var(--llblue)'; el.style.color='var(--navy2)'; el.style.borderColor='var(--navy2)'; }
+      else { el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+    } else {
+      el.className = 'type-btn';
+      el.style.background=''; el.style.color=''; el.style.borderColor='';
+    }
   });
   // Mettre à jour les contacts selon workgroup + statut
   renderEqContacts(state.eq.wg || '', s);
@@ -4611,9 +4696,13 @@ function editRecord(id) {
             <input class="fi" id="edit-tag" value="${r.tag||''}" style="width:100%">
           </div>
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO</div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
             <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%">
           </div>
+          ${r.type==='TERMINE' ? `<div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
+            <input class="fi" id="edit-wousine" value="${r.woUsine||r.woMtc||''}" style="width:100%" placeholder="Ex : 855376">
+          </div>` : ''}
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Statut / Info</div>
             <input class="fi" id="edit-statut" value="${r.statut||r.shutdown||''}" style="width:100%">
@@ -4644,6 +4733,7 @@ function editRecord(id) {
 async function saveEdit(id) {
   const tag     = document.getElementById('edit-tag').value.trim();
   const wo      = document.getElementById('edit-wo').value.trim();
+  const woUsine = document.getElementById('edit-wousine') ? document.getElementById('edit-wousine').value.trim() : '';
   const s       = document.getElementById('edit-statut').value.trim();
   const typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : '';
   const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
@@ -4652,7 +4742,7 @@ async function saveEdit(id) {
   // Mettre à jour dans Supabase
   try {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-      tag, wo, statut: s, shutdown: s, type_eqt: typeEqt, serie, loc
+      tag, wo, wo_mtc: woUsine||null, statut: s, shutdown: s, type_eqt: typeEqt, serie, loc
     });
   } catch(e) { console.warn('Supabase update err', e); }
 
@@ -4663,6 +4753,7 @@ async function saveEdit(id) {
     if (idx >= 0) {
       local[idx].tag = tag; local[idx].wo = wo; local[idx].statut = s;
       local[idx].typeEqt = typeEqt; local[idx].serie = serie; local[idx].loc = loc;
+      if (woUsine) local[idx].woMtc = woUsine;
       localStorage.setItem(DB_KEY, JSON.stringify(local));
     }
   } catch(e) {}
