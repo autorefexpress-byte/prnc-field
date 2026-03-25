@@ -4963,6 +4963,38 @@ function showPhotoForWhatsApp(photos) {
   document.body.appendChild(ov);
 }
 
+
+// ── PRÉ-REMPLISSAGE DEPUIS FICHE SUIVEUSE ────────────────
+function prefillArrivee(wo, tag, wr, wg, sc) {
+  show('s-arrive');
+  setTimeout(function() {
+    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
+    if (wgKey) { setWG('ar', wgKey); }
+    if (wo)  { var el=document.getElementById('ar-wo');  if(el) el.value=wo; }
+    if (wr)  { var el=document.getElementById('ar-wr');  if(el) el.value=wr; }
+    if (sc)  { var el=document.getElementById('ar-sc');  if(el) el.value=sc; }
+    if (tag) { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
+    // Date du jour auto
+    var dateEl = document.getElementById('ar-date');
+    if (dateEl && !dateEl.value) {
+      var n=new Date();
+      dateEl.value = n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'))+'-'+(String(n.getDate()).padStart(2,'0'));
+    }
+  }, 200);
+}
+
+function prefillTermine(wo, tag, wr, wg, sc) {
+  show('s-equip');
+  setTimeout(function() {
+    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
+    if (wgKey) { setWG('eq', wgKey); }
+    if (wo)  { var el=document.getElementById('eq-wo');  if(el) el.value=wo; }
+    if (wr)  { var el=document.getElementById('eq-wr');  if(el) el.value=wr; }
+    if (sc)  { var el=document.getElementById('eq-sc');  if(el) el.value=sc; }
+    if (tag) { var el=document.getElementById('eq-tag'); if(el) el.value=tag; }
+  }, 200);
+}
+
 function viewRecord(id) {
   dbLoad().then(records => {
     const r = records.find(x => x.id === id);
@@ -5030,6 +5062,20 @@ function viewRecord(id) {
             style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
             &#128172; WhatsApp Magasinier
           </button>` : ''}
+          ${r.type==='FICHE' && !_isConsultMode ? `
+          <div style="background:#EEF4FF;border-radius:12px;padding:10px 14px;margin-bottom:2px">
+            <div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:8px">&#128196; Suite du workflow :</div>
+            <div style="display:flex;gap:6px">
+              <button onclick="this.closest('.overlay-view').remove();prefillArrivee('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}')"
+                style="flex:1;padding:10px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
+                &#128229; Équipement arrivé
+              </button>
+              <button onclick="this.closest('.overlay-view').remove();prefillTermine('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}')"
+                style="flex:1;padding:10px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
+                &#9989; Équipement terminé
+              </button>
+            </div>
+          </div>` : ''}
           <div style="display:flex;gap:8px">
             <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
             ${!_isConsultMode ? `
