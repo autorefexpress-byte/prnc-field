@@ -312,6 +312,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Demande transport</div>
       <div class="card-sub">Callidus / Intra-site</div>
     </div>
+    <div class="action-card" onclick="if(!checkConsultMode())show('s-fsuiveuse')">
+      <div class="card-icon" style="background:var(--llblue);color:var(--navy2)">&#128203;</div>
+      <div class="card-lbl">Fiche suiveuse</div>
+      <div class="card-sub">Saisir depuis la fiche</div>
+    </div>
   </div>
 </div>
 
@@ -657,6 +662,62 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="photo-prev" id="tr-prev"></div>
     </div>
     <button class="send-btn btn-navy" onclick="sendTransport()">&#128665; Envoyer demande transport</button>
+  </div>
+</div>
+
+<!-- ═══════════════ FICHE SUIVEUSE ═══════════════ -->
+<div class="screen" id="s-fsuiveuse">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">←</div>
+    <div class="form-title">Fiche suiveuse</div>
+    <div class="form-badge" style="background:var(--llblue);color:var(--navy2)">Saisie</div>
+  </div>
+  <div class="form-body">
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div class="wg-grp">
+        <div class="wg-btn" id="fs-wg-chaud" onclick="setWG('fs','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
+        <div class="wg-btn" id="fs-wg-repar" onclick="setWG('fs','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
+        <div class="wg-btn" id="fs-wg-strob" onclick="setWG('fs','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
+      </div>
+    </div>
+
+    <!-- Infos principales -->
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376"></div>
+      <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466"></div>
+    </div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('fs-tag')"></div>
+    <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
+
+    <!-- Statut -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Statut / Type WO</div>
+      <div class="type-grp" id="fs-statut-grp">
+        <div class="type-btn" id="fs-st-pcusine"    onclick="setFsStatut('pcusine')">PC-USINE</div>
+        <div class="type-btn" id="fs-st-demandeur"  onclick="setFsStatut('demandeur')">Retour demandeur</div>
+        <div class="type-btn" id="fs-st-posinsitu"  onclick="setFsStatut('posinsitu')">POSE IN SITU</div>
+        <div class="type-btn" id="fs-st-mcmecus"    onclick="setFsStatut('mcmecus')">MCMECUS</div>
+        <div class="type-btn" id="fs-st-magasin"    onclick="setFsStatut('magasin')">MAGASIN</div>
+        <div class="type-btn" id="fs-st-na"         onclick="setFsStatut('na')">N/A</div>
+      </div>
+    </div>
+
+    <!-- Photo fiche -->
+    <div class="field-grp">
+      <div class="field-lbl">Photo de la fiche <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
+      <div class="photo-zone" onclick="document.getElementById('fs-photos').click()">
+        <div class="photo-icon">&#128247;</div><div class="photo-txt">Photographier la fiche suiveuse</div>
+      </div>
+      <input type="file" id="fs-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'fs-prev')">
+      <div class="photo-prev" id="fs-prev"></div>
+    </div>
+
+    <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="fs-rem" placeholder="Optionnel..."></textarea></div>
+
+    <button class="send-btn" style="background:var(--navy2);color:#fff" onclick="saveFichesuiveuse()">&#128203; Enregistrer la fiche</button>
   </div>
 </div>
 
@@ -2262,10 +2323,11 @@ const ETNA_CONTACTS = {
 // ── STATE ──────────────────────────────────────────────────
 const state = {
   ud: { wg:'' },
+  fs: { wg:'', statut:'' },
   pl: { wg:'', sem:'', stt:'', typeWO:'', kit:'' },
   ar: { wg:'', statut:'' },
   eq: { wg:'', statut:'' },
-  selectedTo: { pl: new Set(), ar: new Set(), eq: new Set(), pt: new Set(), ud: new Set() },
+  selectedTo: { pl: new Set(), ar: new Set(), eq: new Set(), pt: new Set(), ud: new Set(), fs: new Set() },
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
@@ -2802,6 +2864,82 @@ function clearPlanSig() {
   if (!canvas || !_plSigCtx) return;
   _plSigCtx.clearRect(0, 0, canvas.width, canvas.height);
   _plSigHasMark = false;
+}
+
+
+// ── FICHE SUIVEUSE ────────────────────────────────────────
+const FS_STATUT_LABELS = {
+  pcusine:'PC-USINE', demandeur:'Retour demandeur',
+  posinsitu:'POSE IN SITU', mcmecus:'MCMECUS',
+  magasin:'MAGASIN', na:'N/A'
+};
+
+function setFsStatut(s) {
+  state.fs = state.fs || {};
+  state.fs.statut = s;
+  Object.keys(FS_STATUT_LABELS).forEach(function(k) {
+    var el = document.getElementById('fs-st-' + k);
+    if (!el) return;
+    el.className = 'type-btn' + (k === s ? ' on' : '');
+  });
+}
+
+async function saveFichesuiveuse() {
+  var wo  = v('fs-wo');
+  var wr  = v('fs-wr');
+  var tag = v('fs-tag');
+  var dem = v('fs-demandeur');
+  var rem = v('fs-rem');
+  var wg  = state.fs && state.fs.wg ? state.fs.wg : '';
+  var st  = state.fs && state.fs.statut ? FS_STATUT_LABELS[state.fs.statut] : '';
+
+  if (!wg)  { alert('Sélectionne un Workgroup.'); return; }
+  if (!wo)  { alert('Le WO est obligatoire.'); return; }
+  if (!tag) { alert('Le TAG est obligatoire.'); return; }
+  if (!st)  { alert('Sélectionne un statut.'); return; }
+
+  var wgl = WG_LABELS[wg];
+  var photos = getPhotos('fs-prev');
+
+  // Vérifier si un enregistrement avec ce WO/TAG existe déjà
+  var records = await dbLoad();
+  var existing = records.find(function(r) {
+    return r.wo === wo || r.tag === tag;
+  });
+
+  // Sauvegarder dans l'historique
+  await dbAdd({
+    type: 'FICHE',
+    tag: tag, wo: wo, wr: wr, wg: wgl,
+    statut: st, desc: dem ? 'Demandeur : ' + dem : '',
+    motif: rem, photos: photos
+  });
+
+  // Afficher message + lien si équipement trouvé
+  var linkedMsg = existing
+    ? '<br><br>&#128279; Lié à un enregistrement existant : <strong>' + (existing.type) + '</strong> du ' + (existing.date || '')
+    : '';
+
+  // Reset
+  ['fs-wg-chaud','fs-wg-repar','fs-wg-strob'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.className = 'wg-btn';
+  });
+  Object.keys(FS_STATUT_LABELS).forEach(function(k){
+    var el = document.getElementById('fs-st-' + k);
+    if(el) el.className = 'type-btn';
+  });
+  if(state.fs) { state.fs.wg=''; state.fs.statut=''; }
+  clearPhotos('fs-prev');
+  resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
+
+  showSuccess('&#128203;','si-blue','Fiche suiveuse enregistrée !',
+    'Disponible dans l\'historique.',
+    '<strong>WO :</strong> ' + wo + '<br><strong>TAG :</strong> ' + tag +
+    '<br><strong>Workgroup :</strong> ' + wgl +
+    '<br><strong>Statut :</strong> ' + st +
+    (dem ? '<br><strong>Demandeur :</strong> ' + dem : '') +
+    linkedMsg);
 }
 
 function sendPlanning() {
@@ -3880,7 +4018,8 @@ const TYPE_COLORS = {
   TERMINE   : {bg:'#E2EFDA',fg:'#375623',icon:'OUT'},
   USAGE     : {bg:'#FCEBEB',fg:'#E24B4A',icon:'USE'},
   TRANSPORT : {bg:'#DEEAF1',fg:'#1F3864',icon:'TRP'},
-  PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'}
+  PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
+  FICHE     : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'}
 };
 
 // ── RENDER HISTORIQUE ─────────────────────────────────────
@@ -4070,7 +4209,7 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
       : '';
   });
   // Reset photos
-  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev','tr-prev'].forEach(pid => {
+  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev','tr-prev','fs-prev'].forEach(pid => {
     const el = document.getElementById(pid);
     if (el) el.innerHTML = '';
     clearPhotos(pid);
