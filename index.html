@@ -4794,12 +4794,12 @@ function editRecord(id) {
             <input class="fi" id="edit-tag" value="${r.tag||''}" style="width:100%">
           </div>
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
             <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%">
           </div>
           ${r.type==='TERMINE' ? `<div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
-            <input class="fi" id="edit-wousine" value="${r.woUsine||r.woMtc||''}" style="width:100%" placeholder="Ex : 855376">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
+            <input class="fi" id="edit-wousine" value="${r.woMtc||''}" style="width:100%" placeholder="Ex : 837500">
           </div>` : ''}
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Statut / Info</div>
