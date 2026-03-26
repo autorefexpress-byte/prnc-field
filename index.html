@@ -260,37 +260,58 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <hr class="sec" style="margin:0 16px">
   <div class="section-lbl">Actions rapides</div>
+  <!-- Section 1 : Flux équipements -->
+  <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
   <div class="action-grid">
     <div class="action-card" onclick="if(!checkConsultMode())show('s-planning')">
       <div class="card-icon teal">&#128197;</div>
       <div class="card-lbl">Équip. au planning</div>
       <div class="card-sub">Notifier le planning</div>
-      
     </div>
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-arrive')">
-      <div class="card-icon purple">&#128229;</div>
-      <div class="card-lbl">Équipement arrivé</div>
-      <div class="card-sub">Notifier à l'arrivée</div>
+    <div class="action-card" onclick="if(!checkConsultMode())show('s-fsuiveuse')">
+      <div class="card-icon" style="background:var(--llblue);color:var(--navy2)">&#128203;</div>
+      <div class="card-lbl">Fiche suiveuse</div>
+      <div class="card-sub">Saisir depuis la fiche</div>
     </div>
     <div class="action-card" onclick="if(!checkConsultMode())show('s-equip')">
       <div class="card-icon green">&#9989;</div>
       <div class="card-lbl">Équipement terminé</div>
       <div class="card-sub">Notifier le demandeur</div>
     </div>
-    <div class="action-card" onclick="show('s-peinture')">
-      <div class="card-icon orange">&#127912;</div>
-      <div class="card-lbl">Demande peinture</div>
-      <div class="card-sub">Envoi vers ETNA</div>
+    <div class="action-card" onclick="if(!checkConsultMode())show('s-arrive')">
+      <div class="card-icon purple">&#128229;</div>
+      <div class="card-lbl">Équipement arrivé</div>
+      <div class="card-sub">Notifier à l'arrivée</div>
     </div>
     <div class="action-card" onclick="if(!checkConsultMode())show('s-usage')">
       <div class="card-icon red">&#9889;</div>
       <div class="card-lbl">Usage direct</div>
       <div class="card-sub">Utilisation sur site</div>
     </div>
+    <div class="action-card" onclick="show('s-peinture')">
+      <div class="card-icon orange">&#127912;</div>
+      <div class="card-lbl">Demande peinture</div>
+      <div class="card-sub">Envoi vers ETNA</div>
+    </div>
+    <div class="action-card" onclick="show('s-transport')">
+      <div class="card-icon navy">&#128667;</div>
+      <div class="card-lbl">Demande transport</div>
+      <div class="card-sub">Callidus / Intra-site</div>
+    </div>
+  </div>
+
+  <!-- Section 2 : Gestion des flux -->
+  <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 6px">Gestion des flux</div>
+  <div class="action-grid">
     <div class="action-card" onclick="show('s-hist')">
       <div class="card-icon navy">&#128202;</div>
-      <div class="card-lbl">Historique</div>
-      <div class="card-sub">Base de données</div>
+      <div class="card-lbl">Gestion des flux</div>
+      <div class="card-sub">Historique complet</div>
+    </div>
+    <div class="action-card" onclick="show('s-hist-wo')">
+      <div class="card-icon" style="background:#FFF3E0;color:#E65100">&#128196;</div>
+      <div class="card-lbl">Historique WO</div>
+      <div class="card-sub">WO clôturés</div>
     </div>
     <div class="action-card" onclick="show('s-dashboard')">
       <div class="card-icon teal">&#128300;</div>
@@ -306,16 +327,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-icon purple">&#128336;</div>
       <div class="card-lbl">Mon activité</div>
       <div class="card-sub">Timeline du jour</div>
-    </div>
-    <div class="action-card" onclick="show('s-transport')">
-      <div class="card-icon navy">&#128667;</div>
-      <div class="card-lbl">Demande transport</div>
-      <div class="card-sub">Callidus / Intra-site</div>
-    </div>
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-fsuiveuse')">
-      <div class="card-icon" style="background:var(--llblue);color:var(--navy2)">&#128203;</div>
-      <div class="card-lbl">Fiche suiveuse</div>
-      <div class="card-sub">Saisir depuis la fiche</div>
     </div>
   </div>
 </div>
@@ -716,6 +727,25 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <button class="send-btn" style="background:var(--navy2);color:#fff" onclick="saveFichesuiveuse()">&#128203; Enregistrer la fiche</button>
   </div>
+</div>
+
+<!-- ═══════════════ HISTORIQUE WO CLOTURES ═══════════════ -->
+<div class="screen" id="s-hist-wo">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Historique WO</div>
+    <div class="form-badge" style="background:#FFF3E0;color:#E65100">WO Cl&#244;tur&#233;s</div>
+  </div>
+  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="hist-wo-search"
+      placeholder="Rechercher par WO ou TAG..."
+      oninput="renderHistWO()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px;background:#FFF8F0;border-bottom:1px solid #FFE0B2;display:flex;gap:8px;align-items:center">
+    <span style="font-size:11px;color:#E65100;font-weight:600">Marquer un WO comme cl&#244;tur&#233; depuis l&#8217;historique &#8594; bouton &#10003;</span>
+  </div>
+  <div id="hist-wo-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
 </div>
 
 <!-- ═══════════════ SUCCESS ═══════════════ -->
@@ -2329,7 +2359,7 @@ const state = {
 };
 
 // ── NAVIGATION ─────────────────────────────────────────────
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2337,7 +2367,8 @@ function show(id) {
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
   if (id === 's-usage') setTimeout(initSignatureCanvas, 50);
-  if (id === 's-hist')  renderHist();
+  if (id === 's-hist')    renderHist();
+  if (id === 's-hist-wo') renderHistWO();
   if (id === 's-home')     {
     updateStats(); checkRelances();
     // En mode consultation, rediriger vers dashboard
@@ -2935,6 +2966,67 @@ async function saveFichesuiveuse() {
     '<br><strong>Statut :</strong> ' + st +
     (dem ? '<br><strong>Demandeur :</strong> ' + dem : '') +
     linkedMsg);
+}
+
+
+// ── HISTORIQUE WO CLÔTURÉS ────────────────────────────────
+const WO_CLOTURE_KEY = 'prnc-wo-clotures';
+
+function getWOClotures() {
+  try { return JSON.parse(localStorage.getItem(WO_CLOTURE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveWOClotures(list) {
+  try { localStorage.setItem(WO_CLOTURE_KEY, JSON.stringify(list)); } catch(e) {}
+}
+
+function cloturerWO(wo, tag, wg, date) {
+  if (!confirm('Marquer le WO ' + wo + ' comme clôturé ?')) return;
+  var list = getWOClotures();
+  if (!list.find(function(x){ return x.wo === wo; })) {
+    list.unshift({ wo, tag, wg, date, dateCloture: new Date().toLocaleDateString('fr-FR') });
+    saveWOClotures(list);
+  }
+  renderHistWO();
+}
+
+function uncloturerWO(wo) {
+  var list = getWOClotures().filter(function(x){ return x.wo !== wo; });
+  saveWOClotures(list);
+  renderHistWO();
+}
+
+async function renderHistWO() {
+  var list   = document.getElementById('hist-wo-list');
+  if (!list) return;
+  var search = (document.getElementById('hist-wo-search') ? document.getElementById('hist-wo-search').value.toLowerCase() : '');
+  var clotures = getWOClotures();
+
+  if (search) {
+    clotures = clotures.filter(function(r) {
+      return (r.wo||'').toLowerCase().includes(search) || (r.tag||'').toLowerCase().includes(search);
+    });
+  }
+
+  if (clotures.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
+      '<div style="font-size:32px;margin-bottom:12px">&#128196;</div>' +
+      '<div style="font-size:14px;font-weight:600">Aucun WO cl&#244;tur&#233;</div>' +
+      '<div style="font-size:12px;margin-top:4px">Depuis l\'historique, clique sur &#10003; pour cl&#244;turer un WO</div>' +
+      '</div>';
+    return;
+  }
+
+  list.innerHTML = clotures.map(function(r) {
+    return '<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid #FFE0B2;display:flex;gap:10px;align-items:center">' +
+      '<div style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;flex-shrink:0">WO</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:700;color:#E65100">' + (r.wo||'—') + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">' + (r.tag||'—') + (r.wg?' — '+r.wg:'') + '</div>' +
+        '<div style="font-size:10px;color:#aaa;margin-top:2px">Cl&#244;tur&#233; le ' + (r.dateCloture||'—') + '</div>' +
+      '</div>' +
+      '<button onclick="uncloturerWO(&quot;' + (r.wo||'') + '&quot;)" style="background:var(--lred);color:var(--red);border:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#10006; Rouvrir</button>' +
+    '</div>';
+  }).join('');
 }
 
 function sendPlanning() {
@@ -4081,7 +4173,9 @@ async function renderHist() {
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
         ${_isConsultMode
           ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
-          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button><button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>'
+          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
+            '<button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
+            (r.wo ? '<button onclick="cloturerWO(\''+r.wo+'\',\''+r.tag+'\',\''+r.wg+'\',\''+r.date+'\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
         }
       </div>
     </div>`;
