@@ -4943,9 +4943,19 @@ function confirmEnvoi(titre, lignes, callback) {
 async function deleteRecord(id) {
   if (checkConsultMode()) return;
   if (!confirm('Supprimer cet enregistrement ?')) return;
-  const records = await dbLoad();
-  const filtered = records.filter(r => r.id !== id);
-  await dbSave(filtered);
+
+  // Supprimer dans Supabase
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
+    console.log('Supprimé dans Supabase');
+  } catch(e) { console.warn('Supabase delete err', e); }
+
+  // Supprimer en localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id)));
+  } catch(e) {}
+
   renderHist();
   updateStats();
 }
