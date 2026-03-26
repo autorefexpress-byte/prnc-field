@@ -499,12 +499,16 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="type-btn" id="eq-st-demandeur"  onclick="setEqStatut('demandeur')">Retour demandeur</div>
         <div class="type-btn" id="eq-st-p99fabric"  onclick="setEqStatut('p99fabric')">P99 Zone fabric.</div>
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
-        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Devant MCCHAUD</div>
-        <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Zone P50</div>
+        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Retour magasin</div>
+        <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Dock P50</div>
         <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
       </div>
     </div>
     <div class="field-grp"><div class="field-lbl">Localisation</div><input class="fi" type="text" id="eq-zone" placeholder="Ex : Rack 3 / Benne B / Zone A1 / P50..."></div>
+    <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
+      <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
+      <input class="fi" type="text" id="eq-loc-p50" placeholder="Ex : Benne B3 / Rack 2 / Allée 4...">
+    </div>
 
     <!-- Destinataires auto par workgroup -->
     <div class="field-grp">
@@ -3082,8 +3086,8 @@ const EQ_STATUT_LABELS = {
   demandeur : 'DÉPOSER — Retour demandeur',
   p99fabric  : 'DÉPOSER — P99 Zone fabrication',
   p99vanne   : 'DÉPOSER — P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER — Devant MCCHAUD',
-  p50        : 'PRÊT À ENLEVER — Zone P50',
+  magasin    : 'PRÊT À ENLEVER — Retour magasin',
+  p50        : 'RANGÉ — Dock P50',
   attinfo    : 'EN ATTENTE INFO'
 };
 function setEqStatut(s) {
@@ -3101,6 +3105,9 @@ function setEqStatut(s) {
       el.style.background=''; el.style.color=''; el.style.borderColor='';
     }
   });
+  // Afficher champ localisation P50 si Dock P50
+  var p50grp = document.getElementById('eq-loc-p50-grp');
+  if (p50grp) p50grp.style.display = s === 'p50' ? '' : 'none';
   // Mettre à jour les contacts selon workgroup + statut
   renderEqContacts(state.eq.wg || '', s);
 }
@@ -3183,6 +3190,7 @@ function sendEquip() {
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
   const tag  = v('eq-tag'), desc = v('eq-desc'), serie = v('eq-serie');
   const zone = v('eq-zone'), rem  = v('eq-rem');
+  const locP50 = v('eq-loc-p50');
   const manual = getEmails('eq-manual'), cc = getEmails('eq-cc');
 
   if (!tag) { alert('Le TAG est obligatoire.'); return; }
@@ -3210,6 +3218,7 @@ function sendEquip() {
   body += '  Workgroup      : ' + wgl + '\n';
   body += '  Statut         : ' + statutTxt + '\n';
   if (zone)  body += '  Zone précise   : ' + zone + '\n';
+  if (locP50) body += '  Dock P50       : ' + locP50 + '\n';
   if (rem)   body += '\nRemarques :\n' + rem + '\n';
   // Message de fin selon le statut
   const isRetourDemandeur = state.eq.statut === 'demandeur';
@@ -3230,6 +3239,8 @@ function sendEquip() {
     dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, dest:allTo, photos:getPhotos('eq-prev')});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
+    var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
+    var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
     resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
@@ -4956,6 +4967,76 @@ function showPhotoForWhatsApp(photos) {
 
 
 // ── PRÉ-REMPLISSAGE DEPUIS FICHE SUIVEUSE ────────────────
+
+// ── WORKFLOW FICHE SUIVEUSE ───────────────────────────────
+function buildWorkflowHtml(r) {
+  // Chercher les étapes déjà complétées dans l'historique
+  return '<div id="workflow-'+r.id+'" style="background:#F0F4FF;border-radius:12px;padding:12px 14px;margin-bottom:2px">' +
+    '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#128196; Workflow — ' + (r.tag||'') + '</div>' +
+    buildWorkflowSteps(r) +
+    '</div>';
+}
+
+function buildWorkflowSteps(r) {
+  var steps = [
+    { num:1, label:'Fiche suiveuse reçue', done:true, date:r.date, color:'#375623', icon:'&#9989;' },
+    { num:2, label:'Départ ETNA — Peinture', done:false, color:'#C55A11', icon:'&#127912;',
+      action:'prefillEtna', btnLabel:'&#127912; Départ ETNA' },
+    { num:3, label:'Retour ETNA — Check qualité', done:false, color:'#7030A0', icon:'&#128229;',
+      action:'prefillRetourEtna', btnLabel:'&#128229; Retour ETNA' },
+    { num:4, label:'Équipement terminé — Dépôt', done:false, color:'#0F6E56', icon:'&#9989;',
+      action:'prefillTermine', btnLabel:'&#9989; Équipement terminé' },
+  ];
+
+  return steps.map(function(s) {
+    var bg    = s.done ? '#E2EFDA' : '#fff';
+    var color = s.done ? s.color : '#888';
+    var html  = '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E8FF">';
+    html += '<div style="width:26px;height:26px;border-radius:50%;background:' + (s.done?s.color:'#E0E0E0') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">' + s.num + '</div>';
+    html += '<div style="flex:1">';
+    html += '<div style="font-size:12px;font-weight:700;color:' + (s.done?s.color:'#555') + '">' + (s.done?'&#9989; ':'&#9633; ') + s.label + '</div>';
+    if (s.done && s.date) html += '<div style="font-size:10px;color:#888;margin-top:2px">' + s.date + '</div>';
+    html += '</div>';
+    if (!s.done && s.action) {
+      html += '<button onclick="triggerWorkflow(&quot;' + s.action + '&quot;,&quot;' + (r.wo||'') + '&quot;,&quot;' + (r.tag||'') + '&quot;,&quot;' + (r.wr||'') + '&quot;,&quot;' + (r.wg||'') + '&quot;,&quot;' + (r.sc||'') + '&quot;,&quot;' + (r.id||'') + '&quot;)" '
+        + 'style="padding:6px 10px;background:' + s.color + ';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">'
+        + s.btnLabel + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+function triggerWorkflow(action, wo, tag, wr, wg, sc, id) {
+  document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
+  if (action === 'prefillEtna')        { prefillEtna(wo, tag, wg); }
+  else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg); }
+  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id); }
+}
+
+function prefillEtna(wo, tag, wg) {
+  show('s-peinture');
+  setTimeout(function() {
+    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
+    if (wgKey) setWG('pt', wgKey);
+    if (wo)  { var el=document.getElementById('pt-wo');  if(el) el.value=wo; }
+    if (tag) { var el=document.getElementById('pt-tag'); if(el) el.value=tag; }
+  }, 200);
+}
+
+function prefillRetourEtna(wo, tag, wr, wg) {
+  show('s-arrive');
+  setTimeout(function() {
+    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
+    if (wgKey) setWG('ar', wgKey);
+    if (wo)  { var el=document.getElementById('ar-wo');  if(el) el.value=wo; }
+    if (wr)  { var el=document.getElementById('ar-wr');  if(el) el.value=wr; }
+    if (tag) { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
+    // Sélectionner automatiquement le statut Retour ETNA
+    setTimeout(function(){ setStatut('etna'); }, 300);
+  }, 200);
+}
+
 function prefillArrivee(wo, tag, wr, wg, sc) {
   show('s-arrive');
   setTimeout(function() {
@@ -5079,20 +5160,7 @@ function viewRecord(id) {
             style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
             &#128172; WhatsApp Magasinier
           </button>` : ''}
-          ${r.type==='FICHE' && !_isConsultMode ? `
-          <div style="background:#EEF4FF;border-radius:12px;padding:10px 14px;margin-bottom:2px">
-            <div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:8px">&#128196; Suite du workflow :</div>
-            <div style="display:flex;gap:6px">
-              <button onclick="this.closest('.overlay-view').remove();prefillArrivee('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}')"
-                style="flex:1;padding:10px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
-                &#128229; Équipement arrivé
-              </button>
-              <button onclick="this.closest('.overlay-view').remove();prefillTermine('${r.wo||''}','${r.tag||''}','${r.wr||''}','${r.wg||''}','${r.sc||''}','${r.id||''}')"
-                style="flex:1;padding:10px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">
-                &#9989; Équipement terminé
-              </button>
-            </div>
-          </div>` : ''}
+          ${r.type==='FICHE' && !_isConsultMode ? buildWorkflowHtml(r) : ''}
           <div style="display:flex;gap:8px">
             <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
             ${!_isConsultMode ? `
