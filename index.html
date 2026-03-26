@@ -5193,7 +5193,7 @@ function editRecord(id) {
             <input class="fi" id="edit-tag" value="${r.tag||''}" style="width:100%">
           </div>
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${r.type==='FICHE' ? 'WO MTC' : 'WO Usine'}</div>
             <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%">
           </div>
           ${r.type==='TERMINE' ? `<div>
