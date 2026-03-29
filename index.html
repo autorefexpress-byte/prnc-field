@@ -701,9 +701,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Infos principales -->
     <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376"></div>
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376"></div>
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466"></div>
     </div>
+    <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230"></div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('fs-tag')"></div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
 
@@ -2918,6 +2919,7 @@ async function saveFichesuiveuse() {
   var tag = v('fs-tag');
   var dem = v('fs-demandeur');
   var rem = v('fs-rem');
+  var woUsine = v('fs-wo-usine');
   var wg  = state.fs && state.fs.wg ? state.fs.wg : '';
   var st = document.getElementById('fs-statut-input') ? document.getElementById('fs-statut-input').value.trim() : '';
 
@@ -2938,7 +2940,7 @@ async function saveFichesuiveuse() {
   // Sauvegarder dans l'historique
   await dbAdd({
     type: 'FICHE',
-    tag: tag, wo: wo, wr: wr, wg: wgl,
+    tag: tag, wo: wo, woMtc: woUsine||null, wr: wr, wg: wgl,
     statut: st, desc: dem ? 'Demandeur : ' + dem : '',
     motif: rem, photos: photos
   });
@@ -2955,6 +2957,8 @@ async function saveFichesuiveuse() {
   });
   var fsInput = document.getElementById('fs-statut-input');
   if (fsInput) fsInput.value = '';
+  var fsWoU = document.getElementById('fs-wo-usine');
+  if (fsWoU) fsWoU.value = '';
   if(state.fs) { state.fs.wg=''; }
   clearPhotos('fs-prev');
   resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
