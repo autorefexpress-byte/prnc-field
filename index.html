@@ -5115,32 +5115,33 @@ function buildWorkflowSteps(r) {
   }).join('');
 }
 
-function triggerWorkflow(action, wo, tag, wr, wg, sc, id) {
+function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine) {
   document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
-  if (action === 'prefillEtna')        { prefillEtna(wo, tag, wg); }
-  else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg); }
-  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id); }
+  if (action === 'prefillEtna')            { prefillEtna(wo, tag, wg, woUsine); }
+  else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg, woUsine); }
+  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine); }
 }
 
-function prefillEtna(wo, tag, wg) {
+function prefillEtna(wo, tag, wg, woUsine) {
   show('s-peinture');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
     if (wgKey) setWG('pt', wgKey);
-    if (wo)  { var el=document.getElementById('pt-wo');  if(el) el.value=wo; }
-    if (tag) { var el=document.getElementById('pt-tag'); if(el) el.value=tag; }
+    if (wo)      { var el=document.getElementById('pt-wo');  if(el) el.value=wo; }
+    if (woUsine) { var el=document.getElementById('pt-wo-usine')||document.getElementById('pt-wousine'); if(el) el.value=woUsine; }
+    if (tag)     { var el=document.getElementById('pt-tag'); if(el) el.value=tag; }
   }, 200);
 }
 
-function prefillRetourEtna(wo, tag, wr, wg) {
+function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
   show('s-arrive');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
     if (wgKey) setWG('ar', wgKey);
-    if (wo)  { var el=document.getElementById('ar-wo');  if(el) el.value=wo; }
-    if (wr)  { var el=document.getElementById('ar-wr');  if(el) el.value=wr; }
-    if (tag) { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
-    // Sélectionner automatiquement le statut Retour ETNA
+    if (wo)      { var el=document.getElementById('ar-wo');  if(el) el.value=wo; }
+    if (wr)      { var el=document.getElementById('ar-wr');  if(el) el.value=wr; }
+    if (woUsine) { var el=document.getElementById('ar-wo-usine')||document.getElementById('ar-wousine'); if(el) el.value=woUsine; }
+    if (tag)     { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
     setTimeout(function(){ setStatut('etna'); }, 300);
   }, 200);
 }
@@ -5163,15 +5164,16 @@ function prefillArrivee(wo, tag, wr, wg, sc) {
   }, 200);
 }
 
-function prefillTermine(wo, tag, wr, wg, sc, recordId) {
+function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine) {
   show('s-equip');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
     if (wgKey) { setWG('eq', wgKey); }
-    if (wo)  { var el=document.getElementById('eq-wo-mtc'); if(el) el.value=wo; }
-    if (wr)  { var el=document.getElementById('eq-wr');  if(el) el.value=wr; }
-    if (sc)  { var el=document.getElementById('eq-sc');  if(el) el.value=sc; }
-    if (tag) { var el=document.getElementById('eq-tag'); if(el) el.value=tag; }
+    if (wo)      { var el=document.getElementById('eq-wo-mtc'); if(el) el.value=wo; }
+    if (woUsine) { var el=document.getElementById('eq-wo');     if(el) el.value=woUsine; }
+    if (wr)      { var el=document.getElementById('eq-wr');     if(el) el.value=wr; }
+    if (sc)      { var el=document.getElementById('eq-sc');     if(el) el.value=sc; }
+    if (tag)     { var el=document.getElementById('eq-tag');    if(el) el.value=tag; }
 
     // Reprendre les photos de la fiche suiveuse
     if (recordId) {
@@ -5213,7 +5215,7 @@ function viewRecord(id) {
       {l:'Workgroup',       v: r.wg},
       {l:'TAG',             v: r.tag},
       {l: r.type==='FICHE' ? 'WO MTC' : 'WO Usine', v: r.wo},
-      {l:'WO MTC',          v: r.type!=='FICHE' ? r.woMtc : null},
+      {l: r.type==='FICHE' ? 'WO Usine' : 'WO MTC', v: r.woMtc},
       {l:'WR',              v: r.wr},
       {l:'Stock Code',      v: r.sc},
       {l:'N° Série',        v: r.serie},
