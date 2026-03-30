@@ -313,15 +313,20 @@ function buildAll(){
       if(F.pi){
         const wsPI=F.pi.Sheets['MSEWOT']||F.pi.Sheets[F.pi.SheetNames[0]];
         // raw:true pour garder les vrais nombres entiers
-        const jPI=XLSX.utils.sheet_to_json(wsPI,{defval:'',raw:true});
+        const jPI=XLSX.utils.sheet_to_json(wsPI,{defval:'',raw:false,dateNF:'dd/mm/yyyy'});
+        // Trouver la colonne WO (peut s'appeler "Ordre de travail" avec accents variables)
+        const piCols=jPI.length>0?Object.keys(jPI[0]):[];
+        const woCol=piCols.find(c=>c.toLowerCase().includes('ordre')&&c.toLowerCase().includes('travail'))||piCols[0];
+        console.log('PI col WO:', woCol, '| Exemple:', jPI[0]?jPI[0][woCol]:'');
         jPI.forEach(r=>{
-          const raw=r['Ordre de travail'];
+          const raw=r[woCol]||'';
           if(!raw) return;
-          // Convertir en string sans décimales ni zéros devant
-          const wo=String(Math.round(Number(raw))||raw).replace(/\.0$/,'').replace(/^0+/,'').trim();
+          const wo=String(raw).replace(/\.0$/,'').replace(/^0+/,'').trim();
           if(!wo||wo==='0') return;
           D.piIdx[wo]=r;
+          r._woKey=wo;
         });
+        console.log('PI chargé:', Object.keys(D.piIdx).length, 'WO');
       }
 
       ready=true;
