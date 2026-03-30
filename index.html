@@ -466,8 +466,7 @@ function renderWO(wo,rows){
     const maDispo=r['Mise à dispo Direct']||r['Mise à dispo Réappro']||'';
     const due=r['Due on site Direct']||r['Due on site Réappro']||'';
     const po=(r['PO / Line Direct']||r['PO / Line Réappro']||'').split('-')[0].trim();
-    const hasMan=po&&D.manPO[po];
-    return `<tr ${hasMan?'style="background:#FAF0FF"':''}>
+    return `<tr>
       <td style="color:#aaa">${i+1}</td>
       <td style="color:#1565C0;font-weight:700">${r['Num Req']||'—'}</td>
       <td style="color:#5E35B1;font-weight:600">${r['Ligne Rq']||'—'}</td>
@@ -481,7 +480,7 @@ function renderWO(wo,rows){
       <td style="text-align:center;color:${parseFloat(r['En transit'])>0?'#1565C0':'#aaa'}">${r['En transit']||'0'}</td>
       <td>${bdg(r['Statut réquisition'],['9 -','Completed'],['3 -','Unavail','1 - O'])}</td>
       <td>${bdg(r['Statut PO'],['Completed','Printed'],['Approved','Authorized'])}</td>
-      <td style="font-weight:${po?'700':'400'};color:${hasMan?'#6A1B9A':'#555'}">${po||'—'}${hasMan?' &#128666;':''}</td>
+      <td style="font-weight:${po?'700':'400'};color:#555">${po||'—'}</td>
       <td>${dtC(r['Date requise WO'])}</td>
       <td style="color:${maDispo?'#1565C0':'#aaa'};font-weight:${maDispo?'700':'400'}">${maDispo||'—'}</td>
       <td>${dtC(due)}</td>
