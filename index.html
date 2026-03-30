@@ -126,13 +126,13 @@ tr:hover td{background:#EEF4FF}
       <input type="file" id="fi-bi" accept=".xlsx,.xls" onchange="ldf(event,'bi')">
     </div>
 
-    <div class="dz" id="dz-man" ondragover="dov(event,'man')" ondragleave="dol('man')" ondrop="ddrM(event)" onclick="document.getElementById('fi-man').click()">
+    <div class="dz" id="dz-pi" ondragover="dov(event,'pi')" ondragleave="dol('pi')" ondrop="ddr(event,'pi')" onclick="document.getElementById('fi-pi').click()">
       <div class="dzi">&#9203;</div>
       <div class="dzt">WO en PI</div>
       <div class="dzs">MSEWOT — Att. pièces S/C</div>
-      <div class="dzst" id="st-man">Glisser ou cliquer</div>
-      <span class="dzx" id="cx-man" style="display:none" onclick="clf(event,'man')">&#10005;</span>
-      <input type="file" id="fi-man" accept=".xlsx,.xls,.xlsm,.xlsb" multiple onchange="ldfM(event)">
+      <div class="dzst" id="st-pi">Glisser ou cliquer</div>
+      <span class="dzx" id="cx-pi" style="display:none" onclick="clf(event,'pi')">&#10005;</span>
+      <input type="file" id="fi-pi" accept=".xlsx,.xls,.xlsm,.xlsb" multiple onchange="ldfM(event)">
     </div>
 
   </div>
@@ -168,12 +168,6 @@ function dol(id){document.getElementById('dz-'+id).classList.remove('over');}
 function ddr(e,id){e.preventDefault();dol(id);const f=e.dataTransfer.files[0];if(f)proc(f,id);}
 function ldf(e,id){const f=e.target.files[0];if(f)proc(f,id);}
 
-function ddrM(e){
-  e.preventDefault();dol('man');
-  const files=Array.from(e.dataTransfer.files).filter(f=>f.name.match(/\.xlsx?$|\.xlsm$|\.xlsb$/i));
-  if(!files.length) return;
-  procM(files);
-}
 function ldfM(e){ procM(Array.from(e.target.files).filter(f=>f.name.match(/\.xlsx?$|\.xlsm$|\.xlsb$/i))); }
 function procM(files){
   F.man=[];
@@ -185,8 +179,8 @@ function procM(files){
       try{F.man.push({name:f.name,wb:XLSX.read(ev.target.result,{type:'array',cellDates:true,bookVBA:false})});}catch(e){}
       if(++done===files.length){
         setSt('man','ok','&#9989; '+F.man.length+' manifeste(s)');
-        document.getElementById('dz-man').classList.add('ok');
-        document.getElementById('cx-man').style.display='block';
+        document.getElementById('dz-pi').classList.add('ok');
+        document.getElementById('cx-pi').style.display='block';
         checkR();
       }
     };
