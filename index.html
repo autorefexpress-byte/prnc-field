@@ -312,10 +312,14 @@ function buildAll(){
       D.piIdx={};
       if(F.pi){
         const wsPI=F.pi.Sheets['MSEWOT']||F.pi.Sheets[F.pi.SheetNames[0]];
-        const jPI=XLSX.utils.sheet_to_json(wsPI,{defval:'',raw:false,dateNF:'dd/mm/yyyy'});
+        // raw:true pour garder les vrais nombres entiers
+        const jPI=XLSX.utils.sheet_to_json(wsPI,{defval:'',raw:true});
         jPI.forEach(r=>{
-          const wo=cleanWO(r['Ordre de travail']||'');
-          if(!wo) return;
+          const raw=r['Ordre de travail'];
+          if(!raw) return;
+          // Convertir en string sans décimales ni zéros devant
+          const wo=String(Math.round(Number(raw))||raw).replace(/\.0$/,'').replace(/^0+/,'').trim();
+          if(!wo||wo==='0') return;
           D.piIdx[wo]=r;
         });
       }
