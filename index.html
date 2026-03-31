@@ -2403,8 +2403,8 @@ const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-tran
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
-  // Mode STT : navigation limitée à Équipement arrivé, home STT + succès
-  if (_isConsultMode && id !== 's-arrive' && id !== 's-success' && id !== 's-home') return;
+  // Mode STT : navigation limitée à Équipement arrivé + succès
+  if (_isConsultMode && id !== 's-arrive' && id !== 's-success') return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -2414,7 +2414,8 @@ function show(id) {
   if (id === 's-relances') renderRelances();
   if (id === 's-home')     {
     updateStats(); checkRelances();
-    // En mode STT, s-home est autorisé (accueil simplifié)
+    // En mode consultation, rediriger vers dashboard
+    if (_isConsultMode) { setTimeout(()=>show('s-arrive'),50); return; }
   }
   if (id === 's-dashboard') setTimeout(renderDashboard, 50);
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
@@ -4902,22 +4903,14 @@ function activerModeConsultation() {
   _isConsultMode = true;
   const banner = document.getElementById('consult-banner');
   if (banner) banner.style.display = 'block';
-  // Mode STT : masquer tous les onglets de nav
-  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
+  // Mode STT : accès uniquement à l'écran Équipement arrivé
+  // Masquer tous les onglets sauf arrivée
+  ['nav-planning','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  // Masquer toutes les cartes sauf Équipement arrivé
-  document.querySelectorAll('.action-card').forEach(function(card) {
-    card.style.display = 'none';
-  });
-  var arriveeCard = document.querySelector('[onclick*="s-arrive"]');
-  if (arriveeCard) {
-    arriveeCard.style.display = '';
-    arriveeCard.style.width = '100%';
-  }
-  // Aller sur l'accueil simplifié
-  show('s-home');
+  // Aller directement sur Équipement arrivé
+  show('s-arrive');
 }
 
 // Bloquer les actions de saisie en mode consultation
