@@ -2414,8 +2414,7 @@ function show(id) {
   if (id === 's-relances') renderRelances();
   if (id === 's-home')     {
     updateStats(); checkRelances();
-    // En mode consultation, rediriger vers dashboard
-    if (_isConsultMode) { setTimeout(()=>show('s-arrive'),50); return; }
+    // En mode STT, s-home est autorisé (accueil simplifié)
   }
   if (id === 's-dashboard') setTimeout(renderDashboard, 50);
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
