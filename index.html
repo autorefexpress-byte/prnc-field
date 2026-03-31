@@ -4865,7 +4865,7 @@ async function validatePIN() {
     activerModePrepose();
   } else {
     // Mode consultation -- PIN fixe 0000
-    if (_pinModeSelect === 'consult' && _pinBuffer === PIN_CONSULT) {
+    if (_pinModeSelect === 'consult' && _pinBuffer === PIN_STT) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
       activerModeConsultation();
