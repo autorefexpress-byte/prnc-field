@@ -5731,7 +5731,7 @@ async function renderRelances() {
   list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">&#9203; Chargement...</div>';
   var now = new Date();
   try {
-    var data = await supaFetch('historique?type=eq.TERMINE&order=created_at.desc&limit=200');
+    var data = await supaFetch('/rest/v1/historique?type=eq.TERMINE&order=created_at.desc&limit=200');
     var records = (data || []).filter(function(r) {
       var st = (r.statut || '').toLowerCase();
       return (st.indexOf('retour') >= 0 || st.indexOf('demandeur') >= 0) && st.indexOf('recupere') < 0;
@@ -5824,7 +5824,7 @@ async function marquerRecupere(id, btn) {
   btn.disabled = true;
   btn.textContent = '&#9203;';
   try {
-    await supaFetch('historique?id=eq.' + id, 'PATCH', {
+    await supaFetch('/rest/v1/historique?id=eq.' + id, 'PATCH', {
       statut: 'RECUPERE',
       recovered_at: new Date().toISOString()
     });
