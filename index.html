@@ -2403,8 +2403,8 @@ const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-tran
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
-  // Mode STT : navigation limitée à Équipement arrivé + succès
-  if (_isConsultMode && id !== 's-arrive' && id !== 's-success') return;
+  // Mode STT : navigation limitée à Équipement arrivé, home STT + succès
+  if (_isConsultMode && id !== 's-arrive' && id !== 's-success' && id !== 's-home') return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -4903,14 +4903,22 @@ function activerModeConsultation() {
   _isConsultMode = true;
   const banner = document.getElementById('consult-banner');
   if (banner) banner.style.display = 'block';
-  // Mode STT : accès uniquement à l'écran Équipement arrivé
-  // Masquer tous les onglets sauf arrivée
-  ['nav-planning','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
+  // Mode STT : masquer tous les onglets de nav
+  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  // Aller directement sur Équipement arrivé
-  show('s-arrive');
+  // Masquer toutes les cartes sauf Équipement arrivé
+  document.querySelectorAll('.action-card').forEach(function(card) {
+    card.style.display = 'none';
+  });
+  var arriveeCard = document.querySelector('[onclick*="s-arrive"]');
+  if (arriveeCard) {
+    arriveeCard.style.display = '';
+    arriveeCard.style.width = '100%';
+  }
+  // Aller sur l'accueil simplifié
+  show('s-home');
 }
 
 // Bloquer les actions de saisie en mode consultation
