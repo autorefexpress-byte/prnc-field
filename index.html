@@ -308,6 +308,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Gestion des flux</div>
       <div class="card-sub">Historique complet</div>
     </div>
+    <div class="action-card" onclick="show('s-relances')">
+      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#128276;</div>
+      <div class="card-lbl">Relances</div>
+      <div class="card-sub" id="relance-badge-home">Retour demandeur</div>
+    </div>
     <div class="action-card" onclick="show('s-hist-wo')">
       <div class="card-icon" style="background:#FFF3E0;color:#E65100">&#128196;</div>
       <div class="card-lbl">Historique WO</div>
@@ -749,6 +754,19 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div id="hist-wo-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
 </div>
 
+<!-- ═══════════════ RELANCES ═══════════════ -->
+<div class="screen" id="s-relances">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Relances</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C55A11">Retour demandeur</div>
+  </div>
+  <div style="padding:10px 14px;background:#FFF3E0;border-bottom:1px solid #FFE0B2;font-size:11px;color:#E65100;font-weight:600">
+    &#128276; Équipements en attente de récupération depuis plus de 3 jours
+  </div>
+  <div id="relances-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+</div>
+
 <!-- ═══════════════ SUCCESS ═══════════════ -->
 <div class="screen" id="s-success">
   <div class="success-wrap">
@@ -988,7 +1006,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div class="nav-item" id="nav-hist" onclick="show('s-hist')"><div class="nav-icon">&#128202;</div><div class="nav-lbl">Histo.</div></div>
 </div>
 <script>
-// ── QR CODE LIB (inline, no network needed) ──
+// ------ QR CODE LIB (inline, no network needed) ------
 var QRMaskPattern = {
   PATTERN000:0, PATTERN001:1, PATTERN010:2, PATTERN011:3,
   PATTERN100:4, PATTERN101:5, PATTERN110:6, PATTERN111:7
@@ -2200,7 +2218,7 @@ function generateQRSVG(text, size) {
 </script>
 
 <script>
-// ── CONTACTS PAR WORKGROUP ─────────────────────────────────
+// ------ CONTACTS PAR WORKGROUP ------
 const WG_CONTACTS = {
   chaud: { label:'MCCHAUD', contacts:[
     // Destinataires principaux (TO)
@@ -2226,10 +2244,10 @@ const WG_CONTACTS = {
     {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.EXT@pronyresources.com', self:false, cc:true},
     {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
     {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
-  ]}
+  ]},
 };
 
-// Contacts spécifiques ARRIVÉE — par workgroup (indépendant des autres onglets)
+// Contacts spécifiques ARRIVÉE -- par workgroup (indépendant des autres onglets)
 const AR_CONTACTS = {
   chaud: { label:'MCCHAUD', contacts:[
     // Destinataires principaux TO
@@ -2259,11 +2277,11 @@ const AR_CONTACTS = {
   ]}
 };
 
-// Contacts spécifiques ÉQUIPEMENT TERMINÉ — par workgroup + statut
+// Contacts spécifiques ÉQUIPEMENT TERMINÉ -- par workgroup + statut
 const EQ_CONTACTS = {
   // MCCHAUD
   chaud_demandeur: {
-    to: [],  // vide — juste manuel
+    to: [],  // vide -- juste manuel
     cc: [
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
       {name:'Abel VENDEGOU',      mail:'abel.vendegou@pronyresources.com', self:false},
@@ -2295,7 +2313,7 @@ const EQ_CONTACTS = {
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
     ]
   },
-  // EN ATTENTE INFO — tous workgroups → Abel uniquement
+  // EN ATTENTE INFO -- tous workgroups -> Abel uniquement
   chaud_attinfo: {
     to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
     cc: [{name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true}]
@@ -2324,7 +2342,7 @@ const EQ_CONTACTS = {
   },
 };
 
-// Contacts spécifiques ETNA (peinture) — par workgroup
+// Contacts spécifiques ETNA (peinture) -- par workgroup
 const ETNA_CONTACTS = {
   chaud: { label:'MCCHAUD', contacts:[
     // Destinataires principaux
@@ -2348,7 +2366,7 @@ const ETNA_CONTACTS = {
   ]}
 };
 
-// ── STATE ──────────────────────────────────────────────────
+// ------ STATE ------
 const state = {
   ud: { wg:'' },
   fs: { wg:'', statut:'' },
@@ -2359,8 +2377,8 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-// ── NAVIGATION ─────────────────────────────────────────────
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse'];
+// ------ NAVIGATION ------
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2369,7 +2387,8 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage') setTimeout(initSignatureCanvas, 50);
   if (id === 's-hist')    renderHist();
-  if (id === 's-hist-wo') renderHistWO();
+  if (id === 's-hist-wo')  renderHistWO();
+  if (id === 's-relances') renderRelances();
   if (id === 's-home')     {
     updateStats(); checkRelances();
     // En mode consultation, rediriger vers dashboard
@@ -2380,7 +2399,7 @@ function show(id) {
   if (id === 's-timeline')  { const d=document.getElementById('tl-date'); if(d&&!d.value){const n=new Date();d.value=n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'))+'-'+(String(n.getDate()).padStart(2,'0'));} setTimeout(renderTimeline,50); }
 }
 
-// ── SEMAINES ───────────────────────────────────────────────
+// ------ SEMAINES ------
 function initSemaines() {
   const now    = new Date();
   const jan1   = new Date(now.getFullYear(), 0, 1);
@@ -2405,7 +2424,7 @@ function setSemaine(val) {
 }
 
 
-// ── WORKGROUP ──────────────────────────────────────────────
+// ------ WORKGROUP ------
 function setWG(prefix, wg) {
   state[prefix].wg = wg;
   ['chaud','repar','strob'].forEach(w => {
@@ -2454,8 +2473,8 @@ function renderContacts(prefix, wg) {
   const box = document.getElementById(prefix+'-contacts');
   if (!box) return;
 
-  // ── TO — destinataires principaux ────────────────────
-  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
+  // ------ TO -- destinataires principaux ------
+  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires -- ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
   toContacts.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -2468,9 +2487,9 @@ function renderContacts(prefix, wg) {
     html += `</div>`;
   });
 
-  // ── CC cochables ──────────────────────────────────────
+  // ------ CC cochables ------
   if (ccContacts.length > 0) {
-    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC — Coche/décoche</div>`;
+    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC -- Coche/décoche</div>`;
     ccContacts.forEach(c => {
       const id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g,'');
       const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -2501,7 +2520,7 @@ function renderContactsFrom(source, prefix, wg) {
   const box = document.getElementById(prefix+'-contacts');
   if (!box) return;
 
-  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
+  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires -- ${data.label}</span><span class="contacts-hint">Coche/d\u00e9coche</span></div>`;
   toContacts.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -2515,7 +2534,7 @@ function renderContactsFrom(source, prefix, wg) {
   });
 
   if (ccContacts.length > 0) {
-    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC — Coche/décoche</div>`;
+    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC -- Coche/décoche</div>`;
     ccContacts.forEach(c => {
       const id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g,'');
       const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -2570,7 +2589,7 @@ function updateBadge(prefix, wg) {
   else        { b.style.display='none'; }
 }
 
-// ── STATUT ARRIVÉE ─────────────────────────────────────────
+// ------ STATUT ARRIVÉE ------
 function setStatut(s) {
   state.ar.statut = s;
   ['diag','urg','etna'].forEach(x => {
@@ -2582,7 +2601,7 @@ function setStatut(s) {
       el.className = 'statut-btn';
     }
   });
-  // Si Retour ETNA — changer les contacts selon workgroup
+  // Si Retour ETNA -- changer les contacts selon workgroup
   if (s === 'etna') renderEtnaRetourContacts(state.ar.wg || '');
   else if (state.ar.wg) renderContactsFrom(AR_CONTACTS, 'ar', state.ar.wg);
 }
@@ -2605,7 +2624,7 @@ function renderEtnaRetourContacts(wg) {
   var box = document.getElementById('ar-contacts');
   if (!box) return;
 
-  var html = '<div class="contacts-hdr"><span style="font-weight:700;color:var(--orange)">Retour ETNA — Check qualité</span><span class="contacts-hint">Coche/décoche</span></div>';
+  var html = '<div class="contacts-hdr"><span style="font-weight:700;color:var(--orange)">Retour ETNA -- Check qualité</span><span class="contacts-hint">Coche/décoche</span></div>';
 
   toList.forEach(function(c) {
     var id   = btoa(c.mail).replace(/[=+/]/g, '');
@@ -2615,8 +2634,8 @@ function renderEtnaRetourContacts(wg) {
     rowEl.dataset.mail = c.mail;
     rowEl.dataset.id = id;
     rowEl.addEventListener('click', function(){toggleContact('ar', this.dataset.mail, 'chaud', this.dataset.id);});
-    rowEl.innerHTML = '<div class="c-check on-chaud" id="chk-ar-' + id + '">✓</div><div class="c-avatar" style="background:var(--orange)">' + init + '</div><div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
-    // Ajouter dans html via un conteneur temporaire — impossible directement
+    rowEl.innerHTML = '<div class="c-check on-chaud" id="chk-ar-' + id + '">&#10003;</div><div class="c-avatar" style="background:var(--orange)">' + init + '</div><div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
+    // Ajouter dans html via un conteneur temporaire -- impossible directement
     // On utilise un placeholder
     html += '<div class="contact-row" data-etna-mail="' + c.mail + '" data-etna-id="' + id + '" onclick="toggleContact(\"ar\",this.dataset.etnaMail,\"chaud\",this.dataset.etnaId)">';
     html += '<div class="c-avatar" style="background:var(--orange)">' + init + '</div>';
@@ -2640,7 +2659,7 @@ function renderEtnaRetourContacts(wg) {
   updateBadge('ar', 'chaud');
 }
 
-// ── TYPE WO ───────────────────────────────────────────────
+// ------ TYPE WO ------
 const TYPE_LABELS = {pcusine:'PC-USINE',demandeur:'DEMANDEUR',posinsitu:'POSE IN SITU',mcmecus:'MCMECUS',na:'N/A',magasin:'MAGASIN'};
 function setTypeWO(t) {
   state.pl.typeWO = t;
@@ -2650,7 +2669,7 @@ function setTypeWO(t) {
   });
 }
 
-// ── KIT PIÈCES ────────────────────────────────────────────
+// ------ KIT PIÈCES ------
 function setKit(k) {
   state.pl.kit = k;
   document.getElementById('kit-oui').className = 'kit-btn' + (k==='oui'?' on-oui':'');
@@ -2658,12 +2677,12 @@ function setKit(k) {
   document.getElementById('statut-pieces-grp').style.display = k==='non' ? 'flex' : 'none';
 }
 
-// ── MANUAL DEST ───────────────────────────────────────────
+// ------ MANUAL DEST ------
 function addManual(listId) {
   const list = document.getElementById(listId);
   const div = document.createElement('div');
   div.className = 'manual-item';
-  div.innerHTML = '<input class="fi" type="email" placeholder="prenom.nom@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">×<\/div>';
+  div.innerHTML = '<input class="fi" type="email" placeholder="prenom.nom@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;<\/div>';
   list.appendChild(div);
 }
 
@@ -2671,7 +2690,7 @@ function getEmails(listId) {
   return Array.from(document.querySelectorAll('#'+listId+' input')).map(i=>i.value.trim()).filter(Boolean);
 }
 
-// ── PHOTOS ───────────────────────────────────────────────
+// ------ PHOTOS ------
 // Stockage temporaire des photos compressées par zone
 var _photoStore = {};
 
@@ -2703,7 +2722,7 @@ function addPhotos(input, prevId) {
         div.className = 'photo-thumb';
         const idx = _photoStore[prevId].length - 1;
         div.dataset.idx = idx;
-        div.innerHTML = `<img src="${compressed}"><div class="photo-del" onclick="removePhoto('${prevId}',${idx},this.parentNode)">×<\/div>`;
+        div.innerHTML = `<img src="${compressed}"><div class="photo-del" onclick="removePhoto('${prevId}',${idx},this.parentNode)">&times;<\/div>`;
         prev.appendChild(div);
       };
       img.src = e.target.result;
@@ -2725,7 +2744,7 @@ function clearPhotos(prevId) {
   _photoStore[prevId] = [];
 }
 
-// ── UTILS ─────────────────────────────────────────────────
+// ------ UTILS ------
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
 
 function mailto(to, subj, body, cc) {
@@ -2735,10 +2754,10 @@ function mailto(to, subj, body, cc) {
   const ccList = (cc  || '').split(';').map(s=>s.trim()).filter(Boolean);
   const allDests = [...new Set([...toList, ...ccList])]; // dédupliquer
 
-  // Corps court — éviter le blocage Outlook mobile
+  // Corps court -- éviter le blocage Outlook mobile
   const bodyTrimmed = body.length > 600 ? body.substring(0, 597) + '...' : body;
 
-  // Mettre tout le monde en TO — pas de &cc= qui bloque Outlook mobile
+  // Mettre tout le monde en TO -- pas de &cc= qui bloque Outlook mobile
   const toStr = allDests.join(',');
   let url = 'mailto:' + toStr;
   url += '?subject=' + encodeURIComponent(subj);
@@ -2780,8 +2799,8 @@ const WG_COLORS = {
   strob:'background:var(--lpurple);color:var(--purple)'
 };
 
-// ── SEND PLANNING ─────────────────────────────────────────
-// ── LISTE ÉQUIPEMENTS PLANNING ────────────────────────────
+// ------ SEND PLANNING ------
+// ------ LISTE ÉQUIPEMENTS PLANNING ------
 var _plEqtList = []; // [{wo, tag, loc, typeWO, infos, photos, prevId}]
 var _plEqtCount = 0;
 
@@ -2861,7 +2880,7 @@ function resetPlanEqts() {
   if (list) list.innerHTML = '';
 }
 
-// ── SIGNATURE SUPERVISEUR PLANNING ───────────────────────
+// ------ SIGNATURE SUPERVISEUR PLANNING ------
 var _plSigCtx = null;
 var _plSigDrawing = false;
 var _plSigHasMark = false;
@@ -2896,7 +2915,7 @@ function clearPlanSig() {
 }
 
 
-// ── FICHE SUIVEUSE ────────────────────────────────────────
+// ------ FICHE SUIVEUSE ------
 const FS_STATUT_LABELS = {
   pcusine:'PC-USINE', demandeur:'Retour demandeur',
   posinsitu:'POSE IN SITU', mcmecus:'MCMECUS',
@@ -2973,7 +2992,7 @@ async function saveFichesuiveuse() {
 }
 
 
-// ── HISTORIQUE WO CLÔTURÉS ────────────────────────────────
+// ------ HISTORIQUE WO CLÔTURÉS ------
 const WO_CLOTURE_KEY = 'prnc-wo-clotures';
 
 function getWOClotures() {
@@ -3024,9 +3043,9 @@ async function renderHistWO() {
     return '<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid #FFE0B2;display:flex;gap:10px;align-items:center">' +
       '<div style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;flex-shrink:0">WO</div>' +
       '<div style="flex:1">' +
-        '<div style="font-size:13px;font-weight:700;color:#E65100">' + (r.wo||'—') + '</div>' +
-        '<div style="font-size:11px;color:var(--muted)">' + (r.tag||'—') + (r.wg?' — '+r.wg:'') + '</div>' +
-        '<div style="font-size:10px;color:#aaa;margin-top:2px">Cl&#244;tur&#233; le ' + (r.dateCloture||'—') + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#E65100">' + (r.wo||'--') + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">' + (r.tag||'--') + (r.wg?' -- '+r.wg:'') + '</div>' +
+        '<div style="font-size:10px;color:#aaa;margin-top:2px">Cl&#244;tur&#233; le ' + (r.dateCloture||'--') + '</div>' +
       '</div>' +
       '<button onclick="uncloturerWO(&quot;' + (r.wo||'') + '&quot;)" style="background:var(--lred);color:var(--red);border:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#10006; Rouvrir</button>' +
     '</div>';
@@ -3056,24 +3075,24 @@ function sendPlanning() {
   const ccPl = state.selectedCC && state.selectedCC.pl ? [...state.selectedCC.pl] : [];
 
   const wgl = WG_LABELS[state.pl.wg];
-  const subj = '['+wgl+'] Planning '+state.pl.sem+' — '+eqts.length+' équipement'+(eqts.length>1?'s':'')+' — PRNC';
+  const subj = '['+wgl+'] Planning '+state.pl.sem+' -- '+eqts.length+' équipement'+(eqts.length>1?'s':'')+' -- PRNC';
   let body = 'Bonjour,\n\n';
   body += eqts.length + ' équipement'+(eqts.length>1?'s':'')+' prévus au planning '+state.pl.sem+' :\n';
   body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
   eqts.forEach(function(e, i) {
-    body += (i+1) + '. WO : ' + e.wo + ' — TAG : ' + e.tag + '\n';
+    body += (i+1) + '. WO : ' + e.wo + ' -- TAG : ' + e.tag + '\n';
     if (e.loc)   body += '   Localisation : ' + e.loc + '\n';
     if (e.type)  body += '   Type WO      : ' + e.type + '\n';
     if (e.infos) body += '   Commentaire  : ' + e.infos + '\n';
-    if (i < eqts.length-1) body += '   ─────────────────────────\n';
+    if (i < eqts.length-1) body += '   ------\n';
   });
   body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
   body += '\nWorkgroup : ' + wgl + '\n';
-  body += '\n──────────────────────────────\n';
+  body += '\n------\n';
   body += '  Validé par : ' + supNom + '\n';
   body += '  Date       : ' + new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) + '\n';
-  body += '──────────────────────────────\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
+  body += '------\n';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
 
   mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
 
@@ -3093,11 +3112,11 @@ function sendPlanning() {
     `<strong>WO :</strong> ${wo}<br><strong>TAG :</strong> ${tag}<br>` +
     `<strong>Semaine :</strong> <span style="background:var(--lteal);color:var(--teal);padding:2px 8px;border-radius:20px;font-size:11px">${state.pl.sem}</span><br>` +
     `<strong>Workgroup :</strong> <span style="${WG_COLORS[state.pl.wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}</span><br>` +
-    `<strong>À :</strong> ${allTo.join(', ')}<br><strong>CC :</strong> ${ccPl.length > 0 ? ccPl.join(', ') : '—'}`);
+    `<strong>À :</strong> ${allTo.join(', ')}<br><strong>CC :</strong> ${ccPl.length > 0 ? ccPl.join(', ') : '--'}`);
 }
 
 
-// ── SEND ARRIVÉE ──────────────────────────────────────────
+// ------ SEND ARRIVÉE ------
 function sendArrive() {
   if (checkConsultMode()) return;
   const wo=v('ar-wo'), wr=v('ar-wr'), sc=v('ar-sc'), tag=v('ar-tag');
@@ -3118,26 +3137,26 @@ function sendArrive() {
   const wgl  = WG_LABELS[wg];
   const isUrg   = state.ar.statut==='urg';
   const isEtna  = state.ar.statut==='etna';
-  const statutTxt = isUrg ? '*** URGENCE — TRAITEMENT IMMEDIAT ***'
-                  : isEtna ? 'RETOUR ETNA — CHECK QUALITE A FAIRE'
+  const statutTxt = isUrg ? '*** URGENCE -- TRAITEMENT IMMEDIAT ***'
+                  : isEtna ? 'RETOUR ETNA -- CHECK QUALITE A FAIRE'
                   : 'En attente de diagnostic';
 
-  // ── Corps du mail ──────────────────────────────────────
-  const subj = (isUrg?'[URGENT] ':isEtna?'[RETOUR ETNA] ':'')+'['+wgl+'] Arrivée — '+tag+' — WR '+wr+(wo?' — WO '+wo:'');
+  // ------ Corps du mail ------
+  const subj = (isUrg?'[URGENT] ':isEtna?'[RETOUR ETNA] ':'')+'['+wgl+'] Arrivée -- '+tag+' -- WR '+wr+(wo?' -- WO '+wo:'');
   let body = 'Bonjour,\n\nRéception équipement à la Maintenance Centrale :\n\n';
 
   if (wg === 'chaud') {
     body += '  WR             : '+wr+'\n';
-    body += '  Date réception : '+(dateRecep||'—')+'\n';
+    body += '  Date réception : '+(dateRecep||'--')+'\n';
     body += '  TAG            : '+tag+'\n';
-    body += '  Type Éqt       : '+(typeEqt||'—')+'\n';
-    body += '  N° Série       : '+(serie||'—')+'\n';
+    body += '  Type Éqt       : '+(typeEqt||'--')+'\n';
+    body += '  N° Série       : '+(serie||'--')+'\n';
     body += '  Localisation   : '+loc+'\n';
   } else {
     // MCREPAR / STROB
     body += '  WR             : '+wr+'\n';
-    body += '  Date réception : '+(dateRecep||'—')+'\n';
-    body += '  Stock Code     : '+(sc||'—')+'\n';
+    body += '  Date réception : '+(dateRecep||'--')+'\n';
+    body += '  Stock Code     : '+(sc||'--')+'\n';
     body += '  TAG            : '+tag+'\n';
     body += '  Localisation   : '+loc+'\n';
   }
@@ -3149,7 +3168,7 @@ function sendArrive() {
   const msgFin = isEtna
     ? 'Merci de proceder au check qualite de cet equipement retour ETNA.'
     : 'Merci de prendre en compte cet equipement.';
-  body += '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
+  body += '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer la notification arrivée', [
     {label:'TAG', value:tag}, {label:'WR', value:wr}, {label:'Workgroup', value:wgl},
@@ -3177,13 +3196,13 @@ function sendArrive() {
   });
 }
 
-// ── STATUT ÉQUIP TERMINÉ ─────────────────────────────────
+// ------ STATUT ÉQUIP TERMINÉ ------
 const EQ_STATUT_LABELS = {
-  demandeur : 'DÉPOSER — Retour demandeur',
-  p99fabric  : 'DÉPOSER — P99 Zone fabrication',
-  p99vanne   : 'DÉPOSER — P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER — Retour magasin',
-  p50        : 'RANGÉ — Dock P50',
+  demandeur : 'DÉPOSER -- Retour demandeur',
+  p99fabric  : 'DÉPOSER -- P99 Zone fabrication',
+  p99vanne   : 'DÉPOSER -- P99 Zone vanne',
+  magasin    : 'PRÊT À ENLEVER -- Retour magasin',
+  p50        : 'RANGÉ -- Dock P50',
   attinfo    : 'EN ATTENTE INFO'
 };
 function setEqStatut(s) {
@@ -3214,22 +3233,22 @@ function renderEqContacts(wg, statut) {
   const box  = document.getElementById('eq-contacts');
   if (!box) return;
 
-  // Cas : pas de contacts spécifiques définis → garder contacts WG standard
+  // Cas : pas de contacts spécifiques définis -> garder contacts WG standard
   if (!data) {
     // Utiliser WG_CONTACTS standard si disponible
     if (wg && WG_CONTACTS[wg]) renderContacts('eq', wg);
     return;
   }
 
-  // Cas retour demandeur — juste manuel, pas de liste
+  // Cas retour demandeur -- juste manuel, pas de liste
   if (data.to.length === 0 && statut === 'demandeur') {
     state.selectedTo.eq = new Set();
     if (!state.selectedCC) state.selectedCC = {};
     state.selectedCC.eq = new Set(data.cc.map(c => c.mail));
 
-    let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--orange)">Retour demandeur — saisir manuellement</span><span class="contacts-hint">+ Ajouter ci-dessous</span></div>`;
+    let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--orange)">Retour demandeur -- saisir manuellement</span><span class="contacts-hint">+ Ajouter ci-dessous</span></div>`;
     // Afficher CC cochables
-    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC — Coche/décoche</div>`;
+    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC -- Coche/décoche</div>`;
     data.cc.forEach(c => {
       const id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g,'');
       const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -3264,7 +3283,7 @@ function renderEqContacts(wg, statut) {
   });
 
   if (data.cc.length > 0) {
-    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC — Coche/décoche</div>`;
+    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC -- Coche/décoche</div>`;
     data.cc.forEach(c => {
       const id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g,'');
       const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -3280,7 +3299,7 @@ function renderEqContacts(wg, statut) {
   updateBadge('eq', wg);
 }
 
-// ── SEND ÉQUIP TERMINÉ ────────────────────────────────────
+// ------ SEND ÉQUIP TERMINÉ ------
 function sendEquip() {
   if (checkConsultMode()) return;
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
@@ -3302,7 +3321,7 @@ function sendEquip() {
   const statutTxt = EQ_STATUT_LABELS[state.eq.statut] || state.eq.statut;
   const ccStr   = [...allTo.slice(1), ...cc].join(';');
 
-  const subj = '['+wgl+'] Équipement disponible — ' + tag + (wo?' — WO '+wo:'') + (woMtc?' — MTC '+woMtc:'') + (wr?' — WR '+wr:'');
+  const subj = '['+wgl+'] Équipement disponible -- ' + tag + (wo?' -- WO '+wo:'') + (woMtc?' -- MTC '+woMtc:'') + (wr?' -- WR '+wr:'');
   let body = 'Bonjour,\n\nL\'équipement suivant est disponible :\n\n';
   if (wo)    body += '  WO Usine       : ' + wo + '\n';
   if (woMtc) body += '  WO MTC         : ' + woMtc + '\n';
@@ -3322,11 +3341,11 @@ function sendEquip() {
     ? 'Merci de procéder à la récupération de votre équipement.'
     : 'Merci de confirmer la réception.';
   body += '\n' + msgFin + '\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
-    {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'—'}, {label:'À', value:allTo.join(', ')}
+    {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'--'}, {label:'À', value:allTo.join(', ')}
   ], () => {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc].filter(Boolean);
@@ -3346,7 +3365,7 @@ function sendEquip() {
   });
 }
 
-// ── SEND PEINTURE ─────────────────────────────────────────
+// ------ SEND PEINTURE ------
 function sendPeinture() {
   if (checkConsultMode()) return;
   const wo=v('pt-wo'),wr=v('pt-wr'),sc=v('pt-sc'),tag=v('pt-tag'),desc=v('pt-desc');
@@ -3359,7 +3378,7 @@ function sendPeinture() {
   if(!trait)  {alert('Sélectionne un type de traitement.');return;}
 
   const wgl = _ptWG === 'chaud' ? 'MCCHAUD' : 'MCREPAR';
-  const subj = (prio==='URGENT'?'[URGENT] ':'') + '['+wgl+'] Demande traitement ETNA — '+tag+' — WO '+wo;
+  const subj = (prio==='URGENT'?'[URGENT] ':'') + '['+wgl+'] Demande traitement ETNA -- '+tag+' -- WO '+wo;
 
   let body = 'Bonjour,\n\nNous vous adressons une demande de traitement pour l\u0027équipement suivant :\n\n';
   body += '  Workgroup      : ' + wgl + '\n';
@@ -3374,7 +3393,7 @@ function sendPeinture() {
   if(delai)body += '  Délai souhaité : ' + delai + '\n';
   body += '  QAQC (CCS)     : ' + qaqc + '\n';
   if(rem)  body += '\nExigences qualité :\n' + rem + '\n';
-  body += '\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC — Maintenance Centrale';
+  body += '\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   // Destinataires TO depuis sélection + CC fixes ETNA
   const allTo  = [...(state.selectedTo.pt||new Set()), ...getEmails('pt-manual')];
@@ -3401,22 +3420,22 @@ function sendTransport() {
   if (dests.length === 0) { alert('Ajoute au moins un destinataire.'); return; }
   const to = dests[0];
   const cc = [...dests.slice(1), ...ccList, 'emmanuel.rosa@pronyresources.com'].join(';');
-  const subj='Demande de transport — '+(tag||desc)+' — '+date+' — PRNC';
+  const subj='Demande de transport -- '+(tag||desc)+' -- '+date+' -- PRNC';
   let body='Bonjour,\n\nNous souhaitons organiser un transport ('+(type||'PRNC')+') :\n\n';
-  if(wo||tag) body+='  WO/WR        : '+(wo||'—')+'\n  TAG          : '+(tag||'—')+'\n  Description  : '+(desc||'—')+'\n\n';
-  body+='  Dimensions   : '+(l&&w&&h?l+' x '+w+' x '+h+' cm':'—')+'\n';
-  body+='  Poids        : '+(poids||'—')+' kg\n  Conditio.    : '+(cond||'—')+'\n';
-  body+='  Camion       : '+(camion||'—')+'\n  Grutage      : '+grut+'\n\n';
+  if(wo||tag) body+='  WO/WR        : '+(wo||'--')+'\n  TAG          : '+(tag||'--')+'\n  Description  : '+(desc||'--')+'\n\n';
+  body+='  Dimensions   : '+(l&&w&&h?l+' x '+w+' x '+h+' cm':'--')+'\n';
+  body+='  Poids        : '+(poids||'--')+' kg\n  Conditio.    : '+(cond||'--')+'\n';
+  body+='  Camion       : '+(camion||'--')+'\n  Grutage      : '+grut+'\n\n';
   body+='  Zone charg.  : '+zch+'\n  Zone déch.   : '+zdch+'\n  Date         : '+date+'\n  Heure        : '+(heure||'À confirmer')+'\n';
   if(info) body+='\nInfos chauffeur :\n'+info+'\n';
   body+='\nDemande : Emmanuel ROSA ASIK | Maint. Centrale | Tél : 46 83 71\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC';
   mailto(to, subj, body, cc);
   dbSaveTransport({tag:tag||desc, wo, typeTransport:type, zch, zdch, to:dests.join(', '), photos:getPhotos('tr-prev')});
   showSuccess('&#128667;','si-teal','Demande transport ouverte !','Vérifie et envoie depuis Outlook.',
-    `<strong>À :<\/strong> ${to}<br><strong>TAG :<\/strong> ${tag||'—'}<br><strong>Date :<\/strong> ${date}<br><strong>Camion :<\/strong> ${camion||'—'}`);
+    `<strong>À :<\/strong> ${to}<br><strong>TAG :<\/strong> ${tag||'--'}<br><strong>Date :<\/strong> ${date}<br><strong>Camion :<\/strong> ${camion||'--'}`);
 }
 
-// ── GÉNÉRER FICHE SUIVEUSE (depuis URL params) ────────────
+// ------ GÉNÉRER FICHE SUIVEUSE (depuis URL params) ------
 function genererFicheFromURL(params) {
   const wg      = params.get('wg')  || '';
   const wr      = params.get('wr')  || '';
@@ -3434,22 +3453,22 @@ function genererFicheFromURL(params) {
   const isSTROB   = wg === 'strob';
 
   const couleur = isMCCHAUD ? '#7030A0' : isMCREPAR ? '#C55A11' : '#1F3864';
-  const titre   = isMCCHAUD ? 'FICHE SUIVEUSE — MC CHAUD'
-                : isMCREPAR ? 'FICHE SUIVEUSE — VANNE & ACTIONNEUR'
-                : 'FICHE SUIVEUSE — STROB';
+  const titre   = isMCCHAUD ? 'FICHE SUIVEUSE -- MC CHAUD'
+                : isMCREPAR ? 'FICHE SUIVEUSE -- VANNE & ACTIONNEUR'
+                : 'FICHE SUIVEUSE -- STROB';
 
   function row2(l1,v1,l2,v2) {
     return `<tr>
       <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;width:22%;font-size:12px">${l1}<\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v1||'—'}<\/td>
+      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v1||'--'}<\/td>
       <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;width:22%;font-size:12px">${l2}<\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v2||'—'}<\/td>
+      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v2||'--'}<\/td>
     <\/tr>`;
   }
   function row1(l,v) {
     return `<tr>
       <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px">${l}<\/td>
-      <td colspan="3" style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600">${v||'—'}<\/td>
+      <td colspan="3" style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600">${v||'--'}<\/td>
     <\/tr>`;
   }
   function sectionHdr(t) {
@@ -3470,7 +3489,7 @@ function genererFicheFromURL(params) {
     <\/tr>`;
   }
 
-  // ── Réception MCCHAUD : WR, Date, TAG, Type Éqt, N° Série, Loc
+  // ------ Réception MCCHAUD : WR, Date, TAG, Type Éqt, N° Série, Loc
   let tableBody = sectionHdr('RÉCEPTION');
   if (isMCCHAUD) {
     tableBody += row2('WR', wr, 'DATE RÉCEPTION', dateR);
@@ -3491,7 +3510,7 @@ function genererFicheFromURL(params) {
     if (wo || desc) tableBody += row2('N° WO', wo, 'DÉSIGNATION', desc);
   }
 
-  // ── Zones à remplir à la main
+  // ------ Zones à remplir à la main
   tableBody += sectionHdr('SÉCURITÉ');
   tableBody += emptyRow('IDENTIFICATION DU FLUIDE',32);
   tableBody += emptyRow('DÉCONTAMINATION OUI / NON / N/A',32);
@@ -3503,7 +3522,7 @@ function genererFicheFromURL(params) {
   tableBody += emptyRow('N° SÉRIE FABRICANT',32);
 
   if (isMCCHAUD) {
-    tableBody += sectionHdr('SOUDURE — TECHNICIEN MC CHAUD / TEMPS D\'INTERVENTION');
+    tableBody += sectionHdr('SOUDURE -- TECHNICIEN MC CHAUD / TEMPS D\'INTERVENTION');
     tableBody += `<tr>
       <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-size:11px"><\/td>
       <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px;text-align:center">TECHNICIEN<\/td>
@@ -3517,8 +3536,8 @@ function genererFicheFromURL(params) {
         <td style="border:1px solid #ccc;background:#fff"><\/td><\/tr>`;
     });
     tableBody += signRow('NOM & SIGNATURE TECH.');
-    tableBody += sectionHdr('QA — NDT');
-    tableBody += emptyRow('RAPPORT NDT AVANT RÉPARATION  OUI / NON  — N°PV',32);
+    tableBody += sectionHdr('QA -- NDT');
+    tableBody += emptyRow('RAPPORT NDT AVANT RÉPARATION  OUI / NON  -- N°PV',32);
     tableBody += emptyRow('PROCÉDURE DE RÉPARATION  OUI / NON',32);
     ['VISUEL','RESSUAGE','RADIOGRAPHIE','ULTRASONS','DIMENSIONNEL'].forEach((n,i) => {
       tableBody += `<tr style="height:30px">
@@ -3556,7 +3575,7 @@ function genererFicheFromURL(params) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${titre} — ${tag} — WR ${wr}<\/title>
+<title>${titre} -- ${tag} -- WR ${wr}<\/title>
 <style>
   body{font-family:Arial,sans-serif;margin:10px;background:#f5f5f5}
   .page{background:#fff;max-width:820px;margin:0 auto;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
@@ -3573,9 +3592,9 @@ function genererFicheFromURL(params) {
     <button onclick="window.close()" style="background:#f2f2f2;color:#333;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">✕ Fermer<\/button>
   <\/div>
   <h1>${titre}<\/h1>
-  <div class="subtitle">Générée le ${new Date().toLocaleDateString('fr-FR')} — PRNC Maintenance Centrale — WR : ${wr} — TAG : ${tag}<\/div>
+  <div class="subtitle">Générée le ${new Date().toLocaleDateString('fr-FR')} -- PRNC Maintenance Centrale -- WR : ${wr} -- TAG : ${tag}<\/div>
   <table>${tableBody}<\/table>
-  <div style="font-size:10px;color:#bbb;text-align:right;margin-top:6px">PRNC — Maintenance Centrale — Préposé aux pièces<\/div>
+  <div style="font-size:10px;color:#bbb;text-align:right;margin-top:6px">PRNC -- Maintenance Centrale -- Préposé aux pièces<\/div>
 <\/div>
 <\/body>
 <\/html>`;
@@ -3586,7 +3605,7 @@ function genererFicheFromURL(params) {
   document.close();
 }
 
-// ── GÉNÉRER FICHE depuis l'app (bouton, non utilisé côté mail) ──
+// ------ GÉNÉRER FICHE depuis l'app (bouton, non utilisé côté mail) ------
 function genererFiche() {
   const wg = state.ar.wg;
   if(!wg) { alert('Sélectionne un Workgroup.'); return; }
@@ -3605,9 +3624,9 @@ function genererFiche() {
 }
 
 
-// ══════════════════════════════════════════════════════════
-// ── ÉTIQUETTE ÉQUIPEMENT ───────────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ ÉTIQUETTE ÉQUIPEMENT ------
+// ========================================
 
 function buildEtiquetteSVG(d, width) {
   // d = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg }
@@ -3675,7 +3694,7 @@ function buildEtiquetteSVG(d, width) {
     <rect y="${lineH-4}" width="${W}" height="4" fill="${fg}"/>
     <text x="${pad}" y="${Math.round(lineH*0.68)}"
       font-family="Arial,sans-serif" font-size="${fs2}" font-weight="bold" fill="#fff"
-      letter-spacing="1">[ETQ] ${d.wgl || 'PRNC'} — MAINTENANCE CENTRALE<\/text>
+      letter-spacing="1">[ETQ] ${d.wgl || 'PRNC'} -- MAINTENANCE CENTRALE<\/text>
 
     <!-- Badge statut -->
     <rect x="${W - Math.round(W*0.28) - pad}" y="${Math.round(lineH*0.18)}"
@@ -3688,37 +3707,37 @@ function buildEtiquetteSVG(d, width) {
     <!-- Zone info gauche -->
     <!-- TAG (principal) -->
     <text x="${pad}" y="${lineH + Math.round(lineH*0.85)}"
-      font-family="Arial,sans-serif" font-size="${fs3}" font-weight="bold" fill="${fg}">TAG : ${(d.tag||'—').substring(0,22)}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs3}" font-weight="bold" fill="${fg}">TAG : ${(d.tag||'--').substring(0,22)}<\/text>
 
     <!-- WR -->
     <text x="${pad}" y="${lineH + Math.round(lineH*1.65)}"
       font-family="Arial,sans-serif" font-size="${fs}" fill="#555">WR :<\/text>
     <text x="${pad + Math.round(W*0.1)}" y="${lineH + Math.round(lineH*1.65)}"
-      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.wr||'—').substring(0,18)}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.wr||'--').substring(0,18)}<\/text>
 
     <!-- Stock Code -->
     <text x="${pad}" y="${lineH + Math.round(lineH*2.42)}"
       font-family="Arial,sans-serif" font-size="${fs}" fill="#555">S/C :<\/text>
     <text x="${pad + Math.round(W*0.1)}" y="${lineH + Math.round(lineH*2.42)}"
-      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.sc||'—').substring(0,18)}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.sc||'--').substring(0,18)}<\/text>
 
     <!-- N° Série -->
     <text x="${pad}" y="${lineH + Math.round(lineH*3.18)}"
       font-family="Arial,sans-serif" font-size="${fs}" fill="#555">S/N :<\/text>
     <text x="${pad + Math.round(W*0.1)}" y="${lineH + Math.round(lineH*3.18)}"
-      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.serie||'—').substring(0,18)}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${(d.serie||'--').substring(0,18)}<\/text>
 
     <!-- Date réception -->
     <text x="${pad}" y="${lineH + Math.round(lineH*3.95)}"
       font-family="Arial,sans-serif" font-size="${fs}" fill="#555">Date :<\/text>
     <text x="${pad + Math.round(W*0.1)}" y="${lineH + Math.round(lineH*3.95)}"
-      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${dateAff||'—'}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="#222">${dateAff||'--'}<\/text>
 
     <!-- Localisation -->
     <text x="${pad}" y="${lineH + Math.round(lineH*4.72)}"
       font-family="Arial,sans-serif" font-size="${fs}" fill="#555">Loc. :<\/text>
     <text x="${pad + Math.round(W*0.1)}" y="${lineH + Math.round(lineH*4.72)}"
-      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="${fg}">${(d.loc||'—').substring(0,20)}<\/text>
+      font-family="Arial,sans-serif" font-size="${fs}" font-weight="bold" fill="${fg}">${(d.loc||'--').substring(0,20)}<\/text>
 
     <!-- Séparateur vertical -->
     <line x1="${infoW + pad*2}" y1="${lineH + pad}" x2="${infoW + pad*2}" y2="${H - pad}"
@@ -3739,7 +3758,7 @@ function buildEtiquetteSVG(d, width) {
   return svg;
 }
 
-// ── Imprimer étiquette ────────────────────────────────────
+// ------ Imprimer étiquette ------
 function imprimerEtiquette() {
   if (!_etiqData) { alert('Aucune étiquette à imprimer.'); return; }
   const svg = buildEtiquetteSVG(_etiqData, 560);
@@ -3751,7 +3770,7 @@ function imprimerEtiquette() {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Étiquette — ${_etiqData.tag} — WR ${_etiqData.wr}<\/title>
+<title>Étiquette -- ${_etiqData.tag} -- WR ${_etiqData.wr}<\/title>
 <style>
   @page { size: A6 landscape; margin: 8mm; }
   body { margin: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: Arial, sans-serif; }
@@ -3769,7 +3788,7 @@ function imprimerEtiquette() {
 <div class="no-print">
   <button class="btn" onclick="window.print()">[IMPRIMER] Imprimer / Enregistrer PDF<\/button>
   <button class="btn btn-sec" onclick="window.close()">✕ Fermer<\/button>
-  <div class="info">Format A6 paysage (148 × 105 mm) — Imprime et plastifie ou colle sur l'équipement<\/div>
+  <div class="info">Format A6 paysage (148 × 105 mm) -- Imprime et plastifie ou colle sur l'équipement<\/div>
 <\/div>
 <\/body>
 <\/html>`;
@@ -3779,7 +3798,7 @@ function imprimerEtiquette() {
   else { alert('Autorise les pop-ups pour ce site.'); }
 }
 
-// ── Envoyer étiquette par mail ────────────────────────────
+// ------ Envoyer étiquette par mail ------
 function mailEtiquette() {
   if (!_etiqData) { alert('Aucune étiquette à envoyer.'); return; }
   const d = _etiqData;
@@ -3808,7 +3827,7 @@ function mailEtiquette() {
   window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
 }
 
-// ── Affichage étiquette depuis URL ?etiq=1 ─────────────────
+// ------ Affichage étiquette depuis URL ?etiq=1 ------
 function afficherEtiquetteURL(params) {
   const d = {
     wg       : params.get('wg')      || '',
@@ -3830,7 +3849,7 @@ function afficherEtiquetteURL(params) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8">
-<title>Étiquette — ${d.tag} — WR ${d.wr}<\/title>
+<title>Étiquette -- ${d.tag} -- WR ${d.wr}<\/title>
 <style>
   @page { size: A6 landscape; margin: 8mm; }
   body { margin: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: Arial, sans-serif; }
@@ -3854,8 +3873,8 @@ function afficherEtiquetteURL(params) {
 }
 
 
-// ══════════════════════════════════════════════════════════
-// ── USAGE DIRECT ──────────────────────────────────────────
+// ========================================
+// ------ USAGE DIRECT ------
 function setUdWG(wg) {
   state.ud = state.ud || {};
   state.ud.wg = wg;
@@ -3866,8 +3885,8 @@ function setUdWG(wg) {
   renderContactsFrom(WG_CONTACTS, 'ud', wg);
 }
 
-// ── USAGE DIRECT (suite) ─────────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ------ USAGE DIRECT (suite) ------
+// ========================================
 
 const UD_SHUTDOWN_LABELS = {
   hpal1:'HPAL 1', hpal2:'HPAL 2', hpal3:'HPAL 3',
@@ -3886,7 +3905,7 @@ function setUdShutdown(s) {
   });
 }
 
-// ── Canvas signature ──────────────────────────────────────
+// ------ Canvas signature ------
 function initSignatureCanvas() {
   const canvas = document.getElementById('ud-sig-canvas');
   if (!canvas || canvas._sigInited) return;
@@ -3929,7 +3948,7 @@ function clearSignature() {
 
 // Init canvas géré directement dans show()
 
-// ── SEND USAGE DIRECT ─────────────────────────────────────
+// ------ SEND USAGE DIRECT ------
 async function sendUsageDirect() {
   if (checkConsultMode()) return;
   const wo    = v('ud-wo');
@@ -3961,7 +3980,7 @@ async function sendUsageDirect() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
 
-  const subj = '['+udWGL+'] Usage direct — ' + tag + ' — WO ' + wo + ' — ' + shutdownLbl + ' — QTY ' + qty;
+  const subj = '['+udWGL+'] Usage direct -- ' + tag + ' -- WO ' + wo + ' -- ' + shutdownLbl + ' -- QTY ' + qty;
   let body = 'Bonjour,\n\nUsage direct de piece(s) sur site :\n\n';
   body += '  WO             : ' + wo + '\n';
   body += '  TAG            : ' + tag + '\n';
@@ -3989,13 +4008,13 @@ async function sendUsageDirect() {
   const appBase = window.location.href.split('?')[0];
   const sigLink = appBase + '?sig=' + sigId;
 
-  body += '\n──────────────────────────────────────\n';
+  body += '\n------\n';
   body += '  Signe par : ' + nom + '\n';
   body += '  Date      : ' + dateStr + '\n';
   body += '  Signature : ' + sigLink + '\n';
   body += '  (Ouvrir le lien depuis Chrome pour voir la signature)\n';
-  body += '──────────────────────────────────────\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC — Maintenance Centrale';
+  body += '------\n';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
 
 
   confirmEnvoi('Confirmer usage direct', [
@@ -4016,13 +4035,13 @@ async function sendUsageDirect() {
   });
 }
 
-// ══════════════════════════════════════════════════════════
-// ── BASE DE DONNÉES — HISTORIQUE PRNC ─────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ BASE DE DONNÉES -- HISTORIQUE PRNC ------
+// ========================================
 
 const DB_KEY = 'prnc-historique';
 
-// ── SUPABASE CONFIG ───────────────────────────────────────
+// ------ SUPABASE CONFIG ------
 const SUPA_URL = 'https://lfebsggmcopsmaegptyw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZWJzZ2dtY29wc21hZWdwdHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzU0NzgsImV4cCI6MjA4OTk1MTQ3OH0.dVNE7qEdNhuQFxuPjIt_umiXuCZH4kFh8JBiW2KFUAA';
 
@@ -4043,7 +4062,7 @@ async function supaFetch(path, method, body) {
   return r;
 }
 
-// ── CHARGER depuis Supabase ───────────────────────────────
+// ------ CHARGER depuis Supabase ------
 async function dbLoad() {
   try {
     const data = await supaFetch('/rest/v1/historique?order=created_at.desc&limit=500');
@@ -4067,12 +4086,12 @@ async function dbLoad() {
   } catch(e) { return []; }
 }
 
-// ── SAUVEGARDER (backup local seulement) ─────────────────
+// ------ SAUVEGARDER (backup local seulement) ------
 async function dbSave(records) {
   try { localStorage.setItem(DB_KEY, JSON.stringify(records)); } catch(e) {}
 }
 
-// ── AJOUTER un enregistrement ─────────────────────────────
+// ------ AJOUTER un enregistrement ------
 async function dbAdd(record) {
   record.id    = Date.now() + '-' + Math.random().toString(36).slice(2,6);
   record.ts    = new Date().toISOString();
@@ -4110,7 +4129,7 @@ async function clearHist() {
   renderHist();
 }
 
-// ── COULEURS ET LABELS PAR TYPE ───────────────────────────
+// ------ COULEURS ET LABELS PAR TYPE ------
 const TYPE_COLORS = {
   ARRIVEE   : {bg:'#EDE7F6',fg:'#7030A0',icon:'IN'},
   TERMINE   : {bg:'#E2EFDA',fg:'#375623',icon:'OUT'},
@@ -4120,7 +4139,7 @@ const TYPE_COLORS = {
   FICHE     : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'}
 };
 
-// ── RENDER HISTORIQUE ─────────────────────────────────────
+// ------ RENDER HISTORIQUE ------
 async function renderHist() {
   const list    = document.getElementById('hist-list');
   const countEl = document.getElementById('hist-count');
@@ -4146,7 +4165,7 @@ async function renderHist() {
   const searchTxt = search ? ' pour "' + search + '"' : '';
   const filtreTxt = filtre ? ' (' + filtre + ')' : '';
   countEl.textContent = records.length + ' résultat' + (records.length!==1?'s':'') +
-    searchTxt + filtreTxt + ' — ' + all.length + ' au total';
+    searchTxt + filtreTxt + ' -- ' + all.length + ' au total';
 
   if (records.length === 0) {
     list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
@@ -4158,8 +4177,8 @@ async function renderHist() {
 
   list.innerHTML = records.map(r => {
     const c = TYPE_COLORS[r.type] || {bg:'#f5f5f5',fg:'#555',icon:'?'};
-    const tag  = r.tag  || '—';
-    const wo   = r.wo   || r.woMtc || '—';
+    const tag  = r.tag  || '--';
+    const wo   = r.wo   || r.woMtc || '--';
     const wg   = r.wg   || '';
     const info = r.statut || r.shutdown || r.typeWO || r.typeTransport || '';
     return `<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer" onclick="viewRecord('${r.id}')">
@@ -4169,7 +4188,7 @@ async function renderHist() {
           <span style="font-size:13px;font-weight:700;color:${c.fg}">${tag}</span>
           <span style="font-size:10px;color:var(--muted)">${r.date} ${r.heure}</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${r.type}${wg?' — '+wg:''}${wo&&wo!=='—'?' — WO '+wo:''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${r.type}${wg?' -- '+wg:''}${wo&&wo!=='--'?' -- WO '+wo:''}</div>
         ${info?`<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>`:''}
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
         ${r.loc?`<div style="font-size:10px;color:var(--muted)">${r.loc}</div>`:''}
@@ -4186,7 +4205,7 @@ async function renderHist() {
   }).join('');
 }
 
-// ── EXPORT EXCEL (CSV téléchargeable) ─────────────────────
+// ------ EXPORT EXCEL (CSV téléchargeable) ------
 async function exportExcel() {
   const records = await dbLoad();
   if (records.length === 0) { alert('Aucune donnée à exporter.'); return; }
@@ -4223,7 +4242,7 @@ async function exportExcel() {
   URL.revokeObjectURL(url);
 }
 
-// ── INJECTION SAVE DANS CHAQUE SEND ──────────────────────
+// ------ INJECTION SAVE DANS CHAQUE SEND ------
 // Appelé automatiquement après chaque envoi réussi
 async function dbSaveArrivee(d) {
   await dbAdd({ type:'ARRIVEE', tag:d.tag, wo:d.wo, wr:d.wr, sc:d.sc, wg:d.wgl,
@@ -4241,7 +4260,7 @@ async function dbSaveUsage(d) {
 }
 async function dbSaveTransport(d) {
   await dbAdd({ type:'TRANSPORT', tag:d.tag, wo:d.wo, typeTransport:d.typeTransport,
-    loc:d.zch+' → '+d.zdch, dest:[d.to], photos:d.photos||[] });
+    loc:d.zch+' -> '+d.zdch, dest:[d.to], photos:d.photos||[] });
 }
 async function dbSavePeinture(d) {
   await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'], photos:d.photos||[] });
@@ -4250,14 +4269,14 @@ async function dbSavePeinture(d) {
 // Init historique quand on arrive sur l'onglet
 
 
-// ── STATS ACCUEIL ─────────────────────────────────────────
+// ------ STATS ACCUEIL ------
 async function updateStats() {
   try {
     const records = await dbLoad();
     const today   = new Date().toLocaleDateString('fr-FR');
     const n = type => records.filter(r => r.type === type).length;
     const el = id => document.getElementById(id);
-    if(el('stat-planning')) el('stat-planning').textContent = n('PLANNING') || records.filter(r=>r.type==='PLANNING').length || '—';
+    if(el('stat-planning')) el('stat-planning').textContent = n('PLANNING') || records.filter(r=>r.type==='PLANNING').length || '--';
     // Planning = nombre de notifs planning envoyées
     const planning = records.filter(r => r.type === 'PLANNING').length;
     const arrive   = records.filter(r => r.type === 'ARRIVEE').length;
@@ -4271,9 +4290,9 @@ async function updateStats() {
 }
 
 
-// ══════════════════════════════════════════════════════════
-// ── 1. REMISE À ZÉRO DES FORMULAIRES ─────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ 1. REMISE À ZÉRO DES FORMULAIRES ------
+// ========================================
 function resetForm(ids, selects, wgPrefix, kitReset) {
   // Vider les inputs texte/number/date/textarea
   ids.forEach(id => {
@@ -4363,9 +4382,9 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// ── 2. PRÉ-REMPLISSAGE INTELLIGENT ───────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ 2. PRÉ-REMPLISSAGE INTELLIGENT ------
+// ========================================
 async function suggestFromHistory(tagInputId, fields) {
   // fields = { wo: 'field-id', wg: 'prefix', sc: 'field-id', ... }
   const tagEl = document.getElementById(tagInputId);
@@ -4385,8 +4404,8 @@ async function suggestFromHistory(tagInputId, fields) {
     tagEl.parentNode.insertBefore(suggestEl, tagEl.nextSibling);
   }
 
-  const info = [match.wo&&'WO '+match.wo, match.wg, match.sc&&'S/C '+match.sc].filter(Boolean).join(' — ');
-  suggestEl.innerHTML = '<span>&#128161; Vu le '+match.date+' — '+info+'<br><strong>Appuie pour pré-remplir</strong></span><span style="font-size:16px">&#8594;</span>';
+  const info = [match.wo&&'WO '+match.wo, match.wg, match.sc&&'S/C '+match.sc].filter(Boolean).join(' -- ');
+  suggestEl.innerHTML = '<span>&#128161; Vu le '+match.date+' -- '+info+'<br><strong>Appuie pour pré-remplir</strong></span><span style="font-size:16px">&#8594;</span>';
   suggestEl.style.display = 'flex';
   suggestEl.onclick = () => {
     // Remplir les champs disponibles
@@ -4405,9 +4424,9 @@ async function suggestFromHistory(tagInputId, fields) {
   };
 }
 
-// ══════════════════════════════════════════════════════════
-// ── 3. NOTIFICATION RELANCE — équipements en attente ──────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ 3. NOTIFICATION RELANCE -- équipements en attente ------
+// ========================================
 async function checkRelances() {
   const records = await dbLoad();
   const now = new Date();
@@ -4448,16 +4467,16 @@ async function checkRelances() {
   if (alertEl) {
     if (relances > 0) {
       alertEl.style.display = 'flex';
-      alertEl.innerHTML = '<span>&#9888; <strong>'+relances+' équipement'+(relances>1?'s':'')+' en attente depuis +7 jours</strong> — filtre "Arrivées" pour voir</span>';
+      alertEl.innerHTML = '<span>&#9888; <strong>'+relances+' équipement'+(relances>1?'s':'')+' en attente depuis +7 jours</strong> -- filtre "Arrivées" pour voir</span>';
     } else {
       alertEl.style.display = 'none';
     }
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// ── 4. CONFIRMATION VISUELLE HISTORIQUE ───────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ 4. CONFIRMATION VISUELLE HISTORIQUE ------
+// ========================================
 function flashHistBadge() {
   const navHist = document.getElementById('nav-hist');
   if (!navHist) return;
@@ -4486,9 +4505,9 @@ function flashHistBadge() {
 
 
 
-// ══════════════════════════════════════════════════════════
-// ── TABLEAU DE BORD — ÉQUIPEMENTS EN COURS ────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ TABLEAU DE BORD -- ÉQUIPEMENTS EN COURS ------
+// ========================================
 async function renderDashboard() {
   const list    = document.getElementById('dash-list');
   const countEl = document.getElementById('dash-count');
@@ -4511,7 +4530,7 @@ async function renderDashboard() {
   }
 
   countEl.textContent = enCours.length + ' équipement' + (enCours.length!==1?'s':'') + ' en cours' +
-    (search ? ' pour "'+search+'"' : '') + ' — ' + arrives.length + ' total arrivés';
+    (search ? ' pour "'+search+'"' : '') + ' -- ' + arrives.length + ' total arrivés';
 
   if (enCours.length === 0) {
     list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
@@ -4532,7 +4551,7 @@ async function renderDashboard() {
 
     return `<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid ${jours>=7?urgColor:'var(--border)'};display:flex;flex-direction:column;gap:6px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:14px;font-weight:700;color:${wgFg}">${r.tag||'—'}</span>
+        <span style="font-size:14px;font-weight:700;color:${wgFg}">${r.tag||'--'}</span>
         <span style="background:${urgBg};color:${urgColor};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">${joursLabel}</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -4552,9 +4571,9 @@ async function renderDashboard() {
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════════
-// ── RAPPORT MENSUEL ───────────────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ RAPPORT MENSUEL ------
+// ========================================
 async function previewRapport() {
   const mois   = parseInt((document.getElementById('rp-mois')||{value:new Date().getMonth()+1}).value);
   const annee  = parseInt((document.getElementById('rp-annee')||{value:new Date().getFullYear()}).value);
@@ -4599,11 +4618,11 @@ async function previewRapport() {
       countMatches++;
     }
   });
-  const moyJours = countMatches > 0 ? Math.round(totalJours / countMatches) : '—';
+  const moyJours = countMatches > 0 ? Math.round(totalJours / countMatches) : '--';
 
   prev.innerHTML = `
     <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;text-align:center">
-      Rapport — ${moisNoms[mois]} ${annee}
+      Rapport -- ${moisNoms[mois]} ${annee}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div style="background:var(--llblue);border-radius:10px;padding:10px;text-align:center">
@@ -4626,7 +4645,7 @@ async function previewRapport() {
     <div style="font-size:12px;border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:5px">
       <div style="display:flex;justify-content:space-between">
         <span style="color:var(--muted)">Temps moyen en atelier</span>
-        <span style="font-weight:700">${moyJours === '—' ? '—' : moyJours + ' jour' + (moyJours>1?'s':'')}</span>
+        <span style="font-weight:700">${moyJours === '--' ? '--' : moyJours + ' jour' + (moyJours>1?'s':'')}</span>
       </div>
       <div style="display:flex;justify-content:space-between">
         <span style="color:var(--muted)">Demandes peinture</span>
@@ -4636,7 +4655,7 @@ async function previewRapport() {
         <span style="color:var(--muted)">Notifications planning</span>
         <span style="font-weight:700">${plannings}</span>
       </div>
-      ${Object.keys(wgCount).length>0?`<div style="margin-top:4px;font-size:11px;color:var(--muted)">Répartition : ${Object.entries(wgCount).map(([k,v])=>k+' ('+v+')').join(' — ')}</div>`:''}
+      ${Object.keys(wgCount).length>0?`<div style="margin-top:4px;font-size:11px;color:var(--muted)">Répartition : ${Object.entries(wgCount).map(([k,v])=>k+' ('+v+')').join(' -- ')}</div>`:''}
     </div>`;
 }
 
@@ -4658,10 +4677,10 @@ async function genererRapportPDF() {
     `<tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px;font-size:11px">${r.date||''}</td>
       <td style="padding:6px 8px;font-size:11px"><span style="background:${r.type==='ARRIVEE'?'#EDE7F6':r.type==='TERMINE'?'#E2EFDA':r.type==='USAGE'?'#FCEBEB':'#DEEAF1'};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600">${r.type}</span></td>
-      <td style="padding:6px 8px;font-size:11px;font-weight:600">${r.tag||'—'}</td>
-      <td style="padding:6px 8px;font-size:11px">${r.wo||r.woMtc||'—'}</td>
-      <td style="padding:6px 8px;font-size:11px">${r.wg||'—'}</td>
-      <td style="padding:6px 8px;font-size:11px">${r.statut||r.shutdown||r.typeWO||'—'}</td>
+      <td style="padding:6px 8px;font-size:11px;font-weight:600">${r.tag||'--'}</td>
+      <td style="padding:6px 8px;font-size:11px">${r.wo||r.woMtc||'--'}</td>
+      <td style="padding:6px 8px;font-size:11px">${r.wg||'--'}</td>
+      <td style="padding:6px 8px;font-size:11px">${r.statut||r.shutdown||r.typeWO||'--'}</td>
     </tr>`
   ).join('');
 
@@ -4686,8 +4705,8 @@ async function genererRapportPDF() {
     <button onclick="window.print()" style="background:#1F3864;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">Imprimer / PDF</button>
     <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
   </div>
-  <h1>Rapport Mensuel — ${moisNoms[mois]} ${annee}</h1>
-  <p style="font-size:12px;color:#666">Préposé aux pièces : Emmanuel ROSA ASIK — PRNC Maintenance Centrale — P50</p>
+  <h1>Rapport Mensuel -- ${moisNoms[mois]} ${annee}</h1>
+  <p style="font-size:12px;color:#666">Préposé aux pièces : Emmanuel ROSA ASIK -- PRNC Maintenance Centrale -- P50</p>
   <div class="stats">
     <div class="stat"><div class="stat-n">${arrives}</div><div class="stat-l">Arrivées</div></div>
     <div class="stat"><div class="stat-n">${termines}</div><div class="stat-l">Terminés</div></div>
@@ -4701,7 +4720,7 @@ async function genererRapportPDF() {
     <tr><th>Date</th><th>Type</th><th>TAG</th><th>WO</th><th>Workgroup</th><th>Statut / Info</th></tr>
     ${lignes}
   </table>
-  <div class="footer">Rapport généré le ${new Date().toLocaleDateString('fr-FR')} — Application PRNC Field — Maintenance Centrale P50</div>
+  <div class="footer">Rapport généré le ${new Date().toLocaleDateString('fr-FR')} -- Application PRNC Field -- Maintenance Centrale P50</div>
   </body></html>`;
 
   const win = window.open('','_blank');
@@ -4709,7 +4728,7 @@ async function genererRapportPDF() {
   else alert('Autorise les pop-ups pour ce site.');
 }
 
-// ── SAUVEGARDE HISTORIQUE ─────────────────────────────────
+// ------ SAUVEGARDE HISTORIQUE ------
 async function sauvegarderHistorique() {
   const records = await dbLoad();
   if(records.length === 0){ alert('Aucune donnée à sauvegarder.'); return; }
@@ -4730,9 +4749,9 @@ async function sauvegarderHistorique() {
 
 
 
-// ══════════════════════════════════════════════════════════
-// ── CODE PIN ──────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ CODE PIN ------
+// ========================================
 const PIN_KEY       = 'prnc-pin';
 const PIN_DEFAULT   = '1234';
 const PIN_CONSULT   = '0000';  // PIN mode consultation
@@ -4800,13 +4819,13 @@ async function validatePIN() {
   if (_pinBuffer.length < 4) { err.textContent = 'Code à 4 chiffres requis'; _pinBuffer=''; updatePinDots(); return; }
 
   if (_pinMode === 'setup') {
-    // Premier démarrage — définir le PIN préposé
+    // Premier démarrage -- définir le PIN préposé
     localStorage.setItem(PIN_KEY, _pinBuffer);
     document.getElementById('pin-overlay').style.display = 'none';
     err.textContent = '';
     activerModePrepose();
   } else {
-    // Mode consultation — PIN fixe 0000
+    // Mode consultation -- PIN fixe 0000
     if (_pinModeSelect === 'consult' && _pinBuffer === PIN_CONSULT) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
@@ -4814,7 +4833,7 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
-    // Mode préposé — vérifier le PIN stocké
+    // Mode préposé -- vérifier le PIN stocké
     let stored;
     try { stored = localStorage.getItem(PIN_KEY) || PIN_DEFAULT; } catch(e) { stored = PIN_DEFAULT; }
     if (_pinModeSelect === 'prepose' && _pinBuffer === stored) {
@@ -4822,7 +4841,7 @@ async function validatePIN() {
       err.textContent = '';
       activerModePrepose();
     } else {
-      err.textContent = 'Code incorrect — réessayez';
+      err.textContent = 'Code incorrect -- réessayez';
       document.getElementById('pin-overlay').style.animation = 'shake .3s';
       setTimeout(() => { if(document.getElementById('pin-overlay')) document.getElementById('pin-overlay').style.animation=''; }, 400);
     }
@@ -4857,7 +4876,7 @@ function activerModeConsultation() {
 // Bloquer les actions de saisie en mode consultation
 function checkConsultMode() {
   if (_isConsultMode) {
-    alert('Mode consultation — accès en lecture seule uniquement.');
+    alert('Mode consultation -- accès en lecture seule uniquement.');
     return true;
   }
   return false;
@@ -4868,9 +4887,9 @@ const shakeStyle = document.createElement('style');
 shakeStyle.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
 document.head.appendChild(shakeStyle);
 
-// ══════════════════════════════════════════════════════════
-// ── AUTOCOMPLÉTION TAG ────────────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ AUTOCOMPLÉTION TAG ------
+// ========================================
 async function autocompleteTag(inputId) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -4914,9 +4933,9 @@ document.addEventListener('click', e => {
   }
 });
 
-// ══════════════════════════════════════════════════════════
-// ── CONFIRMATION AVANT ENVOI ──────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ CONFIRMATION AVANT ENVOI ------
+// ========================================
 function confirmEnvoi(titre, lignes, callback) {
   // Créer un overlay de confirmation
   const overlay = document.createElement('div');
@@ -4926,7 +4945,7 @@ function confirmEnvoi(titre, lignes, callback) {
     <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px;max-height:80vh;overflow-y:auto">
       <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:14px;text-align:center">${titre}</div>
       <div style="background:var(--grey);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;line-height:1.8">
-        ${lignes.map(l=>`<div><span style="color:var(--muted)">${l.label} : </span><strong>${l.value||'—'}</strong></div>`).join('')}
+        ${lignes.map(l=>`<div><span style="color:var(--muted)">${l.label} : </span><strong>${l.value||'--'}</strong></div>`).join('')}
       </div>
       <div style="display:flex;gap:10px">
         <button onclick="document.getElementById('confirm-overlay').remove()" style="flex:1;padding:13px;background:var(--grey);border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--text)">Annuler</button>
@@ -4941,9 +4960,9 @@ function confirmEnvoi(titre, lignes, callback) {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 
-// ══════════════════════════════════════════════════════════
-// ── MODIFIER / SUPPRIMER UN ENREGISTREMENT ────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ MODIFIER / SUPPRIMER UN ENREGISTREMENT ------
+// ========================================
 async function deleteRecord(id) {
   if (checkConsultMode()) return;
   if (!confirm('Supprimer cet enregistrement ?')) return;
@@ -4965,7 +4984,7 @@ async function deleteRecord(id) {
 }
 
 
-// ── FICHE DÉTAIL ENREGISTREMENT ───────────────────────────
+// ------ FICHE DÉTAIL ENREGISTREMENT ------
 
 function viewPhotoFull(idx, recordId) {
   dbLoad().then(records => {
@@ -4977,7 +4996,7 @@ function viewPhotoFull(idx, recordId) {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center';
     ov.innerHTML = `<img src="${src}" style="max-width:95%;max-height:90vh;border-radius:8px;object-fit:contain">
-      <div onclick="this.parentNode.remove()" style="position:absolute;top:16px;right:16px;color:#fff;font-size:28px;cursor:pointer;font-weight:700">×</div>`;
+      <div onclick="this.parentNode.remove()" style="position:absolute;top:16px;right:16px;color:#fff;font-size:28px;cursor:pointer;font-weight:700">&times;</div>`;
     ov.addEventListener('click', e => { if(e.target===ov) ov.remove(); });
     document.body.appendChild(ov);
   });
@@ -4990,16 +5009,16 @@ function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone, recordId) {
   var msg = line + '\n';
   msg += '\uD83D\uDD27 EQUIPEMENT DISPONIBLE\n';
   msg += line + '\n';
-  msg += '\uD83C\uDFF7 TAG       : ' + (tag    || '—') + '\n';
+  msg += '\uD83C\uDFF7 TAG       : ' + (tag    || '--') + '\n';
   if (wo)    msg += '\uD83D\uDCCB WO Usine  : ' + wo    + '\n';
   if (woMtc) msg += '\uD83D\uDCCB WO MTC    : ' + woMtc + '\n';
-  msg += '\u2705 Statut    : ' + (statut || '—') + '\n';
+  msg += '\u2705 Statut    : ' + (statut || '--') + '\n';
   if (loc)  msg += '\uD83D\uDCCD Localisa. : ' + loc   + '\n';
   if (zone) msg += '\uD83D\uDCE6 Zone depot : ' + zone  + '\n';
   msg += line + '\n';
   msg += '\uD83D\uDC4D Merci de deposer dans la bonne zone.\n';
   msg += line + '\n';
-  msg += 'Emmanuel ROSA ASIK — Prepose aux pieces';
+  msg += 'Emmanuel ROSA ASIK -- Prepose aux pieces';
 
   // Modifier le numéro si besoin
   var newNum = prompt('Numéro WhatsApp du magasinier :', num);
@@ -5064,7 +5083,7 @@ function showPhotoForWhatsApp(photos) {
 
     // Bouton fermer
     var close = document.createElement('button');
-    close.textContent = '✓ C\'est fait — Fermer';
+    close.textContent = '&#10003; C\'est fait -- Fermer';
     close.style.cssText = 'padding:12px 28px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
     close.onclick = function(){ ov.remove(); };
     ov.appendChild(close);
@@ -5074,13 +5093,13 @@ function showPhotoForWhatsApp(photos) {
 }
 
 
-// ── PRÉ-REMPLISSAGE DEPUIS FICHE SUIVEUSE ────────────────
+// ------ PRÉ-REMPLISSAGE DEPUIS FICHE SUIVEUSE ------
 
-// ── WORKFLOW FICHE SUIVEUSE ───────────────────────────────
+// ------ WORKFLOW FICHE SUIVEUSE ------
 function buildWorkflowHtml(r) {
   // Chercher les étapes déjà complétées dans l'historique
   return '<div id="workflow-'+r.id+'" style="background:#F0F4FF;border-radius:12px;padding:12px 14px;margin-bottom:2px">' +
-    '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#128196; Workflow — ' + (r.tag||'') + '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#128196; Workflow -- ' + (r.tag||'') + '</div>' +
     buildWorkflowSteps(r) +
     '</div>';
 }
@@ -5088,11 +5107,11 @@ function buildWorkflowHtml(r) {
 function buildWorkflowSteps(r) {
   var steps = [
     { num:1, label:'Fiche suiveuse reçue', done:true, date:r.date, color:'#375623', icon:'&#9989;' },
-    { num:2, label:'Départ ETNA — Peinture', done:false, color:'#C55A11', icon:'&#127912;',
+    { num:2, label:'Départ ETNA -- Peinture', done:false, color:'#C55A11', icon:'&#127912;',
       action:'prefillEtna', btnLabel:'&#127912; Départ ETNA' },
-    { num:3, label:'Retour ETNA — Check qualité', done:false, color:'#7030A0', icon:'&#128229;',
+    { num:3, label:'Retour ETNA -- Check qualité', done:false, color:'#7030A0', icon:'&#128229;',
       action:'prefillRetourEtna', btnLabel:'&#128229; Retour ETNA' },
-    { num:4, label:'Équipement terminé — Dépôt', done:false, color:'#0F6E56', icon:'&#9989;',
+    { num:4, label:'Équipement terminé -- Dépôt', done:false, color:'#0F6E56', icon:'&#9989;',
       action:'prefillTermine', btnLabel:'&#9989; Équipement terminé' },
   ];
 
@@ -5228,7 +5247,7 @@ function viewRecord(id) {
       {l:'Shutdown',        v: r.shutdown},
       {l:'Date',            v: r.date ? r.date + ' à ' + r.heure : null},
       {l:'Destinataires',   v: r.dest && r.dest.length ? r.dest.join(', ') : null},
-    ].filter(f => f.v && f.v !== '—');
+    ].filter(f => f.v && f.v !== '--');
 
     const rows = fields.map(f =>
       `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
@@ -5255,7 +5274,7 @@ function viewRecord(id) {
       <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:430px;max-height:85vh;display:flex;flex-direction:column">
         <div style="background:${c.fg};border-radius:20px 20px 0 0;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
           <div>
-            <div style="font-size:18px;font-weight:700;color:#fff">${r.tag || '—'}</div>
+            <div style="font-size:18px;font-weight:700;color:#fff">${r.tag || '--'}</div>
             <div style="font-size:12px;color:rgba(255,255,255,.7)">${r.type} · ${r.date} ${r.heure}</div>
           </div>
           <div style="background:${c.bg};color:${c.fg};border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700">${c.icon}</div>
@@ -5296,7 +5315,7 @@ function editRecord(id) {
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
     overlay.innerHTML = `
       <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px">
-        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px">Modifier — ${r.tag||'—'}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px">Modifier -- ${r.tag||'--'}</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">TAG</div>
@@ -5400,11 +5419,11 @@ function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
         </div>
       </div>
       <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;font-family:monospace;color:#15803d;line-height:1.8">
-        TAG : <strong>${tag||'—'}</strong><br>
+        TAG : <strong>${tag||'--'}</strong><br>
         ${woUsine?'WO Usine : <strong>'+woUsine+'</strong><br>':''}
         ${woMtc?'WO MTC : <strong>'+woMtc+'</strong><br>':''}
-        Statut : <strong>${statut||'—'}</strong><br>
-        Zone : <strong>${loc||'—'}</strong><br>
+        Statut : <strong>${statut||'--'}</strong><br>
+        Zone : <strong>${loc||'--'}</strong><br>
         ${zone?'Zone depot : <strong>'+zone+'</strong>':''}
       </div>
       <div style="display:flex;gap:10px;margin-top:4px">
@@ -5416,9 +5435,9 @@ function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 
-// ══════════════════════════════════════════════════════════
-// ── TIMELINE ACTIVITÉ DU JOUR ─────────────────────────────
-// ══════════════════════════════════════════════════════════
+// ========================================
+// ------ TIMELINE ACTIVITÉ DU JOUR ------
+// ========================================
 async function renderTimeline() {
   const list    = document.getElementById('tl-list');
   const countEl = document.getElementById('tl-count');
@@ -5436,7 +5455,7 @@ async function renderTimeline() {
   const records = await dbLoad();
   const dayRecs = records.filter(r => r.date === selDate).sort((a,b) => (a.heure||'').localeCompare(b.heure||''));
 
-  countEl.textContent = dayRecs.length + ' action' + (dayRecs.length!==1?'s':'') + ' — ' + selDate;
+  countEl.textContent = dayRecs.length + ' action' + (dayRecs.length!==1?'s':'') + ' -- ' + selDate;
 
   if (dayRecs.length === 0) {
     list.innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)">' +
@@ -5454,15 +5473,15 @@ async function renderTimeline() {
       const col = TYPE_COLORS2[r.type] || 'var(--navy)';
       return `<div style="display:flex;gap:12px;align-items:flex-start;padding:0 0 16px;position:relative">
         <div style="flex-shrink:0;width:56px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;z-index:1">
-          <div style="font-size:11px;font-weight:700;color:var(--muted)">${r.heure||'—'}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted)">${r.heure||'--'}</div>
           <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${TYPE_ICONS[r.type]||'?'}</div>
         </div>
         <div style="flex:1;background:#fff;border-radius:12px;padding:10px 12px;border:1px solid var(--border);margin-top:2px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700;color:${col}">${r.tag||'—'}</span>
+            <span style="font-size:13px;font-weight:700;color:${col}">${r.tag||'--'}</span>
             <span style="font-size:10px;background:var(--grey);padding:2px 7px;border-radius:10px;color:var(--muted);font-weight:600">${r.type}</span>
           </div>
-          ${r.wo?`<div style="font-size:11px;color:var(--muted)">WO ${r.wo}${r.wg?' — '+r.wg:''}</div>`:''}
+          ${r.wo?`<div style="font-size:11px;color:var(--muted)">WO ${r.wo}${r.wg?' -- '+r.wg:''}</div>`:''}
           ${r.statut||r.shutdown?`<div style="font-size:11px;color:var(--text);margin-top:2px">${r.statut||r.shutdown}</div>`:''}
           ${r.loc?`<div style="font-size:10px;color:var(--navy);margin-top:2px">&#128205; ${r.loc}</div>`:''}
           ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700;margin-top:2px">QTY : ${r.qty}</div>`:''}
@@ -5479,12 +5498,12 @@ async function exportTimelinePDF() {
   const dayRecs   = records.filter(r=>r.date===selDate).sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
 
   const rows = dayRecs.map(r=>`<tr>
-    <td style="padding:7px 10px;font-size:12px;font-weight:700">${r.heure||'—'}</td>
+    <td style="padding:7px 10px;font-size:12px;font-weight:700">${r.heure||'--'}</td>
     <td style="padding:7px 10px;font-size:11px"><span style="padding:2px 7px;border-radius:4px;background:#eee;font-weight:600">${r.type}</span></td>
-    <td style="padding:7px 10px;font-size:12px;font-weight:700;color:#1F3864">${r.tag||'—'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.wo||'—'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.wg||'—'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.statut||r.shutdown||'—'}</td>
+    <td style="padding:7px 10px;font-size:12px;font-weight:700;color:#1F3864">${r.tag||'--'}</td>
+    <td style="padding:7px 10px;font-size:11px">${r.wo||'--'}</td>
+    <td style="padding:7px 10px;font-size:11px">${r.wg||'--'}</td>
+    <td style="padding:7px 10px;font-size:11px">${r.statut||r.shutdown||'--'}</td>
   </tr>`).join('');
 
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
@@ -5500,9 +5519,9 @@ async function exportTimelinePDF() {
     <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
   </div>
   <h1>Activite du ${selDate}</h1>
-  <p style="font-size:12px;color:#666">${dayRecs.length} action(s) — Emmanuel ROSA ASIK — PRNC Maintenance Centrale P50</p>
+  <p style="font-size:12px;color:#666">${dayRecs.length} action(s) -- Emmanuel ROSA ASIK -- PRNC Maintenance Centrale P50</p>
   <table><tr><th>Heure</th><th>Type</th><th>TAG</th><th>WO</th><th>Workgroup</th><th>Statut</th></tr>${rows}</table>
-  <div class="footer">PRNC Field — ${selDate}</div>
+  <div class="footer">PRNC Field -- ${selDate}</div>
   </body></html>`;
 
   const win=window.open('','_blank');
@@ -5511,7 +5530,7 @@ async function exportTimelinePDF() {
 
 
 
-// ── PEINTURE ETNA — Workgroup + Type traitement ───────────
+// ------ PEINTURE ETNA -- Workgroup + Type traitement ------
 var _ptWG    = '';
 var _ptTrait = '';
 var _ptTraitLabel = '';
@@ -5538,8 +5557,8 @@ function renderEtnaContacts(wg) {
   const box = document.getElementById('pt-contacts');
   if (!box) return;
 
-  // ── Destinataires principaux ──────────────────────────
-  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires — ${data.label}</span><span class="contacts-hint">Coche/décoche</span></div>`;
+  // ------ Destinataires principaux ------
+  let html = `<div class="contacts-hdr"><span style="font-weight:700;color:var(--text)">Destinataires -- ${data.label}</span><span class="contacts-hint">Coche/décoche</span></div>`;
   toContacts.forEach(c => {
     const id   = btoa(c.mail).replace(/[=+/]/g,'');
     const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -5551,9 +5570,9 @@ function renderEtnaContacts(wg) {
     html += `</div>`;
   });
 
-  // ── CC cochables ──────────────────────────────────────
+  // ------ CC cochables ------
   if (ccContacts.length > 0) {
-    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC — Coche/décoche</div>`;
+    html += `<div class="contacts-hdr" style="background:var(--llblue);font-size:10px;color:var(--navy2)">CC -- Coche/décoche</div>`;
     ccContacts.forEach(c => {
       const id   = 'cc-' + btoa(c.mail).replace(/[=+/]/g,'');
       const init = c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -5593,7 +5612,7 @@ function setPtTrait(key, label) {
 }
 
 
-// ── INIT ──────────────────────────────────────────────────
+// ------ INIT ------
 initSemaines();
 updateStats();
 checkRelances();
@@ -5620,25 +5639,25 @@ checkRelances();
           <div style="margin:0;background:#f0f4f8;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;padding:16px;box-sizing:border-box">
             <div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.12);text-align:center">
               <div style="background:#1F3864;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-                <div style="font-size:16px;font-weight:700">Signature — Usage direct</div>
+                <div style="font-size:16px;font-weight:700">Signature -- Usage direct</div>
                 <div style="font-size:11px;opacity:.7;margin-top:3px">${d.wg || ''}</div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;text-align:left">
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">TAG</div>
-                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.tag||'—'}</div>
+                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.tag||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">WO</div>
-                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.wo||'—'}</div>
+                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.wo||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">QTY</div>
-                  <div style="font-size:13px;font-weight:700;color:#C00000">${d.qty||'—'}</div>
+                  <div style="font-size:13px;font-weight:700;color:#C00000">${d.qty||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">Shutdown</div>
-                  <div style="font-size:12px;font-weight:700;color:#555">${d.shutdown||'—'}</div>
+                  <div style="font-size:12px;font-weight:700;color:#555">${d.shutdown||'--'}</div>
                 </div>
               </div>
               <div style="border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fafafa">
@@ -5646,8 +5665,8 @@ checkRelances();
                 <img src="${d.img}" style="width:100%;height:auto;display:block">
               </div>
               <div style="background:#e8f5e9;border-radius:8px;padding:10px;font-size:12px;color:#2e7d32">
-                <div style="font-weight:700">Signé par : ${d.nom||'—'}</div>
-                <div style="margin-top:3px;color:#555">${d.date||'—'}</div>
+                <div style="font-weight:700">Signé par : ${d.nom||'--'}</div>
+                <div style="margin-top:3px;color:#555">${d.date||'--'}</div>
               </div>
             </div>
           </div>`;
@@ -5668,7 +5687,7 @@ initPIN();
   if(m) m.value = now.getMonth()+1;
 })();
 
-// Si URL contient ?etiq=1 → afficher étiquette | ?fiche= → afficher fiche
+// Si URL contient ?etiq=1 -> afficher étiquette | ?fiche= -> afficher fiche
 (function checkURL() {
   const p = new URLSearchParams(window.location.search);
   if (p.get('etiq') === '1') {
@@ -5682,5 +5701,132 @@ initPIN();
     } catch(e) { console.warn('Fiche URL err', e); }
   }
 })();
+
+// ========================================
+// RELANCES -- Équipements retour demandeur
+// ========================================
+
+async function renderRelances() {
+  var list = document.getElementById('relances-list');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">&#9203; Chargement...</div>';
+  var now = new Date();
+  try {
+    var data = await supaFetch('historique?type=eq.TERMINE&order=created_at.desc&limit=200');
+    var records = (data || []).filter(function(r) {
+      var st = (r.statut || '').toLowerCase();
+      return (st.indexOf('retour') >= 0 || st.indexOf('demandeur') >= 0) && st.indexOf('recupere') < 0;
+    });
+    if (!records.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px;margin-bottom:8px">&#9989;</div>Aucune relance en attente</div>';
+      updateRelanceBadge(0);
+      return;
+    }
+    records.forEach(function(r) {
+      var d = new Date(r.created_at || r.date);
+      r._jours = Math.floor((now - d) / 86400000);
+    });
+    records.sort(function(a,b){ return b._jours - a._jours; });
+    var urgents = records.filter(function(r){ return r._jours >= 3; });
+    var recents = records.filter(function(r){ return r._jours < 3; });
+    updateRelanceBadge(urgents.length);
+    var html = '';
+    if (urgents.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#C55A11;text-transform:uppercase;padding:8px 0 4px">&#128276; A relancer (&ge; 3 jours) &mdash; ' + urgents.length + '</div>';
+      urgents.forEach(function(r){ html += renderRelanceCard(r, true); });
+    }
+    if (recents.length) {
+      html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:12px 0 4px;margin-top:4px">&#9203; En attente recente (&lt; 3 jours) &mdash; ' + recents.length + '</div>';
+      recents.forEach(function(r){ html += renderRelanceCard(r, false); });
+    }
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div style="color:red;padding:20px">Erreur : ' + e.message + '</div>';
+  }
+}
+
+function renderRelanceCard(r, urgent) {
+  var tag   = r.tag || '--';
+  var wo    = r.wo  || '--';
+  var wg    = r.wg  || '';
+  var dest  = r.desc ? r.desc.replace('Demandeur : ', '') : (r.motif || '--');
+  var jours = r._jours;
+  var date  = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
+  var statut = r.statut || r.status || '--';
+  var woUsine = r.woMtc || r.wo_usine || '';
+
+  // Couleur bordure selon urgence
+  var borderColor = urgent ? '#C55A11' : '#b0bec5';
+  var bgColor     = urgent ? '#FFF8F0' : '#fafafa';
+  var joursBadge  = urgent
+    ? '<span style="background:#FCE4D6;color:#C55A11;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">' + jours + ' jour' + (jours>1?'s':'') + '</span>'
+    : '<span style="background:#f0f0f0;color:#888;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">' + jours + ' jour' + (jours>1?'s':'') + '</span>';
+
+  // Mail de relance
+  var sujet = encodeURIComponent('[RELANCE] Équipement disponible -- ' + tag + ' -- WO ' + wo);
+    var ligne1 = 'Bonjour ' + dest + ',';
+  var ligne2 = 'Votre equipement est disponible depuis ' + jours + ' jour' + (jours>1?'s':'') + ' et attend recuperation a la Maintenance Centrale P50.';
+  var ligne3 = 'Detail :';
+  var ligne4 = 'TAG       : ' + tag;
+  var ligne5 = 'WO MTC    : ' + wo;
+  var ligne6 = woUsine ? 'WO Usine  : ' + woUsine : '';
+  var ligne7 = 'Statut    : ' + statut;
+  var ligne8 = 'Disponible depuis le : ' + date;
+  var ligne9 = 'Merci de venir recuperer votre equipement dans les meilleurs delais.';
+  var ligne10 = 'Cordialement,';
+  var ligne11 = 'Emmanuel ROSA ASIK';
+  var ligne12 = 'Prepose aux pieces -- Maintenance Centrale P50';
+  var ligne13 = 'PRONY RESOURCES NC';
+  var corps_txt = [ligne1,'',ligne2,'',ligne3,ligne4,ligne5,ligne6||null,ligne7,ligne8,'',ligne9,'',ligne10,ligne11,ligne12,ligne13].filter(function(l){return l!==null;}).join('\n');
+  var corps = encodeURIComponent(corps_txt);
+  var mailTo = 'mailto:?subject=' + sujet + '&body=' + corps;
+
+  return '<div style="background:' + bgColor + ';border:1.5px solid ' + borderColor + ';border-radius:10px;padding:12px 14px;margin-bottom:6px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:700;color:#1F3864">' + tag + '</div>' +
+        '<div style="font-size:11px;color:#666;margin-top:2px">WO ' + wo + (woUsine ? ' · Usine ' + woUsine : '') + ' · ' + wg + '</div>' +
+      '</div>' +
+      joursBadge +
+    '</div>' +
+    '<div style="font-size:12px;margin-bottom:10px">' +
+      '<div><span style="color:#888;font-size:10px;text-transform:uppercase;font-weight:700">Destinataire</span></div>' +
+      '<div style="font-weight:600;color:#333;margin-top:2px">&#128100; ' + dest + '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:#888;margin-bottom:10px">Notifié le ' + date + '</div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<a href="' + mailTo + '" style="flex:1;background:#1F3864;color:#fff;padding:9px;border-radius:8px;text-align:center;font-size:12px;font-weight:700;text-decoration:none">&#9993; Relancer par mail</a>' +
+      '<button onclick="marquerRecupere(' + JSON.stringify(r.id) + ',this)" style="background:#E8F5E9;color:#375623;border:none;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">&#9989; Récupéré</button>' +
+    '</div>' +
+  '</div>';
+}
+
+async function marquerRecupere(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '&#9203;';
+  try {
+    await supaFetch('historique?id=eq.' + id, 'PATCH', {
+      statut: 'RECUPERE',
+      recovered_at: new Date().toISOString()
+    });
+    var card = btn.parentElement.parentElement;
+    if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
+    setTimeout(renderRelances, 800);
+  } catch(e) {
+    btn.textContent = '&#10060;';
+    btn.disabled = false;
+  }
+}
+
+function updateRelanceBadge(count) {
+  var el = document.getElementById('relance-badge-home');
+  if (!el) return;
+  if (count > 0) {
+    el.innerHTML = '&#128276; <strong style="color:#C55A11">' + count + '</strong> à relancer';
+  } else {
+    el.textContent = 'Retour demandeur';
+  }
+}
+
 </script>
 </body>
