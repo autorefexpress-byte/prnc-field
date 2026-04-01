@@ -5758,7 +5758,7 @@ function prefillEtna(wo, tag, wg, woUsine) {
   show('s-peinture');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
-    if (wgKey) setWG('pt', wgKey);
+    if (wgKey) setPtWG(wgKey === 'chaud' ? 'chaud' : 'repar');
     if (wo)      { var el=document.getElementById('pt-wo');  if(el) el.value=wo; }
     if (woUsine) { var el=document.getElementById('pt-wo-usine')||document.getElementById('pt-wousine'); if(el) el.value=woUsine; }
     if (tag)     { var el=document.getElementById('pt-tag'); if(el) el.value=tag; }
