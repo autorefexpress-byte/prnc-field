@@ -5036,13 +5036,15 @@ const ETNA_STATUT_LABELS = {
   recu    : 'Reçu ETNA',
   encours : 'En cours',
   termine : 'Terminé',
-  livre   : 'Livré PRNC'
+  livre   : 'Livré PRNC',
+  recumc  : 'Réceptionné MC'
 };
 const ETNA_STATUT_COLORS = {
   recu    : 'var(--navy2)',
   encours : 'var(--orange)',
   termine : 'var(--green)',
-  livre   : 'var(--teal)'
+  livre   : 'var(--teal)',
+  recumc  : 'var(--green)'
 };
 
 function setEtnaStatut(s) {
@@ -5152,6 +5154,41 @@ async function saveEtnaUpdate() {
   }, 300);
 }
 
+// Réceptionner un équipement revenu d'ETNA → pré-remplir Retour ETNA
+function receptionnerDepuisEtna(id) {
+  dbLoad().then(function(records) {
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+
+    // Confirmer
+    if (!confirm('Réceptionner ' + (r.tag||'--') + ' revenu d\'ETNA ?\nLe formulaire Retour ETNA va s\'ouvrir pré-rempli.')) return;
+
+    // Trouver le WO, TAG, WR, WG depuis l'enregistrement
+    var wo      = r.wo      || '';
+    var tag     = r.tag     || '';
+    var wr      = r.wr      || '';
+    var wg      = r.wg      || '';
+    var sc      = r.sc      || '';
+    var woUsine = r.woUsine || '';
+
+    // Utiliser prefillRetourEtna qui existe déjà
+    prefillRetourEtna(wo, tag, wr, wg, woUsine);
+
+    // Marquer comme réceptionné dans Supabase
+    supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
+      etna_statut: 'Réceptionné MC',
+      etna_updated_at: new Date().toISOString()
+    }).catch(function(e){ console.warn('ETNA reception err', e); });
+
+    // Mettre à jour localStorage
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      var idx = local.findIndex(function(x){ return x.id === id; });
+      if (idx >= 0) { local[idx].etnaStatut = 'Réceptionné MC'; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
+    } catch(e) {}
+  });
+}
+
 // Rendu vue PRNC (onglet Travaux ETNA)
 async function renderEtnaSuivi() {
   var list    = document.getElementById('etna-list');
@@ -5182,7 +5219,7 @@ async function renderEtnaSuivi() {
 
   list.innerHTML = etnaRecs.map(function(r) {
     var statut    = r.etnaStatut || 'En attente';
-    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé'));
+    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé') || r.etnaStatut.includes('Réceptionné'));
     var statColor = done ? '#375623' : (r.etnaStatut ? '#C55A11' : '#888');
     var statBg    = done ? '#E2EFDA' : (r.etnaStatut ? '#FCE4D6' : '#f0f0f0');
     var borderCol = done ? '#375623' : (r.etnaStatut ? '#C55A11' : '#e0e0e0');
@@ -5228,8 +5265,14 @@ async function renderEtnaSuivi() {
           photos.slice(1,4).map(function(p){ return '<img src="' + p + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0">'; }).join('') +
           (photos.length > 4 ? '<div style="width:60px;height:60px;border-radius:6px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888;flex-shrink:0">+' + (photos.length-4) + '</div>' : '') +
         '</div>' : '') +
-        // Bouton modifier
-        '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="width:100%;padding:10px;background:#C55A11;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Mettre à jour</button>' +
+        // Bouton selon statut
+        (r.etnaStatut && r.etnaStatut.includes('Livré')
+          ? '<div style="display:flex;gap:8px;margin-top:4px">' +
+              '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="flex:1;padding:10px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>' +
+              '<button onclick="receptionnerDepuisEtna(\'' + r.id + '\')" style="flex:2;padding:10px;background:#375623;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128229; Réceptionner</button>' +
+            '</div>'
+          : '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="width:100%;padding:10px;background:#C55A11;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Mettre à jour</button>'
+        ) +
       '</div>' +
     '</div>';
   }).join('');
@@ -5263,7 +5306,7 @@ async function renderEtnaPrestataire() {
   }
 
   list.innerHTML = etnaRecs.map(function(r) {
-    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé'));
+    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé') || r.etnaStatut.includes('Réceptionné'));
     var borderCol = done ? '#375623' : '#C55A11';
     var statLabel = r.etnaStatut || 'En attente de prise en charge';
     var statColor = done ? '#375623' : '#C55A11';
