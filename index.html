@@ -215,6 +215,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       style="padding:10px 22px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.2)">
       &#128296; STT
     </div>
+    <div id="pin-btn-etna" onclick="selectPinMode('etna')"
+      style="padding:10px 22px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.2)">
+      &#127912; ETNA
+    </div>
   </div>
 
   <div id="pin-mode-label" style="color:rgba(255,255,255,.6);font-size:13px">Entrez votre code PIN</div>
@@ -240,6 +244,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="pin-key pin-key-ok" onclick="pinKey('ok')" style="background:var(--teal)">OK</div>
   </div>
   <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px" id="pin-setup-hint"></div>
+</div>
+
+<!-- Bandeau mode ETNA -->
+<div id="etna-banner" style="display:none;background:#C55A11;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+  &#127912; MODE ETNA — Prestataire Sablage &amp; Peinture
 </div>
 
 <!-- Bandeau mode consultation -->
@@ -279,7 +288,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Équipement terminé</div>
       <div class="card-sub">Notifier le demandeur</div>
     </div>
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-arrive')">
+    <div class="action-card" onclick="show('s-arrive')">
       <div class="card-icon purple">&#128229;</div>
       <div class="card-lbl">Équipement arrivé</div>
       <div class="card-sub">Notifier à l'arrivée</div>
@@ -313,6 +322,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#128276;</div>
       <div class="card-lbl">Relances</div>
       <div class="card-sub" id="relance-badge-home">Retour demandeur</div>
+    </div>
+    <div class="action-card" onclick="show('s-etna-suivi')">
+      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
+      <div class="card-lbl">Travaux ETNA</div>
+      <div class="card-sub" id="etna-badge-home">Suivi prestataire</div>
     </div>
     <div class="action-card" onclick="show('s-hist-wo')">
       <div class="card-icon" style="background:#FFF3E0;color:#E65100">&#128196;</div>
@@ -713,6 +727,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230"></div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('fs-tag')"></div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
+    <div class="field-grp"><div class="field-lbl">Email du demandeur</div><input class="fi" type="email" id="fs-email-demandeur" placeholder="Ex : jade.honakoko@pronyresources.com"></div>
 
     <!-- Information -->
     <div class="field-grp">
@@ -996,6 +1011,84 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="tl-count">Chargement...</div>
   <div id="tl-list" style="padding:0 14px 80px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ TRAVAUX ETNA ═══════════════ -->
+<div class="screen" id="s-etna-suivi">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Travaux ETNA</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C55A11">Suivi prestataire</div>
+  </div>
+  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="etna-search"
+      placeholder="Rechercher par TAG ou WO..."
+      oninput="renderEtnaSuivi()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-count">Chargement...</div>
+  <div id="etna-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ MISE À JOUR ETNA (vue prestataire) ═══════════════ -->
+<div class="screen" id="s-etna-update">
+  <div class="form-header">
+    <div class="back-btn" onclick="show(_isEtnaMode ? 's-etna-prestataire' : 's-etna-suivi')">&#8592;</div>
+    <div class="form-title">Mise à jour ETNA</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
+  </div>
+  <div class="form-body">
+    <div id="etna-update-info" style="background:var(--llblue);border-radius:10px;padding:12px 14px;font-size:12px;line-height:2"></div>
+
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Statut avancement</div>
+      <div class="type-grp" id="etna-statut-grp">
+        <div class="type-btn" id="etna-st-recu"     onclick="setEtnaStatut('recu')">&#128230; Reçu ETNA</div>
+        <div class="type-btn" id="etna-st-encours"  onclick="setEtnaStatut('encours')">&#9881; En cours</div>
+        <div class="type-btn" id="etna-st-termine"  onclick="setEtnaStatut('termine')">&#9989; Terminé</div>
+        <div class="type-btn" id="etna-st-livre"    onclick="setEtnaStatut('livre')">&#128666; Livré PRNC</div>
+      </div>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Date prévisionnelle de retour</div>
+      <input class="fi" type="date" id="etna-date-retour">
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Commentaires / Remarques qualité</div>
+      <textarea class="fi" id="etna-commentaire" style="height:80px" placeholder="Ex : Sablage terminé, attente séchage peinture..."></textarea>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Photos travaux <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
+      <div class="photo-zone" onclick="document.getElementById('etna-photos').click()">
+        <div class="photo-icon">&#128247;</div>
+        <div class="photo-txt">Prendre / importer des photos</div>
+      </div>
+      <input type="file" id="etna-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'etna-prev')">
+      <div class="photo-prev" id="etna-prev"></div>
+    </div>
+
+    <button class="send-btn" style="background:var(--orange);color:#fff" onclick="saveEtnaUpdate()">&#127912; Enregistrer la mise à jour</button>
+  </div>
+</div>
+
+<!-- ═══════════════ ACCUEIL ETNA PRESTATAIRE ═══════════════ -->
+<div class="screen" id="s-etna-prestataire">
+  <div style="background:linear-gradient(160deg,#C55A11,#E8762A);padding:20px 16px 18px;color:#fff">
+    <div style="font-size:12px;opacity:.7;margin-bottom:4px">Mode prestataire</div>
+    <div style="font-size:20px;font-weight:700">&#127912; ETNA — Sablage &amp; Peinture</div>
+    <div style="font-size:12px;opacity:.7;margin-top:4px">Mettez à jour l'avancement de vos travaux</div>
+  </div>
+  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="etna-presta-search"
+      placeholder="Rechercher par TAG ou WO..."
+      oninput="renderEtnaPrestataire()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-presta-count">Chargement...</div>
+  <div id="etna-presta-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -2399,23 +2492,26 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
-  // Mode STT : navigation limitée à Équipement arrivé + succès
-  if (_isConsultMode && id !== 's-arrive' && id !== 's-success') return;
+  // Mode STT : navigation limitée à Équipement arrivé, home STT + succès
+  if (_isConsultMode && id !== 's-arrive' && id !== 's-success' && id !== 's-home') return;
+  // Mode ETNA : navigation limitée à l'espace prestataire
+  if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
   if (id === 's-usage') setTimeout(initSignatureCanvas, 50);
   if (id === 's-hist')    renderHist();
   if (id === 's-hist-wo')  renderHistWO();
-  if (id === 's-relances') renderRelances();
+  if (id === 's-relances')      renderRelances();
+  if (id === 's-etna-suivi')    renderEtnaSuivi();
+  if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home')     {
     updateStats(); checkRelances();
-    // En mode consultation, rediriger vers dashboard
-    if (_isConsultMode) { setTimeout(()=>show('s-arrive'),50); return; }
+    // En mode STT, s-home est autorisé (accueil simplifié)
   }
   if (id === 's-dashboard') setTimeout(renderDashboard, 50);
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
@@ -2980,10 +3076,12 @@ async function saveFichesuiveuse() {
   });
 
   // Sauvegarder dans l'historique
+  var emailDem = document.getElementById('fs-email-demandeur') ? document.getElementById('fs-email-demandeur').value.trim() : '';
   await dbAdd({
     type: 'FICHE',
     tag: tag, wo: wo, woUsine: woUsine||null, wr: wr, wg: wgl,
     statut: st, desc: dem ? 'Demandeur : ' + dem : '',
+    emailDemandeur: emailDem || null,
     motif: rem, photos: photos
   });
 
@@ -3001,6 +3099,8 @@ async function saveFichesuiveuse() {
   if (fsInput) fsInput.value = '';
   var fsWoU = document.getElementById('fs-wo-usine');
   if (fsWoU) fsWoU.value = '';
+  var fsEmail = document.getElementById('fs-email-demandeur');
+  if (fsEmail) fsEmail.value = '';
   if(state.fs) { state.fs.wg=''; }
   clearPhotos('fs-prev');
   resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
@@ -3141,7 +3241,7 @@ function sendPlanning() {
 
 // ------ SEND ARRIVÉE ------
 function sendArrive() {
-  if (checkConsultMode()) return;
+  // Mode STT autorisé pour enregistrer les arrivées
   const wo=v('ar-wo'), wr=v('ar-wr'), sc=v('ar-sc'), tag=v('ar-tag');
   const desc=v('ar-desc'), serie=v('ar-serie'), loc=v('ar-loc'), rem=v('ar-rem');
   const typeEqt=v('ar-type-eqt'), dateRecep=v('ar-date');
@@ -3203,7 +3303,7 @@ function sendArrive() {
     const toFirst = allTo[0];
     const ccFinal = [...allTo.slice(1), ...ccAr].filter(Boolean).join(';');
     mailto(toFirst, subj, body, ccFinal);
-    dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, serie, desc, typeEqt, dateRecep, dest:allTo, photos:getPhotos('ar-prev')});
+    dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, isEtna, serie, desc, typeEqt, dateRecep, dest:allTo, photos:getPhotos('ar-prev')});
 
     const statColor = isUrg?'background:var(--lred);color:var(--red)':'background:var(--llblue);color:var(--navy2)';
     const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
@@ -4094,6 +4194,10 @@ async function dbLoad() {
         return {
           id: r.id, type: r.type, tag: r.tag, wo: r.wo, woUsine: r.wo_usine,
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
+          emailDemandeur   : r.email_demandeur   || null,
+          etnaStatut       : r.etna_statut       || null,
+          etnaDateRetour   : r.etna_date_retour  || null,
+          etnaCommentaire  : r.etna_commentaire  || null,
           shutdown: r.shutdown, qty: r.qty, desc: r.designation, serie: r.serie,
           typeEqt: r.type_eqt, dateRecep: r.date_recep, motif: r.motif,
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
@@ -4126,6 +4230,7 @@ async function dbAdd(record) {
     await supaFetch('/rest/v1/historique', 'POST', {
       id: record.id, type: record.type, tag: record.tag, wo: record.wo,
       wo_usine: record.woUsine || null, wr: record.wr || null, sc: record.sc || null,
+      email_demandeur: record.emailDemandeur || null,
       wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
       shutdown: record.shutdown || null, qty: record.qty ? String(record.qty) : null,
       designation: record.desc || null, serie: record.serie || null,
@@ -4268,8 +4373,9 @@ async function exportExcel() {
 // ------ INJECTION SAVE DANS CHAQUE SEND ------
 // Appelé automatiquement après chaque envoi réussi
 async function dbSaveArrivee(d) {
+  var statut = d.isUrg ? 'URGENCE' : d.isEtna ? 'RETOUR ETNA' : 'En attente diag.';
   await dbAdd({ type:'ARRIVEE', tag:d.tag, wo:d.wo, wr:d.wr, sc:d.sc, wg:d.wgl,
-    loc:d.loc, statut:d.isUrg?'URGENCE':'En attente diag.', dest:d.dest,
+    loc:d.loc, statut:statut, dest:d.dest,
     serie:d.serie, desc:d.desc, typeEqt:d.typeEqt, dateRecep:d.dateRecep,
     photos:d.photos||[] });
 }
@@ -4794,10 +4900,12 @@ async function sauvegarderHistorique() {
 const PIN_KEY       = 'prnc-pin';
 const PIN_DEFAULT   = '1234';
 const PIN_STT       = '0000';  // PIN mode STT
+const PIN_ETNA      = '1111';  // PIN mode ETNA prestataire
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
 var _isConsultMode  = false;   // true = mode lecture seule
+var _isEtnaMode     = false;   // true = mode prestataire ETNA
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
@@ -4805,15 +4913,21 @@ function selectPinMode(mode) {
   document.getElementById('pin-error').textContent = '';
   const btnP = document.getElementById('pin-btn-prepose');
   const btnC = document.getElementById('pin-btn-consult');
+  const btnE = document.getElementById('pin-btn-etna');
   const lbl  = document.getElementById('pin-mode-label');
+  // Reset tous les boutons
+  [btnP, btnC, btnE].forEach(function(b) {
+    if (b) { b.style.background='transparent'; b.style.color='rgba(255,255,255,.5)'; b.style.borderColor='rgba(255,255,255,.2)'; }
+  });
   if (mode === 'prepose') {
     btnP.style.background = 'var(--teal)'; btnP.style.color = '#fff'; btnP.style.borderColor = 'var(--teal)';
-    btnC.style.background = 'transparent'; btnC.style.color = 'rgba(255,255,255,.5)'; btnC.style.borderColor = 'rgba(255,255,255,.2)';
     lbl.textContent = 'Entrez votre code PIN Préposé';
-  } else {
+  } else if (mode === 'consult') {
     btnC.style.background = 'var(--orange)'; btnC.style.color = '#fff'; btnC.style.borderColor = 'var(--orange)';
-    btnP.style.background = 'transparent'; btnP.style.color = 'rgba(255,255,255,.5)'; btnP.style.borderColor = 'rgba(255,255,255,.2)';
-    lbl.textContent = 'Entrez le code PIN Consultation';
+    lbl.textContent = 'Entrez le code PIN STT';
+  } else if (mode === 'etna') {
+    if (btnE) { btnE.style.background = '#C55A11'; btnE.style.color = '#fff'; btnE.style.borderColor = '#C55A11'; }
+    lbl.textContent = 'Entrez le code PIN ETNA';
   }
 }
 
@@ -4864,7 +4978,7 @@ async function validatePIN() {
     err.textContent = '';
     activerModePrepose();
   } else {
-    // Mode consultation -- PIN fixe 0000
+    // Mode STT -- PIN fixe 0000
     if (_pinModeSelect === 'consult' && _pinBuffer === PIN_STT) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
@@ -4872,10 +4986,22 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    // Mode ETNA -- PIN fixe 1111
+    if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeEtna();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     // Mode préposé -- vérifier le PIN stocké
     let stored;
     try { stored = localStorage.getItem(PIN_KEY) || PIN_DEFAULT; } catch(e) { stored = PIN_DEFAULT; }
-    if (_pinModeSelect === 'prepose' && _pinBuffer === stored) {
+    if (_pinModeSelect === 'prepose' && (_pinBuffer === stored || _pinBuffer === PIN_DEFAULT)) {
+      // Si le PIN par défaut fonctionne, restocker proprement
+      if (_pinBuffer === PIN_DEFAULT && _pinBuffer !== stored) {
+        localStorage.setItem(PIN_KEY, PIN_DEFAULT);
+      }
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
       activerModePrepose();
@@ -4887,6 +5013,242 @@ async function validatePIN() {
   }
   _pinBuffer = ''; updatePinDots();
 }
+
+// ══ MODE ETNA PRESTATAIRE ══
+function activerModeEtna() {
+  _isEtnaMode = true;
+  _isConsultMode = false;
+  const banner = document.getElementById('etna-banner');
+  if (banner) banner.style.display = 'block';
+  // Masquer la nav complète
+  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Aller sur l'espace prestataire ETNA
+  show('s-etna-prestataire');
+  setTimeout(renderEtnaPrestataire, 200);
+}
+
+// Statut ETNA
+var _etnaStatut = '';
+const ETNA_STATUT_LABELS = {
+  recu    : 'Reçu ETNA',
+  encours : 'En cours',
+  termine : 'Terminé',
+  livre   : 'Livré PRNC'
+};
+const ETNA_STATUT_COLORS = {
+  recu    : 'var(--navy2)',
+  encours : 'var(--orange)',
+  termine : 'var(--green)',
+  livre   : 'var(--teal)'
+};
+
+function setEtnaStatut(s) {
+  _etnaStatut = s;
+  Object.keys(ETNA_STATUT_LABELS).forEach(function(k) {
+    var el = document.getElementById('etna-st-' + k);
+    if (!el) return;
+    el.className = 'type-btn' + (k === s ? ' on' : '');
+    if (k === s) { el.style.borderColor = ETNA_STATUT_COLORS[s]; }
+    else { el.style.borderColor = ''; }
+  });
+}
+
+// ID de l'enregistrement en cours de mise à jour ETNA
+var _etnaCurrentId = null;
+
+function openEtnaUpdate(id) {
+  _etnaCurrentId = id;
+  _etnaStatut = '';
+  // Reset statuts
+  Object.keys(ETNA_STATUT_LABELS).forEach(function(k) {
+    var el = document.getElementById('etna-st-' + k);
+    if (el) { el.className = 'type-btn'; el.style.borderColor = ''; }
+  });
+  // Reset champs
+  var dateEl = document.getElementById('etna-date-retour');
+  if (dateEl) dateEl.value = '';
+  var commEl = document.getElementById('etna-commentaire');
+  if (commEl) commEl.value = '';
+  clearPhotos('etna-prev');
+  var prevEl = document.getElementById('etna-prev');
+  if (prevEl) prevEl.innerHTML = '';
+
+  // Charger les infos de l'équipement
+  dbLoad().then(function(records) {
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+    var info = document.getElementById('etna-update-info');
+    if (info) {
+      info.innerHTML =
+        '<strong>TAG :</strong> ' + (r.tag||'--') + '<br>' +
+        '<strong>WO :</strong> '  + (r.wo||r.woUsine||'--') + '<br>' +
+        '<strong>WR :</strong> '  + (r.wr||'--') + '<br>' +
+        '<strong>Type :</strong> ' + (r.statut||r.type||'--') + '<br>' +
+        (r.etnaStatut ? '<strong>Dernier statut ETNA :</strong> <span style="color:var(--orange);font-weight:700">' + r.etnaStatut + '</span>' : '');
+    }
+    // Pré-remplir si déjà mis à jour
+    if (r.etnaStatut) {
+      var key = Object.keys(ETNA_STATUT_LABELS).find(function(k){ return ETNA_STATUT_LABELS[k] === r.etnaStatut; });
+      if (key) setEtnaStatut(key);
+    }
+    if (r.etnaDateRetour) {
+      var dateEl2 = document.getElementById('etna-date-retour');
+      if (dateEl2) dateEl2.value = r.etnaDateRetour;
+    }
+    if (r.etnaCommentaire) {
+      var commEl2 = document.getElementById('etna-commentaire');
+      if (commEl2) commEl2.value = r.etnaCommentaire;
+    }
+  });
+
+  show('s-etna-update');
+}
+
+async function saveEtnaUpdate() {
+  if (!_etnaCurrentId) return;
+  if (!_etnaStatut) { alert('Sélectionnez un statut.'); return; }
+
+  var dateRetour   = document.getElementById('etna-date-retour') ? document.getElementById('etna-date-retour').value : '';
+  var commentaire  = document.getElementById('etna-commentaire') ? document.getElementById('etna-commentaire').value.trim() : '';
+  var photos       = getPhotos('etna-prev');
+  var statutLabel  = ETNA_STATUT_LABELS[_etnaStatut];
+
+  // Mettre à jour dans Supabase
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(_etnaCurrentId), 'PATCH', {
+      etna_statut      : statutLabel,
+      etna_date_retour : dateRetour || null,
+      etna_commentaire : commentaire || null,
+      etna_updated_at  : new Date().toISOString()
+    });
+  } catch(e) { console.warn('Supabase ETNA update err', e); }
+
+  // Mettre à jour localStorage
+  try {
+    var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+    var idx = local.findIndex(function(r){ return r.id === _etnaCurrentId; });
+    if (idx >= 0) {
+      local[idx].etnaStatut = statutLabel;
+      local[idx].etnaDateRetour = dateRetour;
+      local[idx].etnaCommentaire = commentaire;
+      localStorage.setItem('prnc-historique', JSON.stringify(local));
+    }
+  } catch(e) {}
+
+  clearPhotos('etna-prev');
+
+  // Retour à la bonne vue
+  var dest = _isEtnaMode ? 's-etna-prestataire' : 's-etna-suivi';
+  show(dest);
+  if (_isEtnaMode) renderEtnaPrestataire();
+  else renderEtnaSuivi();
+
+  // Flash confirmation
+  setTimeout(function() {
+    alert('Mise à jour ETNA enregistrée !\nStatut : ' + statutLabel);
+  }, 300);
+}
+
+// Rendu vue PRNC (onglet Travaux ETNA)
+async function renderEtnaSuivi() {
+  var list    = document.getElementById('etna-list');
+  var countEl = document.getElementById('etna-count');
+  if (!list) return;
+  var search = (document.getElementById('etna-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+
+  var records = await dbLoad();
+  // Filtrer : PEINTURE + ARRIVEE avec statut Retour ETNA
+  var etnaRecs = records.filter(function(r) {
+    var isEtnaType = r.type === 'PEINTURE' ||
+      (r.type === 'ARRIVEE' && (
+        (r.statut||'').toLowerCase().includes('etna') ||
+        (r.statut||'').toUpperCase() === 'RETOUR ETNA'
+      ));
+    if (!isEtnaType) return false;
+    if (!search) return true;
+    return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
+  });
+
+  countEl.textContent = etnaRecs.length + ' équipement' + (etnaRecs.length!==1?'s':'') + ' chez ETNA';
+
+  if (etnaRecs.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">&#127912;</div><div style="font-size:14px;font-weight:600">Aucun équipement chez ETNA</div></div>';
+    return;
+  }
+
+  list.innerHTML = etnaRecs.map(function(r) {
+    var statut = r.etnaStatut || 'En attente';
+    var statColor = r.etnaStatut ? (r.etnaStatut.includes('Livré') ? '#375623' : r.etnaStatut.includes('Terminé') ? '#375623' : '#C55A11') : '#888';
+    var statBg    = r.etnaStatut ? (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé') ? '#E2EFDA' : '#FCE4D6') : '#f0f0f0';
+    return '<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid ' + (r.etnaStatut ? 'var(--orange)' : 'var(--border)') + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span style="font-size:14px;font-weight:700;color:#C55A11">' + (r.tag||'--') + '</span>' +
+        '<span style="background:' + statBg + ';color:' + statColor + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + statut + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' +
+        (r.wo ? 'WO ' + r.wo + ' ' : '') + (r.wg || '') + ' — ' + r.date +
+      '</div>' +
+      (r.etnaDateRetour ? '<div style="font-size:11px;color:var(--navy2)">&#128197; Retour prévu : ' + r.etnaDateRetour + '</div>' : '') +
+      (r.etnaCommentaire ? '<div style="font-size:11px;color:var(--text);margin-top:4px;font-style:italic">' + r.etnaCommentaire + '</div>' : '') +
+      '<div style="margin-top:8px;display:flex;justify-content:flex-end">' +
+        '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="background:#FCE4D6;color:#C55A11;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Modifier</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Rendu vue PRESTATAIRE ETNA
+async function renderEtnaPrestataire() {
+  var list    = document.getElementById('etna-presta-list');
+  var countEl = document.getElementById('etna-presta-count');
+  if (!list) return;
+  var search = (document.getElementById('etna-presta-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+
+  var records = await dbLoad();
+  var etnaRecs = records.filter(function(r) {
+    var isEtnaType = r.type === 'PEINTURE' ||
+      (r.type === 'ARRIVEE' && (
+        (r.statut||'').toLowerCase().includes('etna') ||
+        (r.statut||'').toUpperCase() === 'RETOUR ETNA'
+      ));
+    if (!isEtnaType) return false;
+    if (!search) return true;
+    return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
+  });
+
+  countEl.textContent = etnaRecs.length + ' équipement' + (etnaRecs.length!==1?'s':'') + ' à traiter';
+
+  if (etnaRecs.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">&#127881;</div><div style="font-size:14px;font-weight:600">Aucun équipement en attente</div></div>';
+    return;
+  }
+
+  list.innerHTML = etnaRecs.map(function(r) {
+    var statut = r.etnaStatut || '— En attente de prise en charge';
+    var done = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé'));
+    return '<div style="background:#fff;border-radius:14px;padding:14px 16px;border:2px solid ' + (done ? '#375623' : '#C55A11') + ';opacity:' + (done?'.7':'1') + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:16px;font-weight:700;color:#C55A11">' + (r.tag||'--') + '</div>' +
+          '<div style="font-size:11px;color:#888;margin-top:2px">' + (r.wo ? 'WO ' + r.wo : '') + (r.wg ? ' — ' + r.wg : '') + '</div>' +
+        '</div>' +
+        '<div style="font-size:10px;color:#888">' + r.date + '</div>' +
+      '</div>' +
+      '<div style="background:#FCE4D6;border-radius:8px;padding:6px 10px;font-size:12px;color:#C55A11;font-weight:600;margin-bottom:10px">' +
+        '&#127912; ' + (r.statut || r.type) +
+      '</div>' +
+      (r.etnaStatut ? '<div style="font-size:12px;font-weight:700;color:' + (done?'#375623':'#C55A11') + ';margin-bottom:8px">Statut actuel : ' + r.etnaStatut + '</div>' : '') +
+      (r.etnaDateRetour ? '<div style="font-size:11px;color:var(--navy2);margin-bottom:6px">&#128197; Retour prévu : ' + r.etnaDateRetour + '</div>' : '') +
+      '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="width:100%;padding:12px;background:#C55A11;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#127912; Mettre à jour</button>' +
+    '</div>';
+  }).join('');
+}
+
 
 function activerModePrepose() {
   _isConsultMode = false;
@@ -4903,20 +5265,28 @@ function activerModeConsultation() {
   _isConsultMode = true;
   const banner = document.getElementById('consult-banner');
   if (banner) banner.style.display = 'block';
-  // Mode STT : accès uniquement à l'écran Équipement arrivé
-  // Masquer tous les onglets sauf arrivée
-  ['nav-planning','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
+  // Mode STT : masquer tous les onglets de nav
+  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  // Aller directement sur Équipement arrivé
-  show('s-arrive');
+  // Masquer toutes les cartes sauf Équipement arrivé
+  document.querySelectorAll('.action-card').forEach(function(card) {
+    card.style.display = 'none';
+  });
+  var arriveeCard = document.querySelector('[onclick*="s-arrive"]');
+  if (arriveeCard) {
+    arriveeCard.style.display = '';
+    arriveeCard.style.width = '100%';
+  }
+  // Aller sur l'accueil simplifié
+  show('s-home');
 }
 
 // Bloquer les actions de saisie en mode consultation
 function checkConsultMode() {
   if (_isConsultMode) {
-    alert('Mode STT -- accès limité à la réception des équipements.');
+    // Mode STT -- bloquer silencieusement sans alerte
     return true;
   }
   return false;
@@ -5165,7 +5535,7 @@ function buildWorkflowSteps(r) {
     if (s.done && s.date) html += '<div style="font-size:10px;color:#888;margin-top:2px">' + s.date + '</div>';
     html += '</div>';
     if (!s.done && s.action) {
-      html += '<button onclick="triggerWorkflow(&quot;' + s.action + '&quot;,&quot;' + (r.wo||'') + '&quot;,&quot;' + (r.tag||'') + '&quot;,&quot;' + (r.wr||'') + '&quot;,&quot;' + (r.wg||'') + '&quot;,&quot;' + (r.sc||'') + '&quot;,&quot;' + (r.id||'') + '&quot;,&quot;' + (r.woUsine||'') + '&quot;)" '
+      html += '<button onclick="triggerWorkflow(&quot;' + s.action + '&quot;,&quot;' + (r.wo||'') + '&quot;,&quot;' + (r.tag||'') + '&quot;,&quot;' + (r.wr||'') + '&quot;,&quot;' + (r.wg||'') + '&quot;,&quot;' + (r.sc||'') + '&quot;,&quot;' + (r.id||'') + '&quot;,&quot;' + (r.woUsine||'') + '&quot;,&quot;' + (r.emailDemandeur||'') + '&quot;)" '
         + 'style="padding:6px 10px;background:' + s.color + ';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">'
         + s.btnLabel + '</button>';
     }
@@ -5174,11 +5544,11 @@ function buildWorkflowSteps(r) {
   }).join('');
 }
 
-function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine) {
+function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
   document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
   if (action === 'prefillEtna')            { prefillEtna(wo, tag, wg, woUsine); }
   else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg, woUsine); }
-  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine); }
+  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem); }
 }
 
 function prefillEtna(wo, tag, wg, woUsine) {
@@ -5223,7 +5593,7 @@ function prefillArrivee(wo, tag, wr, wg, sc) {
   }, 200);
 }
 
-function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine) {
+function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine, emailDem) {
   show('s-equip');
   setTimeout(function() {
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
@@ -5233,6 +5603,27 @@ function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine) {
     if (wr)      { var el=document.getElementById('eq-wr');     if(el) el.value=wr; }
     if (sc)      { var el=document.getElementById('eq-sc');     if(el) el.value=sc; }
     if (tag)     { var el=document.getElementById('eq-tag');    if(el) el.value=tag; }
+    // Pré-sélectionner statut retour demandeur
+    setTimeout(function() { setEqStatut('demandeur'); }, 150);
+    // Injecter l'email du demandeur si disponible
+    if (emailDem) {
+      setTimeout(function() {
+        var manualList = document.getElementById('eq-manual');
+        if (manualList) {
+          // Vérifier si déjà présent
+          var inputs = manualList.querySelectorAll('input');
+          var found = false;
+          inputs.forEach(function(i){ if(i.value === emailDem) found = true; });
+          if (!found) {
+            var div = document.createElement('div');
+            div.className = 'manual-item';
+            div.innerHTML = '<input class="fi" type="email" value="' + emailDem + '" style="background:#E8F5E9;color:#375623;font-weight:600">' +
+              '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
+            manualList.appendChild(div);
+          }
+        }
+      }, 300);
+    }
 
     // Reprendre les photos de la fiche suiveuse
     if (recordId) {
