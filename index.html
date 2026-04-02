@@ -5192,6 +5192,12 @@ async function saveEtnaUpdate() {
 }
 
 // Visionneuse photo ETNA (navigation entre photos)
+function viewPhotoByKey(key, startIdx) {
+  var photos = (window._etnaPhotosMap || {})[key];
+  if (!photos || !photos.length) return;
+  viewPhotoFullEtna(photos, startIdx || 0);
+}
+
 function viewPhotoFullEtna(photos, startIdx) {
   if (!photos || !photos.length) return;
   var idx = startIdx || 0;
@@ -5369,8 +5375,11 @@ async function renderEtnaSuivi() {
 
     // Photo principale (première photo de l'équipement)
     var photos = r.photos && r.photos.length ? r.photos.filter(Boolean) : [];
+    var _pid = 'ep_' + r.id;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[_pid] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoFullEtna(' + JSON.stringify(photos) + ')" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:90px;background:linear-gradient(135deg,#FCE4D6,#FFD0A8);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:36px">&#127912;</div>';
 
     // WG badge color
@@ -5405,7 +5414,7 @@ async function renderEtnaSuivi() {
         (r.etnaCommentaire ? '<div style="background:#FFF8F0;border-left:3px solid #C55A11;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#333;font-style:italic;margin-bottom:8px">' + r.etnaCommentaire + '</div>' : '') +
         // Photos ETNA si disponibles
         (photos.length > 1 ? '<div style="display:flex;gap:4px;margin-bottom:8px;overflow-x:auto">' +
-          photos.slice(1,4).map(function(p, pi){ return '<img src="' + p + '" onclick="viewPhotoFullEtna(' + JSON.stringify(photos) + ',' + (pi+1) + ')" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer">'; }).join('') +
+          photos.slice(1,4).map(function(p, pi){ return '<img src="' + p + '" onclick="viewPhotoByKey(\"' + _pid + '\",' + (pi+1) + ')" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer">'; }).join('') +
           (photos.length > 4 ? '<div style="width:60px;height:60px;border-radius:6px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888;flex-shrink:0">+' + (photos.length-4) + '</div>' : '') +
         '</div>' : '') +
         // Bouton ajouter photo
@@ -5462,8 +5471,11 @@ async function renderEtnaPrestataire() {
     var statColor = done ? '#375623' : '#C55A11';
     var statBg    = done ? '#E2EFDA' : '#FCE4D6';
     var photos    = r.photos && r.photos.length ? r.photos.filter(Boolean) : [];
+    var _pidP = 'ep_' + r.id;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[_pidP] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoFullEtna(' + JSON.stringify(photos) + ')" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pidP + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:80px;background:linear-gradient(135deg,#FCE4D6,#FFD0A8);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:32px">&#127912;</div>';
     var trait = r.statut || (r.type === 'PEINTURE' ? 'Demande peinture' : 'Retour ETNA');
 
@@ -5482,7 +5494,7 @@ async function renderEtnaPrestataire() {
         (r.etnaDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.etnaDateRetour + '</div>' : '') +
         (r.etnaCommentaire ? '<div style="background:#FFF8F0;border-left:3px solid #C55A11;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.etnaCommentaire + '</div>' : '') +
         (photos.length > 1 ? '<div style="display:flex;gap:4px;margin-bottom:8px;overflow-x:auto">' +
-          photos.slice(1,4).map(function(p,pi){ return '<img src="' + p + '" onclick="viewPhotoFullEtna(' + JSON.stringify(photos) + ',' + (pi+1) + ')" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer">'; }).join('') +
+          photos.slice(1,4).map(function(p,pi){ return '<img src="' + p + '" onclick="viewPhotoByKey(\"' + _pidP + '\",' + (pi+1) + ')" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer">'; }).join('') +
         '</div>' : '') +
         '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="width:100%;padding:12px;background:' + (done?'#375623':'#C55A11') + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">' +
           (done ? '&#9989; Terminé — Modifier' : '&#127912; Mettre à jour') +
@@ -6462,8 +6474,11 @@ function renderRelanceCard(r, urgent) {
   var wgBg    = wg==='MCCHAUD' ? '#EDE7F6' : wg==='MCREPAR' ? '#FCE4D6' : '#E1F5EE';
 
   // Photo principale
+  var _pidR = 'rp_' + r.id;
+  window._etnaPhotosMap = window._etnaPhotosMap || {};
+  window._etnaPhotosMap[_pidR] = photos;
   var photoHtml = photos.length > 0
-    ? '<img src="' + photos[0] + '" onclick="viewPhotoFullEtna(' + JSON.stringify(photos) + ')" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+    ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pidR + ',0)" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
     : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
 
   // Mail de relance
