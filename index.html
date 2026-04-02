@@ -213,6 +213,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <option value="consult" style="background:#1F3864;color:#fff">&#128296; STT — Superviseur</option>
       <option value="etna"       style="background:#1F3864;color:#fff">&#127912; ETNA — Prestataire</option>
       <option value="consult2"   style="background:#1F3864;color:#fff">&#128065; Consultation</option>
+      <option value="callidus"   style="background:#1F3864;color:#fff">&#128295; Callidus — Prestataire</option>
     </select>
   </div>
 
@@ -239,6 +240,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="pin-key pin-key-ok" onclick="pinKey('ok')" style="background:var(--teal)">OK</div>
   </div>
   <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px" id="pin-setup-hint"></div>
+</div>
+
+<!-- Bandeau mode Callidus -->
+<div id="callidus-banner" style="display:none;background:#1F3864;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+  &#128295; MODE CALLIDUS — Prestataire Réparation
 </div>
 
 <!-- Bandeau mode Consultation -->
@@ -327,6 +333,16 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
       <div class="card-lbl">Travaux ETNA</div>
       <div class="card-sub" id="etna-badge-home">Suivi prestataire</div>
+    </div>
+    <div class="action-card" onclick="show('s-envoi-callidus')">
+      <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
+      <div class="card-lbl">Envoi Callidus</div>
+      <div class="card-sub">Préparer un envoi</div>
+    </div>
+    <div class="action-card" onclick="show('s-callidus-suivi')">
+      <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128295;</div>
+      <div class="card-lbl">Travaux Callidus</div>
+      <div class="card-sub" id="callidus-badge-home">Suivi prestataire</div>
     </div>
     <div class="action-card" onclick="show('s-hist-wo')">
       <div class="card-icon" style="background:#FFF3E0;color:#E65100">&#128196;</div>
@@ -1089,6 +1105,120 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-presta-count">Chargement...</div>
   <div id="etna-presta-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ ENVOI CALLIDUS ═══════════════ -->
+<div class="screen" id="s-envoi-callidus">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Envoi Callidus</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
+  </div>
+  <div class="form-body">
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div class="wg-grp">
+        <div class="wg-btn" id="cal-wg-chaud" onclick="setWG('cal','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
+        <div class="wg-btn" id="cal-wg-repar" onclick="setWG('cal','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
+        <div class="wg-btn" id="cal-wg-strob" onclick="setWG('cal','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
+      </div>
+    </div>
+
+    <!-- Date d'envoi -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Date d'envoi</div>
+      <input class="fi" type="date" id="cal-date">
+    </div>
+
+    <!-- Liste équipements -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Équipements à envoyer</div>
+      <div id="cal-eqt-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button onclick="addCallidusEqt()" style="margin-top:8px;width:100%;padding:11px;background:#DEEAF1;color:#1F3864;border:1.5px dashed #1F3864;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">+ Ajouter un équipement</button>
+    </div>
+
+    <!-- Remarques -->
+    <div class="field-grp">
+      <div class="field-lbl">Remarques / Instructions</div>
+      <textarea class="fi" id="cal-rem" style="height:72px" placeholder="Ex : Priorité urgente, attention contamination..."></textarea>
+    </div>
+
+    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="sendEnvoiCallidus()">&#128228; Envoyer la notification Callidus</button>
+  </div>
+</div>
+
+<!-- ═══════════════ TRAVAUX CALLIDUS (vue PRNC) ═══════════════ -->
+<div class="screen" id="s-callidus-suivi">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Travaux Callidus</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">Suivi</div>
+  </div>
+  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="cal-suivi-search" placeholder="Rechercher par TAG ou WO..." oninput="renderCallidusSuivi()" style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="cal-suivi-count">Chargement...</div>
+  <div id="cal-suivi-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ MAJ CALLIDUS ═══════════════ -->
+<div class="screen" id="s-callidus-update">
+  <div class="form-header">
+    <div class="back-btn" onclick="show(_isCallidusMode ? 's-callidus-prestataire' : 's-callidus-suivi')">&#8592;</div>
+    <div class="form-title">Mise à jour Callidus</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128295;</div>
+  </div>
+  <div class="form-body">
+    <div id="cal-update-info" style="background:var(--llblue);border-radius:10px;padding:12px 14px;font-size:12px;line-height:2"></div>
+
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Statut avancement</div>
+      <div class="type-grp" id="cal-statut-grp">
+        <div class="type-btn" id="cal-st-recu"    onclick="setCallidusStatut('recu')">&#128230; Reçu</div>
+        <div class="type-btn" id="cal-st-encours" onclick="setCallidusStatut('encours')">&#9881; En cours</div>
+        <div class="type-btn" id="cal-st-termine" onclick="setCallidusStatut('termine')">&#9989; Terminé</div>
+        <div class="type-btn" id="cal-st-livre"   onclick="setCallidusStatut('livre')">&#128666; Livré PRNC</div>
+      </div>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Date prévisionnelle de retour</div>
+      <input class="fi" type="date" id="cal-date-retour">
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Commentaires / Rapport qualité</div>
+      <textarea class="fi" id="cal-commentaire" style="height:80px" placeholder="Ex : Usinage terminé, en attente de contrôle dimensionnel..."></textarea>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Photos travaux</div>
+      <div class="photo-zone" onclick="document.getElementById('cal-photos').click()">
+        <div class="photo-icon">&#128247;</div>
+        <div class="photo-txt">Prendre / importer des photos</div>
+      </div>
+      <input type="file" id="cal-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'cal-prev')">
+      <div class="photo-prev" id="cal-prev"></div>
+    </div>
+
+    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="saveCallidusUpdate()">&#128295; Enregistrer la mise à jour</button>
+  </div>
+</div>
+
+<!-- ═══════════════ ACCUEIL CALLIDUS PRESTATAIRE ═══════════════ -->
+<div class="screen" id="s-callidus-prestataire">
+  <div style="background:linear-gradient(160deg,#1F3864,#2E75B6);padding:20px 16px 18px;color:#fff">
+    <div style="font-size:12px;opacity:.7;margin-bottom:4px">Mode prestataire</div>
+    <div style="font-size:20px;font-weight:700">&#128295; Callidus — Réparation</div>
+    <div style="font-size:12px;opacity:.7;margin-top:4px">Mettez à jour l'avancement de vos travaux</div>
+  </div>
+  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="cal-presta-search" placeholder="Rechercher par TAG ou WO..." oninput="renderCallidusPrestataire()" style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="cal-presta-count">Chargement...</div>
+  <div id="cal-presta-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -2483,6 +2613,7 @@ const ETNA_CONTACTS = {
 // ------ STATE ------
 const state = {
   ud: { wg:'' },
+  cal: { wg:'' },
   fs: { wg:'', statut:'' },
   pl: { wg:'', sem:'', stt:'', typeWO:'', kit:'' },
   ar: { wg:'', statut:'' },
@@ -2492,7 +2623,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2502,6 +2633,8 @@ function show(id) {
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
   // Mode Consultation : accès lecture seule
   if (_isConsult2Mode && !['s-home','s-etna-suivi','s-dashboard','s-relances','s-hist'].includes(id)) return;
+  // Mode Callidus : navigation limitée à l'espace prestataire Callidus
+  if (_isCallidusMode && !['s-callidus-prestataire','s-callidus-update','s-success'].includes(id)) return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -2509,7 +2642,9 @@ function show(id) {
   if (id === 's-hist')    renderHist();
   if (id === 's-hist-wo')  renderHistWO();
   if (id === 's-relances')      renderRelances();
-  if (id === 's-etna-suivi')    renderEtnaSuivi();
+  if (id === 's-etna-suivi')       renderEtnaSuivi();
+  if (id === 's-callidus-suivi')   renderCallidusSuivi();
+  if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home')     {
     updateStats(); checkRelances();
@@ -2961,11 +3096,11 @@ function addPlanEqt() {
       '<textarea class="fi" id="pl-infos-' + idx + '" placeholder="IR OK / ATT USINAGE..." style="width:100%;height:52px"></textarea></div>' +
     '<div>' +
       '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
-      '<div class="photo-zone" onclick="document.getElementById(\'pl-file-' + idx + '\').click()" style="padding:8px">' +
+      '<div class="photo-zone" onclick="triggerCalFile(' + idx + ')" style="padding:8px">' +
         '<div class="photo-icon" style="font-size:18px">&#128247;</div>' +
         '<div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
       '</div>' +
-      '<input type="file" id="pl-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,\''+prevId+'\')">' +
+      '<input type="file" id="pl-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addCalPhotos(this,' + idx + ')">' +
       '<div class="photo-prev" id="' + prevId + '"></div>' +
     '</div>';
   list.appendChild(card);
@@ -4200,6 +4335,9 @@ async function dbLoad() {
           etnaStatut       : r.etna_statut       || null,
           etnaDateRetour   : r.etna_date_retour  || null,
           etnaCommentaire  : r.etna_commentaire  || null,
+          callidusStatut       : r.callidus_statut       || null,
+          callidusDateRetour   : r.callidus_date_retour  || null,
+          callidusCommentaire  : r.callidus_commentaire  || null,
           shutdown: r.shutdown, qty: r.qty, desc: r.designation, serie: r.serie,
           typeEqt: r.type_eqt, dateRecep: r.date_recep, motif: r.motif,
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
@@ -4904,12 +5042,14 @@ const PIN_DEFAULT   = '1234';
 const PIN_STT       = '0000';  // PIN mode STT
 const PIN_ETNA      = '1111';  // PIN mode ETNA prestataire
 const PIN_CONSULT2  = '2222';  // PIN mode consultation
+const PIN_CALLIDUS  = '3333';  // PIN mode Callidus prestataire
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
 var _isConsultMode  = false;   // true = mode lecture seule
 var _isEtnaMode     = false;   // true = mode prestataire ETNA
 var _isConsult2Mode = false;   // true = mode consultation lecture seule
+var _isCallidusMode = false;   // true = mode prestataire Callidus
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
@@ -4932,6 +5072,9 @@ function selectPinMode(mode) {
   } else if (mode === 'consult2') {
     lbl.textContent = 'Entrez le code PIN Consultation (2222)';
     if (dd) dd.style.background = 'rgba(46,117,182,.6)';
+  } else if (mode === 'callidus') {
+    lbl.textContent = 'Entrez le code PIN Callidus (3333)';
+    if (dd) dd.style.background = 'rgba(31,56,100,.8)';
   }
 }
 
@@ -4998,6 +5141,14 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    // Mode Callidus -- PIN fixe 3333
+    if (_pinModeSelect === 'callidus' && _pinBuffer === PIN_CALLIDUS) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeCallidus();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     // Mode ETNA -- PIN fixe 1111
     if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
       document.getElementById('pin-overlay').style.display = 'none';
@@ -5025,6 +5176,292 @@ async function validatePIN() {
   }
   _pinBuffer = ''; updatePinDots();
 }
+
+// ══ MODE CALLIDUS PRESTATAIRE ══
+function activerModeCallidus() {
+  _isCallidusMode = true;
+  _isEtnaMode = false; _isConsultMode = false; _isConsult2Mode = false;
+  var banner = document.getElementById('callidus-banner');
+  if (banner) banner.style.display = 'block';
+  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  show('s-callidus-prestataire');
+  setTimeout(renderCallidusPrestataire, 200);
+}
+
+// Statuts Callidus
+var _callidusStatut = '';
+const CALLIDUS_STATUT_LABELS = { recu:'Reçu Callidus', encours:'En cours', termine:'Terminé', livre:'Livré PRNC' };
+
+function setCallidusStatut(s) {
+  _callidusStatut = s;
+  Object.keys(CALLIDUS_STATUT_LABELS).forEach(function(k) {
+    var el = document.getElementById('cal-st-' + k);
+    if (!el) return;
+    el.className = 'type-btn' + (k === s ? ' on' : '');
+    el.style.borderColor = k === s ? '#1F3864' : '';
+  });
+}
+
+// ID enregistrement en cours de MAJ
+var _callidusCurrentId = null;
+
+function openCallidusUpdate(id) {
+  if (_isConsult2Mode) { alert('Mode consultation — lecture seule.'); return; }
+  _callidusCurrentId = id;
+  _callidusStatut = '';
+  Object.keys(CALLIDUS_STATUT_LABELS).forEach(function(k) {
+    var el = document.getElementById('cal-st-' + k);
+    if (el) { el.className = 'type-btn'; el.style.borderColor = ''; }
+  });
+  var dateEl = document.getElementById('cal-date-retour'); if (dateEl) dateEl.value = '';
+  var commEl = document.getElementById('cal-commentaire'); if (commEl) commEl.value = '';
+  clearPhotos('cal-prev');
+  var prevEl = document.getElementById('cal-prev'); if (prevEl) prevEl.innerHTML = '';
+
+  dbLoad().then(function(records) {
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+    var info = document.getElementById('cal-update-info');
+    if (info) {
+      info.innerHTML = '<strong>TAG :</strong> ' + (r.tag||'--') + '<br>' +
+        '<strong>WO :</strong> ' + (r.wo||'--') + '<br>' +
+        '<strong>WR :</strong> ' + (r.wr||'--') + '<br>' +
+        (r.callidusStatut ? '<strong>Statut actuel :</strong> <span style="color:#1F3864;font-weight:700">' + r.callidusStatut + '</span>' : '');
+    }
+    if (r.callidusStatut) {
+      var key = Object.keys(CALLIDUS_STATUT_LABELS).find(function(k){ return CALLIDUS_STATUT_LABELS[k] === r.callidusStatut; });
+      if (key) setCallidusStatut(key);
+    }
+    if (r.callidusDateRetour) { var d = document.getElementById('cal-date-retour'); if (d) d.value = r.callidusDateRetour; }
+    if (r.callidusCommentaire) { var c = document.getElementById('cal-commentaire'); if (c) c.value = r.callidusCommentaire; }
+  });
+  show('s-callidus-update');
+}
+
+async function saveCallidusUpdate() {
+  if (!_callidusCurrentId) return;
+  if (!_callidusStatut) { alert('Sélectionnez un statut.'); return; }
+  var dateRetour  = document.getElementById('cal-date-retour') ? document.getElementById('cal-date-retour').value : '';
+  var commentaire = document.getElementById('cal-commentaire') ? document.getElementById('cal-commentaire').value.trim() : '';
+  var photos      = getPhotos('cal-prev');
+  var statutLabel = CALLIDUS_STATUT_LABELS[_callidusStatut];
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(_callidusCurrentId), 'PATCH', {
+      callidus_statut      : statutLabel,
+      callidus_date_retour : dateRetour || null,
+      callidus_commentaire : commentaire || null,
+      callidus_updated_at  : new Date().toISOString()
+    });
+  } catch(e) { console.warn('Callidus update err', e); }
+  try {
+    var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+    var idx = local.findIndex(function(r){ return r.id === _callidusCurrentId; });
+    if (idx >= 0) { local[idx].callidusStatut = statutLabel; local[idx].callidusDateRetour = dateRetour; local[idx].callidusCommentaire = commentaire; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
+  } catch(e) {}
+  clearPhotos('cal-prev');
+  var dest = _isCallidusMode ? 's-callidus-prestataire' : 's-callidus-suivi';
+  show(dest);
+  if (_isCallidusMode) renderCallidusPrestataire(); else renderCallidusSuivi();
+  setTimeout(function(){ alert('Mise à jour Callidus enregistrée !'); }, 300);
+}
+
+// ── Envoi Callidus (liste multi-équipements) ──
+var _calEqtCount = 0;
+
+function addCalPhotos(input, idx) {
+  addPhotos(input, 'cal-prev-' + idx);
+}
+
+function triggerCalFile(idx) {
+  var el = document.getElementById('cal-file-' + idx);
+  if (el) el.click();
+}
+
+function removeCalEqt(idx) {
+  var el = document.getElementById('cal-eqt-' + idx);
+  if (el) el.remove();
+}
+
+function addCallidusEqt() {
+  var idx = _calEqtCount++;
+  var prevId = 'cal-prev-' + idx;
+  var list = document.getElementById('cal-eqt-list');
+  var card = document.createElement('div');
+  card.id = 'cal-eqt-' + idx;
+  card.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;position:relative';
+  card.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '<span style="font-size:12px;font-weight:700;color:#1F3864">Équipement ' + (idx+1) + '</span>' +
+      '<span onclick="removeCalEqt(' + idx + ')" style="color:var(--red);font-size:18px;cursor:pointer">&times;</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">TAG *</div>' +
+        '<input class="fi" id="cal-tag-' + idx + '" type="text" placeholder="Ex : 220-X-00315" style="width:100%"></div>' +
+      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WO</div>' +
+        '<input class="fi" id="cal-wo-' + idx + '" type="text" placeholder="Ex : 837669" style="width:100%"></div>' +
+    '</div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WR</div>' +
+      '<input class="fi" id="cal-wr-' + idx + '" type="text" placeholder="Ex : 118466" style="width:100%"></div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Description travaux</div>' +
+      '<textarea class="fi" id="cal-desc-' + idx + '" placeholder="Ex : Usinage arbre de rotation, rectification alésage..." style="width:100%;height:56px"></textarea></div>' +
+    '<div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
+      '<div class="photo-zone" onclick="triggerCalFile(' + idx + ')" style="padding:8px">' +
+        '<div class="photo-icon" style="font-size:18px">&#128247;</div><div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
+      '</div>' +
+      '<input type="file" id="cal-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addCalPhotos(this,' + idx + ')">' +
+      '<div class="photo-prev" id="' + prevId + '"></div>' +
+    '</div>';
+  list.appendChild(card);
+}
+
+function collectCallidusEqts() {
+  var result = [];
+  for (var i = 0; i < _calEqtCount; i++) {
+    if (!document.getElementById('cal-eqt-' + i)) continue;
+    var tag  = document.getElementById('cal-tag-' + i) ? document.getElementById('cal-tag-' + i).value.trim() : '';
+    var wo   = document.getElementById('cal-wo-' + i)  ? document.getElementById('cal-wo-' + i).value.trim()  : '';
+    var wr   = document.getElementById('cal-wr-' + i)  ? document.getElementById('cal-wr-' + i).value.trim()  : '';
+    var desc = document.getElementById('cal-desc-' + i)? document.getElementById('cal-desc-' + i).value.trim(): '';
+    var prevId = 'cal-prev-' + i;
+    var photos = getPhotos(prevId);
+    if (tag) result.push({tag, wo, wr, desc, photos, prevId});
+  }
+  return result;
+}
+
+async function sendEnvoiCallidus() {
+  var wg   = (state.cal && state.cal.wg) ? state.cal.wg : '';
+  var date = document.getElementById('cal-date') ? document.getElementById('cal-date').value : '';
+  var rem  = document.getElementById('cal-rem')  ? document.getElementById('cal-rem').value.trim()  : '';
+  if (!wg)   { alert('Sélectionne un Workgroup.'); return; }
+  if (!date) { alert('La date est obligatoire.'); return; }
+  var eqts = collectCallidusEqts();
+  if (!eqts.length) { alert('Ajoute au moins un équipement.'); return; }
+  var wgl = WG_LABELS[wg] || wg;
+
+  // Construire le mail
+  var subj = '[CALLIDUS] Envoi réparation — ' + eqts.length + ' équipement' + (eqts.length>1?'s':'') + ' — ' + date;
+  var bodyParts = ['Bonjour,', '', 'Envoi de ' + eqts.length + ' équipement' + (eqts.length>1?'s':'') + ' pour réparation :', '', 'Date envoi : ' + date, 'Workgroup  : ' + wgl, ''];
+  eqts.forEach(function(e, i) {
+    bodyParts.push((i+1) + '. TAG : ' + e.tag + (e.wo ? ' | WO : ' + e.wo : '') + (e.wr ? ' | WR : ' + e.wr : ''));
+    if (e.desc) bodyParts.push('   Travaux : ' + e.desc);
+  });
+  if (rem) { bodyParts.push('', 'Remarques :', rem); }
+  bodyParts.push('', 'Cordialement,', 'Emmanuel ROSA ASIK', 'Prepose aux pieces | PRNC -- Maintenance Centrale');
+
+  var mailTo = 'mailto:logistique-stores@callidusgroup.com.au?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(bodyParts.join('\n'));
+  window.location.href = mailTo;
+
+  // Sauvegarder chaque équipement dans l'historique
+  for (var i = 0; i < eqts.length; i++) {
+    var e = eqts[i];
+    await dbAdd({ type:'CALLIDUS', tag:e.tag, wo:e.wo, wr:e.wr, wg:wgl, statut:'Envoyé Callidus', desc:e.desc, photos:e.photos||[], date_envoi:date });
+    clearPhotos(e.prevId);
+  }
+
+  // Reset
+  _calEqtCount = 0;
+  var list = document.getElementById('cal-eqt-list'); if (list) list.innerHTML = '';
+  var remEl = document.getElementById('cal-rem'); if (remEl) remEl.value = '';
+  ['cal-wg-chaud','cal-wg-repar','cal-wg-strob'].forEach(function(id){ var el=document.getElementById(id); if(el) el.className='wg-btn'; });
+  if (state.cal) state.cal.wg = '';
+}
+
+// ── Rendu Travaux Callidus (vue PRNC) ──
+async function renderCallidusSuivi() {
+  var list = document.getElementById('cal-suivi-list');
+  var countEl = document.getElementById('cal-suivi-count');
+  if (!list) return;
+  var search = (document.getElementById('cal-suivi-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+  var records = await dbLoad();
+  var calRecs = records.filter(function(r) {
+    if (r.type !== 'CALLIDUS') return false;
+    if (!search) return true;
+    return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
+  });
+  countEl.textContent = calRecs.length + ' équipement' + (calRecs.length!==1?'s':'') + ' chez Callidus';
+  if (!calRecs.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun équipement chez Callidus</div></div>'; return; }
+  list.innerHTML = calRecs.map(function(r) {
+    var done = r.callidusStatut && (r.callidusStatut.includes('Livré') || r.callidusStatut.includes('Terminé'));
+    var statut = r.callidusStatut || 'En attente';
+    var statColor = done ? '#375623' : (r.callidusStatut ? '#1F3864' : '#888');
+    var statBg    = done ? '#E2EFDA' : (r.callidusStatut ? '#DEEAF1' : '#f0f0f0');
+    var photos = (r.photos||[]).filter(Boolean);
+    var _cpid = 'cp_' + r.id;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[_cpid] = photos;
+    var photoHtml = photos.length > 0
+      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _cpid + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
+    return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">' +
+      photoHtml +
+      '<div style="padding:12px 14px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<div style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
+          '<span style="background:' + statBg + ';color:' + statColor + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + statut + '</span>' +
+        '</div>' +
+        '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
+          (r.wo ? '<div><span style="color:#888;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
+          (r.wr ? '<div><span style="color:#888;font-weight:700">WR</span> <strong>' + r.wr + '</strong></div>' : '') +
+          (r.desc ? '<div><span style="color:#888;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
+          '<div><span style="color:#888;font-weight:700">Envoyé le</span> ' + (r.date||'--') + '</div>' +
+        '</div>' +
+        (r.callidusDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.callidusDateRetour + '</div>' : '') +
+        (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #1F3864;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
+        '<button onclick="openCallidusUpdate(' + r.id + ')" style="width:100%;padding:10px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Mettre à jour</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Rendu vue PRESTATAIRE Callidus ──
+async function renderCallidusPrestataire() {
+  var list = document.getElementById('cal-presta-list');
+  var countEl = document.getElementById('cal-presta-count');
+  if (!list) return;
+  var search = (document.getElementById('cal-presta-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+  var records = await dbLoad();
+  var calRecs = records.filter(function(r) {
+    if (r.type !== 'CALLIDUS') return false;
+    if (!search) return true;
+    return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
+  });
+  countEl.textContent = calRecs.length + ' équipement' + (calRecs.length!==1?'s':'') + ' à traiter';
+  if (!calRecs.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun équipement en attente</div></div>'; return; }
+  list.innerHTML = calRecs.map(function(r) {
+    var done = r.callidusStatut && (r.callidusStatut.includes('Livré') || r.callidusStatut.includes('Terminé'));
+    var statut = r.callidusStatut || 'En attente';
+    var photos = (r.photos||[]).filter(Boolean);
+    var _cpidP = 'cpP_' + r.id;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[_cpidP] = photos;
+    var photoHtml = photos.length > 0
+      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _cpidP + ',0)" style="width:100%;height:130px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      : '<div style="width:100%;height:60px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
+    return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:' + (done?.75:1) + '">' +
+      photoHtml +
+      '<div style="padding:12px 14px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<div style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
+          '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (done?'#E2EFDA':'#DEEAF1') + ';color:' + (done?'#375623':'#1F3864') + '">' + statut + '</span>' +
+        '</div>' +
+        '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
+          (r.wo ? '<div><span style="color:#888;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
+          (r.wr ? '<div><span style="color:#888;font-weight:700">WR</span> <strong>' + r.wr + '</strong></div>' : '') +
+          (r.desc ? '<div><span style="color:#888;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
+        '</div>' +
+        (r.callidusDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.callidusDateRetour + '</div>' : '') +
+        (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #1F3864;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
+        '<button onclick="openCallidusUpdate(' + r.id + ')" style="width:100%;padding:12px;background:' + (done?'#375623':'#1F3864') + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">' + (done?'&#9989; Modifier':'&#128295; Mettre à jour') + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
 
 // ══ MODE CONSULTATION LECTURE SEULE ══
 function activerModeConsult2() {
@@ -5509,12 +5946,15 @@ function activerModePrepose() {
   _isConsultMode  = false;
   _isConsult2Mode = false;
   _isEtnaMode     = false;
+  _isCallidusMode = false;
   const banner = document.getElementById('consult-banner');
   if (banner) banner.style.display = 'none';
   var b2 = document.getElementById('consult2-banner');
   if (b2) b2.style.display = 'none';
   var be = document.getElementById('etna-banner');
   if (be) be.style.display = 'none';
+  var bc = document.getElementById('callidus-banner');
+  if (bc) bc.style.display = 'none';
   // Afficher tous les onglets de saisie
   ['nav-planning','nav-arrive','nav-equip','nav-usage'].forEach(id => {
     const el = document.getElementById(id);
