@@ -206,19 +206,14 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:1px">PRNC Field</div>
 
   <!-- Sélection du mode -->
-  <div id="pin-mode-select" style="display:flex;gap:10px;margin:4px 0">
-    <div id="pin-btn-prepose" onclick="selectPinMode('prepose')"
-      style="padding:10px 22px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:var(--teal);color:#fff;border:2px solid var(--teal)">
-      &#9881; Préposé
-    </div>
-    <div id="pin-btn-consult" onclick="selectPinMode('consult')"
-      style="padding:10px 22px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.2)">
-      &#128296; STT
-    </div>
-    <div id="pin-btn-etna" onclick="selectPinMode('etna')"
-      style="padding:10px 22px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);border:2px solid rgba(255,255,255,.2)">
-      &#127912; ETNA
-    </div>
+  <div id="pin-mode-select" style="margin:4px 0;width:240px">
+    <select id="pin-mode-dropdown" onchange="selectPinMode(this.value)"
+      style="width:100%;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.3);font-family:inherit;-webkit-appearance:none;text-align:center">
+      <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
+      <option value="consult" style="background:#1F3864;color:#fff">&#128296; STT — Superviseur</option>
+      <option value="etna"       style="background:#1F3864;color:#fff">&#127912; ETNA — Prestataire</option>
+      <option value="consult2"   style="background:#1F3864;color:#fff">&#128065; Consultation</option>
+    </select>
   </div>
 
   <div id="pin-mode-label" style="color:rgba(255,255,255,.6);font-size:13px">Entrez votre code PIN</div>
@@ -244,6 +239,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="pin-key pin-key-ok" onclick="pinKey('ok')" style="background:var(--teal)">OK</div>
   </div>
   <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px" id="pin-setup-hint"></div>
+</div>
+
+<!-- Bandeau mode Consultation -->
+<div id="consult2-banner" style="display:none;background:#2E75B6;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+  &#128065; MODE CONSULTATION — Lecture seule
 </div>
 
 <!-- Bandeau mode ETNA -->
@@ -2500,6 +2500,8 @@ function show(id) {
   if (_isConsultMode && id !== 's-arrive' && id !== 's-success' && id !== 's-home') return;
   // Mode ETNA : navigation limitée à l'espace prestataire
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
+  // Mode Consultation : accès lecture seule
+  if (_isConsult2Mode && !['s-home','s-etna-suivi','s-dashboard','s-relances','s-hist'].includes(id)) return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -4901,33 +4903,35 @@ const PIN_KEY       = 'prnc-pin';
 const PIN_DEFAULT   = '1234';
 const PIN_STT       = '0000';  // PIN mode STT
 const PIN_ETNA      = '1111';  // PIN mode ETNA prestataire
+const PIN_CONSULT2  = '2222';  // PIN mode consultation
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
 var _isConsultMode  = false;   // true = mode lecture seule
 var _isEtnaMode     = false;   // true = mode prestataire ETNA
+var _isConsult2Mode = false;   // true = mode consultation lecture seule
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
   _pinBuffer = ''; updatePinDots();
   document.getElementById('pin-error').textContent = '';
-  const btnP = document.getElementById('pin-btn-prepose');
-  const btnC = document.getElementById('pin-btn-consult');
-  const btnE = document.getElementById('pin-btn-etna');
-  const lbl  = document.getElementById('pin-mode-label');
-  // Reset tous les boutons
-  [btnP, btnC, btnE].forEach(function(b) {
-    if (b) { b.style.background='transparent'; b.style.color='rgba(255,255,255,.5)'; b.style.borderColor='rgba(255,255,255,.2)'; }
-  });
+  const lbl = document.getElementById('pin-mode-label');
+  // Sync dropdown si appelé depuis ailleurs
+  var dd = document.getElementById('pin-mode-dropdown');
+  if (dd) dd.value = mode;
+  // Mettre à jour le label et la couleur du dropdown
   if (mode === 'prepose') {
-    btnP.style.background = 'var(--teal)'; btnP.style.color = '#fff'; btnP.style.borderColor = 'var(--teal)';
     lbl.textContent = 'Entrez votre code PIN Préposé';
+    if (dd) dd.style.background = 'rgba(15,110,86,.6)';
   } else if (mode === 'consult') {
-    btnC.style.background = 'var(--orange)'; btnC.style.color = '#fff'; btnC.style.borderColor = 'var(--orange)';
-    lbl.textContent = 'Entrez le code PIN STT';
+    lbl.textContent = 'Entrez le code PIN STT (0000)';
+    if (dd) dd.style.background = 'rgba(197,90,17,.6)';
   } else if (mode === 'etna') {
-    if (btnE) { btnE.style.background = '#C55A11'; btnE.style.color = '#fff'; btnE.style.borderColor = '#C55A11'; }
-    lbl.textContent = 'Entrez le code PIN ETNA';
+    lbl.textContent = 'Entrez le code PIN ETNA (1111)';
+    if (dd) dd.style.background = 'rgba(197,90,17,.4)';
+  } else if (mode === 'consult2') {
+    lbl.textContent = 'Entrez le code PIN Consultation (2222)';
+    if (dd) dd.style.background = 'rgba(46,117,182,.6)';
   }
 }
 
@@ -4986,6 +4990,14 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    // Mode Consultation -- PIN fixe 2222
+    if (_pinModeSelect === 'consult2' && _pinBuffer === PIN_CONSULT2) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeConsult2();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     // Mode ETNA -- PIN fixe 1111
     if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
       document.getElementById('pin-overlay').style.display = 'none';
@@ -5012,6 +5024,30 @@ async function validatePIN() {
     }
   }
   _pinBuffer = ''; updatePinDots();
+}
+
+// ══ MODE CONSULTATION LECTURE SEULE ══
+function activerModeConsult2() {
+  _isConsult2Mode = true;
+  _isConsultMode  = false;
+  _isEtnaMode     = false;
+  var banner = document.getElementById('consult2-banner');
+  if (banner) banner.style.display = 'block';
+  // Masquer tous les onglets de nav sauf home
+  ['nav-planning','nav-arrive','nav-equip','nav-usage','nav-hist'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Masquer toutes les cartes sauf Travaux ETNA, Tableau de bord, Relances
+  document.querySelectorAll('.action-card').forEach(function(card) {
+    card.style.display = 'none';
+  });
+  // Réafficher uniquement les cartes de consultation
+  ['s-etna-suivi','s-dashboard','s-relances','s-hist'].forEach(function(screen) {
+    var card = document.querySelector('[onclick*="' + screen + '"]');
+    if (card) card.style.display = '';
+  });
+  show('s-home');
 }
 
 // ══ MODE ETNA PRESTATAIRE ══
@@ -5062,6 +5098,7 @@ function setEtnaStatut(s) {
 var _etnaCurrentId = null;
 
 function openEtnaUpdate(id) {
+  if (_isConsult2Mode) { alert('Mode consultation — lecture seule uniquement.'); return; }
   _etnaCurrentId = id;
   _etnaStatut = '';
   // Reset statuts
@@ -5454,9 +5491,15 @@ async function renderEtnaPrestataire() {
 
 
 function activerModePrepose() {
-  _isConsultMode = false;
+  _isConsultMode  = false;
+  _isConsult2Mode = false;
+  _isEtnaMode     = false;
   const banner = document.getElementById('consult-banner');
   if (banner) banner.style.display = 'none';
+  var b2 = document.getElementById('consult2-banner');
+  if (b2) b2.style.display = 'none';
+  var be = document.getElementById('etna-banner');
+  if (be) be.style.display = 'none';
   // Afficher tous les onglets de saisie
   ['nav-planning','nav-arrive','nav-equip','nav-usage'].forEach(id => {
     const el = document.getElementById(id);
