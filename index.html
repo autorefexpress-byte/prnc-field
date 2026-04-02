@@ -5270,6 +5270,15 @@ async function saveCallidusUpdate() {
 // ── Envoi Callidus (liste multi-équipements) ──
 var _calEqtCount = 0;
 
+function triggerPlFile(idx) {
+  var el = document.getElementById('pl-file-' + idx);
+  if (el) el.click();
+}
+
+function addPlPhotos(input, idx) {
+  addPhotos(input, 'pl-prev-' + idx);
+}
+
 function addCalPhotos(input, idx) {
   addPhotos(input, 'cal-prev-' + idx);
 }
