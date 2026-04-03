@@ -495,8 +495,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="ar-rem" placeholder="Ex : Équipement décontaminé, coupon attaché, état général..."></textarea></div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('ar-photos').click()">
-        <div class="photo-icon">&#128247;</div>
+      <label class="photo-zone" for="ar-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label>
         <div class="photo-txt">Appuyer pour prendre / importer des photos</div>
       </div>
       <input type="file" id="ar-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'ar-prev')">
@@ -573,8 +573,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="eq-rem" placeholder="Optionnel..."></textarea></div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('eq-photos').click()">
-        <div class="photo-icon">&#128247;</div><div class="photo-txt">Prendre / importer des photos</div>
+      <label class="photo-zone" for="eq-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label><div class="photo-txt">Prendre / importer des photos</div>
       </div>
       <input type="file" id="eq-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'eq-prev')">
       <div class="photo-prev" id="eq-prev"></div>
@@ -637,8 +637,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- Photos -->
     <div class="field-grp">
       <div class="field-lbl">Photos équipement <span style="font-size:10px;color:var(--red)">(recommandé)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('pt-photos').click()">
-        <div class="photo-icon">&#128247;</div><div class="photo-txt">Photo avant traitement — obligatoire pour ETNA</div>
+      <label class="photo-zone" for="pt-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label><div class="photo-txt">Photo avant traitement — obligatoire pour ETNA</div>
       </div>
       <input type="file" id="pt-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'pt-prev')">
       <div class="photo-prev" id="pt-prev"></div>
@@ -706,8 +706,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     </div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('tr-photos').click()">
-        <div class="photo-icon">&#128247;</div><div class="photo-txt">Prendre / importer des photos</div>
+      <label class="photo-zone" for="tr-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label><div class="photo-txt">Prendre / importer des photos</div>
       </div>
       <input type="file" id="tr-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'tr-prev')">
       <div class="photo-prev" id="tr-prev"></div>
@@ -754,8 +754,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- Photo fiche -->
     <div class="field-grp">
       <div class="field-lbl">Photo de la fiche <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('fs-photos').click()">
-        <div class="photo-icon">&#128247;</div><div class="photo-txt">Photographier la fiche suiveuse</div>
+      <label class="photo-zone" for="fs-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label><div class="photo-txt">Photographier la fiche suiveuse</div>
       </div>
       <input type="file" id="fs-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'fs-prev')">
       <div class="photo-prev" id="fs-prev"></div>
@@ -890,8 +890,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- Photo -->
     <div class="field-grp">
       <div class="field-lbl">Photo <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('ud-photos').click()">
-        <div class="photo-icon">&#128247;</div><div class="photo-txt">Prendre / importer des photos</div>
+      <label class="photo-zone" for="ud-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label><div class="photo-txt">Prendre / importer des photos</div>
       </div>
       <input type="file" id="ud-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'ud-prev')">
       <div class="photo-prev" id="ud-prev"></div>
@@ -1078,8 +1078,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <div class="field-grp">
       <div class="field-lbl">Photos travaux <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <div class="photo-zone" onclick="document.getElementById('etna-photos').click()">
-        <div class="photo-icon">&#128247;</div>
+      <label class="photo-zone" for="etna-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label>
         <div class="photo-txt">Prendre / importer des photos</div>
       </div>
       <input type="file" id="etna-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'etna-prev')">
@@ -1195,8 +1195,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <div class="field-grp">
       <div class="field-lbl">Photos travaux</div>
-      <div class="photo-zone" onclick="document.getElementById('cal-photos').click()">
-        <div class="photo-icon">&#128247;</div>
+      <label class="photo-zone" for="cal-photos" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</label>
         <div class="photo-txt">Prendre / importer des photos</div>
       </div>
       <input type="file" id="cal-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'cal-prev')">
@@ -3096,11 +3096,11 @@ function addPlanEqt() {
       '<textarea class="fi" id="pl-infos-' + idx + '" placeholder="IR OK / ATT USINAGE..." style="width:100%;height:52px"></textarea></div>' +
     '<div>' +
       '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
-      '<div class="photo-zone" onclick="triggerCalFile(' + idx + ')" style="padding:8px">' +
+      '<label for="pl-file-' + idx + '" class="photo-zone" style="padding:8px;display:flex;flex-direction:column;align-items:center;cursor:pointer">' +
         '<div class="photo-icon" style="font-size:18px">&#128247;</div>' +
         '<div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
-      '</div>' +
-      '<input type="file" id="pl-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addCalPhotos(this,' + idx + ')">' +
+      '</label>' +
+      '<input type="file" id="pl-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addPlPhotos(this,' + idx + ')">' +
       '<div class="photo-prev" id="' + prevId + '"></div>' +
     '</div>';
   list.appendChild(card);
@@ -5316,7 +5316,7 @@ function addCallidusEqt() {
     '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Description travaux</div>' +
       '<textarea class="fi" id="cal-desc-' + idx + '" placeholder="Ex : Usinage arbre de rotation, rectification alésage..." style="width:100%;height:56px"></textarea></div>' +
     '<div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
-      '<div class="photo-zone" onclick="triggerCalFile(' + idx + ')" style="padding:8px">' +
+      '<div class="photo-zone" onclick="triggerPlFile(' + idx + ')" style="padding:8px">' +
         '<div class="photo-icon" style="font-size:18px">&#128247;</div><div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
       '</div>' +
       '<input type="file" id="cal-file-' + idx + '" accept="image/*" capture="environment" multiple style="display:none" onchange="addCalPhotos(this,' + idx + ')">' +
