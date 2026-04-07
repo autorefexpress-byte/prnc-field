@@ -7080,7 +7080,7 @@ function renderRelanceCard(r, urgent) {
     '&body='    + encodeURIComponent(corps_txt) +
     (ccAddrs ? '&cc=' + ccAddrs : '');
 
-  return '<div style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:8px">' +
+  return '<div class="relance-card" style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:8px">' +
     // Photo
     photoHtml +
     '<div style="padding:12px 14px">' +
@@ -7114,9 +7114,32 @@ function renderRelanceCard(r, urgent) {
       '<div style="display:flex;gap:8px">' +
         '<a href="' + mailTo + '" style="flex:1;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
         '<button onclick="marquerRecupere(' + JSON.stringify(r.id) + ',this)" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
+        '<button onclick="supprimerRelance(' + JSON.stringify(r.id) + ',this)" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
       '</div>' +
     '</div>' +
   '</div>';
+}
+
+async function supprimerRelance(id, btn) {
+  if (!confirm('Supprimer cet enregistrement ?')) return;
+  btn.disabled = true;
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
+    // Supprimer du localStorage
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      local = local.filter(function(r){ return r.id !== id; });
+      localStorage.setItem('prnc-historique', JSON.stringify(local));
+    } catch(e) {}
+    invalidateDbCache();
+    // Animer la disparition
+    var card = btn.closest ? btn.closest('.relance-card') : btn.parentElement.parentElement.parentElement;
+    if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; }
+    setTimeout(renderRelances, 400);
+  } catch(e) {
+    btn.disabled = false;
+    alert('Erreur suppression');
+  }
 }
 
 async function marquerRecupere(id, btn) {
