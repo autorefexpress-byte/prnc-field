@@ -7113,8 +7113,8 @@ function renderRelanceCard(r, urgent) {
       // Boutons
       '<div style="display:flex;gap:8px">' +
         '<a href="' + mailTo + '" style="flex:1;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
-        '<button onclick="marquerRecupere(' + JSON.stringify(r.id) + ',this)" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
-        '<button onclick="supprimerRelance(' + JSON.stringify(r.id) + ',this)" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
+        '<button onclick="marquerRecupere(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
+        '<button onclick="supprimerRelance(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
       '</div>' +
     '</div>' +
   '</div>';
@@ -7123,6 +7123,7 @@ function renderRelanceCard(r, urgent) {
 async function supprimerRelance(id, btn) {
   if (!confirm('Supprimer cet enregistrement ?')) return;
   btn.disabled = true;
+  btn.innerHTML = '&#8987;';
   try {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
     // Supprimer du localStorage
@@ -7132,13 +7133,20 @@ async function supprimerRelance(id, btn) {
       localStorage.setItem('prnc-historique', JSON.stringify(local));
     } catch(e) {}
     invalidateDbCache();
-    // Animer la disparition
-    var card = btn.closest ? btn.closest('.relance-card') : btn.parentElement.parentElement.parentElement;
-    if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; }
-    setTimeout(renderRelances, 400);
+    // Remonter le DOM jusqu'à la carte
+    var el = btn;
+    for (var i = 0; i < 6; i++) {
+      if (!el || !el.parentElement) break;
+      el = el.parentElement;
+      if (el.className && el.className.toString().indexOf('relance-card') >= 0) break;
+    }
+    if (el) { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; }
+    setTimeout(function() { renderRelances(); }, 500);
   } catch(e) {
+    console.error('Suppression err:', e);
     btn.disabled = false;
-    alert('Erreur suppression');
+    btn.innerHTML = '&#128465;';
+    alert('Erreur suppression : ' + e.message);
   }
 }
 
