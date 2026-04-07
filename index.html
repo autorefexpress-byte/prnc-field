@@ -7046,7 +7046,24 @@ function renderRelanceCard(r, urgent) {
     'Prepose aux pieces -- Maintenance Centrale P50',
     'PRONY RESOURCES NC'
   ].filter(function(l){return l!==null;}).join('\n');
-  var mailTo = 'mailto:?subject=' + sujet + '&body=' + encodeURIComponent(corps_txt);
+  // Destinataire principal = email demandeur si disponible
+  var WG_RELANCE = {
+    'MCCHAUD': ['cyril.alosio@pronyresources.com','abel.vendegou@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+    'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+    'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+  };
+  var emailDem  = r.emailDemandeur || '';
+  var wgContacts = WG_RELANCE[wg] || [];
+  var toAddr  = emailDem || '';
+  var ccAddrs = emailDem
+    ? wgContacts.join(',')
+    : wgContacts.slice(1).join(',');
+  if (!toAddr && wgContacts.length) toAddr = wgContacts[0];
+
+  var mailTo = 'mailto:' + encodeURIComponent(toAddr) +
+    '?subject=' + encodeURIComponent(sujet) +
+    '&body='    + encodeURIComponent(corps_txt) +
+    (ccAddrs ? '&cc=' + encodeURIComponent(ccAddrs) : '');
 
   return '<div style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:8px">' +
     // Photo
