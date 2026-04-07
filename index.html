@@ -2950,40 +2950,91 @@ function getEmails(listId) {
 // Stockage temporaire des photos compressées par zone
 var _photoStore = {};
 
-function addPhotos(input, prevId) {
-  const prev = document.getElementById(prevId);
-  if (!_photoStore[prevId]) _photoStore[prevId] = [];
+// Upload une photo vers Supabase Storage et retourne l'URL publique
+async function uploadPhotoToStorage(file) {
+  // Compresser d'abord
+  const compressed = await compressImage(file, 600, 0.25);
+  // Convertir base64 en Blob
+  const arr = compressed.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--) u8arr[n] = bstr.charCodeAt(n);
+  const blob = new Blob([u8arr], {type: mime});
 
-  Array.from(input.files).forEach(file => {
+  // Nom de fichier unique
+  const fileName = Date.now() + '-' + Math.random().toString(36).slice(2,6) + '.jpg';
+
+  // Upload vers Supabase Storage
+  const uploadUrl = SUPA_URL + '/storage/v1/object/prnc-photos/' + fileName;
+  const resp = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'image/jpeg',
+      'x-upsert': 'true'
+    },
+    body: blob
+  });
+  if (!resp.ok) throw new Error('Upload failed: ' + resp.status);
+
+  // Retourner l'URL publique
+  return SUPA_URL + '/storage/v1/object/public/prnc-photos/' + fileName;
+}
+
+// Compresser une image
+function compressImage(file, maxSize, quality) {
+  return new Promise(function(resolve) {
     const reader = new FileReader();
-    reader.onload = e => {
-      // Compresser via canvas
+    reader.onload = function(e) {
       const img = new Image();
-      img.onload = () => {
+      img.onload = function() {
         const canvas = document.createElement('canvas');
-        const MAX = 800; // max largeur/hauteur
         let w = img.width, h = img.height;
-        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; }
+        if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; }
         canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL('image/jpeg', 0.35); // 35% qualité
-
-        // Stocker
-        _photoStore[prevId].push(compressed);
-
-        // Afficher miniature
-        const div = document.createElement('div');
-        div.className = 'photo-thumb';
-        const idx = _photoStore[prevId].length - 1;
-        div.dataset.idx = idx;
-        div.innerHTML = `<img src="${compressed}"><div class="photo-del" onclick="removePhoto('${prevId}',${idx},this.parentNode)">&times;<\/div>`;
-        prev.appendChild(div);
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+  });
+}
+
+function addPhotos(input, prevId) {
+  const prev = document.getElementById(prevId);
+  if (!_photoStore[prevId]) _photoStore[prevId] = [];
+
+  Array.from(input.files).forEach(async function(file) {
+    // Afficher un placeholder pendant l'upload
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.style.opacity = '0.5';
+    div.innerHTML = '<div style="width:64px;height:64px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px">&#8987;</div>';
+    prev.appendChild(div);
+
+    try {
+      // Uploader vers Storage
+      const url = await uploadPhotoToStorage(file);
+
+      // Stocker l'URL
+      _photoStore[prevId].push(url);
+      const idx = _photoStore[prevId].length - 1;
+
+      // Afficher miniature
+      div.style.opacity = '1';
+      div.dataset.idx = idx;
+      div.innerHTML = '<img src="' + url + '"><div class="photo-del" onclick="removePhoto(\''+prevId+'\','+idx+',this.parentNode)">&times;</div>';
+    } catch(e) {
+      console.warn('Upload photo err:', e);
+      div.innerHTML = '<div style="width:64px;height:64px;background:#fee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px">&#10060;</div>';
+      // Fallback : stocker en base64 local
+      const compressed = await compressImage(file, 400, 0.20);
+      _photoStore[prevId].push(compressed);
+    }
   });
 }
 
@@ -3304,7 +3355,7 @@ async function renderHistWO() {
       '<div style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;flex-shrink:0">WO</div>' +
       '<div style="flex:1">' +
         '<div style="font-size:13px;font-weight:700;color:#E65100">' + (r.wo||'--') + '</div>' +
-        '<div style="font-size:11px;color:var(--muted)">' + (r.tag||'--') + (r.wg?' -- '+r.wg:'') + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">' + (r.tag||'--') + (r.wg?' -- '+r.wg:'') + (r.fromFiche?'<span style="background:#1F3864;color:#fff;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;margin-left:4px">FS</span>':'') + '</div>' +
         '<div style="font-size:10px;color:#aaa;margin-top:2px">Cl&#244;tur&#233; le ' + (r.dateCloture||'--') + '</div>' +
       '</div>' +
       '<button onclick="uncloturerWO(&quot;' + (r.wo||'') + '&quot;)" style="background:var(--lred);color:var(--red);border:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#10006; Rouvrir</button>' +
@@ -4305,6 +4356,8 @@ const DB_KEY = 'prnc-historique';
 const SUPA_URL = 'https://lfebsggmcopsmaegptyw.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZWJzZ2dtY29wc21hZWdwdHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzU0NzgsImV4cCI6MjA4OTk1MTQ3OH0.dVNE7qEdNhuQFxuPjIt_umiXuCZH4kFh8JBiW2KFUAA';
 
+function invalidateDbCache() { _dbCache = null; _dbCacheTs = 0; }
+
 async function supaFetch(path, method, body) {
   method = method || 'GET';
   const opts = {
@@ -4332,6 +4385,7 @@ async function dbLoad() {
           id: r.id, type: r.type, tag: r.tag, wo: r.wo, woUsine: r.wo_usine,
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
           emailDemandeur   : r.email_demandeur   || null,
+          fromFiche        : r.from_fiche        || false,
           etnaStatut       : r.etna_statut       || null,
           etnaDateRetour   : r.etna_date_retour  || null,
           etnaCommentaire  : r.etna_commentaire  || null,
@@ -4364,6 +4418,8 @@ async function dbAdd(record) {
   record.ts    = new Date().toISOString();
   record.date  = new Date().toLocaleDateString('fr-FR');
   record.heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  // Marquer si vient d'une fiche suiveuse
+  if (window._lastFromFiche) { record.fromFiche = true; window._lastFromFiche = false; }
 
   // Envoyer vers Supabase
   try {
@@ -4372,6 +4428,7 @@ async function dbAdd(record) {
       wo_usine: record.woUsine || null, wr: record.wr || null, sc: record.sc || null,
       email_demandeur: record.emailDemandeur || null,
       wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
+      from_fiche: record.fromFiche ? true : null,
       shutdown: record.shutdown || null, qty: record.qty ? String(record.qty) : null,
       designation: record.desc || null, serie: record.serie || null,
       type_eqt: record.typeEqt || null, date_recep: record.dateRecep || null,
@@ -5409,7 +5466,10 @@ async function renderCallidusSuivi() {
       photoHtml +
       '<div style="padding:12px 14px">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-          '<div style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</span>' +
+            (r.fromFiche ? '<span style="background:#1F3864;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">FS</span>' : '') +
+          '</div>' +
           '<span style="background:' + statBg + ';color:' + statColor + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + statut + '</span>' +
         '</div>' +
         '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
@@ -5638,6 +5698,21 @@ async function saveEtnaUpdate() {
 }
 
 // Visionneuse photo ETNA (navigation entre photos)
+async function loadAndViewPhoto(id, startIdx) {
+  // Charger les photos depuis Supabase à la demande
+  var key = 'ph_' + id;
+  window._etnaPhotosMap = window._etnaPhotosMap || {};
+  if (!window._etnaPhotosMap[key] || !window._etnaPhotosMap[key].length) {
+    try {
+      var resp = await supaFetch('/rest/v1/historique?select=photos&id=eq.' + encodeURIComponent(id), 'GET');
+      if (resp && resp[0] && resp[0].photos) {
+        window._etnaPhotosMap[key] = resp[0].photos.filter(Boolean);
+      }
+    } catch(e) { console.warn('Photo load err', e); return; }
+  }
+  viewPhotoByKey(key, startIdx || 0);
+}
+
 function viewPhotoByKey(key, startIdx) {
   var photos = (window._etnaPhotosMap || {})[key];
   if (!photos || !photos.length) return;
@@ -5708,13 +5783,13 @@ function ajouterPhotoEtna(input, id) {
     img.onload = function() {
       // Compresser
       var canvas = document.createElement('canvas');
-      var MAX = 800;
+      var MAX = 500; // max 500px pour réduire l'egress
       var w = img.width, h = img.height;
       if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
       if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      var compressed = canvas.toDataURL('image/jpeg', 0.35);
+      var compressed = canvas.toDataURL('image/jpeg', 0.20);
 
       // Charger l'enregistrement et ajouter la photo
       dbLoad().then(function(records) {
@@ -6256,9 +6331,30 @@ function buildWorkflowSteps(r) {
 
 function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
   document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
+
+  // Supprimer la fiche suiveuse source et marquer "from_fiche"
+  if (id) {
+    deleteFicheSupabase(id);
+    window._lastFromFiche = true; // flag pour le prochain enregistrement
+  }
+
   if (action === 'prefillEtna')            { prefillEtna(wo, tag, wg, woUsine); }
   else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg, woUsine); }
   else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem); }
+}
+
+// Supprimer une fiche suiveuse de Supabase + localStorage
+async function deleteFicheSupabase(id) {
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
+    // Supprimer du localStorage
+    var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+    local = local.filter(function(r){ return r.id !== id; });
+    localStorage.setItem('prnc-historique', JSON.stringify(local));
+    // Invalider le cache
+    invalidateDbCache();
+    console.log('Fiche suiveuse supprimée:', id);
+  } catch(e) { console.warn('Delete fiche err', e); }
 }
 
 function prefillEtna(wo, tag, wg, woUsine) {
@@ -6959,7 +7055,10 @@ function renderRelanceCard(r, urgent) {
       // Header TAG + jours
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
         '<div>' +
-          '<div style="font-size:16px;font-weight:700;color:#1F3864">' + tag + '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:16px;font-weight:700;color:#1F3864">' + tag + '</span>' +
+            (r.fromFiche ? '<span style="background:#1F3864;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">FS</span>' : '') +
+          '</div>' +
           (wg ? '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + wg + '</span>' : '') +
         '</div>' +
         joursBadge +
