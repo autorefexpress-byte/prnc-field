@@ -7000,13 +7000,14 @@ async function renderRelances() {
 
 function renderRelanceCard(r, urgent) {
   var tag     = r.tag || '--';
-  var wo      = r.wo  || '--';
+  var wo      = r.wo  || r.woMtc || '--';          // WO MTC
   var wg      = r.wg  || '';
   var dest    = r.desc ? r.desc.replace('Demandeur : ', '') : (r.motif || '--');
+  var emailDem = r.emailDemandeur || '';
   var jours   = r._jours;
   var date    = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
   var statut  = r.statut || r.status || '--';
-  var woUsine = r.woMtc || r.wo_usine || '';
+  var woUsine = r.woUsine || r.wo_usine || '';
   var photos  = (r.photos || []).filter(Boolean);
 
   var borderColor = urgent ? '#C55A11' : '#b0bec5';
@@ -7027,16 +7028,19 @@ function renderRelanceCard(r, urgent) {
     : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
 
   // Mail de relance
-  var sujet = encodeURIComponent('[RELANCE] Équipement disponible -- ' + tag + ' -- WO ' + wo);
-  var corps_txt = ['Bonjour ' + dest + ',',
+  var sujet = '[RELANCE] Equipement disponible -- ' + tag + (wo !== '--' ? ' -- WO ' + wo : '');
+  var nomDest = dest !== '--' ? dest : (emailDem || 'Demandeur');
+  var corps_txt = [
+    'Bonjour ' + nomDest + ',',
     '',
     'Votre equipement est disponible depuis ' + jours + ' jour' + (jours>1?'s':'') + ' et attend recuperation a la Maintenance Centrale P50.',
     '',
     'Detail :',
-    'TAG       : ' + tag,
-    'WO MTC    : ' + wo,
-    woUsine ? 'WO Usine  : ' + woUsine : null,
-    'Statut    : ' + statut,
+    'TAG          : ' + tag,
+    wo !== '--' ? 'WO MTC       : ' + wo : null,
+    woUsine      ? 'WO Usine     : ' + woUsine : null,
+    emailDem     ? 'Email        : ' + emailDem : null,
+    'Statut       : ' + statut,
     'Disponible depuis le : ' + date,
     '',
     'Merci de venir recuperer votre equipement dans les meilleurs delais.',
@@ -7052,18 +7056,15 @@ function renderRelanceCard(r, urgent) {
     'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
     'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
   };
-  var emailDem  = r.emailDemandeur || '';
   var wgContacts = WG_RELANCE[wg] || [];
-  var toAddr  = emailDem || '';
-  var ccAddrs = emailDem
-    ? wgContacts.join(',')
-    : wgContacts.slice(1).join(',');
-  if (!toAddr && wgContacts.length) toAddr = wgContacts[0];
+  var toAddr  = emailDem || (wgContacts.length ? wgContacts[0] : '');
+  var ccList  = emailDem ? wgContacts : wgContacts.slice(1);
+  var ccAddrs = ccList.join(',');
 
-  var mailTo = 'mailto:' + encodeURIComponent(toAddr) +
+  var mailTo = 'mailto:' + toAddr +
     '?subject=' + encodeURIComponent(sujet) +
     '&body='    + encodeURIComponent(corps_txt) +
-    (ccAddrs ? '&cc=' + encodeURIComponent(ccAddrs) : '');
+    (ccAddrs ? '&cc=' + ccAddrs : '');
 
   return '<div style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:8px">' +
     // Photo
@@ -7092,6 +7093,7 @@ function renderRelanceCard(r, urgent) {
         '<div>' +
           '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Destinataire</div>' +
           '<div style="font-size:13px;font-weight:600;color:#1F3864">' + dest + '</div>' +
+          (emailDem ? '<div style="font-size:11px;color:#888">&#9993; ' + emailDem + '</div>' : '') +
         '</div>' +
       '</div>' +
       // Boutons
