@@ -3664,7 +3664,13 @@ function sendEquip() {
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
     mailto(allTo[0], subj, body, ccUniqueEq);
-    dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, dest:allTo, photos:getPhotos('eq-prev')});
+      // Récupérer email et nom demandeur depuis les champs
+  var eqManualInputs = document.querySelectorAll('#eq-manual input');
+  var emailDem = eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '';
+  var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone,
+    dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
+    photos:getPhotos('eq-prev')});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
     var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
@@ -4579,8 +4585,14 @@ async function dbSaveArrivee(d) {
     photos:d.photos||[] });
 }
 async function dbSaveTermine(d) {
-  await dbAdd({ type:'TERMINE', tag:d.tag, wo:d.wo, woMtc:d.woMtc, wr:d.wr, sc:d.sc,
-    wg:d.wg, statut:d.statut, loc:d.zone, dest:d.dest, photos:d.photos||[] });
+  await dbAdd({ type:'TERMINE', tag:d.tag,
+    wo:    d.woMtc || d.wo || '',   // WO MTC en priorité
+    woUsine: d.wo  || '',            // WO Usine
+    wr:d.wr, sc:d.sc,
+    wg:d.wg, statut:d.statut, loc:d.zone,
+    desc: d.dest ? d.dest.join(', ') : '',
+    emailDemandeur: d.emailDemandeur || null,
+    photos:d.photos||[] });
 }
 async function dbSaveUsage(d) {
   await dbAdd({ type:'USAGE', tag:d.tag, wo:d.wo, sc:d.sc, qty:d.qty,
@@ -7014,10 +7026,23 @@ async function renderRelances() {
 
 function renderRelanceCard(r, urgent) {
   var tag     = r.tag || '--';
-  var wo      = r.wo  || r.woMtc || '--';          // WO MTC
+  var wo      = r.wo  || r.woMtc || r.wo_mtc || '--';  // WO MTC
   var wg      = r.wg  || '';
-  var dest    = r.desc ? r.desc.replace('Demandeur : ', '') : (r.motif || '--');
   var emailDem = r.emailDemandeur || '';
+  // desc contient soit "Demandeur : Nom" soit les emails destinataires
+  var dest = '--';
+  if (r.desc) {
+    if (r.desc.indexOf('Demandeur : ') === 0) {
+      dest = r.desc.replace('Demandeur : ', '');
+    } else if (r.desc.indexOf('@') >= 0) {
+      // c'est un email — utiliser comme dest si pas d'emailDem
+      if (!emailDem) emailDem = r.desc.split(',')[0].trim();
+      dest = emailDem;
+    } else {
+      dest = r.desc;
+    }
+  }
+  if (dest === '--' && emailDem) dest = emailDem;
   var jours   = r._jours;
   var date    = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
   var statut  = r.statut || r.status || '--';
