@@ -316,6 +316,12 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     </div>
   </div>
 
+  <!-- Bouton Scanner QR -->
+  <button onclick="ouvrirScannerQR()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(31,56,100,.3);margin-bottom:12px">
+    <span style="font-size:22px">&#128247;</span>
+    <span>Scanner un QR Code &eacute;quipement</span>
+  </button>
+
   <!-- Section 2 : Gestion des flux -->
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 6px">Gestion des flux</div>
   <div class="action-grid">
@@ -333,6 +339,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
       <div class="card-lbl">Travaux ETNA</div>
       <div class="card-sub" id="etna-badge-home">Suivi prestataire</div>
+    </div>
+    <div class="action-card" onclick="show('s-inventaire')">
+      <div class="card-icon" style="background:#E2EFDA;color:#375623">&#128203;</div>
+      <div class="card-lbl">Inventaire P50</div>
+      <div class="card-sub" id="inv-badge-home">Tour de stock</div>
     </div>
     <div class="action-card" onclick="show('s-envoi-callidus')">
       <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
@@ -1219,6 +1230,70 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="cal-presta-count">Chargement...</div>
   <div id="cal-presta-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ INVENTAIRE P50 ═══════════════ -->
+<div class="screen" id="s-inventaire">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Inventaire P50</div>
+    <div class="form-badge" style="background:#E2EFDA;color:#375623">&#128203;</div>
+  </div>
+
+  <!-- Barre de recherche + filtre -->
+  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
+    <input class="fi" type="text" id="inv-search"
+      placeholder="Rechercher TAG, WO, localisation..."
+      oninput="renderInventaire()"
+      style="flex:1;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+    <select id="inv-wg-filter" onchange="renderInventaire()"
+      style="padding:10px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-family:inherit;background:#fff">
+      <option value="">Tous</option>
+      <option value="MCCHAUD">MCCHAUD</option>
+      <option value="MCREPAR">MCREPAR</option>
+      <option value="STROB">STROB</option>
+    </select>
+  </div>
+
+  <!-- Stats rapides -->
+  <div id="inv-stats" style="padding:10px 14px;display:flex;gap:8px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border)"></div>
+
+  <!-- Compteur -->
+  <div style="padding:8px 14px;font-size:11px;color:var(--muted)" id="inv-count">Chargement...</div>
+
+  <!-- Liste équipements -->
+  <div id="inv-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
+</div>
+
+<!-- ═══════════════ FICHE QR CODE ═══════════════ -->
+<div class="screen" id="s-qr-fiche">
+  <div class="form-header">
+    <div class="back-btn" onclick="history.back()">&#8592;</div>
+    <div class="form-title">Fiche Équipement</div>
+    <div class="form-badge" style="background:#E2EFDA;color:#375623">&#128248;</div>
+  </div>
+  <div id="qr-fiche-content" style="padding:16px"></div>
+</div>
+
+<!-- ═══════════════ SCANNER QR ═══════════════ -->
+<div class="screen" id="s-scanner">
+  <div class="form-header">
+    <div class="back-btn" onclick="fermerScannerQR()">&#8592;</div>
+    <div class="form-title">Scanner QR Code</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128247;</div>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="font-size:13px;color:var(--muted);text-align:center">
+      Pointe la caméra vers le QR code de l'équipement
+    </div>
+    <!-- Zone caméra -->
+    <div id="qr-reader" style="width:100%;max-width:320px;border-radius:16px;overflow:hidden;border:3px solid #1F3864"></div>
+    <!-- Résultat -->
+    <div id="qr-result" style="display:none;width:100%;background:#E2EFDA;border-radius:12px;padding:14px;text-align:center;font-weight:700;color:#375623;font-size:14px"></div>
+    <!-- Erreur -->
+    <div id="qr-error" style="display:none;width:100%;background:#FCE4D6;border-radius:12px;padding:14px;text-align:center;color:#C55A11;font-size:13px"></div>
+    <button onclick="fermerScannerQR()" style="padding:12px 30px;background:#f0f0f0;color:#333;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -2623,7 +2698,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2645,6 +2720,12 @@ function show(id) {
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
+  if (id === 's-inventaire') renderInventaire();
+  // Arrêter le scanner si on quitte
+  if (id !== 's-scanner' && _html5QrCode) {
+    _html5QrCode.stop().catch(function(){});
+    _html5QrCode = null;
+  }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home')     {
     // Chargement différé pour ne pas bloquer l'affichage
@@ -5556,6 +5637,334 @@ async function renderCallidusPrestataire() {
 }
 
 
+// ══ SCANNER QR CODE ══
+var _html5QrCode = null;
+
+function ouvrirScannerQR() {
+  show('s-scanner');
+  document.getElementById('qr-result').style.display = 'none';
+  document.getElementById('qr-error').style.display = 'none';
+
+  setTimeout(function() {
+    try {
+      _html5QrCode = new Html5Qrcode('qr-reader');
+      _html5QrCode.start(
+        { facingMode: 'environment' }, // caméra arrière
+        {
+          fps: 10,
+          qrbox: { width: 220, height: 220 }
+        },
+        function(decodedText) {
+          // QR code détecté !
+          _html5QrCode.stop().then(function() {
+            traiterQRCode(decodedText);
+          });
+        },
+        function(err) {
+          // Erreur de scan — ignorée silencieusement
+        }
+      ).catch(function(err) {
+        var errEl = document.getElementById('qr-error');
+        errEl.textContent = 'Caméra inaccessible : ' + err;
+        errEl.style.display = 'block';
+      });
+    } catch(e) {
+      var errEl = document.getElementById('qr-error');
+      errEl.textContent = 'Scanner non disponible : ' + e.message;
+      errEl.style.display = 'block';
+    }
+  }, 300);
+}
+
+function fermerScannerQR() {
+  if (_html5QrCode) {
+    _html5QrCode.stop().catch(function(){}).then(function(){
+      _html5QrCode = null;
+    });
+  }
+  show('s-home');
+}
+
+function traiterQRCode(url) {
+  var resultEl = document.getElementById('qr-result');
+  resultEl.textContent = '✅ QR détecté ! Ouverture de la fiche...';
+  resultEl.style.display = 'block';
+
+  // Extraire l'ID de la fiche depuis l'URL
+  try {
+    var urlObj = new URL(url);
+    var ficheId = urlObj.searchParams.get('fiche');
+    if (ficheId) {
+      setTimeout(function() {
+        ouvrirFicheQR(ficheId);
+      }, 600);
+    } else {
+      // URL non reconnue — ouvrir quand même
+      resultEl.textContent = '⚠️ QR non PRNC : ' + url;
+    }
+  } catch(e) {
+    resultEl.textContent = '⚠️ Code non reconnu';
+    resultEl.style.display = 'block';
+  }
+}
+
+
+// ══ INVENTAIRE P50 ══
+async function renderInventaire() {
+  var list    = document.getElementById('inv-list');
+  var countEl = document.getElementById('inv-count');
+  var statsEl = document.getElementById('inv-stats');
+  if (!list) return;
+
+  var search = (document.getElementById('inv-search')||{value:''}).value.toLowerCase();
+  var wgFilter = (document.getElementById('inv-wg-filter')||{value:''}).value;
+
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+
+  var records = await dbLoad();
+
+  // Filtrer : équipements présents à P50 (ARRIVEE non RECUPERE, FICHE, TERMINE non RECUPERE)
+  var present = records.filter(function(r) {
+    if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
+    if (r.statut && r.statut.includes('RECUPERE')) return false;
+    if (r.type === 'ARRIVEE' || r.type === 'TERMINE' || r.type === 'FICHE') {
+      if (wgFilter && r.wg !== wgFilter) return false;
+      if (search) {
+        return (r.tag||'').toLowerCase().includes(search) ||
+               (r.wo||'').toLowerCase().includes(search) ||
+               (r.loc||'').toLowerCase().includes(search) ||
+               (r.wg||'').toLowerCase().includes(search);
+      }
+      return true;
+    }
+    return false;
+  });
+
+  // Stats par workgroup
+  var wgCounts = {};
+  present.forEach(function(r) { wgCounts[r.wg||'?'] = (wgCounts[r.wg||'?']||0) + 1; });
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+  if (statsEl) {
+    statsEl.innerHTML = '<div style="background:#DEEAF1;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#1F3864;white-space:nowrap">&#128203; Total : ' + present.length + '</div>' +
+      Object.keys(wgCounts).map(function(wg) {
+        return '<div style="background:' + (wgBgs[wg]||'#f0f0f0') + ';border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:' + (wgColors[wg]||'#333') + ';white-space:nowrap">' + wg + ' : ' + wgCounts[wg] + '</div>';
+      }).join('');
+  }
+
+  countEl.textContent = present.length + ' équipement' + (present.length!==1?'s':'') + ' en P50';
+
+  if (!present.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128203;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun équipement trouvé</div></div>';
+    return;
+  }
+
+  // Grouper par localisation
+  var byLoc = {};
+  present.forEach(function(r) {
+    var loc = r.loc || 'Sans localisation';
+    if (!byLoc[loc]) byLoc[loc] = [];
+    byLoc[loc].push(r);
+  });
+
+  var html = '';
+  Object.keys(byLoc).sort().forEach(function(loc) {
+    var items = byLoc[loc];
+    html += '<div style="background:#f8f9fa;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-top:8px;margin-bottom:2px">&#128205; ' + loc + ' — ' + items.length + ' éq.</div>';
+    items.forEach(function(r) {
+      var wgColor = wgColors[r.wg] || '#333';
+      var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
+      html += '<div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:700;color:var(--navy)">' + (r.tag||'--') + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
+            (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.date||'') +
+          '</div>' +
+          '<div style="font-size:11px;color:#555;margin-top:2px">' + (r.statut||r.type||'--') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
+          '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + (r.wg||'--') + '</span>' +
+          '<button onclick="genererQRCode(' + r.id + ')" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128248; QR</button>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+  list.innerHTML = html;
+}
+
+// ══ QR CODE ══
+async function genererQRCode(id) {
+  var records = await dbLoad();
+  var r = records.find(function(x){ return x.id === id; });
+  if (!r) return;
+
+  // URL de la fiche = app + ?fiche=ID
+  var url = window.location.origin + window.location.pathname + '?fiche=' + id;
+
+  // Créer overlay
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;box-sizing:border-box';
+
+  // Contenu
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:16px;padding:20px;width:100%;max-width:360px;text-align:center';
+  box.innerHTML = '<div style="font-size:16px;font-weight:700;color:#1F3864;margin-bottom:4px">&#128248; ' + (r.tag||'--') + '</div>' +
+    '<div style="font-size:11px;color:#888;margin-bottom:12px">' + (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.wg||'') + '</div>' +
+    '<div id="qr-canvas" style="display:flex;justify-content:center;margin-bottom:12px"></div>' +
+    '<div style="font-size:10px;color:#aaa;word-break:break-all">' + url + '</div>' +
+    '<div style="margin-top:12px;font-size:11px;color:#555;background:#f8f9fa;border-radius:8px;padding:8px;text-align:left;line-height:1.8">' +
+      (r.tag    ? '<strong>TAG :</strong> ' + r.tag + '<br>' : '') +
+      (r.wo     ? '<strong>WO MTC :</strong> ' + r.wo + '<br>' : '') +
+      (r.wr     ? '<strong>WR :</strong> ' + r.wr + '<br>' : '') +
+      (r.wg     ? '<strong>WG :</strong> ' + r.wg + '<br>' : '') +
+      (r.loc    ? '<strong>Loc :</strong> ' + r.loc + '<br>' : '') +
+      (r.statut ? '<strong>Statut :</strong> ' + r.statut + '<br>' : '') +
+      (r.date   ? '<strong>Date :</strong> ' + r.date : '') +
+    '</div>';
+
+  document.body.appendChild(ov);
+  ov.appendChild(box);
+
+  // Boutons actions
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px';
+
+  var btnPrint = document.createElement('button');
+  btnPrint.innerHTML = '&#128424; Étiquette';
+  btnPrint.style.cssText = 'padding:12px 20px;background:#375623;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit';
+  btnPrint.onclick = function(){ imprimerEtiquetteQR(r); };
+
+  var close = document.createElement('button');
+  close.innerHTML = '&#10005; Fermer';
+  close.style.cssText = 'padding:12px 20px;background:#fff;color:#1F3864;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit';
+  close.onclick = function(){ ov.remove(); };
+
+  btnRow.appendChild(btnPrint);
+  btnRow.appendChild(close);
+  ov.appendChild(btnRow);
+
+  // Générer le QR code
+  setTimeout(function() {
+    try {
+      new QRCode(document.getElementById('qr-canvas'), {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark: '#1F3864',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {
+      document.getElementById('qr-canvas').innerHTML = '<div style="color:#C00;font-size:12px">Erreur QR : ' + e.message + '</div>';
+    }
+  }, 100);
+
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+}
+
+// ══ IMPRESSION ÉTIQUETTE NIIMBOT ══
+function imprimerEtiquetteQR(r) {
+  var url = window.location.origin + window.location.pathname + '?fiche=' + r.id;
+  var win = window.open('', '_blank', 'width=400,height=600');
+  if (!win) { alert('Autorise les popups pour imprimer'); return; }
+
+  var infos = '';
+  if (r.wo)      infos += '<div><span>WO MTC</span> <span>' + r.wo + '</span></div>';
+  if (r.woUsine) infos += '<div><span>WO Usine</span> <span>' + r.woUsine + '</span></div>';
+  if (r.wr)      infos += '<div><span>WR</span> <span>' + r.wr + '</span></div>';
+  if (r.wg)      infos += '<div><span>Workgroup</span> <span>' + r.wg + '</span></div>';
+  if (r.loc)     infos += '<div><span>Localisation</span> <span>' + r.loc + '</span></div>';
+  if (r.date)    infos += '<div><span>Date</span> <span>' + r.date + '</span></div>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<title>Etiquette ' + (r.tag||'') + '</title>' +
+    '<style>' +
+    '* { margin:0; padding:0; box-sizing:border-box; }' +
+    'body { font-family:Arial,sans-serif; width:62mm; background:#fff; }' +
+    '@media print { body { width:62mm; } @page { size:62mm auto; margin:2mm; } }' +
+    '.etiquette { width:62mm; padding:3mm; border:1px solid #000; display:flex; flex-direction:column; align-items:center; gap:3mm; }' +
+    '.logo { font-size:7pt; font-weight:bold; color:#1F3864; text-align:center; letter-spacing:1px; border-bottom:1px solid #1F3864; width:100%; padding-bottom:2mm; }' +
+    '.tag { font-size:14pt; font-weight:bold; color:#000; text-align:center; letter-spacing:1px; }' +
+    '.infos { width:100%; font-size:7pt; line-height:1.6; }' +
+    '.infos div { display:flex; justify-content:space-between; }' +
+    '.infos span { font-weight:bold; color:#333; }' +
+    '#qr { display:flex; justify-content:center; }' +
+    '.badge { font-size:7pt; font-weight:bold; background:#1F3864; color:#fff; padding:1mm 3mm; border-radius:3mm; }' +
+    '.footer { font-size:6pt; color:#888; text-align:center; border-top:1px dashed #ccc; padding-top:2mm; width:100%; }' +
+    '.btn { margin:10px auto; display:block; padding:10px 20px; background:#1F3864; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; }' +
+    '@media print { .btn { display:none; } }' +
+    '</style>' +
+    '</head><body>' +
+    '<div class="etiquette">' +
+      '<div class="logo">PRNC - MAINTENANCE CENTRALE P50</div>' +
+      '<div class="tag">' + (r.tag||'--') + '</div>' +
+      '<div id="qr"></div>' +
+      '<div class="infos">' + infos + '</div>' +
+      (r.statut ? '<div class="badge">' + r.statut + '</div>' : '') +
+      '<div class="footer">Scanne pour voir la fiche complete</div>' +
+    '</div>' +
+    '<button class="btn" onclick="window.print()">Imprimer</button>' +
+    '<scr' + 'ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></' + 'script>' +
+    '<scr' + 'ipt>' +
+    'window.onload=function(){' +
+      'new QRCode(document.getElementById("qr"),{' +
+        'text:"' + url + '",' +
+        'width:120,height:120,' +
+        'colorDark:"#1F3864",colorLight:"#ffffff",' +
+        'correctLevel:QRCode.CorrectLevel.M' +
+      '});' +
+      'setTimeout(function(){window.print();},800);' +
+    '};' +
+    '</' + 'script>' +
+    '</body></html>';
+
+  win.document.write(html);
+  win.document.close();
+}
+
+
+// ══ FICHE VIA QR CODE (ouverture depuis scan) ══
+async function ouvrirFicheQR(id) {
+  show('s-qr-fiche');
+  var content = document.getElementById('qr-fiche-content');
+  if (content) content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">&#8987; Chargement...</div>';
+
+  var records = await dbLoad();
+  var r = records.find(function(x){ return x.id === id; });
+  if (!r) {
+    if (content) content.innerHTML = '<div style="text-align:center;padding:40px;color:#C00">Équipement introuvable</div>';
+    return;
+  }
+
+  var photos = (r.photos||[]).filter(Boolean);
+  var _pid = 'qr_' + r.id;
+  window._etnaPhotosMap = window._etnaPhotosMap || {};
+  if (photos.length) window._etnaPhotosMap[_pid] = photos;
+
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+
+  if (content) content.innerHTML =
+    (photos.length ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;cursor:pointer">' : '') +
+    '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:20px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
+        (r.wg ? '<span style="background:' + (wgBgs[r.wg]||'#f0f0f0') + ';color:' + (wgColors[r.wg]||'#333') + ';padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">' + r.wg + '</span>' : '') +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">' +
+        (r.wo     ? '<div><span style="color:#888;font-weight:700">WO MTC</span><br><strong>' + r.wo + '</strong></div>' : '') +
+        (r.woUsine? '<div><span style="color:#888;font-weight:700">WO Usine</span><br><strong>' + r.woUsine + '</strong></div>' : '') +
+        (r.wr     ? '<div><span style="color:#888;font-weight:700">WR</span><br><strong>' + r.wr + '</strong></div>' : '') +
+        (r.sc     ? '<div><span style="color:#888;font-weight:700">Stock Code</span><br><strong>' + r.sc + '</strong></div>' : '') +
+        (r.loc    ? '<div><span style="color:#888;font-weight:700">Localisation</span><br><strong>' + r.loc + '</strong></div>' : '') +
+        (r.date   ? '<div><span style="color:#888;font-weight:700">Date</span><br>' + r.date + '</div>' : '') +
+      '</div>' +
+      (r.statut ? '<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:8px 12px;font-size:12px"><span style="color:#888;font-weight:700">Statut :</span> <strong>' + r.statut + '</strong></div>' : '') +
+      (r.desc   ? '<div style="margin-top:8px;font-size:11px;color:#555;font-style:italic">' + r.desc + '</div>' : '') +
+    '</div>';
+}
+
+
 // ══ MODE CONSULTATION LECTURE SEULE ══
 function activerModeConsult2() {
   _isConsult2Mode = true;
@@ -6617,6 +7026,7 @@ function editRecord(id) {
           <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
           <button onclick="saveEdit('${id}')" style="flex:2;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Enregistrer</button>
         </div>
+        <button onclick="genererQRCode('${id}')" style="width:100%;margin-top:10px;padding:11px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128248; Générer QR Code</button>
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
@@ -6968,6 +7378,13 @@ initPIN();
 
 // Si URL contient ?etiq=1 -> afficher étiquette | ?fiche= -> afficher fiche
 (function checkURL() {
+  // Ouvrir fiche via QR code
+  const ficheId = new URLSearchParams(window.location.search).get('fiche');
+  if (ficheId) {
+    // Attendre que l'app soit prête puis ouvrir la fiche
+    setTimeout(function() { ouvrirFicheQR(ficheId); }, 800);
+    return;
+  }
   const p = new URLSearchParams(window.location.search);
   if (p.get('etiq') === '1') {
     // Afficher l'étiquette directement (lien depuis le mail)
