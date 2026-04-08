@@ -1287,7 +1287,9 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       Pointe la caméra vers le QR code de l'équipement
     </div>
     <!-- Zone caméra -->
-    <div id="qr-reader" style="width:100%;max-width:320px;border-radius:16px;overflow:hidden;border:3px solid #1F3864"></div>
+    <div id="qr-reader" style="width:100%;max-width:320px;border-radius:16px;overflow:hidden;border:3px solid #1F3864;min-height:80px">
+      <video id="qr-video" style="width:100%;display:none;border-radius:13px" playsinline muted></video>
+    </div>
     <!-- Résultat -->
     <div id="qr-result" style="display:none;width:100%;background:#E2EFDA;border-radius:12px;padding:14px;text-align:center;font-weight:700;color:#375623;font-size:14px"></div>
     <!-- Erreur -->
@@ -2721,11 +2723,8 @@ function show(id) {
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-inventaire') renderInventaire();
-  // Arrêter le scanner si on quitte
-  if (id !== 's-scanner' && _html5QrCode) {
-    _html5QrCode.stop().catch(function(){});
-    _html5QrCode = null;
-  }
+  // Arrêter la caméra si on quitte le scanner
+  if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home')     {
     // Chargement différé pour ne pas bloquer l'affichage
@@ -5638,50 +5637,104 @@ async function renderCallidusPrestataire() {
 
 
 // ══ SCANNER QR CODE ══
-var _html5QrCode = null;
+var _scanStream = null;
+var _scanInterval = null;
 
 function ouvrirScannerQR() {
   show('s-scanner');
   document.getElementById('qr-result').style.display = 'none';
   document.getElementById('qr-error').style.display = 'none';
 
-  setTimeout(function() {
-    try {
-      _html5QrCode = new Html5Qrcode('qr-reader');
-      _html5QrCode.start(
-        { facingMode: 'environment' }, // caméra arrière
-        {
-          fps: 10,
-          qrbox: { width: 220, height: 220 }
-        },
-        function(decodedText) {
-          // QR code détecté !
-          _html5QrCode.stop().then(function() {
-            traiterQRCode(decodedText);
-          });
-        },
-        function(err) {
-          // Erreur de scan — ignorée silencieusement
+  // Vérifier si BarcodeDetector est disponible (Chrome Android natif)
+  if ('BarcodeDetector' in window) {
+    demarrerScannerNatif();
+  } else {
+    // Fallback : input file caméra
+    afficherFallbackCamera();
+  }
+}
+
+async function demarrerScannerNatif() {
+  var video = document.getElementById('qr-video');
+  var errEl = document.getElementById('qr-error');
+  try {
+    _scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: 1280, height: 720 }
+    });
+    video.srcObject = _scanStream;
+    video.style.display = 'block';
+    await video.play();
+
+    var detector = new BarcodeDetector({ formats: ['qr_code'] });
+    var canvas = document.createElement('canvas');
+
+    _scanInterval = setInterval(async function() {
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      try {
+        var codes = await detector.detect(canvas);
+        if (codes.length > 0) {
+          clearInterval(_scanInterval);
+          arreterCamera();
+          traiterQRCode(codes[0].rawValue);
         }
-      ).catch(function(err) {
-        var errEl = document.getElementById('qr-error');
-        errEl.textContent = 'Caméra inaccessible : ' + err;
-        errEl.style.display = 'block';
-      });
-    } catch(e) {
-      var errEl = document.getElementById('qr-error');
-      errEl.textContent = 'Scanner non disponible : ' + e.message;
-      errEl.style.display = 'block';
+      } catch(e) {}
+    }, 300);
+  } catch(e) {
+    errEl.textContent = 'Caméra inaccessible : ' + e.message + ' — utilise le bouton ci-dessous.';
+    errEl.style.display = 'block';
+    afficherFallbackCamera();
+  }
+}
+
+function afficherFallbackCamera() {
+  var zone = document.getElementById('qr-reader');
+  zone.innerHTML =
+    '<div style="padding:20px;text-align:center">' +
+      '<div style="font-size:13px;color:#555;margin-bottom:16px">Prends en photo le QR code :</div>' +
+      '<label style="display:inline-block;padding:14px 24px;background:#1F3864;color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">' +
+        '&#128247; Ouvrir la caméra' +
+        '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="lireImageQR(this)">' +
+      '</label>' +
+    '</div>';
+}
+
+async function lireImageQR(input) {
+  if (!input.files || !input.files[0]) return;
+  var resultEl = document.getElementById('qr-result');
+  resultEl.textContent = '&#8987; Analyse en cours...';
+  resultEl.style.display = 'block';
+
+  try {
+    // Utiliser BarcodeDetector si dispo
+    if ('BarcodeDetector' in window) {
+      var img = await createImageBitmap(input.files[0]);
+      var detector = new BarcodeDetector({ formats: ['qr_code'] });
+      var codes = await detector.detect(img);
+      if (codes.length > 0) {
+        traiterQRCode(codes[0].rawValue);
+        return;
+      }
     }
-  }, 300);
+    // Fallback : lire l'URL de l'image si c'est un QR PRNC
+    resultEl.textContent = 'QR non detecte. Essaie le bouton caméra.';
+  } catch(e) {
+    resultEl.textContent = 'Erreur : ' + e.message;
+  }
+}
+
+function arreterCamera() {
+  if (_scanStream) {
+    _scanStream.getTracks().forEach(function(t){ t.stop(); });
+    _scanStream = null;
+  }
+  if (_scanInterval) { clearInterval(_scanInterval); _scanInterval = null; }
 }
 
 function fermerScannerQR() {
-  if (_html5QrCode) {
-    _html5QrCode.stop().catch(function(){}).then(function(){
-      _html5QrCode = null;
-    });
-  }
+  arreterCamera();
   show('s-home');
 }
 
