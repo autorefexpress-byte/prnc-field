@@ -5899,18 +5899,23 @@ async function genererQRCode(id) {
   // Générer le QR code
   setTimeout(function() {
     try {
-      new QRCode(document.getElementById('qr-canvas'), {
+      var qrDiv = document.getElementById('qr-canvas');
+      if (typeof QRCode === 'undefined') {
+        qrDiv.innerHTML = '<div style="font-size:11px;color:#888;padding:8px">QR lib en chargement...<br><a href="' + url + '" style="color:#1F3864;word-break:break-all;font-size:10px">' + url + '</a></div>';
+        return;
+      }
+      new QRCode(qrDiv, {
         text: url,
         width: 200,
         height: 200,
         colorDark: '#1F3864',
         colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+        correctLevel: 0
       });
     } catch(e) {
       document.getElementById('qr-canvas').innerHTML = '<div style="color:#C00;font-size:12px">Erreur QR : ' + e.message + '</div>';
     }
-  }, 100);
+  }, 300);
 
   ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
 }
@@ -5964,7 +5969,7 @@ function imprimerEtiquetteQR(r) {
         'text:"' + url + '",' +
         'width:120,height:120,' +
         'colorDark:"#1F3864",colorLight:"#ffffff",' +
-        'correctLevel:QRCode.CorrectLevel.M' +
+        'correctLevel:0' +
       '});' +
       'setTimeout(function(){window.print();},800);' +
     '};' +
