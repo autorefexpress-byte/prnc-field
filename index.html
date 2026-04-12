@@ -335,6 +335,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Relances</div>
       <div class="card-sub" id="relance-badge-home">Retour demandeur</div>
     </div>
+    <div class="action-card" onclick="show('s-relance-credit')">
+      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#128230;</div>
+      <div class="card-lbl">Relances Crédit</div>
+      <div class="card-sub" id="cr-badge-home">Crédit magasin</div>
+    </div>
     <div class="action-card" onclick="show('s-etna-suivi')">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
       <div class="card-lbl">Travaux ETNA</div>
@@ -1296,6 +1301,93 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div id="qr-error" style="display:none;width:100%;background:#FCE4D6;border-radius:12px;padding:14px;text-align:center;color:#C55A11;font-size:13px"></div>
     <button onclick="fermerScannerQR()" style="padding:12px 30px;background:#f0f0f0;color:#333;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
   </div>
+</div>
+
+<!-- ═══════════════ CRÉDIT MAGASIN ═══════════════ -->
+<div class="screen" id="s-credit-magasin">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Crédit Magasin</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128230;</div>
+  </div>
+  <div class="form-body">
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div class="wg-grp">
+        <div class="wg-btn" id="cr-wg-chaud" onclick="setWG('cr','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div></div>
+        <div class="wg-btn" id="cr-wg-repar" onclick="setWG('cr','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div></div>
+        <div class="wg-btn" id="cr-wg-strob" onclick="setWG('cr','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div></div>
+      </div>
+    </div>
+
+    <!-- Infos pièce -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> N° IR (Issue Requisition)</div>
+      <input class="fi" type="text" id="cr-ir" placeholder="Ex : 000000123456">
+    </div>
+
+    <div class="row2">
+      <div class="field-grp">
+        <div class="field-lbl">WO associé</div>
+        <input class="fi" type="text" id="cr-wo" placeholder="Ex : 837669">
+      </div>
+      <div class="field-grp">
+        <div class="field-lbl">Stock Code</div>
+        <input class="fi" type="text" id="cr-sc" placeholder="Ex : 158659">
+      </div>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Description pièce</div>
+      <input class="fi" type="text" id="cr-desc" placeholder="Ex : VANNE PAPILLON 4 POUCES">
+    </div>
+
+    <div class="row2">
+      <div class="field-grp">
+        <div class="field-lbl">Quantité</div>
+        <input class="fi" type="number" id="cr-qty" placeholder="1" value="1">
+      </div>
+      <div class="field-grp">
+        <div class="field-lbl">Date dépôt magasin</div>
+        <input class="fi" type="date" id="cr-date">
+      </div>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Remarques</div>
+      <textarea class="fi" id="cr-rem" style="height:60px" placeholder="Ex : Pièce non utilisée suite à annulation WO..."></textarea>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl">Photo</div>
+      <label for="cr-photos" class="photo-zone" style="cursor:pointer">
+        <div class="photo-icon">&#128247;</div>
+        <div class="photo-txt">Prendre une photo</div>
+      </label>
+      <input type="file" id="cr-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'cr-prev')">
+      <div class="photo-prev" id="cr-prev"></div>
+    </div>
+
+    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="sendCreditMagasin()">&#128228; Notifier le magasin</button>
+  </div>
+</div>
+
+<!-- ═══════════════ RELANCES CRÉDIT MAGASIN ═══════════════ -->
+<div class="screen" id="s-relance-credit">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Relances Crédit</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C55A11">&#128276;</div>
+  </div>
+  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <input class="fi" type="text" id="cr-search" placeholder="Rechercher IR, WO, Stock Code..."
+      oninput="renderRelancesCredit()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  </div>
+  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="cr-relance-count">Chargement...</div>
+  <div id="cr-relance-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -2691,6 +2783,7 @@ const ETNA_CONTACTS = {
 const state = {
   ud: { wg:'' },
   cal: { wg:'' },
+  cr:  { wg:'' },
   fs: { wg:'', statut:'' },
   pl: { wg:'', sem:'', stt:'', typeWO:'', kit:'' },
   ar: { wg:'', statut:'' },
@@ -2700,7 +2793,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2715,14 +2808,16 @@ function show(id) {
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
-  if (id === 's-usage') setTimeout(initSignatureCanvas, 50);
+  if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
+  if (id === 's-planning') setTimeout(initPlanSig, 50);
   if (id === 's-hist')    renderHist();
   if (id === 's-hist-wo')  renderHistWO();
   if (id === 's-relances')      renderRelances();
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
-  if (id === 's-inventaire') renderInventaire();
+  if (id === 's-inventaire')      renderInventaire();
+  if (id === 's-relance-credit') renderRelancesCredit();
   // Arrêter la caméra si on quitte le scanner
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
@@ -3276,7 +3371,8 @@ var _plSigHasMark = false;
 
 function initPlanSig() {
   var canvas = document.getElementById('pl-sig-canvas');
-  if (!canvas || _plSigCtx) return;
+  if (!canvas) return;
+  _plSigCtx = null; // réinitialiser à chaque ouverture
   _plSigCtx = canvas.getContext('2d');
   _plSigCtx.strokeStyle = '#1F3864';
   _plSigCtx.lineWidth = 2.5;
@@ -3472,11 +3568,20 @@ function sendPlanning() {
   let body = 'Bonjour,\n\n';
   body += eqts.length + ' équipement'+(eqts.length>1?'s':'')+' prévus au planning '+state.pl.sem+' :\n';
   body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  // Générer les IDs avant envoi pour les liens
+  var planIds = eqts.map(function() {
+    return Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  });
+
   eqts.forEach(function(e, i) {
+    var ficheUrl = window.location.origin + window.location.pathname + '?fiche=' + planIds[i];
     body += (i+1) + '. WO : ' + e.wo + ' -- TAG : ' + e.tag + '\n';
     if (e.loc)   body += '   Localisation : ' + e.loc + '\n';
     if (e.type)  body += '   Type WO      : ' + e.type + '\n';
     if (e.infos) body += '   Commentaire  : ' + e.infos + '\n';
+    if (e.photos && e.photos.length > 0) {
+      body += '   Photos (' + e.photos.length + ') : ' + ficheUrl + '\n';
+    }
     if (i < eqts.length-1) body += '   ------\n';
   });
   body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
@@ -3489,11 +3594,32 @@ function sendPlanning() {
 
   mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
 
-  // Sauvegarder chaque équipement dans l'historique
-  eqts.forEach(function(e) {
-    dbAdd({ type:'PLANNING', tag:e.tag, wo:e.wo, wg:wgl, statut:state.pl.sem,
-            loc:e.loc, typeWO:e.type, dest:allTo, photos:e.photos||[] });
+  // Sauvegarder chaque équipement avec l'ID pré-généré
+  eqts.forEach(function(e, i) {
+    var record = {
+      type:'PLANNING', tag:e.tag, wo:e.wo, wg:wgl, statut:state.pl.sem,
+      loc:e.loc, typeWO:e.type, dest:allTo, photos:e.photos||[]
+    };
+    record.id    = planIds[i];
+    record.ts    = new Date().toISOString();
+    record.date  = new Date().toLocaleDateString('fr-FR');
+    record.heure = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if (window._lastFromFiche) { record.fromFiche = true; window._lastFromFiche = false; }
+    // Sauvegarder en localStorage
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      local.unshift(record);
+      localStorage.setItem('prnc-historique', JSON.stringify(local));
+    } catch(ex) {}
+    // Sauvegarder dans Supabase
+    supaFetch('/rest/v1/historique', 'POST', {
+      id: record.id, type: record.type, tag: record.tag, wo: record.wo,
+      wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
+      designation: record.desc || null, date: record.date, heure: record.heure,
+      ts: record.ts, photos: record.photos || []
+    }).catch(function(e){ console.warn('Supabase plan save err', e); });
     clearPhotos(e.prevId);
+    invalidateDbCache();
   });
 
   clearPlanSig(); _plSigHasMark=false;
@@ -5633,6 +5759,238 @@ async function renderCallidusPrestataire() {
       '</div>' +
     '</div>';
   }).join('');
+}
+
+
+// ══ CRÉDIT MAGASIN ══
+const MAIL_MAGASIN = 'PRNC-Magasin@pronyresources.com';
+const WG_CC_CREDIT = {
+  'MCCHAUD': ['cyril.alosio@pronyresources.com','abel.vendegou@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+  'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+  'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+};
+
+async function sendCreditMagasin() {
+  var wg  = state.cr && state.cr.wg ? WG_LABELS[state.cr.wg] || state.cr.wg : '';
+  var ir  = document.getElementById('cr-ir')   ? document.getElementById('cr-ir').value.trim()   : '';
+  var wo  = document.getElementById('cr-wo')   ? document.getElementById('cr-wo').value.trim()   : '';
+  var sc  = document.getElementById('cr-sc')   ? document.getElementById('cr-sc').value.trim()   : '';
+  var desc= document.getElementById('cr-desc') ? document.getElementById('cr-desc').value.trim() : '';
+  var qty = document.getElementById('cr-qty')  ? document.getElementById('cr-qty').value.trim()  : '1';
+  var date= document.getElementById('cr-date') ? document.getElementById('cr-date').value        : '';
+  var rem = document.getElementById('cr-rem')  ? document.getElementById('cr-rem').value.trim()  : '';
+  var photos = getPhotos('cr-prev');
+
+  if (!wg)  { alert('Sélectionne un Workgroup.'); return; }
+  if (!ir)  { alert('Le N° IR est obligatoire.'); return; }
+  if (!date){ alert('La date de dépôt est obligatoire.'); return; }
+
+  // Mail vers magasin
+  var cc = (WG_CC_CREDIT[wg] || []).join(',');
+  var subj = '[CREDIT MAGASIN] Retour piece -- IR ' + ir + (wo ? ' -- WO ' + wo : '');
+  var bodyParts = [
+    'Bonjour,', '',
+    'Veuillez proceder au credit magasin pour la piece suivante :', '',
+    '  N IR          : ' + ir,
+    wo   ? '  WO           : ' + wo   : null,
+    sc   ? '  Stock Code   : ' + sc   : null,
+    desc ? '  Description  : ' + desc : null,
+    '  Quantite      : ' + qty,
+    '  Workgroup     : ' + wg,
+    '  Date depot    : ' + date,
+    rem  ? '  Remarques    : ' + rem  : null,
+    '', 'Merci de confirmer la reception.',
+    '', 'Cordialement,',
+    'Emmanuel ROSA ASIK',
+    'Prepose aux pieces | PRNC -- Maintenance Centrale P50'
+  ].filter(function(l){ return l !== null; }).join('\n');
+
+  var mailTo = 'mailto:' + MAIL_MAGASIN +
+    '?subject=' + encodeURIComponent(subj) +
+    '&body='    + encodeURIComponent(bodyParts) +
+    (cc ? '&cc=' + cc : '');
+  window.location.href = mailTo;
+
+  // Sauvegarder en base
+  await dbAdd({
+    type: 'CREDIT',
+    wo: wo, wg: wg, sc: sc,
+    desc: desc, qty: qty,
+    statut: 'En attente confirmation',
+    motif: 'IR: ' + ir + (rem ? ' | ' + rem : ''),
+    loc: ir,
+    emailDemandeur: MAIL_MAGASIN,
+    photos: photos,
+    date_depot: date
+  });
+  invalidateDbCache();
+
+  // Reset
+  clearPhotos('cr-prev');
+  ['cr-ir','cr-wo','cr-sc','cr-desc','cr-rem'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var qtyEl = document.getElementById('cr-qty'); if(qtyEl) qtyEl.value = '1';
+  var dateEl = document.getElementById('cr-date'); if(dateEl) dateEl.value = '';
+  ['cr-wg-chaud','cr-wg-repar','cr-wg-strob'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.className='wg-btn';
+  });
+  if (state.cr) state.cr.wg = '';
+  show('s-home');
+}
+
+// ══ RELANCES CRÉDIT MAGASIN ══
+async function renderRelancesCredit() {
+  var list    = document.getElementById('cr-relance-list');
+  var countEl = document.getElementById('cr-relance-count');
+  if (!list) return;
+  var search = (document.getElementById('cr-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
+
+  var records = await dbLoad();
+  var now = new Date();
+
+  // Filtrer les crédits non confirmés depuis + de 5 jours
+  var credits = records.filter(function(r) {
+    if (r.type !== 'CREDIT') return false;
+    if (r.statut === 'Confirmé magasin') return false;
+    if (search) {
+      var ir = r.loc || '';
+      return ir.toLowerCase().includes(search) ||
+             (r.wo||'').toLowerCase().includes(search) ||
+             (r.sc||'').toLowerCase().includes(search);
+    }
+    return true;
+  });
+
+  // Calculer les jours depuis le dépôt
+  credits.forEach(function(r) {
+    var d = r.created_at ? new Date(r.created_at) : new Date(r.ts||now);
+    r._jours = Math.floor((now - d) / 86400000);
+    r._urgent = r._jours >= 5;
+  });
+
+  var urgents = credits.filter(function(r){ return r._urgent; });
+  var recents = credits.filter(function(r){ return !r._urgent; });
+
+  countEl.innerHTML = urgents.length > 0
+    ? '<span style="color:#C55A11;font-weight:700">&#9888; ' + urgents.length + ' en retard (&ge;5j)</span> &nbsp;|&nbsp; ' + recents.length + ' r&eacute;cents'
+    : credits.length + ' cr&eacute;dit(s) en attente';
+
+  if (!credits.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128230;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun cr&eacute;dit en attente</div></div>';
+    return;
+  }
+
+  function renderCreditCard(r) {
+    var ir   = r.loc || '--';
+    var wo   = r.wo  || '--';
+    var sc   = r.sc  || '--';
+    var wg   = r.wg  || '';
+    var date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
+    var borderColor = r._urgent ? '#C55A11' : '#b0bec5';
+    var joursBadge = r._urgent
+      ? '<span style="background:#FCE4D6;color:#C55A11;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + r._jours + 'j &#9888;</span>'
+      : '<span style="background:#f0f0f0;color:#888;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + r._jours + 'j</span>';
+
+    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
+    var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+
+    // Mail de relance
+    var cc = (WG_CC_CREDIT[wg] || []).join(',');
+    var subj = '[RELANCE CREDIT] IR ' + ir + (wo !== '--' ? ' -- WO ' + wo : '');
+    var bodyParts = [
+      'Bonjour,', '',
+      'Nous relançons pour le credit magasin suivant non encore confirme :',
+      '',
+      '  N IR        : ' + ir,
+      wo !== '--' ? '  WO         : ' + wo : null,
+      sc !== '--' ? '  Stock Code : ' + sc : null,
+      '  Workgroup  : ' + wg,
+      '  Depose le  : ' + date,
+      '  En attente depuis : ' + r._jours + ' jour' + (r._jours>1?'s':''),
+      '', 'Merci de confirmer la reception et de proceder au credit.',
+      '', 'Cordialement,',
+      'Emmanuel ROSA ASIK',
+      'Prepose aux pieces | PRNC -- Maintenance Centrale P50'
+    ].filter(function(l){ return l !== null; }).join('\n');
+
+    var mailTo = 'mailto:' + MAIL_MAGASIN +
+      '?subject=' + encodeURIComponent(subj) +
+      '&body='    + encodeURIComponent(bodyParts) +
+      (cc ? '&cc=' + cc : '');
+
+    return '<div class="credit-card" style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;padding:14px;margin-bottom:4px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:15px;font-weight:700;color:#1F3864">IR : ' + ir + '</div>' +
+          (wg ? '<span style="background:' + (wgBgs[wg]||'#f0f0f0') + ';color:' + (wgColors[wg]||'#333') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + wg + '</span>' : '') +
+        '</div>' +
+        joursBadge +
+      '</div>' +
+      '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;font-size:11px;line-height:2;margin-bottom:10px">' +
+        (wo !== '--' ? '<div><span style="color:#888;font-weight:700">WO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><strong>' + wo + '</strong></div>' : '') +
+        (sc !== '--' ? '<div><span style="color:#888;font-weight:700">Stock Code</span><strong>' + sc + '</strong></div>' : '') +
+        '<div><span style="color:#888;font-weight:700">Déposé le &nbsp;</span>' + date + '</div>' +
+        '<div><span style="color:#888;font-weight:700">Destinataire</span><strong>' + MAIL_MAGASIN + '</strong></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<a href="' + mailTo + '" style="flex:2;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
+        '<button onclick="confirmerCreditMagasin(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:2;background:#E2EFDA;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Confirmé</button>' +
+        '<button onclick="supprimerCredit(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer">&#128465;</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var html = '';
+  if (urgents.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:#C55A11;text-transform:uppercase;padding:4px 0;margin-top:4px">&#9888; En retard (&ge;5 jours)</div>';
+    html += urgents.map(renderCreditCard).join('');
+  }
+  if (recents.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:4px 0;margin-top:8px">Recents (&lt;5 jours)</div>';
+    html += recents.map(renderCreditCard).join('');
+  }
+  list.innerHTML = html;
+}
+
+async function confirmerCreditMagasin(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '&#8987;';
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
+      statut: 'Confirme magasin'
+    });
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      var idx = local.findIndex(function(r){ return r.id === id; });
+      if (idx >= 0) { local[idx].statut = 'Confirme magasin'; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
+    } catch(e) {}
+    invalidateDbCache();
+    setTimeout(renderRelancesCredit, 400);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '&#9989; Confirmé';
+  }
+}
+
+async function supprimerCredit(id, btn) {
+  if (!confirm('Supprimer cet enregistrement ?')) return;
+  btn.disabled = true;
+  btn.innerHTML = '&#8987;';
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      local = local.filter(function(r){ return r.id !== id; });
+      localStorage.setItem('prnc-historique', JSON.stringify(local));
+    } catch(e) {}
+    invalidateDbCache();
+    setTimeout(renderRelancesCredit, 400);
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '&#128465;';
+  }
 }
 
 
