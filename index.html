@@ -366,11 +366,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Historique WO</div>
       <div class="card-sub">WO clôturés</div>
     </div>
-    <div class="action-card" onclick="show('s-dashboard')">
-      <div class="card-icon teal">&#128300;</div>
-      <div class="card-lbl">Tableau de bord</div>
-      <div class="card-sub">Équip. en cours</div>
-    </div>
+
     <div class="action-card" onclick="show('s-rapport')">
       <div class="card-icon green">&#128196;</div>
       <div class="card-lbl">Rapport mensuel</div>
@@ -6395,7 +6391,7 @@ function activerModeConsult2() {
     card.style.display = 'none';
   });
   // Réafficher uniquement les cartes de consultation
-  ['s-etna-suivi','s-dashboard','s-relances','s-hist'].forEach(function(screen) {
+  ['s-etna-suivi','s-relances','s-hist'].forEach(function(screen) {
     var card = document.querySelector('[onclick*="' + screen + '"]');
     if (card) card.style.display = '';
   });
