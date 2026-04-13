@@ -210,9 +210,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <select id="pin-mode-dropdown" onchange="selectPinMode(this.value)"
       style="width:100%;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.3);font-family:inherit;-webkit-appearance:none;text-align:center">
       <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
-      <option value="consult" style="background:#1F3864;color:#fff">&#128296; STT — Superviseur</option>
       <option value="etna"       style="background:#1F3864;color:#fff">&#127912; ETNA — Prestataire</option>
-      <option value="consult2"   style="background:#1F3864;color:#fff">&#128065; Consultation</option>
       <option value="callidus"   style="background:#1F3864;color:#fff">&#128295; Callidus — Prestataire</option>
     </select>
   </div>
@@ -247,10 +245,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   &#128295; MODE CALLIDUS — Prestataire Réparation
 </div>
 
-<!-- Bandeau mode Consultation -->
-<div id="consult2-banner" style="display:none;background:#2E75B6;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
-  &#128065; MODE CONSULTATION — Lecture seule
-</div>
+
 
 <!-- Bandeau mode ETNA -->
 <div id="etna-banner" style="display:none;background:#C55A11;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
@@ -2796,8 +2791,6 @@ const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-tran
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
-  // Mode STT : navigation limitée à Équipement arrivé, home STT + succès
-  if (_isConsultMode && id !== 's-arrive' && id !== 's-success' && id !== 's-home') return;
   // Mode ETNA : navigation limitée à l'espace prestataire
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
   // Mode Consultation : accès lecture seule
@@ -5323,22 +5316,7 @@ async function validatePIN() {
     err.textContent = '';
     activerModePrepose();
   } else {
-    // Mode STT -- PIN fixe 0000
-    if (_pinModeSelect === 'consult' && _pinBuffer === PIN_STT) {
-      document.getElementById('pin-overlay').style.display = 'none';
-      err.textContent = '';
-      activerModeConsultation();
-      _pinBuffer = ''; updatePinDots();
-      return;
-    }
-    // Mode Consultation -- PIN fixe 2222
-    if (_pinModeSelect === 'consult2' && _pinBuffer === PIN_CONSULT2) {
-      document.getElementById('pin-overlay').style.display = 'none';
-      err.textContent = '';
-      activerModeConsult2();
-      _pinBuffer = ''; updatePinDots();
-      return;
-    }
+
     // Mode Callidus -- PIN fixe 3333
     if (_pinModeSelect === 'callidus' && _pinBuffer === PIN_CALLIDUS) {
       document.getElementById('pin-overlay').style.display = 'none';
@@ -5406,7 +5384,6 @@ function setCallidusStatut(s) {
 var _callidusCurrentId = null;
 
 function openCallidusUpdate(id) {
-  if (_isConsult2Mode) { alert('Mode consultation — lecture seule.'); return; }
   _callidusCurrentId = id;
   _callidusStatut = '';
   Object.keys(CALLIDUS_STATUT_LABELS).forEach(function(k) {
@@ -6787,14 +6764,8 @@ async function renderEtnaPrestataire() {
 
 
 function activerModePrepose() {
-  _isConsultMode  = false;
-  _isConsult2Mode = false;
   _isEtnaMode     = false;
   _isCallidusMode = false;
-  const banner = document.getElementById('consult-banner');
-  if (banner) banner.style.display = 'none';
-  var b2 = document.getElementById('consult2-banner');
-  if (b2) b2.style.display = 'none';
   var be = document.getElementById('etna-banner');
   if (be) be.style.display = 'none';
   var bc = document.getElementById('callidus-banner');
