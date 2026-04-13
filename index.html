@@ -3871,7 +3871,11 @@ function sendEquip() {
     mailto(allTo[0], subj, body, ccUniqueEq);
       // Récupérer email et nom demandeur depuis les champs
   var eqManualInputs = document.querySelectorAll('#eq-manual input');
-  var emailDem = eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '';
+  var hiddenEmail = document.getElementById('eq-email-dem-hidden');
+  var emailDem = (hiddenEmail && hiddenEmail.value.trim()) ||
+                 (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
+  // Reset le champ caché
+  if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
   dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
@@ -7124,12 +7128,16 @@ function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine, emailDem) {
     if (tag)     { var el=document.getElementById('eq-tag');    if(el) el.value=tag; }
     // Pré-sélectionner statut retour demandeur
     setTimeout(function() { setEqStatut('demandeur'); }, 150);
+    // Stocker l'email dans le champ caché
+    if (emailDem) {
+      var hiddenEl = document.getElementById('eq-email-dem-hidden');
+      if (hiddenEl) hiddenEl.value = emailDem;
+    }
     // Injecter l'email du demandeur si disponible
     if (emailDem) {
       setTimeout(function() {
         var manualList = document.getElementById('eq-manual');
         if (manualList) {
-          // Vérifier si déjà présent
           var inputs = manualList.querySelectorAll('input');
           var found = false;
           inputs.forEach(function(i){ if(i.value === emailDem) found = true; });
@@ -7724,20 +7732,22 @@ function renderRelanceCard(r, urgent) {
   var wo      = r.wo  || r.woMtc || r.wo_mtc || '--';  // WO MTC
   var wg      = r.wg  || '';
   var emailDem = r.emailDemandeur || '';
-  // desc contient soit "Demandeur : Nom" soit les emails destinataires
+  // Essayer aussi de trouver l'email dans desc
+  if (!emailDem && r.desc && r.desc.indexOf('@') >= 0) {
+    emailDem = r.desc.split(',')[0].trim();
+  }
   var dest = '--';
   if (r.desc) {
     if (r.desc.indexOf('Demandeur : ') === 0) {
       dest = r.desc.replace('Demandeur : ', '');
     } else if (r.desc.indexOf('@') >= 0) {
-      // c'est un email — utiliser comme dest si pas d'emailDem
-      if (!emailDem) emailDem = r.desc.split(',')[0].trim();
-      dest = emailDem;
+      dest = r.desc.split(',')[0].trim();
     } else {
       dest = r.desc;
     }
   }
-  if (dest === '--' && emailDem) dest = emailDem;
+  // Si on a l'email mais pas le nom, afficher l'email comme destinataire
+  if ((dest === '--' || dest === '') && emailDem) dest = emailDem;
   var jours   = r._jours;
   var date    = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
   var statut  = r.statut || r.status || '--';
