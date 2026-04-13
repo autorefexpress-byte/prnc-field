@@ -198,7 +198,13 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="topbar-title"><span class="status-dot"></span>PRNC Field</div>
     <div class="topbar-sub">Maintenance Centrale — P50</div>
   </div>
-  <div class="topbar-user">ROSA ASIK E.<br>Préposé aux pièces</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="topbar-user">ROSA ASIK E.<br>Préposé aux pièces</div>
+    <button onclick="deconnexion()" title="Déconnexion"
+      style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:16px;color:#fff;line-height:1">
+      &#128274;
+    </button>
+  </div>
 </div>
 
 <!-- ═══════════════ PIN LOCK ═══════════════ -->
@@ -6762,6 +6768,13 @@ async function renderEtnaPrestataire() {
   }).join('');
 }
 
+
+function deconnexion() {
+  if (!confirm('Se déconnecter ?')) return;
+  try { localStorage.removeItem('prnc-pin'); } catch(e) {}
+  // Recharger la page pour revenir à l'écran PIN
+  window.location.reload();
+}
 
 function activerModePrepose() {
   _isEtnaMode     = false;
