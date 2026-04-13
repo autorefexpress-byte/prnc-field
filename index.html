@@ -458,7 +458,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- CHAMPS COMMUNS à tous les workgroups -->
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WR</div><input class="fi" type="text" id="ar-wr" placeholder="Ex : 118466"></div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Date réception</div><input class="fi" type="date" id="ar-date"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="ar-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('ar-tag');suggestFromHistory('ar-tag',{wo:'ar-wo',sc:'ar-sc',wgPrefix:'ar'})"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="ar-tag" placeholder="Ex : 220-X-00315"></div>
 
     <!-- STOCK CODE — MCREPAR et STROB uniquement -->
     <div class="field-grp" id="ar-field-sc" style="display:none">
@@ -545,7 +545,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="eq-sc" placeholder="Ex : 35378"></div>
     </div>
     <div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" type="text" id="eq-serie" placeholder="Ex : SN-2021-047"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="eq-tag" placeholder="Ex : 220-PPD-201" data-ac="1" oninput="autocompleteTag('eq-tag');suggestFromHistory('eq-tag',{wo:'eq-wo',woMtc:'eq-wo-mtc',sc:'eq-sc',wgPrefix:'eq'})"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="eq-tag" placeholder="Ex : 220-PPD-201"></div>
     <div class="field-grp"><div class="field-lbl">Désignation</div><input class="fi" type="text" id="eq-desc" placeholder="Ex : STACK SET 1.5 CL900"></div>
 
     <!-- Statut -->
@@ -750,7 +750,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466"></div>
     </div>
     <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('fs-tag')"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
     <div class="field-grp"><div class="field-lbl">Email du demandeur</div><input class="fi" type="email" id="fs-email-demandeur" placeholder="Ex : jade.honakoko@pronyresources.com"></div>
 
@@ -867,7 +867,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- WO + TAG -->
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="ud-wo" placeholder="Ex : 855376"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="ud-tag" placeholder="Ex : 220-X-00315" data-ac="1" oninput="autocompleteTag('ud-tag');suggestFromHistory('ud-tag',{wo:'ud-wo',sc:'ud-sc'})"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="ud-tag" placeholder="Ex : 220-X-00315"></div>
 
     <!-- QTY -->
     <div class="row2">
@@ -2613,6 +2613,8 @@ const WG_CONTACTS = {
     // CC cochables
     {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
     {name:'Abel VENDEGOU',        mail:'abel.vendegou@pronyresources.com',         self:false, cc:true},
+    {name:'Benjamin DUBREUIL',    mail:'benjamin.dubreuil@pronyresources.com',     self:false, cc:true},
+    {name:'David SELEMAEA',       mail:'david.selemaea@pronyresources.com',        self:false, cc:true},
     {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
   ]},
   repar: { label:'MCREPAR', contacts:[
@@ -2722,7 +2724,11 @@ const EQ_CONTACTS = {
   // EN ATTENTE INFO -- tous workgroups -> Abel uniquement
   chaud_attinfo: {
     to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
-    cc: [{name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true}]
+    cc: [
+      {name:'Emmanuel ROSA ASIK',  mail:'emmanuel.rosa@pronyresources.com',      self:true},
+      {name:'Benjamin DUBREUIL',   mail:'benjamin.dubreuil@pronyresources.com',  self:false},
+      {name:'David SELEMAEA',      mail:'david.selemaea@pronyresources.com',     self:false}
+    ]
   },
   repar_attinfo: {
     to: [{name:'Abel VENDEGOU', mail:'abel.vendegou@pronyresources.com', self:false}],
@@ -4933,99 +4939,7 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
 // ========================================
 // ------ 2. PRÉ-REMPLISSAGE INTELLIGENT ------
 // ========================================
-async function suggestFromHistory(tagInputId, fields) {
-  // fields = { wo: 'field-id', wg: 'prefix', sc: 'field-id', ... }
-  const tagEl = document.getElementById(tagInputId);
-  if (!tagEl || tagEl.value.length < 4) return;
-  const tag = tagEl.value.trim().toUpperCase();
-  const records = await dbLoad();
-  // Chercher le dernier enregistrement avec ce TAG
-  const match = records.find(r => (r.tag||'').toUpperCase() === tag);
-  if (!match) return;
-
-  // Afficher la suggestion
-  let suggestEl = document.getElementById('suggest-'+tagInputId);
-  if (!suggestEl) {
-    suggestEl = document.createElement('div');
-    suggestEl.id = 'suggest-'+tagInputId;
-    suggestEl.style.cssText = 'background:var(--llblue);border:1px solid var(--lblue);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--navy);margin-top:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center';
-    tagEl.parentNode.insertBefore(suggestEl, tagEl.nextSibling);
-  }
-
-  const info = [match.wo&&'WO '+match.wo, match.wg, match.sc&&'S/C '+match.sc].filter(Boolean).join(' -- ');
-  suggestEl.innerHTML = '<span>&#128161; Vu le '+match.date+' -- '+info+'<br><strong>Appuie pour pré-remplir</strong></span><span style="font-size:16px">&#8594;</span>';
-  suggestEl.style.display = 'flex';
-  suggestEl.onclick = () => {
-    // Remplir les champs disponibles
-    if (fields.wo   && match.wo)  { const el=document.getElementById(fields.wo);   if(el) el.value=match.wo; }
-    if (fields.sc   && match.sc)  { const el=document.getElementById(fields.sc);   if(el) el.value=match.sc; }
-    if (fields.woMtc&& match.woMtc){const el=document.getElementById(fields.woMtc);if(el) el.value=match.woMtc;}
-    if (fields.wr   && match.wr)  { const el=document.getElementById(fields.wr);   if(el) el.value=match.wr; }
-    // Workgroup
-    if (fields.wgPrefix && match.wg) {
-      const wgKey = Object.keys(WG_LABELS).find(k => WG_LABELS[k] === match.wg);
-      if (wgKey) setWG(fields.wgPrefix, wgKey);
-    }
-    suggestEl.style.cssText += ';background:var(--lgreen);border-color:var(--green);color:var(--green)';
-    suggestEl.innerHTML = '&#10003; Pre-rempli depuis l\'historique du '+match.date;
-    setTimeout(() => { if(suggestEl) suggestEl.style.display='none'; }, 2500);
-  };
-}
-
-// ========================================
-// ------ 3. NOTIFICATION RELANCE -- équipements en attente ------
-// ========================================
-async function checkRelances() {
-  // Requête légère : uniquement les statuts DEPOSE récents pour le badge
-  const records = await dbLoad();
-  const now = new Date();
-  // Équipements arrivés sans sortie correspondante depuis > 7 jours
-  const arrives = records.filter(r => r.type === 'ARRIVEE');
-  const termines = records.filter(r => r.type === 'TERMINE');
-  const terminesTags = new Set(termines.map(r => r.tag));
-
-  let relances = 0;
-  arrives.forEach(r => {
-    if (terminesTags.has(r.tag)) return; // déjà sorti
-    const d = new Date(r.ts);
-    const jours = Math.floor((now - d) / 86400000);
-    if (jours >= 7) relances++;
-  });
-
-  // Afficher badge sur nav historique
-  let badge = document.getElementById('nav-relance-badge');
-  const navHist = document.getElementById('nav-hist');
-  if (!navHist) return;
-
-  if (relances > 0) {
-    if (!badge) {
-      badge = document.createElement('div');
-      badge.id = 'nav-relance-badge';
-      badge.style.cssText = 'position:absolute;top:2px;right:2px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center';
-      navHist.style.position = 'relative';
-      navHist.appendChild(badge);
-    }
-    badge.textContent = relances;
-    badge.style.display = 'flex';
-  } else if (badge) {
-    badge.style.display = 'none';
-  }
-
-  // Afficher alerte dans historique si on y est
-  const alertEl = document.getElementById('hist-relance-alert');
-  if (alertEl) {
-    if (relances > 0) {
-      alertEl.style.display = 'flex';
-      alertEl.innerHTML = '<span>&#9888; <strong>'+relances+' équipement'+(relances>1?'s':'')+' en attente depuis +7 jours</strong> -- filtre "Arrivées" pour voir</span>';
-    } else {
-      alertEl.style.display = 'none';
-    }
-  }
-}
-
-// ========================================
-// ------ 4. CONFIRMATION VISUELLE HISTORIQUE ------
-// ========================================
+async 
 function flashHistBadge() {
   const navHist = document.getElementById('nav-hist');
   if (!navHist) return;
@@ -6929,52 +6843,7 @@ document.head.appendChild(shakeStyle);
 // ========================================
 // ------ AUTOCOMPLÉTION TAG ------
 // ========================================
-async function autocompleteTag(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  const val = input.value.trim().toUpperCase();
-  // Supprimer la liste existante
-  const oldList = document.getElementById('ac-'+inputId);
-  if (oldList) oldList.remove();
-  if (val.length < 2) return;
-
-  const records = await dbLoad();
-  // Collecter les TAGs uniques qui correspondent
-  const tags = [...new Set(records.map(r=>r.tag).filter(t=>t&&t.toUpperCase().includes(val)))].slice(0,5);
-  if (tags.length === 0) return;
-
-  const list = document.createElement('div');
-  list.id = 'ac-'+inputId;
-  list.style.cssText = 'background:#fff;border:1.5px solid var(--navy2);border-radius:0 0 10px 10px;margin-top:-2px;overflow:hidden;z-index:200;position:relative';
-  tags.forEach(tag => {
-    const item = document.createElement('div');
-    item.style.cssText = 'padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)';
-    // Mettre en gras la partie correspondante
-    const idx = tag.toUpperCase().indexOf(val);
-    item.innerHTML = tag.slice(0,idx) + '<strong>'+tag.slice(idx,idx+val.length)+'</strong>' + tag.slice(idx+val.length);
-    item.onclick = () => {
-      input.value = tag;
-      list.remove();
-      // Déclencher la suggestion historique si disponible
-      input.dispatchEvent(new Event('input'));
-    };
-    item.onmouseenter = () => item.style.background = 'var(--llblue)';
-    item.onmouseleave = () => item.style.background = '';
-    list.appendChild(item);
-  });
-  input.parentNode.insertBefore(list, input.nextSibling);
-}
-
-// Fermer autocomplete si on clique ailleurs
-document.addEventListener('click', e => {
-  if (!e.target.closest('[id^="ac-"]') && !e.target.matches('[data-ac]')) {
-    document.querySelectorAll('[id^="ac-"]').forEach(el => el.remove());
-  }
-});
-
-// ========================================
-// ------ CONFIRMATION AVANT ENVOI ------
-// ========================================
+async 
 function confirmEnvoi(titre, lignes, callback) {
   // Créer un overlay de confirmation
   const overlay = document.createElement('div');
