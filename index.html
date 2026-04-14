@@ -666,66 +666,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
 </div>
 
-<!-- ═══════════════ TRANSPORT ═══════════════ -->
-<div class="screen" id="s-transport">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">←</div>
-    <div class="form-title">Demande transport</div>
-    <div class="form-badge badge-navy">Fret</div>
-  </div>
-  <div class="form-body">
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Type de transport</div>
-      <select class="fi" id="tr-type"><option value="">-- Choisir --</option><option>CALLIDUS NC — Externe</option><option>INTRA-SITE — Interne</option></select>
-    </div>
-    <div class="field-grp"><div class="field-lbl">WO / WR</div><input class="fi" type="text" id="tr-wo" placeholder="Ex : WO 876230 / WR 115518"></div>
-    <div class="field-grp"><div class="field-lbl">TAG équipement</div><input class="fi" type="text" id="tr-tag" placeholder="Ex : 220-PPD-201"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Description marchandise</div><input class="fi" type="text" id="tr-desc" placeholder="Ex : STACK SET 1.5 CL900"></div>
-    <div class="field-grp">
-      <div class="field-lbl">Dimensions L × l × H (cm)</div>
-      <div class="row3">
-        <div class="field-grp"><div class="field-lbl" style="font-size:10px">L</div><input class="fi" type="number" id="tr-l" placeholder="L"></div>
-        <div class="field-grp"><div class="field-lbl" style="font-size:10px">l</div><input class="fi" type="number" id="tr-w" placeholder="l"></div>
-        <div class="field-grp"><div class="field-lbl" style="font-size:10px">H</div><input class="fi" type="number" id="tr-h" placeholder="H"></div>
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field-grp"><div class="field-lbl">Poids total (kg)</div><input class="fi" type="number" id="tr-poids" placeholder="Ex : 350"></div>
-      <div class="field-grp"><div class="field-lbl">Grutage requis</div><select class="fi" id="tr-grut"><option>NON</option><option>OUI</option></select></div>
-    </div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Type de camion</div><select class="fi" id="tr-camion"><option value="">-- Choisir --</option><option>Plateau</option><option>Grue</option><option>Plateau + Grue</option><option>Fourgon</option></select></div>
-    <div class="field-grp"><div class="field-lbl">Conditionnement</div><select class="fi" id="tr-cond"><option value="">-- Choisir --</option><option>CHASSIS</option><option>PALETTE</option><option>CAISSE</option><option>CHASSIS / PALETTE</option></select></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Zone de chargement</div><input class="fi" type="text" id="tr-zch" placeholder="Ex : MAINTENANCE CENTRALE"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Zone de déchargement</div><input class="fi" type="text" id="tr-zdch" placeholder="Ex : MAGASIN CENTRAL"></div>
-    <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Date souhaitée</div><input class="fi" type="date" id="tr-date"></div>
-      <div class="field-grp"><div class="field-lbl">Heure de présentation</div><input class="fi" type="time" id="tr-heure"></div>
-    </div>
-    <div class="field-grp"><div class="field-lbl">Infos spécifiques chauffeur</div><textarea class="fi" id="tr-info" placeholder="Ex : Induction HS requise / Grue sur site..."></textarea></div>
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Destinataires</div>
-      <div class="add-manual" onclick="addManual('tr-dest')">+ Ajouter un destinataire</div>
-      <div class="manual-list" id="tr-dest">
-        <div class="manual-item"><input class="fi" type="email" placeholder="Ex : logistique-stores@callidusgroup.com.au"></div>
-      </div>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">CC</div>
-      <div class="add-manual" onclick="addManual('tr-cc')">+ Ajouter un CC</div>
-      <div class="manual-list" id="tr-cc"></div>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <label class="photo-zone" for="tr-photos" style="cursor:pointer">
-        <div class="photo-icon">&#128247;</label><div class="photo-txt">Prendre / importer des photos</div>
-      </div>
-      <input type="file" id="tr-photos" accept="image/*" capture="environment" multiple style="display:none" onchange="addPhotos(this,'tr-prev')">
-      <div class="photo-prev" id="tr-prev"></div>
-    </div>
-    <button class="send-btn btn-navy" onclick="sendTransport()">&#128665; Envoyer demande transport</button>
-  </div>
-</div>
-
 <!-- ═══════════════ FICHE SUIVEUSE ═══════════════ -->
 <div class="screen" id="s-fsuiveuse">
   <div class="form-header">
@@ -946,10 +886,13 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <!-- Barre de recherche -->
   <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
-    <input class="fi" type="text" id="hist-search"
+    <div style="position:relative;flex:1">
+  <input class="fi" type="text" id="hist-search"
       placeholder="Rechercher par TAG ou WO..."
       oninput="debounceRenderHist()"
       style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+    <button onclick="clearHistSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:4px">&#10005;</button>
+  </div>
   </div>
   <!-- Filtre + actions -->
   <div style="padding:8px 14px;display:flex;gap:8px;align-items:center;background:var(--white);border-bottom:1px solid var(--border)">
@@ -968,21 +911,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div id="hist-relance-alert" style="display:none;margin:8px 14px 0;background:var(--lred);border:1px solid var(--red);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--red);gap:6px;align-items:center"></div>
   <div style="padding:6px 14px 4px;font-size:11px;color:var(--muted)" id="hist-count">Chargement...</div>
   <div id="hist-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
-</div>
-
-<!-- ═══════════════ DASHBOARD ═══════════════ -->
-<div class="screen" id="s-dashboard">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">←</div>
-    <div class="form-title">Tableau de bord</div>
-    <div class="form-badge" style="background:var(--llblue);color:var(--navy)">En cours</div>
-  </div>
-  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
-    <input class="fi" type="text" id="dash-search" placeholder="Filtrer par TAG ou WO..."
-      oninput="renderDashboard()" style="width:100%;padding:9px 13px;font-size:13px">
-  </div>
-  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="dash-count">Chargement...</div>
-  <div id="dash-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
 </div>
 
 <!-- ═══════════════ RAPPORT ═══════════════ -->
@@ -1022,21 +950,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <button class="send-btn" style="background:var(--green);color:#fff" onclick="genererRapportPDF()">&#128196; Générer rapport PDF</button>
     <button class="send-btn" style="background:var(--white);color:var(--navy);border:2px solid var(--navy);margin-top:0" onclick="sauvegarderHistorique()">&#128190; Sauvegarder historique complet</button>
   </div>
-</div>
-
-<!-- ═══════════════ TIMELINE ═══════════════ -->
-<div class="screen" id="s-timeline">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">←</div>
-    <div class="form-title">Mon activité</div>
-    <div class="form-badge" style="background:var(--lpurple);color:var(--purple)" id="tl-date-badge">Aujourd'hui</div>
-  </div>
-  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border);display:flex;gap:8px">
-    <input type="date" class="fi" id="tl-date" onchange="renderTimeline()" style="flex:1;padding:8px 12px;font-size:13px">
-    <button onclick="exportTimelinePDF()" style="background:var(--purple);color:#fff;border:none;padding:8px 14px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">PDF</button>
-  </div>
-  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="tl-count">Chargement...</div>
-  <div id="tl-list" style="padding:0 14px 80px;margin-top:4px"></div>
 </div>
 
 <!-- ═══════════════ TRAVAUX ETNA ═══════════════ -->
@@ -2793,7 +2706,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-transport','s-usage','s-hist','s-hist-wo','s-dashboard','s-rapport','s-timeline','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2808,8 +2721,11 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
   if (id === 's-planning') setTimeout(initPlanSig, 50);
-  if (id === 's-hist')    renderHist();
-  if (id === 's-hist-wo')  renderHistWO();
+  if (id === 's-hist') {
+    // Pré-charger le cache si vide, puis rendre
+    if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
+    else { renderHist(); }
+  }
   if (id === 's-relances')      renderRelances();
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
@@ -2825,9 +2741,7 @@ function show(id) {
     setTimeout(function() { checkRelances(); }, 200);
     // En mode STT, s-home est autorisé (accueil simplifié)
   }
-  if (id === 's-dashboard') setTimeout(renderDashboard, 50);
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
-  if (id === 's-timeline')  { const d=document.getElementById('tl-date'); if(d&&!d.value){const n=new Date();d.value=n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'))+'-'+(String(n.getDate()).padStart(2,'0'));} setTimeout(renderTimeline,50); }
 }
 
 // ------ SEMAINES ------
@@ -3489,14 +3403,32 @@ function saveWOClotures(list) {
   try { localStorage.setItem(WO_CLOTURE_KEY, JSON.stringify(list)); } catch(e) {}
 }
 
-function cloturerWO(wo, tag, wg, date) {
-  if (!confirm('Marquer le WO ' + wo + ' comme clôturé ?')) return;
+async function cloturerWO(wo, tag, wg, date, recordId) {
+  if (!confirm('Clôturer le WO ' + wo + ' ?\nIl disparaîtra de l\'historique et sera archivé dans WO Clôturés.')) return;
+
+  // Ajouter dans WO clôturés
   var list = getWOClotures();
   if (!list.find(function(x){ return x.wo === wo; })) {
-    list.unshift({ wo, tag, wg, date, dateCloture: new Date().toLocaleDateString('fr-FR') });
+    list.unshift({ wo:wo, tag:tag, wg:wg, date:date, dateCloture: new Date().toLocaleDateString('fr-FR'), id: recordId });
     saveWOClotures(list);
   }
-  renderHistWO();
+
+  // Supprimer de Supabase si on a l'ID
+  if (recordId) {
+    try {
+      await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(recordId), 'DELETE');
+    } catch(e) { console.warn('Delete err', e); }
+    // Supprimer du localStorage
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      local = local.filter(function(r){ return r.id !== recordId; });
+      localStorage.setItem('prnc-historique', JSON.stringify(local));
+    } catch(e) {}
+    invalidateDbCache();
+  }
+
+  // Rafraîchir l'historique
+  renderHist();
 }
 
 function uncloturerWO(wo) {
@@ -3505,39 +3437,6 @@ function uncloturerWO(wo) {
   renderHistWO();
 }
 
-async function renderHistWO() {
-  var list   = document.getElementById('hist-wo-list');
-  if (!list) return;
-  var search = (document.getElementById('hist-wo-search') ? document.getElementById('hist-wo-search').value.toLowerCase() : '');
-  var clotures = getWOClotures();
-
-  if (search) {
-    clotures = clotures.filter(function(r) {
-      return (r.wo||'').toLowerCase().includes(search) || (r.tag||'').toLowerCase().includes(search);
-    });
-  }
-
-  if (clotures.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
-      '<div style="font-size:32px;margin-bottom:12px">&#128196;</div>' +
-      '<div style="font-size:14px;font-weight:600">Aucun WO cl&#244;tur&#233;</div>' +
-      '<div style="font-size:12px;margin-top:4px">Depuis l\'historique, clique sur &#10003; pour cl&#244;turer un WO</div>' +
-      '</div>';
-    return;
-  }
-
-  list.innerHTML = clotures.map(function(r) {
-    return '<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid #FFE0B2;display:flex;gap:10px;align-items:center">' +
-      '<div style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;flex-shrink:0">WO</div>' +
-      '<div style="flex:1">' +
-        '<div style="font-size:13px;font-weight:700;color:#E65100">' + (r.wo||'--') + '</div>' +
-        '<div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">' + (r.tag||'--') + (r.wg?' -- '+r.wg:'') + (r.fromFiche?'<span style="background:#1F3864;color:#fff;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;margin-left:4px">FS</span>':'') + '</div>' +
-        '<div style="font-size:10px;color:#aaa;margin-top:2px">Cl&#244;tur&#233; le ' + (r.dateCloture||'--') + '</div>' +
-      '</div>' +
-      '<button onclick="uncloturerWO(&quot;' + (r.wo||'') + '&quot;)" style="background:var(--lred);color:var(--red);border:none;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#10006; Rouvrir</button>' +
-    '</div>';
-  }).join('');
-}
 
 function sendPlanning() {
   if (checkConsultMode()) return;
@@ -3935,34 +3834,7 @@ function sendPeinture() {
     '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
 }
 
-function sendTransport() {
-  if (checkConsultMode()) return;
-  const type=v('tr-type'),wo=v('tr-wo'),tag=v('tr-tag'),desc=v('tr-desc');
-  const l=v('tr-l'),w=v('tr-w'),h=v('tr-h'),poids=v('tr-poids');
-  const camion=v('tr-camion'),cond=v('tr-cond'),zch=v('tr-zch'),zdch=v('tr-zdch');
-  const date=v('tr-date'),heure=v('tr-heure'),grut=v('tr-grut'),info=v('tr-info');
-  if(!zch||!zdch||!date){alert('Zone chargement, déchargement et date sont obligatoires.');return;}
-  const dests = getEmails('tr-dest');
-  const ccList = getEmails('tr-cc');
-  if (dests.length === 0) { alert('Ajoute au moins un destinataire.'); return; }
-  const to = dests[0];
-  const cc = [...dests.slice(1), ...ccList, 'emmanuel.rosa@pronyresources.com'].join(';');
-  const subj='Demande de transport -- '+(tag||desc)+' -- '+date+' -- PRNC';
-  let body='Bonjour,\n\nNous souhaitons organiser un transport ('+(type||'PRNC')+') :\n\n';
-  if(wo||tag) body+='  WO/WR        : '+(wo||'--')+'\n  TAG          : '+(tag||'--')+'\n  Description  : '+(desc||'--')+'\n\n';
-  body+='  Dimensions   : '+(l&&w&&h?l+' x '+w+' x '+h+' cm':'--')+'\n';
-  body+='  Poids        : '+(poids||'--')+' kg\n  Conditio.    : '+(cond||'--')+'\n';
-  body+='  Camion       : '+(camion||'--')+'\n  Grutage      : '+grut+'\n\n';
-  body+='  Zone charg.  : '+zch+'\n  Zone déch.   : '+zdch+'\n  Date         : '+date+'\n  Heure        : '+(heure||'À confirmer')+'\n';
-  if(info) body+='\nInfos chauffeur :\n'+info+'\n';
-  body+='\nDemande : Emmanuel ROSA ASIK | Maint. Centrale | Tél : 46 83 71\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC';
-  mailto(to, subj, body, cc);
-  dbSaveTransport({tag:tag||desc, wo, typeTransport:type, zch, zdch, to:dests.join(', '), photos:getPhotos('tr-prev')});
-  showSuccess('&#128667;','si-teal','Demande transport ouverte !','Vérifie et envoie depuis Outlook.',
-    `<strong>À :<\/strong> ${to}<br><strong>TAG :<\/strong> ${tag||'--'}<br><strong>Date :<\/strong> ${date}<br><strong>Camion :<\/strong> ${camion||'--'}`);
-}
 
-// ------ GÉNÉRER FICHE SUIVEUSE (depuis URL params) ------
 function genererFicheFromURL(params) {
   const wg      = params.get('wg')  || '';
   const wr      = params.get('wr')  || '';
@@ -4696,10 +4568,18 @@ const TYPE_COLORS = {
 };
 
 // ------ RENDER HISTORIQUE ------
+function clearHistSearch() {
+  var el = document.getElementById('hist-search');
+  if (el) { el.value = ''; el.focus(); }
+  renderHist();
+}
+
 var _histDebounce = null;
 function debounceRenderHist() {
   clearTimeout(_histDebounce);
-  _histDebounce = setTimeout(renderHist, 200);
+  // Si cache dispo → rendu immédiat sans attendre
+  if (_dbCache) { renderHist(); return; }
+  _histDebounce = setTimeout(renderHist, 150);
 }
 
 async function renderHist() {
@@ -4708,8 +4588,7 @@ async function renderHist() {
   const filtre  = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
-  // Utiliser le cache si disponible — évite le rechargement Supabase à chaque frappe
-  const all = await dbLoad();
+  const all = await dbLoad(); // cache géré dans dbLoad()
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
@@ -4717,8 +4596,7 @@ async function renderHist() {
       (r.wo   || '').toLowerCase().includes(search) ||
       (r.woMtc|| '').toLowerCase().includes(search) ||
       (r.wr   || '').toLowerCase().includes(search) ||
-      (r.sc   || '').toLowerCase().includes(search) ||
-      (r.desc || '').toLowerCase().includes(search)
+      (r.sc   || '').toLowerCase().includes(search)
     );
   }
 
@@ -4993,72 +4871,7 @@ function flashHistBadge() {
 // ========================================
 // ------ TABLEAU DE BORD -- ÉQUIPEMENTS EN COURS ------
 // ========================================
-async function renderDashboard() {
-  const list    = document.getElementById('dash-list');
-  const countEl = document.getElementById('dash-count');
-  if (!list) return;
-  const search  = (document.getElementById('dash-search')||{value:''}).value.trim().toLowerCase();
-  const records = await dbLoad();
-  const now = new Date();
 
-  // Construire la liste des équipements en cours
-  // Un équipement est "en cours" si : arrivée enregistrée mais pas de terminé avec le même TAG
-  const arrives = records.filter(r => r.type === 'ARRIVEE');
-  const terminesTags = new Set(records.filter(r => r.type === 'TERMINE').map(r => r.tag));
-
-  let enCours = arrives.filter(r => !terminesTags.has(r.tag));
-  if (search) {
-    enCours = enCours.filter(r =>
-      (r.tag||'').toLowerCase().includes(search) ||
-      (r.wo||'').toLowerCase().includes(search)
-    );
-  }
-
-  countEl.textContent = enCours.length + ' équipement' + (enCours.length!==1?'s':'') + ' en cours' +
-    (search ? ' pour "'+search+'"' : '') + ' -- ' + arrives.length + ' total arrivés';
-
-  if (enCours.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
-      '<div style="font-size:36px;margin-bottom:10px">&#127881;</div>' +
-      '<div style="font-size:14px;font-weight:600">Aucun équipement en cours</div>' +
-      '<div style="font-size:12px;margin-top:4px">Tout est traité !</div></div>';
-    return;
-  }
-
-  list.innerHTML = enCours.map(r => {
-    const d = new Date(r.ts);
-    const jours = Math.floor((now - d) / 86400000);
-    const urgColor = jours >= 14 ? '#E24B4A' : jours >= 7 ? '#C55A11' : '#375623';
-    const urgBg    = jours >= 14 ? '#FCEBEB' : jours >= 7 ? '#FCE4D6' : '#E2EFDA';
-    const joursLabel = jours === 0 ? "Aujourd'hui" : jours === 1 ? '1 jour' : jours + ' jours';
-    const WG_FG = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56'};
-    const wgFg = WG_FG[r.wg] || 'var(--navy)';
-
-    return `<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid ${jours>=7?urgColor:'var(--border)'};display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:14px;font-weight:700;color:${wgFg}">${r.tag||'--'}</span>
-        <span style="background:${urgBg};color:${urgColor};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">${joursLabel}</span>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${r.wg?`<span style="background:var(--llblue);color:var(--navy);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600">${r.wg}</span>`:''}
-        ${r.wo?`<span style="font-size:11px;color:var(--muted)">WO ${r.wo}</span>`:''}
-        ${r.statut?`<span style="font-size:11px;color:var(--muted)">${r.statut}</span>`:''}
-      </div>
-      ${r.loc?`<div style="font-size:11px;color:var(--navy);font-weight:600">&#128205; ${r.loc}</div>`:''}
-      <div style="font-size:10px;color:var(--muted)">Arrivé le ${r.date} à ${r.heure}</div>
-      <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end">
-        ${_isConsultMode
-          ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065; Afficher</button>'
-          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Modifier</button><button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">Suppr.</button>'
-        }
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ========================================
-// ------ RAPPORT MENSUEL ------
-// ========================================
 async function previewRapport() {
   const mois   = parseInt((document.getElementById('rp-mois')||{value:new Date().getMonth()+1}).value);
   const annee  = parseInt((document.getElementById('rp-annee')||{value:new Date().getFullYear()}).value);
@@ -7256,6 +7069,37 @@ function viewRecord(id) {
   });
 }
 
+function creerFicheDepuisArrivee(id) {
+  dbLoad().then(function(records) {
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+    // Ouvrir la fiche suiveuse pré-remplie
+    show('s-fsuiveuse');
+    setTimeout(function() {
+      // TAG
+      var tagEl = document.getElementById('fs-tag');
+      if (tagEl) tagEl.value = r.tag || '';
+      // WO MTC
+      var woEl = document.getElementById('fs-wo');
+      if (woEl) woEl.value = r.wo || '';
+      // WO Usine
+      var woUEl = document.getElementById('fs-wo-usine');
+      if (woUEl) woUEl.value = r.woUsine || '';
+      // WR
+      var wrEl = document.getElementById('fs-wr');
+      if (wrEl) wrEl.value = r.wr || '';
+      // Workgroup
+      if (r.wg) {
+        var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === r.wg; });
+        if (wgKey) setWG('fs', wgKey);
+      }
+      // Demandeur
+      var demEl = document.getElementById('fs-demandeur');
+      if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+    }, 200);
+  });
+}
+
 function editRecord(id) {
   if (checkConsultMode()) return;
   // Ouvre une modal légère pour modifier le statut/localisation
@@ -7390,57 +7234,6 @@ function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
 // ========================================
 // ------ TIMELINE ACTIVITÉ DU JOUR ------
 // ========================================
-async function renderTimeline() {
-  const list    = document.getElementById('tl-list');
-  const countEl = document.getElementById('tl-count');
-  const badge   = document.getElementById('tl-date-badge');
-  if (!list) return;
-
-  const dateInput = document.getElementById('tl-date');
-  const today     = new Date().toLocaleDateString('fr-FR');
-  const selDate   = dateInput && dateInput.value
-    ? new Date(dateInput.value).toLocaleDateString('fr-FR')
-    : today;
-
-  if (badge) badge.textContent = selDate === today ? "Aujourd'hui" : selDate;
-
-  const records = await dbLoad();
-  const dayRecs = records.filter(r => r.date === selDate).sort((a,b) => (a.heure||'').localeCompare(b.heure||''));
-
-  countEl.textContent = dayRecs.length + ' action' + (dayRecs.length!==1?'s':'') + ' -- ' + selDate;
-
-  if (dayRecs.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--muted)">' +
-      '<div style="font-size:36px;margin-bottom:10px">&#128197;</div>' +
-      '<div style="font-size:14px;font-weight:600">Aucune activité ce jour</div></div>';
-    return;
-  }
-
-  const TYPE_ICONS = {ARRIVEE:'IN',TERMINE:'OUT',USAGE:'USE',TRANSPORT:'TRP',PEINTURE:'PNT',PLANNING:'PLN'};
-  const TYPE_COLORS2 = {ARRIVEE:'var(--purple)',TERMINE:'var(--green)',USAGE:'var(--red)',TRANSPORT:'var(--navy)',PEINTURE:'var(--orange)',PLANNING:'var(--teal)'};
-
-  list.innerHTML = '<div style="padding:8px 0 0;position:relative">' +
-    '<div style="position:absolute;left:28px;top:0;bottom:0;width:2px;background:var(--border)"></div>' +
-    dayRecs.map((r,i) => {
-      const col = TYPE_COLORS2[r.type] || 'var(--navy)';
-      return `<div style="display:flex;gap:12px;align-items:flex-start;padding:0 0 16px;position:relative">
-        <div style="flex-shrink:0;width:56px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;z-index:1">
-          <div style="font-size:11px;font-weight:700;color:var(--muted)">${r.heure||'--'}</div>
-          <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${TYPE_ICONS[r.type]||'?'}</div>
-        </div>
-        <div style="flex:1;background:#fff;border-radius:12px;padding:10px 12px;border:1px solid var(--border);margin-top:2px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700;color:${col}">${r.tag||'--'}</span>
-            <span style="font-size:10px;background:var(--grey);padding:2px 7px;border-radius:10px;color:var(--muted);font-weight:600">${r.type}</span>
-          </div>
-          ${r.wo?`<div style="font-size:11px;color:var(--muted)">WO ${r.wo}${r.wg?' -- '+r.wg:''}</div>`:''}
-          ${r.statut||r.shutdown?`<div style="font-size:11px;color:var(--text);margin-top:2px">${r.statut||r.shutdown}</div>`:''}
-          ${r.loc?`<div style="font-size:10px;color:var(--navy);margin-top:2px">&#128205; ${r.loc}</div>`:''}
-          ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700;margin-top:2px">QTY : ${r.qty}</div>`:''}
-        </div>
-      </div>`;
-    }).join('') + '</div>';
-}
 
 async function exportTimelinePDF() {
   const dateInput = document.getElementById('tl-date');
