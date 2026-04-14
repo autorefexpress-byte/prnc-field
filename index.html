@@ -4592,7 +4592,15 @@ async function supaFetch(path, method, body) {
 }
 
 // ------ CHARGER depuis Supabase ------
+var _dbCache = null;
+var _dbCacheTs = 0;
+const DB_CACHE_TTL = 600000;
+
 async function dbLoad() {
+  // Retourner le cache si encore frais
+  if (_dbCache && (Date.now() - _dbCacheTs) < DB_CACHE_TTL) {
+    return _dbCache;
+  }
   try {
     const data = await supaFetch('/rest/v1/historique?order=created_at.desc&limit=500');
     if (Array.isArray(data) && data.length >= 0) {
@@ -4614,12 +4622,19 @@ async function dbLoad() {
           date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || []
         };
       });
+      // Stocker en cache
+      _dbCache = records;
+      _dbCacheTs = Date.now();
+      return records;
     }
   } catch(e) { console.warn('Supabase load err', e); }
   // Fallback localStorage
   try {
     const raw = localStorage.getItem(DB_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const localRecs = raw ? JSON.parse(raw) : [];
+    _dbCache = localRecs;
+    _dbCacheTs = Date.now();
+    return localRecs;
   } catch(e) { return []; }
 }
 
@@ -4694,7 +4709,7 @@ async function renderHist() {
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
   // Utiliser le cache si disponible — évite le rechargement Supabase à chaque frappe
-  const all = _dbCache || await dbLoad();
+  const all = await dbLoad();
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
@@ -5569,7 +5584,7 @@ async function renderCallidusSuivi() {
   var countEl = document.getElementById('cal-suivi-count');
   if (!list) return;
   var search = (document.getElementById('cal-suivi-search')||{value:''}).value.toLowerCase();
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
   var calRecs = records.filter(function(r) {
     if (r.type !== 'CALLIDUS') return false;
     if (!search) return true;
@@ -5619,7 +5634,7 @@ async function renderCallidusPrestataire() {
   var countEl = document.getElementById('cal-presta-count');
   if (!list) return;
   var search = (document.getElementById('cal-presta-search')||{value:''}).value.toLowerCase();
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
   var calRecs = records.filter(function(r) {
     if (r.type !== 'CALLIDUS') return false;
     if (!search) return true;
@@ -5741,7 +5756,7 @@ async function renderRelancesCredit() {
   var countEl = document.getElementById('cr-relance-count');
   if (!list) return;
   var search = (document.getElementById('cr-search')||{value:''}).value.toLowerCase();
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
   var now = new Date();
 
   // Filtrer les crédits non confirmés depuis + de 5 jours
@@ -6024,7 +6039,7 @@ async function renderInventaire() {
   var search = (document.getElementById('inv-search')||{value:''}).value.toLowerCase();
   var wgFilter = (document.getElementById('inv-wg-filter')||{value:''}).value;
 
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
 
   // Filtrer : équipements présents à P50 (ARRIVEE non RECUPERE, FICHE, TERMINE non RECUPERE)
   var present = records.filter(function(r) {
@@ -6606,7 +6621,7 @@ async function renderEtnaSuivi() {
   var countEl = document.getElementById('etna-count');
   if (!list) return;
   var search = (document.getElementById('etna-search')||{value:''}).value.toLowerCase();
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
   // Filtrer : PEINTURE + ARRIVEE avec statut Retour ETNA
   var etnaRecs = records.filter(function(r) {
     var isEtnaType = r.type === 'PEINTURE' ||
@@ -6703,7 +6718,7 @@ async function renderEtnaPrestataire() {
   var countEl = document.getElementById('etna-presta-count');
   if (!list) return;
   var search = (document.getElementById('etna-presta-search')||{value:''}).value.toLowerCase();
-  var records = _dbCache || await dbLoad();
+  var records = await dbLoad();
   var etnaRecs = records.filter(function(r) {
     var isEtnaType = r.type === 'PEINTURE' ||
       (r.type === 'ARRIVEE' && (
