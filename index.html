@@ -4629,7 +4629,7 @@ async function renderHist() {
         ${_isConsultMode
           ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
           : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
-            (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(' + JSON.stringify(r.id) + ')" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
+            (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(this.dataset.rid)" data-rid="' + r.id + '" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
             '<button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\''+r.wo+'\',\''+r.tag+'\',\''+r.wg+'\',\''+r.date+'\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
         }
@@ -6985,6 +6985,8 @@ function viewRecord(id) {
   dbLoad().then(records => {
     const r = records.find(x => x.id === id);
     if (!r) return;
+    // Si ARRIVEE → ouvrir overlay workflow
+    if (r.type === 'ARRIVEE') { ouvrirWorkflowArrivee(r); return; }
     const c = TYPE_COLORS[r.type] || {bg:'#f5f5f5', fg:'#555', icon:'?'};
 
     // Construire les lignes d'infos
@@ -7062,6 +7064,99 @@ function viewRecord(id) {
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
   });
+}
+
+function ouvrirWorkflowArrivee(r) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
+
+  var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : '#0F6E56';
+  var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : '#E1F5EE';
+
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 36px;width:100%;max-width:430px">' +
+      // Header
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+        '<div>' +
+          '<div style="font-size:17px;font-weight:700;color:#1F3864">&#128230; ' + (r.tag || '--') + '</div>' +
+          '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">' +
+            (r.wg ? '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + r.wg + '</span>' : '') +
+            (r.wo ? '<span style="background:#f0f0f0;color:#555;padding:2px 8px;border-radius:10px;font-size:10px">WO ' + r.wo + '</span>' : '') +
+            (r.wr ? '<span style="background:#f0f0f0;color:#555;padding:2px 8px;border-radius:10px;font-size:10px">WR ' + r.wr + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#888">' + (r.date || '') + '</div>' +
+      '</div>' +
+      // Séparateur
+      '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Suite du workflow</div>' +
+      // Boutons workflow
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<button id="btn-fiche-overlay" style="background:#1F3864;color:#fff;border:none;border-radius:14px;padding:16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">' +
+          '<span style="font-size:22px">&#128203;</span>' +
+          '<div><div style="font-size:13px;font-weight:700">Fiche suiveuse</div><div style="font-size:11px;opacity:.8;margin-top:2px">Créer la fiche de suivi équipement</div></div>' +
+        '</button>' +
+        '<button id="btn-rebus-overlay" style="background:#FFF2F2;color:#C00;border:1.5px solid #C00;border-radius:14px;padding:16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">' +
+          '<span style="font-size:22px">&#128465;</span>' +
+          '<div><div style="font-size:13px;font-weight:700">Rebus</div><div style="font-size:11px;opacity:.7;margin-top:2px">Équipement mis au rebus</div></div>' +
+        '</button>' +
+      '</div>' +
+      // Fermer
+      '<button id="btn-cancel-overlay" style="margin-top:14px;width:100%;background:#f5f5f5;color:#555;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Annuler</button>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+
+  // Bouton Fiche suiveuse
+  overlay.querySelector('#btn-fiche-overlay').addEventListener('click', function() {
+    overlay.remove();
+    _prefillArriveeRecord = r;
+    creerFicheDepuisArriveeRecord(r);
+  });
+
+  // Bouton Rebus
+  overlay.querySelector('#btn-rebus-overlay').addEventListener('click', function() {
+    overlay.remove();
+    if (!confirm('Confirmer la mise au rebus de ' + (r.tag || 'cet équipement') + ' ?')) return;
+    rebusArrivee(r.id);
+  });
+
+  // Bouton Annuler
+  overlay.querySelector('#btn-cancel-overlay').addEventListener('click', function() { overlay.remove(); });
+  // Fermer en cliquant dehors
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+}
+
+async function rebusArrivee(id) {
+  try {
+    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', { statut: 'REBUS', type: 'REBUS' });
+    try {
+      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
+      var idx = local.findIndex(function(r){ return r.id === id; });
+      if (idx >= 0) { local[idx].statut = 'REBUS'; local[idx].type = 'REBUS'; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
+    } catch(e) {}
+    invalidateDbCache();
+    renderHist();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+function creerFicheDepuisArriveeRecord(r) {
+  show('s-fsuiveuse');
+  setTimeout(function() {
+    var tagEl = document.getElementById('fs-tag');
+    if (tagEl) tagEl.value = r.tag || '';
+    var woEl = document.getElementById('fs-wo');
+    if (woEl) woEl.value = r.wo || '';
+    var woUEl = document.getElementById('fs-wo-usine');
+    if (woUEl) woUEl.value = r.woUsine || '';
+    var wrEl = document.getElementById('fs-wr');
+    if (wrEl) wrEl.value = r.wr || '';
+    if (r.wg) {
+      var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === r.wg; });
+      if (wgKey) setWG('fs', wgKey);
+    }
+    var demEl = document.getElementById('fs-demandeur');
+    if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+  }, 200);
 }
 
 function creerFicheDepuisArrivee(id) {
