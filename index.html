@@ -4629,6 +4629,7 @@ async function renderHist() {
         ${_isConsultMode
           ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
           : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
+            (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(' + JSON.stringify(r.id) + ')" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
             '<button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\''+r.wo+'\',\''+r.tag+'\',\''+r.wg+'\',\''+r.date+'\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
         }
