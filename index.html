@@ -3404,21 +3404,16 @@ function saveWOClotures(list) {
 }
 
 async function cloturerWO(wo, tag, wg, date, recordId) {
-  if (!confirm('Clôturer le WO ' + wo + ' ?\nIl disparaîtra de l\'historique et sera archivé dans WO Clôturés.')) return;
-
-  // Ajouter dans WO clôturés
+  // Archiver dans WO clôturés
   var list = getWOClotures();
   if (!list.find(function(x){ return x.wo === wo; })) {
     list.unshift({ wo:wo, tag:tag, wg:wg, date:date, dateCloture: new Date().toLocaleDateString('fr-FR'), id: recordId });
     saveWOClotures(list);
   }
 
-  // Supprimer de Supabase si on a l'ID
+  // Supprimer de Supabase
   if (recordId) {
-    try {
-      await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(recordId), 'DELETE');
-    } catch(e) { console.warn('Delete err', e); }
-    // Supprimer du localStorage
+    supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(recordId), 'DELETE').catch(function(){});
     try {
       var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
       local = local.filter(function(r){ return r.id !== recordId; });
@@ -3427,7 +3422,6 @@ async function cloturerWO(wo, tag, wg, date, recordId) {
     invalidateDbCache();
   }
 
-  // Rafraîchir l'historique
   renderHist();
 }
 
