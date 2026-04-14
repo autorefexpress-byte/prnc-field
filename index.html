@@ -948,7 +948,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
     <input class="fi" type="text" id="hist-search"
       placeholder="Rechercher par TAG ou WO..."
-      oninput="renderHist()"
+      oninput="debounceRenderHist()"
       style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
   </div>
   <!-- Filtre + actions -->
@@ -4681,16 +4681,20 @@ const TYPE_COLORS = {
 };
 
 // ------ RENDER HISTORIQUE ------
+var _histDebounce = null;
+function debounceRenderHist() {
+  clearTimeout(_histDebounce);
+  _histDebounce = setTimeout(renderHist, 200);
+}
+
 async function renderHist() {
   const list    = document.getElementById('hist-list');
   const countEl = document.getElementById('hist-count');
   const filtre  = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Chargement...</div>';
-  checkRelances();
-
-  const all = await dbLoad();
+  // Utiliser le cache si disponible — évite le rechargement Supabase à chaque frappe
+  const all = _dbCache || await dbLoad();
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
@@ -5565,8 +5569,7 @@ async function renderCallidusSuivi() {
   var countEl = document.getElementById('cal-suivi-count');
   if (!list) return;
   var search = (document.getElementById('cal-suivi-search')||{value:''}).value.toLowerCase();
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
   var calRecs = records.filter(function(r) {
     if (r.type !== 'CALLIDUS') return false;
     if (!search) return true;
@@ -5616,8 +5619,7 @@ async function renderCallidusPrestataire() {
   var countEl = document.getElementById('cal-presta-count');
   if (!list) return;
   var search = (document.getElementById('cal-presta-search')||{value:''}).value.toLowerCase();
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
   var calRecs = records.filter(function(r) {
     if (r.type !== 'CALLIDUS') return false;
     if (!search) return true;
@@ -5739,9 +5741,7 @@ async function renderRelancesCredit() {
   var countEl = document.getElementById('cr-relance-count');
   if (!list) return;
   var search = (document.getElementById('cr-search')||{value:''}).value.toLowerCase();
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
   var now = new Date();
 
   // Filtrer les crédits non confirmés depuis + de 5 jours
@@ -6024,9 +6024,7 @@ async function renderInventaire() {
   var search = (document.getElementById('inv-search')||{value:''}).value.toLowerCase();
   var wgFilter = (document.getElementById('inv-wg-filter')||{value:''}).value;
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
 
   // Filtrer : équipements présents à P50 (ARRIVEE non RECUPERE, FICHE, TERMINE non RECUPERE)
   var present = records.filter(function(r) {
@@ -6608,9 +6606,7 @@ async function renderEtnaSuivi() {
   var countEl = document.getElementById('etna-count');
   if (!list) return;
   var search = (document.getElementById('etna-search')||{value:''}).value.toLowerCase();
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
   // Filtrer : PEINTURE + ARRIVEE avec statut Retour ETNA
   var etnaRecs = records.filter(function(r) {
     var isEtnaType = r.type === 'PEINTURE' ||
@@ -6707,9 +6703,7 @@ async function renderEtnaPrestataire() {
   var countEl = document.getElementById('etna-presta-count');
   if (!list) return;
   var search = (document.getElementById('etna-presta-search')||{value:''}).value.toLowerCase();
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
-
-  var records = await dbLoad();
+  var records = _dbCache || await dbLoad();
   var etnaRecs = records.filter(function(r) {
     var isEtnaType = r.type === 'PEINTURE' ||
       (r.type === 'ARRIVEE' && (
