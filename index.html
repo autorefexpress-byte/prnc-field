@@ -7130,9 +7130,8 @@ function ouvrirWorkflowArrivee(r) {
     var records = await dbLoad();
     var ficheExistante = records.find(function(x) {
       if (x.type !== 'FICHE') return false;
-      if (r.wo && x.wo && x.wo === r.wo) return true;
-      if (r.tag && x.tag && x.tag === r.tag) return true;
-      return false;
+      if (!r.wo) return false; // pas de WO → pas de vérification
+      return x.wo && x.wo === r.wo;
     });
 
     if (ficheExistante) {
