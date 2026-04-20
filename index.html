@@ -497,7 +497,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="ar-rem" placeholder="Ex : Équipement décontaminé, coupon attaché, état général..."></textarea></div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-        <div class="photo-txt">Appuyer pour prendre / importer des photos</div>
       </div>
     </div>
 
@@ -570,7 +569,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="eq-rem" placeholder="Optionnel..."></textarea></div>
     <div class="field-grp">
-      <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div><div class="photo-txt">Prendre / importer des photos</div>
       </div>
     </div>
     <button class="send-btn btn-green" onclick="sendEquip()">&#9989; Envoyer le mail</button>
@@ -630,7 +628,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Photos -->
     <div class="field-grp">
-      <div class="field-lbl">Photos équipement <span style="font-size:10px;color:var(--red)">(recommandé)</span></div><div class="photo-txt">Photo avant traitement — obligatoire pour ETNA</div>
       </div>
     </div>
 
@@ -683,7 +680,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Photo fiche -->
     <div class="field-grp">
-      <div class="field-lbl">Photo de la fiche <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div><div class="photo-txt">Photographier la fiche suiveuse</div>
       </div>
     </div>
 
@@ -815,7 +811,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Photo -->
     <div class="field-grp">
-      <div class="field-lbl">Photo <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div><div class="photo-txt">Prendre / importer des photos</div>
       </div>
     </div>
 
@@ -973,7 +968,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <div class="field-grp">
       <div class="field-lbl">Photos travaux <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-        <div class="photo-txt">Prendre / importer des photos</div>
       </div>
     </div>
 
@@ -1086,7 +1080,6 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <div class="field-grp">
       <div class="field-lbl">Photos travaux</div>
-        <div class="photo-txt">Prendre / importer des photos</div>
       </div>
     </div>
 
@@ -4326,9 +4319,13 @@ async function dbLoad() {
   try {
     const data = await supaFetch('/rest/v1/historique?order=created_at.desc&limit=500');
     if (Array.isArray(data) && data.length >= 0) {
-      return data.map(function(r) {
+      // Mapper les colonnes Supabase vers les champs JS
+      const records = data.map(function(r) {
         return {
-          id: r.id, type: r.type, tag: r.tag, wo: r.wo, woUsine: r.wo_usine,
+          id: r.id, type: r.type, tag: r.tag,
+          wo: r.wo || '',           // WO MTC
+          woUsine: r.wo_usine || r.woUsine || '',  // WO Usine
+          woMtc: r.wo_mtc || r.woMtc || '',
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
           emailDemandeur   : r.email_demandeur   || null,
           fromFiche        : r.from_fiche        || false,
@@ -4338,10 +4335,13 @@ async function dbLoad() {
           callidusStatut       : r.callidus_statut       || null,
           callidusDateRetour   : r.callidus_date_retour  || null,
           callidusCommentaire  : r.callidus_commentaire  || null,
-          shutdown: r.shutdown, qty: r.qty, desc: r.designation, serie: r.serie,
-          typeEqt: r.type_eqt, dateRecep: r.date_recep, motif: r.motif,
+          shutdown: r.shutdown, qty: r.qty,
+          desc: r.designation || r.desc || '',
+          serie: r.serie, typeEqt: r.type_eqt || r.typeEqt || '',
+          dateRecep: r.date_recep, motif: r.motif,
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
-          date: r.date, heure: r.heure, dest: r.dest || []
+          date: r.date, heure: r.heure, dest: r.dest || [],
+          ts: r.created_at, created_at: r.created_at
         };
       });
       // Stocker en cache
@@ -4442,11 +4442,15 @@ async function renderHist() {
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
-      (r.tag  || '').toLowerCase().includes(search) ||
-      (r.wo   || '').toLowerCase().includes(search) ||
-      (r.woMtc|| '').toLowerCase().includes(search) ||
-      (r.wr   || '').toLowerCase().includes(search) ||
-      (r.sc   || '').toLowerCase().includes(search)
+      (r.tag     || '').toLowerCase().includes(search) ||
+      (r.wo      || '').toLowerCase().includes(search) ||
+      (r.woUsine || '').toLowerCase().includes(search) ||
+      (r.woMtc   || '').toLowerCase().includes(search) ||
+      (r.wr      || '').toLowerCase().includes(search) ||
+      (r.sc      || '').toLowerCase().includes(search) ||
+      (r.wg      || '').toLowerCase().includes(search) ||
+      (r.statut  || '').toLowerCase().includes(search) ||
+      (r.desc    || '').toLowerCase().includes(search)
     );
   }
 
@@ -5177,12 +5181,6 @@ function addCallidusEqt() {
       '<input class="fi" id="cal-wr-' + idx + '" type="text" placeholder="Ex : 118466" style="width:100%"></div>' +
     '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Description travaux</div>' +
       '<textarea class="fi" id="cal-desc-' + idx + '" placeholder="Ex : Usinage arbre de rotation, rectification alésage..." style="width:100%;height:56px"></textarea></div>' +
-    '<div><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
-      '<div class="photo-zone" onclick="triggerPlFile(' + idx + ')" style="padding:8px">' +
-        '<div class="photo-icon" style="font-size:18px">&#128247;</div><div class="photo-txt" style="font-size:11px">Prendre une photo</div>' +
-      '</div>' +
-      '' +
-      '' +
     '</div>';
   list.appendChild(card);
 }
