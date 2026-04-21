@@ -3548,12 +3548,32 @@ function sendArrive() {
           zip.file('word/document.xml', docXml);
           var blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
           var filename = 'Fiche_Suiveuse_' + (wg==='chaud'?'MCCHAUD':'MCREPAR') + '_' + tag + '_WR' + wr + '.docx';
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url; a.download = filename; a.click();
-          setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
-          // Ouvrir Outlook 1.5s apres le telechargement
-          setTimeout(function(){ mailto(toFirst, subj, body + '\n\n>>> JOINDRE LE FICHIER : Fiche_Suiveuse_' + (wg==='chaud'?'MCCHAUD':'MCREPAR') + '_' + tag + '_WR' + wr + '.docx\n(disponible dans vos Telechargements)', ccFinal); }, 1500);
+          var mailBody = body + '\n\n>>> Fiche suiveuse jointe : ' + filename;
+          // Web Share API (Android) — partage direct vers Outlook
+          if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename)] })) {
+            var file = new File([blob], filename, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            try {
+              await navigator.share({
+                title: subj,
+                text: mailBody,
+                files: [file]
+              });
+            } catch(shareErr) {
+              if (shareErr.name !== 'AbortError') {
+                // Fallback si partage échoue
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+                setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+                setTimeout(function(){ mailto(toFirst, subj, mailBody, ccFinal); }, 1500);
+              }
+            }
+          } else {
+            // Fallback navigateur desktop
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+            setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+            setTimeout(function(){ mailto(toFirst, subj, mailBody, ccFinal); }, 1500);
+          }
         } catch(e) {
           console.warn('Word gen err:', e);
           mailto(toFirst, subj, body, ccFinal);
