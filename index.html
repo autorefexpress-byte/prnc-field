@@ -3559,16 +3559,11 @@ function sendArrive() {
 
             // Envoyer via Resend avec la fiche en pièce jointe
             try {
-              var resendResp = await fetch('https://api.resend.com/emails', {
+              var resendResp = await fetch('/api/send-fiche', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer re_ZKqs2NHt_9u1tMAEnW1SuWXfx3gRMcnFi'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  from: 'PRNC Field <onboarding@resend.dev>',
-                  to: ['neobigwave@gmail.com'],
-                  cc: ['Emmanuel.Rosa@pronyresources.com'],
+                  to: ['Emmanuel.Rosa@pronyresources.com'],
                   subject: '[FICHE SUIVEUSE] ' + (wg==='chaud'?'MCCHAUD':'MCREPAR') + ' — ' + tag + ' — WO ' + wo,
                   text: ['Bonjour,', '', 'Fiche suiveuse ci-jointe.',
                     '', 'TAG : ' + tag, 'WO  : ' + wo, 'WR  : ' + wr,
@@ -3576,10 +3571,8 @@ function sendArrive() {
                     'A transferer aux destinataires avec les photos.', '',
                     'Emmanuel ROSA ASIK', 'Prepose aux pieces | PRNC'
                   ].join('\n'),
-                  attachments: [{
-                    filename: filename,
-                    content: b64content
-                  }]
+                  filename: filename,
+                  content: b64content
                 })
               });
               if (resendResp.ok) {
