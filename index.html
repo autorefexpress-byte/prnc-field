@@ -3553,7 +3553,7 @@ function sendArrive() {
           a.href = url; a.download = filename; a.click();
           setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
           // Ouvrir Outlook 1.5s apres le telechargement
-          setTimeout(function(){ mailto(toFirst, subj, body + '\n\n[Fiche Word telechargee — a joindre en piece jointe]', ccFinal); }, 1500);
+          setTimeout(function(){ mailto(toFirst, subj, body + '\n\n>>> JOINDRE LE FICHIER : Fiche_Suiveuse_' + (wg==='chaud'?'MCCHAUD':'MCREPAR') + '_' + tag + '_WR' + wr + '.docx\n(disponible dans vos Telechargements)', ccFinal); }, 1500);
         } catch(e) {
           console.warn('Word gen err:', e);
           mailto(toFirst, subj, body, ccFinal);
@@ -3568,8 +3568,11 @@ function sendArrive() {
     const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
 
     resetForm(['ar-wo','ar-wr','ar-sc','ar-tag','ar-desc','ar-serie','ar-loc','ar-date','ar-type-eqt','ar-rem'], [], 'ar');
+    var wordMsg = (wg === 'repar' || wg === 'chaud')
+      ? '&#128196; Fiche Word téléchargée — joindre dans Outlook depuis Téléchargements.'
+      : 'Étiquette prête à imprimer ci-dessous.';
     showSuccess('&#128229;','si-purple','Notification envoyée !',
-      'Étiquette prête à imprimer ci-dessous.',
+      wordMsg,
       `<strong>WR :<\/strong> ${wr}<br><strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Statut :<\/strong> <span style="${statColor};padding:2px 8px;border-radius:20px;font-size:11px">${isUrg?'URGENCE':'En attente diag.'}<\/span><br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_COLORS[wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
