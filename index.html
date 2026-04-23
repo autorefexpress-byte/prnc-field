@@ -339,7 +339,14 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Travaux ETNA</div>
       <div class="card-sub" id="etna-badge-home">Suivi prestataire</div>
     </div>
-    <div class="action-card" onclick="show('s-inventaire')">
+    <div class="action-card" onclick="show('s-bons-sortie');renderBonsSortie()">
+          <div class="card-icon">📦</div>
+          <div class="card-content">
+            <div class="card-title">BDS P50</div>
+            <div class="card-sub">Suivi pièces par WO</div>
+          </div>
+        </div>
+        <div class="action-card" onclick="show('s-inventaire')">
       <div class="card-icon" style="background:#E2EFDA;color:#375623">&#128203;</div>
       <div class="card-lbl">Inventaire P50</div>
       <div class="card-sub" id="inv-badge-home">Tour de stock</div>
@@ -2657,7 +2664,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit'];
+const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -7680,6 +7687,340 @@ function nouvelleInterventionTag(last) {
   }, 300);
 }
 
+
+// ══════════════════════════════════════════
+// BONS DE SORTIE P50
+// ══════════════════════════════════════════
+var BS_KEY = 'prnc-bons-sortie';
+var _bsnWG = '';
+var _bsCurrentId = null;
+
+function setBsnWG(wg) {
+  _bsnWG = wg;
+  ['chaud','repar','strob'].forEach(function(w) {
+    var el = document.getElementById('bsn-wg-' + w);
+    if (!el) return;
+    el.className = 'wg-btn' + (w === wg ? ' on-' + w : '');
+  });
+}
+
+function getBonsSortie() {
+  try { return JSON.parse(localStorage.getItem(BS_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function saveBonsSortieData(data) {
+  try { localStorage.setItem(BS_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function previewBsnPieces() {
+  var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
+  var pieces = parsePiecesFromText(text);
+  var preview = document.getElementById('bsn-preview');
+  var previewList = document.getElementById('bsn-preview-list');
+  var previewCount = document.getElementById('bsn-preview-count');
+  if (!preview) return;
+
+  if (pieces.length === 0) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  preview.style.display = 'block';
+  previewCount.textContent = pieces.length;
+  previewList.innerHTML = pieces.map(function(p) {
+    return '<div style="padding:2px 0;border-bottom:1px solid #eee">' +
+      '<span style="color:#1F3864;font-weight:700">' + p.ref + '</span> · ' +
+      p.desc + ' · <span style="color:#375623">x' + p.qte + '</span></div>';
+  }).join('');
+}
+
+function parsePiecesFromText(text) {
+  if (!text.trim()) return [];
+  var pieces = [];
+  var lines = text.split('\n');
+  lines.forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+    // Séparer par tabulation
+    var parts = line.split('\t');
+    if (parts.length >= 2) {
+      var ref = parts[0].trim();
+      var desc = parts[1] ? parts[1].trim() : '';
+      var qte = parts[2] ? parts[2].trim().replace(',', '.') : '1';
+      // Ignorer la ligne d'en-tête
+      if (ref.toLowerCase().includes('numéro') || ref.toLowerCase().includes('numero')) return;
+      if (ref) {
+        pieces.push({
+          ref: ref,
+          desc: desc,
+          qte: parseFloat(qte) || 1,
+          recu: false
+        });
+      }
+    }
+  });
+  return pieces;
+}
+
+function saveBonsSortieWO() {
+  var wo = document.getElementById('bsn-wo') ? document.getElementById('bsn-wo').value.trim() : '';
+  var tag = document.getElementById('bsn-tag') ? document.getElementById('bsn-tag').value.trim() : '';
+  var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
+
+  if (!wo) { alert('Le N° WO est obligatoire.'); return; }
+  if (!_bsnWG) { alert('Sélectionne un Workgroup.'); return; }
+
+  var pieces = parsePiecesFromText(text);
+  if (pieces.length === 0) { alert('Colle la liste des pièces depuis Ellipse.'); return; }
+
+  var loc = document.getElementById('bsn-loc') ? document.getElementById('bsn-loc').value.trim() : '';
+  var wgl = WG_LABELS[_bsnWG] || _bsnWG.toUpperCase();
+  var data = getBonsSortie();
+
+  // Vérifier si WO existe déjà
+  var existing = data.findIndex(function(d) { return d.wo === wo; });
+
+  var woData = {
+    id: existing >= 0 ? data[existing].id : Date.now().toString(),
+    wo: wo,
+    wg: wgl,
+    tag: tag,
+    loc: loc,
+    date: new Date().toLocaleDateString('fr-FR'),
+    pieces: pieces,
+    statut: 'En cours',
+    created_at: new Date().toISOString()
+  };
+
+  if (existing >= 0) {
+    // Conserver les pièces déjà cochées
+    var oldPieces = data[existing].pieces || [];
+    woData.pieces = pieces.map(function(p) {
+      var old = oldPieces.find(function(op) { return op.ref === p.ref; });
+      return { ref: p.ref, desc: p.desc, qte: p.qte, recu: old ? old.recu : false };
+    });
+    data[existing] = woData;
+  } else {
+    data.unshift(woData);
+  }
+
+  saveBonsSortieData(data);
+
+  // Reset
+  ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['chaud','repar','strob'].forEach(function(w) {
+    var el = document.getElementById('bsn-wg-' + w);
+    if(el) el.className = 'wg-btn';
+  });
+  _bsnWG = '';
+  var preview = document.getElementById('bsn-preview');
+  if(preview) preview.style.display = 'none';
+
+  show('s-bons-sortie');
+  renderBonsSortie();
+  alert('WO ' + wo + ' enregistré — ' + pieces.length + ' pièce(s)');
+}
+
+function renderBonsSortie() {
+  var list = document.getElementById('bs-list');
+  if (!list) return;
+  var search = (document.getElementById('bs-search')||{value:''}).value.toLowerCase();
+  var data = getBonsSortie();
+
+  // Filtrer
+  var filtered = data.filter(function(d) {
+    if (!search) return true;
+    return (d.wo||'').toLowerCase().includes(search) ||
+           (d.wg||'').toLowerCase().includes(search) ||
+           (d.tag||'').toLowerCase().includes(search);
+  });
+
+  // Stats
+  var complets = data.filter(function(d) { return d.statut === 'Complet'; }).length;
+  var encours = data.filter(function(d) { return d.statut !== 'Complet' && d.statut !== 'Planning'; }).length;
+  var el = document.getElementById('bs-count-complet'); if(el) el.textContent = complets;
+  var el2 = document.getElementById('bs-count-encours'); if(el2) el2.textContent = encours;
+  var el3 = document.getElementById('bs-count-total'); if(el3) el3.textContent = data.length;
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">📦<br>Aucun WO enregistré</div>';
+    return;
+  }
+
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
+  var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+
+  list.innerHTML = filtered.map(function(d) {
+    var pieces = d.pieces || [];
+    var total = pieces.length;
+    var recus = pieces.filter(function(p) { return p.recu; }).length;
+    var complet = recus === total;
+    var pct = total > 0 ? Math.round(recus/total*100) : 0;
+    var statColor = complet ? '#375623' : '#E65100';
+    var statBg = complet ? '#E2EFDA' : '#FFF3E0';
+    var wgColor = wgColors[d.wg] || '#555';
+    var wgBg = wgBgs[d.wg] || '#f0f0f0';
+
+    return '<div onclick="ouvrirDetailBS(this.dataset.bsid)" data-bsid="' + d.id + '" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-weight:800;font-size:15px">WO ' + d.wo + '</div>' +
+          (d.tag ? '<div style="font-size:12px;color:#666;margin-top:2px">📦 ' + d.tag + '</div>' : '') +
+          (d.loc ? '<div style="font-size:12px;color:#1F4E79;margin-top:2px">📍 ' + d.loc + '</div>' : '') +
+        '</div>' +
+        '<div style="background:' + statBg + ';color:' + statColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' +
+          (complet ? '✅ Complet' : '⏳ ' + recus + '/' + total) +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (d.wg||'--') + '</div>' +
+        '<div style="font-size:11px;color:#888">' + (d.date||'--') + '</div>' +
+      '</div>' +
+      // Barre de progression
+      '<div style="background:#e0e0e0;border-radius:4px;height:6px;margin-top:6px">' +
+        '<div style="background:' + statColor + ';width:' + pct + '%;height:6px;border-radius:4px;transition:width .3s"></div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#888;margin-top:3px;text-align:right">' + pct + '% reçu</div>' +
+    '</div>';
+  }).join('');
+}
+
+function ouvrirDetailBS(id) {
+  _bsCurrentId = id;
+  var data = getBonsSortie();
+  var d = data.find(function(x) { return x.id === id; });
+  if (!d) return;
+
+  var pieces = d.pieces || [];
+  var total = pieces.length;
+  var recus = pieces.filter(function(p) { return p.recu; }).length;
+  var complet = recus === total;
+
+  // Header
+  var titleEl = document.getElementById('bs-detail-title');
+  if(titleEl) titleEl.textContent = 'WO ' + d.wo;
+  var badgeEl = document.getElementById('bs-detail-badge');
+  if(badgeEl) {
+    badgeEl.textContent = complet ? '✅ Complet' : '⏳ ' + recus + '/' + total;
+    badgeEl.style.background = complet ? '#E2EFDA' : '#FFF3E0';
+    badgeEl.style.color = complet ? '#375623' : '#E65100';
+  }
+
+  // Info WO
+  var infoEl = document.getElementById('bs-detail-info');
+  if(infoEl) {
+    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
+    var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+    infoEl.innerHTML =
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<div style="background:' + (wgBgs[d.wg]||'#f0f0f0') + ';color:' + (wgColors[d.wg]||'#555') + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + (d.wg||'--') + '</div>' +
+        (d.tag ? '<div style="font-size:12px;color:#666">📦 ' + d.tag + '</div>' : '') +
+        '<div style="font-size:12px;color:#888;margin-left:auto">' + (d.date||'--') + '</div>' +
+      '</div>' +
+      (d.loc ? '<div style="margin-top:8px;padding:8px 10px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;font-weight:600">📍 ' + d.loc + '</div>' : '');
+  }
+
+  // Bouton planning
+  var planBtn = document.getElementById('bs-planning-btn');
+  if(planBtn) {
+    planBtn.style.background = complet ? '#375623' : '#aaa';
+    planBtn.textContent = complet ? '📋 Passer en planning' : '⏳ Incomplet';
+  }
+
+  // Liste pièces
+  var listEl = document.getElementById('bs-detail-list');
+  var countEl = document.getElementById('bs-detail-count');
+  if(countEl) countEl.textContent = recus + '/' + total + ' reçue(s)';
+
+  if(listEl) {
+    listEl.innerHTML = pieces.map(function(p, idx) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid ' + (p.recu?'#C8E6C9':'#e0e0e0') + '">' +
+        '<input type="checkbox" data-woid="' + id + '" data-pidx="' + idx + '" ' + (p.recu?'checked':'') +
+          ' onchange="togglePiece(this.dataset.woid,this.dataset.pidx,this.checked)"' +
+          ' style="width:20px;height:20px;cursor:pointer;accent-color:#375623">' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:700;font-size:12px;color:' + (p.recu?'#375623':'#1F3864') + '">' + p.ref + '</div>' +
+          '<div style="font-size:11px;color:#666">' + p.desc + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#555">x' + p.qte + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  show('s-bs-detail');
+}
+
+function togglePiece(woId, pieceIdx, checked) {
+  var data = getBonsSortie();
+  var d = data.find(function(x) { return x.id === woId; });
+  if (!d || !d.pieces[pieceIdx]) return;
+
+  d.pieces[pieceIdx].recu = checked;
+
+  // Vérifier si complet
+  var total = d.pieces.length;
+  var recus = d.pieces.filter(function(p) { return p.recu; }).length;
+  var complet = recus === total;
+  d.statut = complet ? 'Complet' : 'En cours';
+
+  saveBonsSortieData(data);
+
+  // Mettre à jour le badge et bouton
+  var badgeEl = document.getElementById('bs-detail-badge');
+  if(badgeEl) {
+    badgeEl.textContent = complet ? '✅ Complet' : '⏳ ' + recus + '/' + total;
+    badgeEl.style.background = complet ? '#E2EFDA' : '#FFF3E0';
+    badgeEl.style.color = complet ? '#375623' : '#E65100';
+  }
+  var planBtn = document.getElementById('bs-planning-btn');
+  if(planBtn) {
+    planBtn.style.background = complet ? '#375623' : '#aaa';
+    planBtn.textContent = complet ? '📋 Passer en planning' : '⏳ Incomplet';
+  }
+  var countEl = document.getElementById('bs-detail-count');
+  if(countEl) countEl.textContent = recus + '/' + total + ' reçue(s)';
+
+  // Alert si vient de devenir complet
+  if (complet && checked) {
+    setTimeout(function() {
+      alert('✅ WO ' + d.wo + ' — ' + d.wg + '\nToutes les pièces sont reçues !\nPrêt pour le planning.');
+    }, 300);
+  }
+}
+
+function passerEnPlanning() {
+  var data = getBonsSortie();
+  var d = data.find(function(x) { return x.id === _bsCurrentId; });
+  if (!d) return;
+
+  var recus = (d.pieces||[]).filter(function(p) { return p.recu; }).length;
+  var total = (d.pieces||[]).length;
+  if (recus < total) {
+    alert('Le WO n\'est pas encore complet (' + recus + '/' + total + ' pièces reçues).');
+    return;
+  }
+
+  if (!confirm('Passer le WO ' + d.wo + ' en planning ?\nCela archivera ce WO.')) return;
+
+  d.statut = 'Planning';
+  d.date_planning = new Date().toLocaleDateString('fr-FR');
+  saveBonsSortieData(data);
+
+  show('s-bons-sortie');
+  renderBonsSortie();
+  alert('✅ WO ' + d.wo + ' passé en planning !');
+}
+
+function supprimerWO() {
+  if (!confirm('Supprimer ce WO ?')) return;
+  var data = getBonsSortie().filter(function(x) { return x.id !== _bsCurrentId; });
+  saveBonsSortieData(data);
+  show('s-bons-sortie');
+  renderBonsSortie();
+}
+
 // ------ INIT ------
 initSemaines();
 updateStats();
@@ -8406,3 +8747,134 @@ function escapeXmlVal(str) {
   </div>
 </div>
 </body>
+<!-- ═══════════════ BONS DE SORTIE P50 ═══════════════ -->
+<div class="screen" id="s-bons-sortie">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">📦 BDS P50</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Bons de Sortie — Suivi pièces</div>
+    </div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Stats -->
+    <div id="bs-stats" style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#1F4E79,#2E75B6)">
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;backdrop-filter:blur(4px)">
+        <div id="bs-count-complet" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">✅ Complets</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bs-count-encours" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">⏳ En cours</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bs-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total WO</div>
+      </div>
+    </div>
+
+
+
+    <!-- Recherche + bouton -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <input class="fi" type="text" id="bs-search" placeholder="🔍 Rechercher WO, WG, TAG..."
+        oninput="renderBonsSortie()" style="flex:1;margin:0">
+      <button onclick="show('s-bs-nouveau')" style="background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+        ➕ Nouveau
+      </button>
+    </div>
+
+    <!-- Liste WO -->
+    <div id="bs-list" style="padding:10px 14px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NOUVEAU WO BS ═══════════════ -->
+<div class="screen" id="s-bs-nouveau">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
+    <div class="form-title">Nouveau WO</div>
+    <div class="form-badge" style="background:#E3F2FD;color:#1565C0">📋 Créer</div>
+  </div>
+  <div class="form-body">
+    <!-- WO -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> N° WO</div>
+      <input class="fi" type="text" id="bsn-wo" placeholder="Ex : 837669">
+    </div>
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div class="wg-grp">
+        <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
+        <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
+        <div class="wg-btn" id="bsn-wg-strob" onclick="setBsnWG('strob')">STROB</div>
+      </div>
+    </div>
+
+    <!-- TAG équipement -->
+    <div class="field-grp">
+      <div class="field-lbl">TAG Équipement</div>
+      <input class="fi" type="text" id="bsn-tag" placeholder="Ex : 220-X-00315">
+    </div>
+
+    <!-- Localisation pièces -->
+    <div class="field-grp">
+      <div class="field-lbl">Localisation des pièces</div>
+      <input class="fi" type="text" id="bsn-loc" placeholder="Ex : Rack A3 / Benne 12 / Étagère B2...">
+    </div>
+
+    <!-- Coller depuis Excel -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Liste pièces — Coller depuis Ellipse</div>
+      <textarea class="fi" id="bsn-paste" rows="8"
+        placeholder="Copier depuis Ellipse (Révision demande) et coller ici :&#10;&#10;F37712/0001&#9;GASKET SET SEAT TI&#9;1,00&#10;F37712/0002&#9;GASKET SET BONNET&#9;1,00&#10;..."
+        style="font-family:monospace;font-size:12px;resize:vertical"
+        oninput="previewBsnPieces()"></textarea>
+    </div>
+
+    <!-- Aperçu -->
+    <div id="bsn-preview" style="display:none;margin-bottom:12px">
+      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:6px">APERÇU — <span id="bsn-preview-count">0</span> pièce(s) détectée(s)</div>
+      <div id="bsn-preview-list" style="background:#f8f8f8;border-radius:10px;padding:10px;font-size:12px;font-family:monospace;max-height:150px;overflow-y:auto"></div>
+    </div>
+
+    <button onclick="saveBonsSortieWO()" class="send-btn" style="background:#375623">
+      💾 Enregistrer le WO
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ DETAIL WO BS ═══════════════ -->
+<div class="screen" id="s-bs-detail">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
+    <div class="form-title" id="bs-detail-title">Détail WO</div>
+    <div class="form-badge" id="bs-detail-badge" style="background:#E2EFDA;color:#375623">✅</div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Infos WO -->
+    <div id="bs-detail-info" style="padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)"></div>
+
+    <!-- Actions -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <button id="bs-planning-btn" onclick="passerEnPlanning()" 
+        style="flex:1;background:#375623;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📋 Passer en planning
+      </button>
+      <button onclick="supprimerWO()" 
+        style="background:#FCE4D6;color:#C55A11;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑
+      </button>
+    </div>
+
+    <!-- Liste pièces -->
+    <div style="padding:10px 14px">
+      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:8px">PIÈCES — <span id="bs-detail-count"></span></div>
+      <div id="bs-detail-list"></div>
+    </div>
+  </div>
+</div>
+
+
