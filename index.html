@@ -3502,7 +3502,10 @@ function sendArrive() {
   const msgFin = isEtna
     ? 'Merci de proceder au check qualite de cet equipement retour ETNA.'
     : 'Merci de prendre en compte cet equipement.';
-  body += '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
+
+  // Construire la fin du mail (historique ajouté dans le callback)
+  var _bodyFin = '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
+  body += _bodyFin;
 
   confirmEnvoi('Confirmer la notification arrivée', [
     {label:'TAG', value:tag}, {label:'WR', value:wr}, {label:'Workgroup', value:wgl},
@@ -3513,6 +3516,26 @@ function sendArrive() {
     const ccAr  = state.selectedCC && state.selectedCC.ar ? [...state.selectedCC.ar] : [];
     const toFirst = allTo[0];
     const ccFinal = [...allTo.slice(1), ...ccAr].filter(Boolean).join(';');
+    // Ajouter historique dans le body si équipement connu
+    dbLoad().then(function(allRecs) {
+      var tagHist = allRecs.filter(function(r) {
+        return (r.tag||'').toUpperCase() === (tag||'').toUpperCase();
+      }).sort(function(a,b) {
+        return (b.ts||b.created_at||'') > (a.ts||a.created_at||'') ? 1 : -1;
+      });
+      if (tagHist.length > 0) {
+        var histTxt = '\n--- HISTORIQUE (' + tagHist.length + ' intervention(s)) ---\n';
+        tagHist.forEach(function(r, i) {
+          histTxt += (i+1) + '. ' + (r.type||'--') + ' — ' + (r.date||'--');
+          if (r.wo) histTxt += ' | WO : ' + r.wo;
+          if (r.wr) histTxt += ' | WR : ' + r.wr;
+          if (r.statut) histTxt += ' | ' + r.statut;
+          histTxt += '\n';
+        });
+        body += histTxt;
+      }
+    }).catch(function(){});
+
     // Generer la fiche Word MCREPAR/STROB si applicable
     if ((wg === 'repar' || wg === 'chaud') && typeof JSZip !== 'undefined') {
       (async function() {
@@ -5835,19 +5858,17 @@ function fermerScannerQR() {
 
 function traiterQRCode(url) {
   var resultEl = document.getElementById('qr-result');
-  resultEl.textContent = '✅ QR détecté ! Ouverture de la fiche...';
+  resultEl.textContent = '✅ QR détecté ! Ouverture...';
   resultEl.style.display = 'block';
-
-  // Extraire l'ID de la fiche depuis l'URL
   try {
     var urlObj = new URL(url);
+    var tagParam = urlObj.searchParams.get('tag');
     var ficheId = urlObj.searchParams.get('fiche');
-    if (ficheId) {
-      setTimeout(function() {
-        ouvrirFicheQR(ficheId);
-      }, 600);
+    if (tagParam) {
+      setTimeout(function() { ouvrirHistoriqueTag(decodeURIComponent(tagParam)); }, 600);
+    } else if (ficheId) {
+      setTimeout(function() { ouvrirFicheQR(ficheId); }, 600);
     } else {
-      // URL non reconnue — ouvrir quand même
       resultEl.textContent = '⚠️ QR non PRNC : ' + url;
     }
   } catch(e) {
@@ -5945,7 +5966,7 @@ async function genererQRCode(id) {
   if (!r) return;
 
   // URL de la fiche = app + ?fiche=ID
-  var url = window.location.origin + window.location.pathname + '?fiche=' + id;
+  var url = window.location.origin + window.location.pathname + '?tag=' + encodeURIComponent(r.tag || id);
 
   // Créer overlay
   var ov = document.createElement('div');
@@ -7552,6 +7573,113 @@ function checkRelances() {
   }).catch(function(){});
 }
 
+
+// ══ HISTORIQUE PAR TAG (scan QR) ══
+async function ouvrirHistoriqueTag(tag) {
+  // Afficher l'écran scanner avec le résultat
+  show('s-scanner');
+  var resultEl = document.getElementById('qr-result');
+  if (resultEl) { resultEl.textContent = '⌛ Chargement historique...'; resultEl.style.display = 'block'; }
+
+  var records = await dbLoad();
+  var tagRecs = records.filter(function(r) {
+    return (r.tag || '').toUpperCase() === tag.toUpperCase();
+  }).sort(function(a, b) {
+    return (b.ts || b.created_at || '') > (a.ts || a.created_at || '') ? 1 : -1;
+  });
+
+  // Récupérer les infos du dernier enregistrement pour pré-remplir
+  var last = tagRecs[0] || {};
+
+  // Construire l'overlay historique
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;overflow:hidden';
+
+  var wgColor = last.wg === 'MCCHAUD' ? '#C55A11' : last.wg === 'MCREPAR' ? '#1F3864' : '#0F6E56';
+
+  var html = '<div style="background:#1F3864;color:#fff;padding:16px 14px;display:flex;align-items:center;gap:10px">' +
+    '<div style="font-size:20px">📦</div>' +
+    '<div style="flex:1">' +
+      '<div style="font-weight:700;font-size:17px">' + tag + '</div>' +
+      (last.wg ? '<div style="font-size:12px;opacity:.8">' + last.wg + (last.sc ? ' · SC ' + last.sc : '') + '</div>' : '') +
+    '</div>' +
+    '<div id="hist-tag-ov-close" style="font-size:22px;cursor:pointer;padding:4px">✕</div>' +
+  '</div>';
+
+  // Bouton nouvelle intervention
+  html += '<div style="padding:12px 14px;background:#fff;border-bottom:1px solid #e0e0e0">' +
+    '<button onclick="nouvelleInterventionTag(' + JSON.stringify(last).replace(/'/g, "\'") + ')" ' +
+    'style="width:100%;background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">' +
+    '➕ Nouvelle intervention' +
+  '</button></div>';
+
+  // Historique
+  html += '<div style="flex:1;overflow-y:auto;padding:12px 14px;background:#f5f5f5">';
+  html += '<div style="font-weight:700;color:#555;font-size:12px;margin-bottom:8px">HISTORIQUE — ' + tagRecs.length + ' intervention(s)</div>';
+
+  if (!tagRecs.length) {
+    html += '<div style="text-align:center;padding:30px;color:#999">Aucune intervention trouvée pour ce TAG</div>';
+  } else {
+    tagRecs.forEach(function(r, idx) {
+      var statColor = r.type === 'TERMINE' ? '#375623' : r.type === 'ARRIVEE' ? '#1F3864' : '#C55A11';
+      var statBg = r.type === 'TERMINE' ? '#E2EFDA' : r.type === 'ARRIVEE' ? '#DEEAF1' : '#FCE4D6';
+      html += '<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ' + statColor + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<div style="font-weight:700;font-size:13px">' + (r.type || '--') + '</div>' +
+          '<div style="font-size:11px;color:#888">' + (r.date || '--') + '</div>' +
+        '</div>' +
+        (r.wo ? '<div style="font-size:12px;color:#555">WO : ' + r.wo + '</div>' : '') +
+        (r.wr ? '<div style="font-size:12px;color:#555">WR : ' + r.wr + '</div>' : '') +
+        (r.wg ? '<div style="font-size:12px;color:#555">WG : ' + r.wg + '</div>' : '') +
+        (r.statut ? '<div style="display:inline-block;margin-top:4px;background:' + statBg + ';color:' + statColor + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + r.statut + '</div>' : '') +
+        (r.desc ? '<div style="font-size:11px;color:#888;margin-top:4px">' + r.desc + '</div>' : '') +
+      '</div>';
+    });
+  }
+  html += '</div>';
+
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  var closeBtn = document.getElementById('hist-tag-ov-close');
+  if (closeBtn) closeBtn.onclick = function(){ ov.remove(); };
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+function nouvelleInterventionTag(last) {
+  // Fermer l'overlay
+  document.querySelectorAll('[style*="position:fixed"]').forEach(function(el) {
+    if (el.style.zIndex >= 9000) el.remove();
+  });
+
+  // Aller sur Équipement arrivé et pré-remplir
+  show('s-arrive');
+  setTimeout(function() {
+    // TAG
+    var tagEl = document.getElementById('ar-tag');
+    if (tagEl && last.tag) tagEl.value = last.tag;
+    // WO — pas pré-rempli car différent à chaque intervention
+    var woEl = document.getElementById('ar-wo');
+    if (woEl) woEl.value = '';
+    // WR — pas pré-rempli car différent à chaque intervention
+    var wrEl = document.getElementById('ar-wr');
+    if (wrEl) wrEl.value = '';
+    // Stock Code
+    var scEl = document.getElementById('ar-sc');
+    if (scEl && last.sc) scEl.value = last.sc;
+    // N° Série
+    var serieEl = document.getElementById('ar-serie');
+    if (serieEl && last.serie) serieEl.value = last.serie;
+    // Workgroup
+    if (last.wg) {
+      var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === last.wg; });
+      if (wgKey) setWG('ar', wgKey);
+    }
+    // Désignation
+    var descEl = document.getElementById('ar-desc');
+    if (descEl && last.desc) descEl.value = last.desc.replace('Demandeur : ', '');
+  }, 300);
+}
+
 // ------ INIT ------
 initSemaines();
 updateStats();
@@ -7629,10 +7757,14 @@ initPIN();
 
 // Si URL contient ?etiq=1 -> afficher étiquette | ?fiche= -> afficher fiche
 (function checkURL() {
-  // Ouvrir fiche via QR code
-  const ficheId = new URLSearchParams(window.location.search).get('fiche');
+  var _up2 = new URLSearchParams(window.location.search);
+  var _tagP2 = _up2.get('tag');
+  var ficheId = _up2.get('fiche');
+  if (_tagP2) {
+    setTimeout(function() { ouvrirHistoriqueTag(decodeURIComponent(_tagP2)); }, 800);
+    return;
+  }
   if (ficheId) {
-    // Attendre que l'app soit prête puis ouvrir la fiche
     setTimeout(function() { ouvrirFicheQR(ficheId); }, 800);
     return;
   }
