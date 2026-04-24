@@ -194,6 +194,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .numpad-key.key-ok{background:#1F4E79;color:#fff;font-size:16px}
 .numpad-key.key-zero{grid-column:span 1}
 .numpad-row-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.photo-btn{display:inline-block;background:var(--navy2);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;margin-top:4px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -518,7 +519,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="ar-rem" placeholder="Ex : Équipement décontaminé, coupon attaché, état général..."></textarea></div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      </div>
+      <label class="photo-btn">&#128247; Prendre une photo
+        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ar-prev')" style="display:none">
+      </label>
+      <div id="ar-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
     </div>
 
     <button class="send-btn btn-purple" onclick="sendArrive()">&#128229; Envoyer la notification + lien fiche</button>
@@ -649,7 +653,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Photos -->
     <div class="field-grp">
-      </div>
+      <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
+      <label class="photo-btn">&#128247; Prendre une photo
+        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'etna-prev')" style="display:none">
+      </label>
+      <div id="etna-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
     </div>
 
     <!-- Destinataires dynamiques — même système que équip terminé -->
@@ -832,7 +840,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
     <!-- Photo -->
     <div class="field-grp">
-      </div>
+      <div class="field-lbl">Photo <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
+      <label class="photo-btn">&#128247; Prendre une photo
+        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ud-prev')" style="display:none">
+      </label>
+      <div id="ud-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
     </div>
 
     <!-- Signature canvas -->
@@ -3007,12 +3019,86 @@ function getEmails(listId) {
   return Array.from(document.querySelectorAll('#'+listId+' input')).map(i=>i.value.trim()).filter(Boolean);
 }
 
-// ------ PHOTOS ------
-// Photos désactivées — envoi par mail
-function getPhotos(id) { return []; }
-function addPhotos(input, prevId) {}
-function clearPhotos(prevId) {}
+// ------ PHOTOS CLOUDINARY ------
+var CLOUDINARY_CLOUD = 'dns5b6fix';
+var CLOUDINARY_PRESET = 'prnc_photos';
 var _photoStore = {};
+
+async function uploadToCloudinary(file) {
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('folder', 'prnc-field');
+  try {
+    var r = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
+      method: 'POST', body: formData
+    });
+    var d = await r.json();
+    return d.secure_url || null;
+  } catch(e) { console.warn('Cloudinary upload err', e); return null; }
+}
+
+function compressImage(file, maxPx, quality, cb) {
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function() {
+    var w = img.width, h = img.height;
+    if (w > maxPx || h > maxPx) {
+      if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+      else { w = Math.round(w * maxPx / h); h = maxPx; }
+    }
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    c.toBlob(function(b) { URL.revokeObjectURL(url); cb(b); }, 'image/jpeg', quality);
+  };
+  img.src = url;
+}
+
+function getPhotos(id) { return _photoStore[id] || []; }
+
+function clearPhotos(prevId) {
+  _photoStore[prevId] = [];
+  var prev = document.getElementById(prevId);
+  if (prev) prev.innerHTML = '';
+}
+
+async function addPhotos(input, prevId) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  if (!_photoStore[prevId]) _photoStore[prevId] = [];
+  var prev = document.getElementById(prevId);
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    (function(f) {
+      compressImage(f, 600, 0.35, async function(blob) {
+        // Affichage local immédiat
+        var localUrl = URL.createObjectURL(blob);
+        var img = document.createElement('img');
+        img.src = localUrl;
+        img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:6px;margin:3px;opacity:0.5;';
+        if (prev) prev.appendChild(img);
+
+        // Upload Cloudinary
+        var cloudUrl = await uploadToCloudinary(new File([blob], f.name, {type:'image/jpeg'}));
+        if (cloudUrl) {
+          _photoStore[prevId].push(cloudUrl);
+          img.style.opacity = '1';
+        } else {
+          // Fallback base64
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            _photoStore[prevId].push(e.target.result);
+            img.style.opacity = '1';
+          };
+          reader.readAsDataURL(blob);
+        }
+      });
+    })(file);
+  }
+  input.value = '';
+}
 
 // ------ UTILS ------
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
@@ -3649,7 +3735,7 @@ function sendArrive() {
     } else {
       mailto(toFirst, subj, body, ccFinal);
     }
-    dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, isEtna, serie, desc, typeEqt, dateRecep, dest:allTo});
+    dbSaveArrivee({tag, wo, wr, sc, wgl, loc, isUrg, isEtna, serie, desc, typeEqt, dateRecep, dest:allTo, photos:getPhotos('ar-prev')});
 
     const statColor = isUrg?'background:var(--lred);color:var(--red)':'background:var(--llblue);color:var(--navy2)';
     const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
@@ -3883,7 +3969,7 @@ function sendPeinture() {
 
   const ccFinalPt = [...allTo.slice(1), ...ccList].filter(Boolean).join(';');
   mailto(allTo[0], subj, body, ccFinalPt);
-  dbSavePeinture({tag, wo, trait});
+  dbSavePeinture({tag, wo, trait, photos:getPhotos('etna-prev')});
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
     '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
@@ -4478,7 +4564,7 @@ async function sendUsageDirect() {
     const ccUD     = state.selectedCC && state.selectedCC.ud ? [...state.selectedCC.ud] : [];
     const ccFinalUD = [...dests.slice(1), ...ccUD].filter(Boolean).join(';');
     mailto(dests[0], subj, body, ccFinalUD);
-    dbSaveUsage({tag, wo, sc, qty, shutdown:UD_SHUTDOWN_LABELS[_udShutdown], motif, wg:udWGL, dest:dests});
+    dbSaveUsage({tag, wo, sc, qty, shutdown:UD_SHUTDOWN_LABELS[_udShutdown], motif, wg:udWGL, dest:dests, photos:getPhotos('ud-prev')});
 
     resetForm(['ud-wo','ud-tag','ud-qty','ud-sc','ud-desc','ud-motif','ud-nom'], [], 'ud');
     showSuccess('&#9889;','si-purple','Usage direct envoyé !',
@@ -4558,6 +4644,7 @@ async function dbLoad() {
           dateRecep: r.date_recep, motif: r.motif,
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
           date: r.date, heure: r.heure, dest: r.dest || [],
+          photos: r.photos || [],
           ts: r.created_at, created_at: r.created_at
         };
       });
@@ -4605,7 +4692,8 @@ async function dbAdd(record) {
       motif: record.motif || null, type_wo: record.typeWO || null,
       type_transport: record.typeTransport || null, zone: record.zone || null,
       date: record.date, heure: record.heure,
-      dest: record.dest || []
+      dest: record.dest || [],
+      photos: record.photos || []
     });
   } catch(e) { console.warn('DB add err', e); }
 
@@ -4758,7 +4846,8 @@ async function dbSaveArrivee(d) {
   var statut = d.isUrg ? 'URGENCE' : d.isEtna ? 'RETOUR ETNA' : 'En attente diag.';
   await dbAdd({ type:'ARRIVEE', tag:d.tag, wo:d.wo, wr:d.wr, sc:d.sc, wg:d.wgl,
     loc:d.loc, statut:statut, dest:d.dest,
-    serie:d.serie, desc:d.desc, typeEqt:d.typeEqt, dateRecep:d.dateRecep });
+    serie:d.serie, desc:d.desc, typeEqt:d.typeEqt, dateRecep:d.dateRecep,
+    photos: d.photos || [] });
 }
 async function dbSaveTermine(d) {
   await dbAdd({ type:'TERMINE', tag:d.tag,
@@ -4771,14 +4860,16 @@ async function dbSaveTermine(d) {
 }
 async function dbSaveUsage(d) {
   await dbAdd({ type:'USAGE', tag:d.tag, wo:d.wo, sc:d.sc, qty:d.qty,
-    shutdown:d.shutdown, statut:d.motif.substring(0,60)+'...', wg:d.wg, dest:d.dest });
+    shutdown:d.shutdown, statut:d.motif.substring(0,60)+'...', wg:d.wg, dest:d.dest,
+    photos: d.photos || [] });
 }
 async function dbSaveTransport(d) {
   await dbAdd({ type:'TRANSPORT', tag:d.tag, wo:d.wo, typeTransport:d.typeTransport,
     loc:d.zch+' -> '+d.zdch, dest:[d.to] });
 }
 async function dbSavePeinture(d) {
-  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'] });
+  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'],
+    photos: d.photos || [] });
 }
 
 // Init historique quand on arrive sur l'onglet
