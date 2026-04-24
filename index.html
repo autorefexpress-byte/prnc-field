@@ -4495,24 +4495,30 @@ async function sendUsageDirect() {
 
 const DB_KEY = 'prnc-historique';
 
-// ------ NEON CONFIG ------
-const SUPA_URL = 'https://ep-blue-tree-a79w2h77.apirest.ap-southeast-2.aws.neon.tech/neondb';
-const SUPA_KEY = 'napi_12u2yyfcox3su4rj9xxdvnz89qq9kijfpi3q086koxc4rehm97v06w4zvwdqrs3r';
+// ------ DB CONFIG (Vercel Function → Neon) ------
+const DB_API = '/api/db';
 
 function invalidateDbCache() { _dbCache = null; _dbCacheTs = 0; }
 
 async function supaFetch(path, method, body) {
   method = method || 'GET';
+  
+  // Extraire l'id du path si présent (ex: ?id=eq.xxx)
+  const idMatch = path.match(/[?&]id=eq\.([^&]+)/);
+  const id = idMatch ? decodeURIComponent(idMatch[1]) : null;
+  
   const opts = {
-    method: method,
-    headers: {
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : (method === 'PATCH' ? 'return=minimal' : '')
-    }
+    method: method === 'GET' ? 'GET' : method,
+    headers: { 'Content-Type': 'application/json' }
   };
+  
+  let url = DB_API;
+  if (id) url += '?id=' + encodeURIComponent(id);
+  
   if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(SUPA_URL + path, opts);
+  if (method === 'GET') opts.method = 'GET';
+  
+  const r = await fetch(url, opts);
   if (method === 'GET') return r.json();
   return r;
 }
