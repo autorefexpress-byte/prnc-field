@@ -3453,7 +3453,7 @@ function sendPlanning() {
       wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
       designation: record.desc || null, date: record.date, heure: record.heure,
       ts: record.ts
-    }).catch(function(e){ console.warn('Supabase plan save err', e); });
+    }).catch(function(e){ console.warn('DB plan save err', e); });
     clearPhotos(e.prevId);
     invalidateDbCache();
   });
@@ -4453,7 +4453,7 @@ async function sendUsageDirect() {
       id: sigId, img: sigDataUrl, nom, tag, wo,
       date: dateStr, shutdown: shutdownLbl, qty: String(qty), wg: udWGL
     });
-  } catch(e) { console.warn('Supabase sig err', e); }
+  } catch(e) { console.warn('DB sig err', e); }
   // Backup local
   try { localStorage.setItem(sigId, JSON.stringify({
     img: sigDataUrl, nom, tag, wo, date: dateStr, shutdown: shutdownLbl, qty, wg: udWGL
@@ -4495,9 +4495,9 @@ async function sendUsageDirect() {
 
 const DB_KEY = 'prnc-historique';
 
-// ------ SUPABASE CONFIG ------
-const SUPA_URL = 'https://lfebsggmcopsmaegptyw.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZWJzZ2dtY29wc21hZWdwdHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNzU0NzgsImV4cCI6MjA4OTk1MTQ3OH0.dVNE7qEdNhuQFxuPjIt_umiXuCZH4kFh8JBiW2KFUAA';
+// ------ NEON CONFIG ------
+const SUPA_URL = 'https://ep-blue-tree-a79w2h77.apirest.ap-southeast-2.aws.neon.tech/neondb';
+const SUPA_KEY = 'napi_12u2yyfcox3su4rj9xxdvnz89qq9kijfpi3q086koxc4rehm97v06w4zvwdqrs3r';
 
 function invalidateDbCache() { _dbCache = null; _dbCacheTs = 0; }
 
@@ -4506,10 +4506,9 @@ async function supaFetch(path, method, body) {
   const opts = {
     method: method,
     headers: {
-      'apikey': SUPA_KEY,
       'Authorization': 'Bearer ' + SUPA_KEY,
       'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=minimal' : (method === 'PATCH' ? 'return=minimal' : '')
+      'Prefer': method === 'POST' ? 'return=representation' : (method === 'PATCH' ? 'return=minimal' : '')
     }
   };
   if (body) opts.body = JSON.stringify(body);
@@ -4561,7 +4560,7 @@ async function dbLoad() {
       _dbCacheTs = Date.now();
       return records;
     }
-  } catch(e) { console.warn('Supabase load err', e); }
+  } catch(e) { console.warn('DB load err', e); }
   // Fallback localStorage
   try {
     const raw = localStorage.getItem(DB_KEY);
@@ -4602,7 +4601,7 @@ async function dbAdd(record) {
       date: record.date, heure: record.heure,
       dest: record.dest || []
     });
-  } catch(e) { console.warn('Supabase add err', e); }
+  } catch(e) { console.warn('DB add err', e); }
 
   // Backup localStorage
   try {
@@ -6319,7 +6318,7 @@ async function saveEtnaUpdate() {
       etna_commentaire : commentaire || null,
       etna_updated_at  : new Date().toISOString()
     });
-  } catch(e) { console.warn('Supabase ETNA update err', e); }
+  } catch(e) { console.warn('DB ETNA update err', e); }
 
   // Mettre à jour localStorage
   try {
@@ -6770,7 +6769,7 @@ async function deleteRecord(id) {
   try {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
     console.log('Supprimé dans Supabase');
-  } catch(e) { console.warn('Supabase delete err', e); }
+  } catch(e) { console.warn('DB delete err', e); }
 
   // Supprimer en localStorage
   try {
@@ -7399,7 +7398,7 @@ async function saveEdit(id) {
     await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
       tag, wo, wo_mtc: woUsine||null, statut: s, type_eqt: typeEqt, serie, loc, zone: zone||null
     });
-  } catch(e) { console.warn('Supabase update err', e); }
+  } catch(e) { console.warn('DB update err', e); }
 
   // Mettre à jour aussi en localStorage
   try {
