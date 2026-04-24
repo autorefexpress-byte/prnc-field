@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/send-fiche.js": {
+    "api/db.js": {
       "memory": 128,
       "maxDuration": 10
     }
