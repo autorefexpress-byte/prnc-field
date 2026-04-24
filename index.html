@@ -6057,61 +6057,85 @@ async function genererQRCode(id) {
 
 // ══ IMPRESSION ÉTIQUETTE NIIMBOT ══
 function imprimerEtiquetteQR(r) {
-  var url = window.location.origin + window.location.pathname + '?fiche=' + r.id;
-  var win = window.open('', '_blank', 'width=400,height=600');
+  var url = window.location.origin + window.location.pathname + '?tag=' + encodeURIComponent(r.tag || r.id);
+  var win = window.open('', '_blank', 'width=500,height=350');
   if (!win) { alert('Autorise les popups pour imprimer'); return; }
 
-  var infos = '';
-  if (r.wo)      infos += '<div><span>WO MTC</span> <span>' + r.wo + '</span></div>';
-  if (r.woUsine) infos += '<div><span>WO Usine</span> <span>' + r.woUsine + '</span></div>';
-  if (r.wr)      infos += '<div><span>WR</span> <span>' + r.wr + '</span></div>';
-  if (r.wg)      infos += '<div><span>Workgroup</span> <span>' + r.wg + '</span></div>';
-  if (r.loc)     infos += '<div><span>Localisation</span> <span>' + r.loc + '</span></div>';
-  if (r.date)    infos += '<div><span>Date</span> <span>' + r.date + '</span></div>';
+  // Formatage des infos
+  var tag = r.tag || '--';
+  var wo = r.wo || '';
+  var wr = r.wr || '';
+  var wg = r.wg || '';
+  var date = r.date || new Date().toLocaleDateString('fr-FR');
+  var statut = r.statut || '';
+  var sc = r.sc || '';
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<title>Etiquette ' + (r.tag||'') + '</title>' +
+  // Couleur WG
+  var wgColor = wg === 'MCCHAUD' ? '#7030A0' : wg === 'MCREPAR' ? '#C55A11' : '#0F6E56';
+
+  var html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<title>Etiquette ' + tag + '</title>' +
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>' +
     '<style>' +
-    '* { margin:0; padding:0; box-sizing:border-box; }' +
-    'body { font-family:Arial,sans-serif; width:62mm; background:#fff; }' +
-    '@media print { body { width:62mm; } @page { size:62mm auto; margin:2mm; } }' +
-    '.etiquette { width:62mm; padding:3mm; border:1px solid #000; display:flex; flex-direction:column; align-items:center; gap:3mm; }' +
-    '.logo { font-size:7pt; font-weight:bold; color:#1F3864; text-align:center; letter-spacing:1px; border-bottom:1px solid #1F3864; width:100%; padding-bottom:2mm; }' +
-    '.tag { font-size:14pt; font-weight:bold; color:#000; text-align:center; letter-spacing:1px; }' +
-    '.infos { width:100%; font-size:7pt; line-height:1.6; }' +
-    '.infos div { display:flex; justify-content:space-between; }' +
-    '.infos span { font-weight:bold; color:#333; }' +
-    '#qr { display:flex; justify-content:center; }' +
-    '.badge { font-size:7pt; font-weight:bold; background:#1F3864; color:#fff; padding:1mm 3mm; border-radius:3mm; }' +
-    '.footer { font-size:6pt; color:#888; text-align:center; border-top:1px dashed #ccc; padding-top:2mm; width:100%; }' +
-    '.btn { margin:10px auto; display:block; padding:10px 20px; background:#1F3864; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; }' +
-    '@media print { .btn { display:none; } }' +
-    '</style>' +
-    '</head><body>' +
+      '@page { size: 62mm 29mm; margin: 0; }' +
+      'body { margin: 0; padding: 0; font-family: Arial, sans-serif; }' +
+      '.etiquette {' +
+        'width: 62mm;' +
+        'height: 29mm;' +
+        'display: flex;' +
+        'align-items: center;' +
+        'padding: 1.5mm;' +
+        'box-sizing: border-box;' +
+        'gap: 2mm;' +
+        'border: 0.5px solid #ddd;' +
+        'overflow: hidden;' +
+      '}' +
+      '#qr-print { width: 25mm; height: 25mm; flex-shrink: 0; }' +
+      '#qr-print img, #qr-print canvas { width: 25mm !important; height: 25mm !important; }' +
+      '.infos { flex: 1; overflow: hidden; }' +
+      '.tag { font-size: 8pt; font-weight: 900; color: #1F3864; line-height: 1.2; word-break: break-all; }' +
+      '.wg-badge { display: inline-block; background: ' + wgColor + '; color: #fff; font-size: 6pt; font-weight: 700; padding: 0.5mm 1.5mm; border-radius: 2mm; margin: 0.5mm 0; }' +
+      '.info-line { font-size: 6pt; color: #333; line-height: 1.4; }' +
+      '.info-line span { font-weight: 700; color: #1F3864; }' +
+      '.prnc { font-size: 5pt; color: #999; margin-top: 1mm; }' +
+      '@media print {' +
+        'body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        '.no-print { display: none; }' +
+      '}' +
+    '</style></head><body>' +
     '<div class="etiquette">' +
-      '<div class="logo">PRNC - MAINTENANCE CENTRALE P50</div>' +
-      '<div class="tag">' + (r.tag||'--') + '</div>' +
-      '<div id="qr"></div>' +
-      '<div class="infos">' + infos + '</div>' +
-      (r.statut ? '<div class="badge">' + r.statut + '</div>' : '') +
-      '<div class="footer">Scanne pour voir la fiche complete</div>' +
+      '<div id="qr-print"></div>' +
+      '<div class="infos">' +
+        '<div class="tag">' + tag + '</div>' +
+        (wg ? '<div class="wg-badge">' + wg + '</div>' : '') +
+        (wo ? '<div class="info-line"><span>WO</span> ' + wo + '</div>' : '') +
+        (wr ? '<div class="info-line"><span>WR</span> ' + wr + '</div>' : '') +
+        (sc ? '<div class="info-line"><span>SC</span> ' + sc + '</div>' : '') +
+        (statut ? '<div class="info-line"><span>Statut</span> ' + statut + '</div>' : '') +
+        '<div class="prnc">PRNC — MC P50 — ' + date + '</div>' +
+      '</div>' +
     '</div>' +
-    '<button class="btn" onclick="window.print()">Imprimer</button>' +
-    '<scr' + 'ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></' + 'script>' +
-    '<scr' + 'ipt>' +
-    'window.onload=function(){' +
-      'new QRCode(document.getElementById("qr"),{' +
-        'text:"' + url + '",' +
-        'width:120,height:120,' +
-        'colorDark:"#1F3864",colorLight:"#ffffff",' +
-        'correctLevel:0' +
-      '});' +
-      'setTimeout(function(){window.print();},800);' +
-    '};' +
-    '</' + 'script>' +
+    '<div class="no-print" style="text-align:center;margin-top:10px">' +
+      '<button onclick="window.print()" style="background:#1F4E79;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨 Imprimer</button>' +
+      '<button onclick="window.close()" style="background:#f0f0f0;color:#333;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✕ Fermer</button>' +
+      '<div style="font-size:11px;color:#888;margin-top:6px">Format : 62×29mm — Brother QL-1060N</div>' +
+    '</div>' +
+    '<script>' +
+      'window.onload = function() {' +
+        'new QRCode(document.getElementById("qr-print"), {' +
+          'text: "' + url + '",' +
+          'width: 95,' +
+          'height: 95,' +
+          'colorDark: "#1F3864",' +
+          'colorLight: "#ffffff",' +
+          'correctLevel: 0' +
+        '});' +
+        'setTimeout(function(){ window.print(); }, 1000);' +
+      '};' +
+    '<\/script>' +
     '</body></html>';
 
-  win.document.write(html);
+  win.document.write(html_content);
   win.document.close();
 }
 
