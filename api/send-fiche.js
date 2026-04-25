@@ -8,13 +8,11 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { to, subject, text, filename, content } = req.body || {};
+    const { subject, text, filename, content } = req.body || {};
 
     if (!content || !filename) {
       return res.status(400).json({ error: 'Missing content or filename' });
     }
-
-    const recipients = Array.isArray(to) ? to : [to || 'Emmanuel.Rosa@pronyresources.com'];
 
     const resendResp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -24,12 +22,12 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         from: 'PRNC Field <onboarding@resend.dev>',
-        to: recipients,
+        to: ['fichesuiveuse@gmail.com'],
         subject: subject || '[FICHE SUIVEUSE] PRNC',
         text: text || 'Fiche suiveuse en pièce jointe.',
         attachments: [{
           filename: filename,
-          content: content  // base64
+          content: content
         }]
       })
     });
