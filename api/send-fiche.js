@@ -1,4 +1,5 @@
 // api/send-fiche.js — Génère et envoie la fiche suiveuse Word via Resend
+// Template MCREPAR est en A3 paysage (420x297mm)
 const JSZip = require('jszip');
 
 async function fixDocx(docxBase64) {
