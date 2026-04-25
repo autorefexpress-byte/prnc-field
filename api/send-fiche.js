@@ -8,18 +8,15 @@ async function fixDocx(docxBase64) {
   // 1. Supprimer le saut de page explicite (crée une page vide)
   xml = xml.replace(/<w:r><w:br w:type="page"\/><\/w:r>/g, '');
 
-  // 2. Calibri 10pt majuscules sur tous les champs SDT
+  // 2. Calibri 8pt majuscules sur les champs SDT uniquement
   xml = xml.replace(/<w:sdt>([\s\S]*?)<\/w:sdt>/g, (match) => {
     const idx = match.indexOf('<w:sdtContent>');
     if (idx < 0) return match;
     const prefix = match.slice(0, idx);
     let body = match.slice(idx);
-    // Police Calibri
     body = body.replace(/<w:rFonts[^/]*\/>/g, '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>');
-    // Taille 10pt
-    body = body.replace(/<w:sz w:val="\d+"/g, '<w:sz w:val="20"');
-    body = body.replace(/<w:szCs w:val="\d+"/g, '<w:szCs w:val="20"');
-    // Majuscules
+    body = body.replace(/<w:sz w:val="\d+"/g, '<w:sz w:val="16"');
+    body = body.replace(/<w:szCs w:val="\d+"/g, '<w:szCs w:val="16"');
     body = body.replace(/(<w:rPr>)(?![\s\S]*?<w:caps\/>)/g, '$1<w:caps/>');
     return prefix + body;
   });
