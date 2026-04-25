@@ -357,6 +357,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
       <div class="card-lbl">Crédit Magasin</div>
       <div class="card-sub">Retour pièces non utilisées</div>
+        <div class="action-card" onclick="show('s-templates'); updateTemplateStatus();" style="background:linear-gradient(135deg,#1F3864,#2E75B6)">
+          <div class="action-icon">📄</div>
+          <div class="action-label">Mes Templates</div>
+          <div class="action-sub">Fiches suiveuses</div>
+        </div>
     </div>
     <div class="action-card" onclick="show('s-etna-suivi')">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
@@ -2706,7 +2711,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
+const SCREENS = ['s-home','s-templates','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist'};
 
 function show(id) {
@@ -2721,6 +2726,7 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
   if (id === 's-planning') setTimeout(initPlanSig, 50);
+  if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
   if (id === 's-hist') {
     // Pré-charger le cache si vide, puis rendre
     if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
@@ -3677,7 +3683,7 @@ function sendArrive() {
     if ((wg === 'repar' || wg === 'chaud') && typeof JSZip !== 'undefined') {
       (async function() {
         try {
-          var b64 = wg === 'chaud' ? TMPL_MCCHAUD_PA_B64 : TMPL_MCREPAR_PA_B64;
+          var b64 = getEffectiveTemplate(wg === 'chaud' ? 'chaud' : 'repar');
           var binary = atob(b64);
           var bytes = new Uint8Array(binary.length);
           for (var ii = 0; ii < binary.length; ii++) bytes[ii] = binary.charCodeAt(ii);
@@ -5199,6 +5205,68 @@ async function genererRapportPDF() {
 </div>
 
 
+
+<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
+<div class="screen" id="s-templates">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div>
+      <div class="form-title">Mes Templates Word</div>
+      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+
+    <!-- MCREPAR -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
+          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCREPAR (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
+      </label>
+      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCREPAR
+      </button>
+    </div>
+
+    <!-- MCCHAUD -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
+          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCCHAUD (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
+      </label>
+      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCCHAUD
+      </button>
+    </div>
+
+    <!-- INFO -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
+      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
+      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
+      <div>2. Ton template est sauvegardé sur ton PC</div>
+      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
+      <div>4. Le fichier généré utilisera ton propre modèle</div>
+      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
+    </div>
+
+  </div>
+</div>
+
 </body></html>`;
 
   const win = window.open('','_blank');
@@ -6232,7 +6300,69 @@ function imprimerEtiquetteQR(r) {
         'setTimeout(function(){ window.print(); }, 1000);' +
       '};' +
     '<\/script>' +
-    '</body></html>';
+    '
+<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
+<div class="screen" id="s-templates">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div>
+      <div class="form-title">Mes Templates Word</div>
+      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+
+    <!-- MCREPAR -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
+          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCREPAR (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
+      </label>
+      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCREPAR
+      </button>
+    </div>
+
+    <!-- MCCHAUD -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
+          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCCHAUD (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
+      </label>
+      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCCHAUD
+      </button>
+    </div>
+
+    <!-- INFO -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
+      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
+      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
+      <div>2. Ton template est sauvegardé sur ton PC</div>
+      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
+      <div>4. Le fichier généré utilisera ton propre modèle</div>
+      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
+    </div>
+
+  </div>
+</div>
+
+</body></html>';
 
   win.document.write(html_content);
   win.document.close();
@@ -7615,6 +7745,68 @@ async function exportTimelinePDF() {
   </div>
 </div>
 
+
+
+<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
+<div class="screen" id="s-templates">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div>
+      <div class="form-title">Mes Templates Word</div>
+      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+
+    <!-- MCREPAR -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
+          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCREPAR (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
+      </label>
+      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCREPAR
+      </button>
+    </div>
+
+    <!-- MCCHAUD -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
+          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCCHAUD (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
+      </label>
+      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCCHAUD
+      </button>
+    </div>
+
+    <!-- INFO -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
+      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
+      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
+      <div>2. Ton template est sauvegardé sur ton PC</div>
+      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
+      <div>4. Le fichier généré utilisera ton propre modèle</div>
+      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
+    </div>
+
+  </div>
+</div>
 
 </body></html>`;
 
@@ -9006,7 +9198,7 @@ async function telechargerFicheWord(r) {
 
   if (!FICHE_TEMPLATES) { alert('Templates non chargés.'); return; }
 
-  var b64 = (wg === 'repar' || wg === 'strob') ? FICHE_TEMPLATES.repar : FICHE_TEMPLATES.chaud;
+  var b64 = getEffectiveTemplate(wg);
   if (!b64) { alert('Template non disponible.'); return; }
 
   if (typeof JSZip === 'undefined') { alert('JSZip non chargé.'); return; }
@@ -9071,6 +9263,91 @@ async function telechargerFicheWord(r) {
   } catch(e) {
     console.error('Erreur génération fiche:', e);
     alert('Erreur génération fiche : ' + e.message);
+  }
+}
+
+
+// ══ GESTION DES TEMPLATES WORD ══
+const TMPL_STORAGE_KEY_REPAR  = 'prnc-tmpl-mcrepar';
+const TMPL_STORAGE_KEY_CHAUD  = 'prnc-tmpl-mcchaud';
+
+function getUserTemplate(wg) {
+  var key = (wg === 'repar' || wg === 'strob') ? TMPL_STORAGE_KEY_REPAR : TMPL_STORAGE_KEY_CHAUD;
+  try { return localStorage.getItem(key); } catch(e) { return null; }
+}
+
+function saveUserTemplate(wg, b64) {
+  var key = (wg === 'repar') ? TMPL_STORAGE_KEY_REPAR : TMPL_STORAGE_KEY_CHAUD;
+  try { localStorage.setItem(key, b64); return true; } catch(e) { return false; }
+}
+
+function deleteUserTemplate(wg) {
+  var key = (wg === 'repar') ? TMPL_STORAGE_KEY_REPAR : TMPL_STORAGE_KEY_CHAUD;
+  try { localStorage.removeItem(key); } catch(e) {}
+}
+
+function getEffectiveTemplate(wg) {
+  // Priorité: template uploadé par l'utilisateur → template embarqué
+  var userTmpl = getUserTemplate(wg);
+  if (userTmpl) return userTmpl;
+  if (wg === 'repar' || wg === 'strob') return FICHE_TEMPLATES.repar;
+  return FICHE_TEMPLATES.chaud;
+}
+
+async function handleTemplateUpload(file, wg) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var b64 = e.target.result.split(',')[1];
+      if (saveUserTemplate(wg, b64)) {
+        resolve(b64);
+      } else {
+        reject(new Error('Erreur sauvegarde template'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+
+async function importTemplate(input, wg) {
+  var file = input.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.docx')) {
+    alert('Le fichier doit être au format .docx');
+    return;
+  }
+  try {
+    await handleTemplateUpload(file, wg);
+    updateTemplateStatus();
+    var label = wg === 'repar' ? 'MCREPAR' : 'MCCHAUD';
+    alert('✅ Template ' + label + ' importé avec succès !\nIl sera utilisé pour toutes vos prochaines fiches.');
+  } catch(e) {
+    alert('Erreur import : ' + e.message);
+  }
+  input.value = '';
+}
+
+function deleteTemplate(wg) {
+  var label = wg === 'repar' ? 'MCREPAR' : 'MCCHAUD';
+  if (!confirm('Supprimer votre template ' + label + ' ?\nLe template par défaut sera utilisé.')) return;
+  deleteUserTemplate(wg);
+  updateTemplateStatus();
+}
+
+function updateTemplateStatus() {
+  var reparEl = document.getElementById('tmpl-repar-status');
+  var chaudEl = document.getElementById('tmpl-chaud-status');
+  if (reparEl) {
+    var r = getUserTemplate('repar');
+    reparEl.textContent = r ? '✅ Template personnalisé chargé (' + Math.round(r.length * 0.75 / 1024) + ' KB)' : '📋 Template par défaut';
+    reparEl.style.color = r ? '#375623' : '#888';
+  }
+  if (chaudEl) {
+    var c = getUserTemplate('chaud');
+    chaudEl.textContent = c ? '✅ Template personnalisé chargé (' + Math.round(c.length * 0.75 / 1024) + ' KB)' : '📋 Template par défaut';
+    chaudEl.style.color = c ? '#C55A11' : '#888';
   }
 }
 
@@ -9260,5 +9537,67 @@ function escapeXmlVal(str) {
     </div>
   </div>
 </div>
+
+<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
+<div class="screen" id="s-templates">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div>
+      <div class="form-title">Mes Templates Word</div>
+      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+
+    <!-- MCREPAR -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
+          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCREPAR (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
+      </label>
+      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCREPAR
+      </button>
+    </div>
+
+    <!-- MCCHAUD -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
+          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCCHAUD (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
+      </label>
+      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCCHAUD
+      </button>
+    </div>
+
+    <!-- INFO -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
+      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
+      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
+      <div>2. Ton template est sauvegardé sur ton PC</div>
+      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
+      <div>4. Le fichier généré utilisera ton propre modèle</div>
+      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
