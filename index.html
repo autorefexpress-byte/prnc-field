@@ -195,6 +195,14 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .numpad-key.key-ok{background:#1F4E79;color:#fff;font-size:16px}
 .numpad-key.key-zero{grid-column:span 1}
 .numpad-row-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.photo-zone{border:2px dashed var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer;background:#f8f9fc;margin-top:4px;transition:background .2s}
+.photo-zone:active{background:#e8edf5}
+.photo-zone-icon{font-size:28px;margin-bottom:4px}
+.photo-zone-lbl{font-size:12px;color:var(--muted);font-weight:600}
+.photo-thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.photo-thumb{position:relative;width:72px;height:72px}
+.photo-thumb img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border)}
+.photo-thumb-del{position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;cursor:pointer;font-weight:700}
 .photo-btn{display:inline-block;background:var(--navy2);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;margin-top:4px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -520,10 +528,12 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="ar-rem" placeholder="Ex : Équipement décontaminé, coupon attaché, état général..."></textarea></div>
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <label class="photo-btn">&#128247; Prendre une photo
-        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ar-prev')" style="display:none">
-      </label>
-      <div id="ar-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+<div class="photo-zone" onclick="document.getElementById('ar-photo-input').click()">
+        <input type="file" id="ar-photo-input" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ar-prev')" style="display:none">
+        <div class="photo-zone-icon">📷</div>
+        <div class="photo-zone-lbl">Appuyer pour prendre ou importer une photo</div>
+      </div>
+      <div class="photo-thumbs" id="ar-prev"></div>
     </div>
 
     <button class="send-btn btn-purple" onclick="sendArrive()">&#128229; Envoyer la notification + lien fiche</button>
@@ -655,10 +665,12 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- Photos -->
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <label class="photo-btn">&#128247; Prendre une photo
-        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'etna-prev')" style="display:none">
-      </label>
-      <div id="etna-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+<div class="photo-zone" onclick="document.getElementById('etna-photo-input').click()">
+        <input type="file" id="etna-photo-input" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'etna-prev')" style="display:none">
+        <div class="photo-zone-icon">📷</div>
+        <div class="photo-zone-lbl">Appuyer pour prendre ou importer une photo</div>
+      </div>
+      <div class="photo-thumbs" id="etna-prev"></div>
     </div>
 
     <!-- Destinataires dynamiques — même système que équip terminé -->
@@ -842,10 +854,12 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <!-- Photo -->
     <div class="field-grp">
       <div class="field-lbl">Photo <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
-      <label class="photo-btn">&#128247; Prendre une photo
-        <input type="file" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ud-prev')" style="display:none">
-      </label>
-      <div id="ud-prev" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div>
+<div class="photo-zone" onclick="document.getElementById('ud-photo-input').click()">
+        <input type="file" id="ud-photo-input" accept="image/*" capture="environment" multiple onchange="addPhotos(this,'ud-prev')" style="display:none">
+        <div class="photo-zone-icon">📷</div>
+        <div class="photo-zone-lbl">Appuyer pour prendre ou importer une photo</div>
+      </div>
+      <div class="photo-thumbs" id="ud-prev"></div>
     </div>
 
     <!-- Signature canvas -->
@@ -3063,6 +3077,7 @@ function clearPhotos(prevId) {
   _photoStore[prevId] = [];
   var prev = document.getElementById(prevId);
   if (prev) prev.innerHTML = '';
+  // Also clear the photo-zone if it exists nearby
 }
 
 async function addPhotos(input, prevId) {
@@ -3075,27 +3090,40 @@ async function addPhotos(input, prevId) {
     var file = files[i];
     (function(f) {
       compressImage(f, 600, 0.35, async function(blob) {
-        // Affichage local immédiat
         var localUrl = URL.createObjectURL(blob);
+
+        // Créer la miniature avec bouton supprimer
+        var thumbDiv = document.createElement('div');
+        thumbDiv.className = 'photo-thumb';
         var img = document.createElement('img');
         img.src = localUrl;
-        img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:6px;margin:3px;opacity:0.5;';
-        if (prev) prev.appendChild(img);
+        img.style.opacity = '0.5';
+        var del = document.createElement('div');
+        del.className = 'photo-thumb-del';
+        del.textContent = '×';
+        thumbDiv.appendChild(img);
+        thumbDiv.appendChild(del);
+        if (prev) prev.appendChild(thumbDiv);
 
         // Upload Cloudinary
         var cloudUrl = await uploadToCloudinary(new File([blob], f.name, {type:'image/jpeg'}));
-        if (cloudUrl) {
-          _photoStore[prevId].push(cloudUrl);
-          img.style.opacity = '1';
-        } else {
+        var finalUrl = cloudUrl;
+        if (!finalUrl) {
           // Fallback base64
-          var reader = new FileReader();
-          reader.onload = function(e) {
-            _photoStore[prevId].push(e.target.result);
-            img.style.opacity = '1';
-          };
-          reader.readAsDataURL(blob);
+          finalUrl = await new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onload = function(e) { resolve(e.target.result); };
+            reader.readAsDataURL(blob);
+          });
         }
+        _photoStore[prevId].push(finalUrl);
+        img.style.opacity = '1';
+        // Bouton supprimer
+        del.onclick = function() {
+          var idx = _photoStore[prevId].indexOf(finalUrl);
+          if (idx >= 0) _photoStore[prevId].splice(idx, 1);
+          thumbDiv.remove();
+        };
       });
     })(file);
   }
