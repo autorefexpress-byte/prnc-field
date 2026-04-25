@@ -1,7 +1,6 @@
 // api/send-fiche.js — Génère et envoie la fiche suiveuse Word via Resend
 const JSZip = require('jszip');
 
-// Post-traitement du docx généré
 async function fixDocx(docxBase64) {
   const zip = await JSZip.loadAsync(Buffer.from(docxBase64, 'base64'));
   let xml = await zip.file('word/document.xml').async('string');
@@ -9,15 +8,19 @@ async function fixDocx(docxBase64) {
   // 1. Supprimer le saut de page explicite (crée une page vide)
   xml = xml.replace(/<w:r><w:br w:type="page"\/><\/w:r>/g, '');
 
-  // 2. Mettre tous les champs SDT à 12pt (w:sz = 24)
-  // On travaille uniquement dans les sdtContent
+  // 2. Calibri 10pt majuscules sur tous les champs SDT
   xml = xml.replace(/<w:sdt>([\s\S]*?)<\/w:sdt>/g, (match) => {
     const idx = match.indexOf('<w:sdtContent>');
     if (idx < 0) return match;
     const prefix = match.slice(0, idx);
     let body = match.slice(idx);
-    body = body.replace(/<w:sz w:val="\d+"/g, '<w:sz w:val="24"');
-    body = body.replace(/<w:szCs w:val="\d+"/g, '<w:szCs w:val="24"');
+    // Police Calibri
+    body = body.replace(/<w:rFonts[^/]*\/>/g, '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>');
+    // Taille 10pt
+    body = body.replace(/<w:sz w:val="\d+"/g, '<w:sz w:val="20"');
+    body = body.replace(/<w:szCs w:val="\d+"/g, '<w:szCs w:val="20"');
+    // Majuscules
+    body = body.replace(/(<w:rPr>)(?![\s\S]*?<w:caps\/>)/g, '$1<w:caps/>');
     return prefix + body;
   });
 
@@ -35,18 +38,11 @@ module.exports = async function handler(req, res) {
 
   try {
     const { subject, text, filename, content } = req.body || {};
+    if (!content || !filename) return res.status(400).json({ error: 'Missing content or filename' });
 
-    if (!content || !filename) {
-      return res.status(400).json({ error: 'Missing content or filename' });
-    }
-
-    // Appliquer les corrections automatiques
     let fixedContent = content;
-    try {
-      fixedContent = await fixDocx(content);
-    } catch(e) {
-      console.warn('Fix failed, using original:', e.message);
-    }
+    try { fixedContent = await fixDocx(content); }
+    catch(e) { console.warn('Fix failed:', e.message); }
 
     const resendResp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -64,10 +60,7 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await resendResp.json();
-    if (!resendResp.ok) {
-      return res.status(500).json({ error: data.message || 'Resend error' });
-    }
-
+    if (!resendResp.ok) return res.status(500).json({ error: data.message || 'Resend error' });
     return res.status(200).json({ ok: true, id: data.id });
 
   } catch(e) {
