@@ -1,46 +1,28 @@
 // api/send-fiche.js — Génère et envoie la fiche suiveuse Word via Resend
 const JSZip = require('jszip');
 
-// Post-traitement : fixe les hauteurs de lignes pour tenir sur 2 pages
-async function fixRowHeights(docxBase64) {
+// Post-traitement du docx généré
+async function fixDocx(docxBase64) {
   const zip = await JSZip.loadAsync(Buffer.from(docxBase64, 'base64'));
-  const docXml = await zip.file('word/document.xml').async('string');
-  
-  let fixed = docXml;
-  
-  // Rendre les lignes DEFAILLANCES, COMMENTAIRES_PAP, INSTRUCTIONS en hauteur exacte
-  // Ces lignes ont h=786 dans RECEPTION - on les fixe à 820 exact
-  // On identifie les lignes par leur contenu SDT
-  
-  // Remplace toutes les trHeight atLeast par exact pour les grandes valeurs
-  // Rows with h >= 786 in RECEPTION/SECURITE tables → set exact
-  fixed = fixed.replace(
-    /<w:trHeight w:val="(786|970|2044)"\/>/g,
-    (match, h) => `<w:trHeight w:val="${h}" w:hRule="exact"/>`
-  );
-  
-  // Also fix IDENTIFICATION table tall rows (408, 423, 415, 323)
-  // Reduce them and make exact
-  fixed = fixed.replace(
-    /<w:trHeight w:val="408"\/>/g,
-    '<w:trHeight w:val="360" w:hRule="exact"/>'
-  );
-  fixed = fixed.replace(
-    /<w:trHeight w:val="423"\/>/g,
-    '<w:trHeight w:val="360" w:hRule="exact"/>'
-  );
-  fixed = fixed.replace(
-    /<w:trHeight w:val="415"\/>/g,
-    '<w:trHeight w:val="360" w:hRule="exact"/>'
-  );
-  fixed = fixed.replace(
-    /<w:trHeight w:val="323"\/>/g,
-    '<w:trHeight w:val="280" w:hRule="exact"/>'
-  );
-  
-  zip.file('word/document.xml', fixed);
-  const result = await zip.generateAsync({ type: 'base64', compression: 'DEFLATE' });
-  return result;
+  let xml = await zip.file('word/document.xml').async('string');
+
+  // 1. Supprimer le saut de page explicite (crée une page vide)
+  xml = xml.replace(/<w:r><w:br w:type="page"\/><\/w:r>/g, '');
+
+  // 2. Mettre tous les champs SDT à 12pt (w:sz = 24)
+  // On travaille uniquement dans les sdtContent
+  xml = xml.replace(/<w:sdt>([\s\S]*?)<\/w:sdt>/g, (match) => {
+    const idx = match.indexOf('<w:sdtContent>');
+    if (idx < 0) return match;
+    const prefix = match.slice(0, idx);
+    let body = match.slice(idx);
+    body = body.replace(/<w:sz w:val="\d+"/g, '<w:sz w:val="24"');
+    body = body.replace(/<w:szCs w:val="\d+"/g, '<w:szCs w:val="24"');
+    return prefix + body;
+  });
+
+  zip.file('word/document.xml', xml);
+  return await zip.generateAsync({ type: 'base64', compression: 'DEFLATE' });
 }
 
 module.exports = async function handler(req, res) {
@@ -58,12 +40,12 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing content or filename' });
     }
 
-    // Fix row heights to ensure 2-page layout
+    // Appliquer les corrections automatiques
     let fixedContent = content;
     try {
-      fixedContent = await fixRowHeights(content);
+      fixedContent = await fixDocx(content);
     } catch(e) {
-      console.warn('Height fix failed, using original:', e.message);
+      console.warn('Fix failed, using original:', e.message);
     }
 
     const resendResp = await fetch('https://api.resend.com/emails', {
@@ -77,10 +59,7 @@ module.exports = async function handler(req, res) {
         to: ['fichesuiveuse@gmail.com'],
         subject: subject || '[FICHE SUIVEUSE] PRNC',
         text: text || 'Fiche suiveuse en pièce jointe.',
-        attachments: [{
-          filename: filename,
-          content: fixedContent
-        }]
+        attachments: [{ filename, content: fixedContent }]
       })
     });
 
