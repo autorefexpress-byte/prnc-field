@@ -182,6 +182,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 
 /* PAVÉ NUMÉRIQUE */
+.numpad-btn{background:#fff;border:1.5px solid #dde3f0;border-radius:10px;padding:14px;font-size:20px;font-weight:700;color:#1F3864;cursor:pointer;text-align:center}
 .numpad-overlay{position:fixed;bottom:0;left:0;right:0;z-index:9500;background:rgba(0,0,0,.4);display:none;align-items:flex-end}
 .numpad-overlay.open{display:flex}
 .numpad-box{width:100%;background:#f2f2f7;border-radius:20px 20px 0 0;padding:12px;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
@@ -5000,8 +5001,7 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
 // ========================================
 // ------ 2. PRÉ-REMPLISSAGE INTELLIGENT ------
 // ========================================
-async 
-function flashHistBadge() {
+async function flashHistBadge() {
   const navHist = document.getElementById('nav-hist');
   if (!navHist) return;
   // Flash de couleur verte sur l'icône Historique
@@ -5194,6 +5194,32 @@ async function genererRapportPDF() {
         style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
     </div>
     <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NUMPAD ═══════════════ -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
+  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpad-label">SAISIE</div>
+    <div class="numpad-display" id="numpad-display">_</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
+      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+    </div>
   </div>
 </div>
 </body></html>`;
@@ -6229,7 +6255,33 @@ function imprimerEtiquetteQR(r) {
         'setTimeout(function(){ window.print(); }, 1000);' +
       '};' +
     '<\/script>' +
-    '</body></html>';
+    '
+<!-- ═══════════════ NUMPAD ═══════════════ -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
+  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpad-label">SAISIE</div>
+    <div class="numpad-display" id="numpad-display">_</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
+      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+    </div>
+  </div>
+</div>
+</body></html>';
 
   win.document.write(html_content);
   win.document.close();
@@ -7604,6 +7656,32 @@ async function exportTimelinePDF() {
         style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
     </div>
     <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NUMPAD ═══════════════ -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
+  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpad-label">SAISIE</div>
+    <div class="numpad-display" id="numpad-display">_</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
+      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+    </div>
   </div>
 </div>
 </body></html>`;
@@ -9004,6 +9082,32 @@ function escapeXmlVal(str) {
         style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
     </div>
     <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NUMPAD ═══════════════ -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
+  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpad-label">SAISIE</div>
+    <div class="numpad-display" id="numpad-display">_</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
+      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+    </div>
   </div>
 </div>
 </body>
