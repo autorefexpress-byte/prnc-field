@@ -2504,6 +2504,7 @@ function generateQRSVG(text, size) {
 </script>
 
 <script>
+/* v=20260425 */
 // ------ CONTACTS PAR WORKGROUP ------
 const WG_CONTACTS = {
   chaud: { label:'MCCHAUD', contacts:[
@@ -6231,9 +6232,7 @@ function imprimerEtiquetteQR(r) {
         'setTimeout(function(){ window.print(); }, 1000);' +
       '};' +
     '<\/script>' +
-    '
-
-</body></html>';
+    '</body></html>';
 
   win.document.write(html_content);
   win.document.close();
@@ -8276,6 +8275,8 @@ function numpadClear() {
   document.getElementById('numpad-display').textContent = '_';
 }
 
+function numpadOk() { validerNumpad(); }
+
 function validerNumpad() {
   if (_numpadTarget) {
     _numpadTarget.value = _numpadValue;
@@ -9038,7 +9039,7 @@ function escapeXmlVal(str) {
     </div>
   </div>
 </div>
-</body>
+
 <!-- ═══════════════ BONS DE SORTIE P50 ═══════════════ -->
 <div class="screen" id="s-bons-sortie">
   <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
@@ -9172,5 +9173,5 @@ function escapeXmlVal(str) {
     </div>
   </div>
 </div>
-
-
+</body>
+</html>
