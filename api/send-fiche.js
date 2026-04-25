@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer re_ZKqs2NHt_9u1tMAEnW1SuWXfx3gRMcnFi'
+        'Authorization': 'Bearer re_6gRPR5mN_L1YwTx7Xw7GqZdgkhsyQSBx5'
       },
       body: JSON.stringify({
         from: 'PRNC Field <onboarding@resend.dev>',
