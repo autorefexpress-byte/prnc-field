@@ -7715,74 +7715,145 @@ function checkRelances() {
 
 // ══ HISTORIQUE PAR TAG (scan QR) ══
 async function ouvrirHistoriqueTag(tag) {
-  // Afficher l'écran scanner avec le résultat
   show('s-scanner');
   var resultEl = document.getElementById('qr-result');
-  if (resultEl) { resultEl.textContent = '⌛ Chargement historique...'; resultEl.style.display = 'block'; }
+  if (resultEl) { resultEl.textContent = '⌛ Chargement...'; resultEl.style.display = 'block'; }
 
   var records = await dbLoad();
   var tagRecs = records.filter(function(r) {
     return (r.tag || '').toUpperCase() === tag.toUpperCase();
   }).sort(function(a, b) {
-    return (b.ts || b.created_at || '') > (a.ts || a.created_at || '') ? 1 : -1;
+    return (b.created_at || '') > (a.created_at || '') ? 1 : -1;
   });
 
-  // Récupérer les infos du dernier enregistrement pour pré-remplir
   var last = tagRecs[0] || {};
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', STCHAUD:'#1F3864' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', STCHAUD:'#DEEAF1' };
+  var wgColor  = wgColors[last.wg] || '#1F3864';
+  var wgBg     = wgBgs[last.wg]    || '#DEEAF1';
 
-  // Construire l'overlay historique
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;overflow:hidden';
 
-  var wgColor = last.wg === 'MCCHAUD' ? '#C55A11' : last.wg === 'MCREPAR' ? '#1F3864' : '#0F6E56';
-
+  // ── HEADER ──
   var html = '<div style="background:#1F3864;color:#fff;padding:16px 14px;display:flex;align-items:center;gap:10px">' +
-    '<div style="font-size:20px">📦</div>' +
+    '<div style="font-size:22px">📦</div>' +
     '<div style="flex:1">' +
-      '<div style="font-weight:700;font-size:17px">' + tag + '</div>' +
-      (last.wg ? '<div style="font-size:12px;opacity:.8">' + last.wg + (last.sc ? ' · SC ' + last.sc : '') + '</div>' : '') +
+      '<div style="font-weight:800;font-size:18px">' + tag + '</div>' +
+      (last.wg ? '<div style="font-size:12px;opacity:.8">' + last.wg + '</div>' : '') +
     '</div>' +
-    '<div id="hist-tag-ov-close" style="font-size:22px;cursor:pointer;padding:4px">✕</div>' +
+    '<div id="hist-tag-ov-close" style="font-size:24px;cursor:pointer;padding:4px 8px">✕</div>' +
   '</div>';
 
-  // Bouton nouvelle intervention
-  html += '<div style="padding:12px 14px;background:#fff;border-bottom:1px solid #e0e0e0">' +
-    '<button onclick="nouvelleInterventionTag(' + JSON.stringify(last).replace(/'/g, "\'") + ')" ' +
-    'style="width:100%;background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">' +
-    '➕ Nouvelle intervention' +
-  '</button></div>';
+  // ── INFOS PRINCIPALES ──
+  html += '<div style="background:#fff;padding:14px;border-bottom:1px solid #e0e0e0">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
 
-  // Historique
+  function infoBox(icon, label, val, color) {
+    if (!val) return '';
+    return '<div style="background:#f8f9fa;border-radius:10px;padding:10px">' +
+      '<div style="font-size:10px;color:#888;font-weight:600;margin-bottom:2px">' + icon + ' ' + label + '</div>' +
+      '<div style="font-size:14px;font-weight:800;color:' + (color||'#1F3864') + '">' + val + '</div>' +
+    '</div>';
+  }
+
+  html += infoBox('🔖', 'TAG', last.tag || tag, '#1F3864');
+  html += infoBox('📋', 'WO', last.wo, '#375623');
+  html += infoBox('🔧', 'WR', last.wr, '#C55A11');
+  html += infoBox('📦', 'STOCK CODE', last.sc, '#7030A0');
+  html += '</div>';
+
+  // Statut
+  if (last.statut || last.type) {
+    var typeColors = { ARRIVEE:'#1F3864', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' };
+    var typeBgs    = { ARRIVEE:'#DEEAF1', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' };
+    var tc = typeColors[last.type] || '#555';
+    var tb = typeBgs[last.type]   || '#f0f0f0';
+    html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+    if (last.wg) html += '<span style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + last.wg + '</span>';
+    if (last.type) html += '<span style="background:' + tb + ';color:' + tc + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + last.type + '</span>';
+    if (last.statut) html += '<span style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600">' + last.statut + '</span>';
+    if (last.date) html += '<span style="font-size:11px;color:#888">' + last.date + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── PHOTOS ──
+  var photos = last.photos || [];
+  if (photos.length > 0) {
+    html += '<div style="background:#fff;padding:10px 14px;border-bottom:1px solid #e0e0e0">';
+    html += '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">📷 PHOTOS (' + photos.length + ')</div>';
+    html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">';
+    photos.forEach(function(url) {
+      html += '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:1px solid #e0e0e0" onclick="window.open(this.src,\'_blank\')">'; 
+    });
+    html += '</div></div>';
+  }
+
+  // ── BOUTON NOUVELLE INTERVENTION ──
+  html += '<div style="padding:10px 14px;background:#fff;border-bottom:1px solid #e0e0e0">' +
+    '<button onclick="nouvelleInterventionTag(' + JSON.stringify(last).replace(/'/g, "\'") + ')" ' +
+    'style="width:100%;background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">' +
+    '➕ Nouvelle intervention' +
+    '</button></div>';
+
+  // ── HISTORIQUE ──
   html += '<div style="flex:1;overflow-y:auto;padding:12px 14px;background:#f5f5f5">';
-  html += '<div style="font-weight:700;color:#555;font-size:12px;margin-bottom:8px">HISTORIQUE — ' + tagRecs.length + ' intervention(s)</div>';
+  html += '<div style="font-weight:700;color:#555;font-size:11px;margin-bottom:8px;text-transform:uppercase">Historique — ' + tagRecs.length + ' intervention(s)</div>';
 
   if (!tagRecs.length) {
-    html += '<div style="text-align:center;padding:30px;color:#999">Aucune intervention trouvée pour ce TAG</div>';
+    html += '<div style="text-align:center;padding:30px;color:#999">Aucune intervention trouvée</div>';
   } else {
-    tagRecs.forEach(function(r, idx) {
-      var statColor = r.type === 'TERMINE' ? '#375623' : r.type === 'ARRIVEE' ? '#1F3864' : '#C55A11';
-      var statBg = r.type === 'TERMINE' ? '#E2EFDA' : r.type === 'ARRIVEE' ? '#DEEAF1' : '#FCE4D6';
-      html += '<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ' + statColor + '">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-          '<div style="font-weight:700;font-size:13px">' + (r.type || '--') + '</div>' +
-          '<div style="font-size:11px;color:#888">' + (r.date || '--') + '</div>' +
-        '</div>' +
-        (r.wo ? '<div style="font-size:12px;color:#555">WO : ' + r.wo + '</div>' : '') +
-        (r.wr ? '<div style="font-size:12px;color:#555">WR : ' + r.wr + '</div>' : '') +
-        (r.wg ? '<div style="font-size:12px;color:#555">WG : ' + r.wg + '</div>' : '') +
-        (r.statut ? '<div style="display:inline-block;margin-top:4px;background:' + statBg + ';color:' + statColor + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + r.statut + '</div>' : '') +
-        (r.desc ? '<div style="font-size:11px;color:#888;margin-top:4px">' + r.desc + '</div>' : '') +
-      '</div>';
+    tagRecs.forEach(function(r) {
+      var tc = { ARRIVEE:'#1F3864', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' }[r.type] || '#555';
+      var tb = { ARRIVEE:'#DEEAF1', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' }[r.type] || '#f0f0f0';
+      var rPhotos = r.photos || [];
+
+      html += '<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ' + tc + ';box-shadow:0 1px 4px rgba(0,0,0,.06)">';
+      
+      // Row 1: type + date
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="background:' + tb + ';color:' + tc + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (r.type||'--') + '</span>';
+      html += '<span style="font-size:11px;color:#888">' + (r.date||'--') + (r.heure ? ' ' + r.heure : '') + '</span>';
+      html += '</div>';
+
+      // Row 2: WO / WR / WG
+      var infos = [];
+      if (r.wo) infos.push('WO ' + r.wo);
+      if (r.wr) infos.push('WR ' + r.wr);
+      if (r.wg) infos.push(r.wg);
+      if (infos.length) html += '<div style="font-size:12px;color:#555;margin-bottom:4px">' + infos.join(' · ') + '</div>';
+
+      // Statut
+      if (r.statut) html += '<div style="font-size:11px;color:#888;margin-bottom:4px">📌 ' + r.statut + '</div>';
+      
+      // Description
+      if (r.description) html += '<div style="font-size:11px;color:#666;margin-bottom:4px">' + r.description + '</div>';
+
+      // Photos miniatures
+      if (rPhotos.length > 0) {
+        html += '<div style="display:flex;gap:4px;margin-top:6px;overflow-x:auto">';
+        rPhotos.slice(0, 5).forEach(function(url) {
+          html += '<img src="' + url + '" onclick="window.open(this.src,\'_blank\')" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
+        });
+        if (rPhotos.length > 5) html += '<div style="width:48px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888">+' + (rPhotos.length-5) + '</div>';
+        html += '</div>';
+      }
+
+      html += '</div>';
     });
   }
+
   html += '</div>';
 
   ov.innerHTML = html;
   document.body.appendChild(ov);
-  var closeBtn = document.getElementById('hist-tag-ov-close');
-  if (closeBtn) closeBtn.onclick = function(){ ov.remove(); };
-  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  document.getElementById('hist-tag-ov-close').onclick = function(){ ov.remove(); };
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+
+  if (resultEl) resultEl.style.display = 'none';
 }
+
 
 function nouvelleInterventionTag(last) {
   // Fermer l'overlay
