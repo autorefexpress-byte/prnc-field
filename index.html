@@ -367,7 +367,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     </div>
     <div class="action-card" onclick="show('s-bons-sortie');renderBonsSortie()">
       <div class="card-icon">📦</div>
-      <div class="card-lbl">BDS P50</div>
+      <div class="card-lbl">PI</div>
       <div class="card-sub">Suivi pièces par WO</div>
     </div>
     <div class="action-card" onclick="show('s-inventaire')">
@@ -7831,7 +7831,7 @@ function envoyerRecapBS() {
   var manquantes = pieces.filter(function(p) { return !p.recu; });
   var today = new Date().toLocaleDateString('fr-FR');
 
-  var subj = '[BDS P50] Récap WO ' + d.wo + ' — ' + d.wg + ' — ' + today;
+  var subj = '[PI] Récap WO ' + d.wo + ' — ' + d.wg + ' — ' + today;
 
   var body = ['Bonjour,', '',
     'Récapitulatif des pièces reçues pour le WO ' + d.wo + ' :',
@@ -7887,7 +7887,7 @@ var _bsCurrentId = null;
 
 function setBsnWG(wg) {
   _bsnWG = wg;
-  ['chaud','repar','strob'].forEach(function(w) {
+  ['chaud','repar','strob','stchaud'].forEach(function(w) {
     var el = document.getElementById('bsn-wg-' + w);
     if (!el) return;
     el.className = 'wg-btn' + (w === wg ? ' on-' + w : '');
@@ -8000,7 +8000,7 @@ function saveBonsSortieWO() {
   ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['chaud','repar','strob'].forEach(function(w) {
+  ['chaud','repar','strob','stchaud'].forEach(function(w) {
     var el = document.getElementById('bsn-wg-' + w);
     if(el) el.className = 'wg-btn';
   });
@@ -8019,7 +8019,19 @@ function renderBonsSortie() {
   var search = (document.getElementById('bs-search')||{value:''}).value.toLowerCase();
   var data = getBonsSortie();
 
-  // Filtrer
+  // Stats
+  var complets = data.filter(function(d) {
+    var pieces = d.pieces || [];
+    var total = pieces.length;
+    var recus = pieces.filter(function(p) { return p.recu; }).length;
+    return recus === total && total > 0;
+  }).length;
+  var encours = data.length - complets;
+  var el = document.getElementById('bs-count-complet'); if(el) el.textContent = complets;
+  var el2 = document.getElementById('bs-count-encours'); if(el2) el2.textContent = encours;
+  var el3 = document.getElementById('bs-count-total'); if(el3) el3.textContent = data.length;
+
+  // Filter
   var filtered = data.filter(function(d) {
     if (!search) return true;
     return (d.wo||'').toLowerCase().includes(search) ||
@@ -8027,54 +8039,92 @@ function renderBonsSortie() {
            (d.tag||'').toLowerCase().includes(search);
   });
 
-  // Stats
-  var complets = data.filter(function(d) { return d.statut === 'Complet'; }).length;
-  var encours = data.filter(function(d) { return d.statut !== 'Complet' && d.statut !== 'Planning'; }).length;
-  var el = document.getElementById('bs-count-complet'); if(el) el.textContent = complets;
-  var el2 = document.getElementById('bs-count-encours'); if(el2) el2.textContent = encours;
-  var el3 = document.getElementById('bs-count-total'); if(el3) el3.textContent = data.length;
-
   if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">📦<br>Aucun WO enregistré</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">🗂️<br>Aucun WO enregistré</div>';
     return;
   }
 
-  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
-  var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+  // Group by WG
+  var wgOrder = ['chaud','repar','strob','stchaud'];
+  var wgLabels = { chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB', stchaud:'STCHAUD' };
+  var wgColors = { chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', stchaud:'#1F3864' };
+  var wgBgs    = { chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', stchaud:'#DEEAF1' };
+  var wgPlanif = {
+    chaud:   'abel.vendegou@pronyresources.com',
+    repar:   'regis.eurimindia@pronyresources.com',
+    stchaud: 'gary.wayaridri.ext@pronyresources.com',
+    strob:   'kendji.kasovimoin.ext@pronyresources.com'
+  };
+  var CC_ALWAYS = 'emmanuel.rosa@pronyresources.com';
 
-  list.innerHTML = filtered.map(function(d) {
-    var pieces = d.pieces || [];
-    var total = pieces.length;
-    var recus = pieces.filter(function(p) { return p.recu; }).length;
-    var complet = recus === total;
-    var pct = total > 0 ? Math.round(recus/total*100) : 0;
-    var statColor = complet ? '#375623' : '#E65100';
-    var statBg = complet ? '#E2EFDA' : '#FFF3E0';
-    var wgColor = wgColors[d.wg] || '#555';
-    var wgBg = wgBgs[d.wg] || '#f0f0f0';
+  var groups = {};
+  wgOrder.forEach(function(wg) { groups[wg] = []; });
+  filtered.forEach(function(d) {
+    var wg = (d.wg||'').toLowerCase().replace('mc','');
+    if (!groups[wg]) groups[wg] = [];
+    groups[wg].push(d);
+  });
 
-    return '<div onclick="ouvrirDetailBS(this.dataset.bsid)" data-bsid="' + d.id + '" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
-        '<div>' +
-          '<div style="font-weight:800;font-size:15px">WO ' + d.wo + '</div>' +
-          (d.tag ? '<div style="font-size:12px;color:#666;margin-top:2px">📦 ' + d.tag + '</div>' : '') +
-          (d.loc ? '<div style="font-size:12px;color:#1F4E79;margin-top:2px">📍 ' + d.loc + '</div>' : '') +
-        '</div>' +
-        '<div style="background:' + statBg + ';color:' + statColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' +
-          (complet ? '✅ Complet' : '⏳ ' + recus + '/' + total) +
-        '</div>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-        '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (d.wg||'--') + '</div>' +
-        '<div style="font-size:11px;color:#888">' + (d.date||'--') + '</div>' +
-      '</div>' +
-      // Barre de progression
-      '<div style="background:#e0e0e0;border-radius:4px;height:6px;margin-top:6px">' +
-        '<div style="background:' + statColor + ';width:' + pct + '%;height:6px;border-radius:4px;transition:width .3s"></div>' +
-      '</div>' +
-      '<div style="font-size:10px;color:#888;margin-top:3px;text-align:right">' + pct + '% reçu</div>' +
-    '</div>';
-  }).join('');
+  var html = '';
+  wgOrder.forEach(function(wg) {
+    var items = groups[wg];
+    if (!items.length) return;
+    var wgLabel = wgLabels[wg];
+    var wgColor = wgColors[wg];
+    var wgBg = wgBgs[wg];
+
+    html += '<div style="margin-bottom:16px">';
+    html += '<div style="background:' + wgBg + ';color:' + wgColor + ';font-weight:800;font-size:12px;padding:6px 12px;border-radius:8px;margin-bottom:6px;display:inline-block">' + wgLabel + '</div>';
+
+    items.forEach(function(d) {
+      var pieces = d.pieces || [];
+      var total = pieces.length;
+      var recus = pieces.filter(function(p) { return p.recu; }).length;
+      var complet = total > 0 && recus === total;
+      var pct = total > 0 ? Math.round(recus/total*100) : 0;
+      var statColor = complet ? '#375623' : '#E65100';
+      var statBg = complet ? '#E2EFDA' : '#FFF3E0';
+
+      html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06)">';
+      
+      // Header row
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px" onclick="ouvrirDetailBS(\'' + d.id + '\')" style="cursor:pointer">';
+      html += '<div><div style="font-weight:800;font-size:15px">WO ' + (d.wo||'--') + '</div>';
+      if (d.tag) html += '<div style="font-size:11px;color:#666;margin-top:2px">📦 ' + d.tag + '</div>';
+      html += '</div>';
+      html += '<div style="background:' + statBg + ';color:' + statColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' +
+        (complet ? '✅ Complet' : '⏳ ' + recus + '/' + total + ' pcs') + '</div>';
+      html += '</div>';
+
+      // Progress bar
+      html += '<div style="background:#e0e0e0;border-radius:4px;height:5px;margin-bottom:8px">';
+      html += '<div style="background:' + statColor + ';width:' + pct + '%;height:5px;border-radius:4px"></div></div>';
+
+      // Buttons row
+      html += '<div style="display:flex;gap:6px">';
+      html += '<button onclick="ouvrirDetailBS(\'' + d.id + '\')" style="flex:1;background:#f0f4ff;color:#1F3864;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">📋 Détail</button>';
+      
+      if (complet) {
+        var planifTo = wgPlanif[wg] || '';
+        var subject = encodeURIComponent('WO ' + (d.wo||'') + ' — Pièces complètes (' + wgLabel + ')');
+        var body = encodeURIComponent(
+          'Bonjour,\n\nToutes les pièces du WO ' + (d.wo||'') + ' sont disponibles.\n' +
+          'TAG : ' + (d.tag||'--') + '\n' +
+          'Workgroup : ' + wgLabel + '\n' +
+          'Pièces : ' + recus + '/' + total + ' reçues\n\n' +
+          'Cordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC'
+        );
+        var mailtoUrl = 'mailto:' + planifTo + '?cc=' + CC_ALWAYS + '&subject=' + subject + '&body=' + body;
+        html += '<button onclick="window.location.href=\'' + mailtoUrl + '\'" style="flex:1;background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">📧 Notifier planificateur</button>';
+      }
+      
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
 }
 
 function ouvrirDetailBS(id) {
@@ -9201,8 +9251,8 @@ function escapeXmlVal(str) {
   <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
     <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
     <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">📦 BDS P50</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Bons de Sortie — Suivi pièces</div>
+      <div class="form-title" style="color:#fff;font-size:17px">🗂️ PI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Planification Intégrée — Suivi pièces</div>
     </div>
   </div>
   <div class="form-body" style="padding:0">
@@ -9259,6 +9309,7 @@ function escapeXmlVal(str) {
         <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
         <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
         <div class="wg-btn" id="bsn-wg-strob" onclick="setBsnWG('strob')">STROB</div>
+        <div class="wg-btn" id="bsn-wg-stchaud" onclick="setBsnWG('stchaud')">STCHAUD</div>
       </div>
     </div>
 
