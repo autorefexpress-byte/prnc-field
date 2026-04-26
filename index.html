@@ -8014,18 +8014,15 @@ async function saveBonsSortieWO() {
   var tag = document.getElementById('bsn-tag') ? document.getElementById('bsn-tag').value.trim() : '';
   var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
 
-  console.log('saveBonsSortieWO: wo=', wo, 'wg=', _bsnWG);
-
   if (!wo) { alert('Le N° WO est obligatoire.'); return; }
   if (!_bsnWG) { alert('Sélectionne un Workgroup.'); return; }
 
   var pieces = parsePiecesFromText(text);
-  console.log('pieces:', pieces.length);
   // pieces can be empty - user can add manually in detail view
 
   var loc = document.getElementById('bsn-loc') ? document.getElementById('bsn-loc').value.trim() : '';
   var wgl = WG_LABELS[_bsnWG] || _bsnWG.toUpperCase();
-  var data = getBonsSortie();
+  var data = await piLoad();
 
   // Vérifier si WO existe déjà
   var existing = data.findIndex(function(d) { return d.wo === wo; });
@@ -8055,13 +8052,11 @@ async function saveBonsSortieWO() {
   }
 
   // Save to Neon
-  console.log('Saving to Neon, existing:', existing, 'woData:', JSON.stringify(woData));
   if (existing >= 0) {
     await piUpdate(woData.id, { statut: woData.statut, pieces: woData.pieces, loc: woData.loc, tag: woData.tag });
   } else {
     await piAdd(woData);
   }
-  console.log('Saved to Neon OK');
 
   // Reset
   ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
