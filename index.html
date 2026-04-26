@@ -7881,7 +7881,64 @@ function envoyerRecapBS() {
 // ══════════════════════════════════════════
 // BONS DE SORTIE P50
 // ══════════════════════════════════════════
-var BS_KEY = 'prnc-bons-sortie';
+const BS_KEY = 'prnc-bons-sortie'; // kept for migration only
+var _piCache = null;
+
+// ── PI SUIVI — Neon API ─────────────────────────────
+async function piLoad() {
+  if (_piCache) return _piCache;
+  try {
+    const r = await fetch('/api/db?table=pi_suivi');
+    const data = await r.json();
+    _piCache = Array.isArray(data) ? data.map(function(d) {
+      return {
+        id: d.id, wo: d.wo, wg: d.wg, tag: d.tag, loc: d.loc,
+        date: d.date, statut: d.statut,
+        pieces: d.pieces || []
+      };
+    }) : [];
+    return _piCache;
+  } catch(e) {
+    console.warn('PI load err', e);
+    // Fallback to localStorage
+    try { return JSON.parse(localStorage.getItem(BS_KEY) || '[]'); } catch(e2) { return []; }
+  }
+}
+
+async function piAdd(item) {
+  _piCache = null;
+  try {
+    await fetch('/api/db?table=pi_suivi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+  } catch(e) { console.warn('PI add err', e); }
+}
+
+async function piUpdate(id, data) {
+  _piCache = null;
+  try {
+    await fetch('/api/db?table=pi_suivi&id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.warn('PI update err', e); }
+}
+
+async function piDelete(id) {
+  _piCache = null;
+  try {
+    await fetch('/api/db?table=pi_suivi&id=' + encodeURIComponent(id), {
+      method: 'DELETE'
+    });
+  } catch(e) { console.warn('PI delete err', e); }
+}
+
+function getBonsSortie() { return _piCache || []; }
+function saveBonsSortieData(data) { _piCache = data; }
+
 var _bsnWG = '';
 var _bsCurrentId = null;
 
@@ -7952,7 +8009,7 @@ function parsePiecesFromText(text) {
   return pieces;
 }
 
-function saveBonsSortieWO() {
+async function saveBonsSortieWO() {
   var wo = document.getElementById('bsn-wo') ? document.getElementById('bsn-wo').value.trim() : '';
   var tag = document.getElementById('bsn-tag') ? document.getElementById('bsn-tag').value.trim() : '';
   var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
@@ -7994,7 +8051,12 @@ function saveBonsSortieWO() {
     data.unshift(woData);
   }
 
-  saveBonsSortieData(data);
+  // Save to Neon
+  if (existing >= 0) {
+    await piUpdate(woData.id, { statut: woData.statut, pieces: woData.pieces, loc: woData.loc, tag: woData.tag });
+  } else {
+    await piAdd(woData);
+  }
 
   // Reset
   ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
@@ -8009,15 +8071,16 @@ function saveBonsSortieWO() {
   if(preview) preview.style.display = 'none';
 
   show('s-bons-sortie');
-  renderBonsSortie();
+  await renderBonsSortie();
   alert('WO ' + wo + ' enregistré — ' + pieces.length + ' pièce(s)');
 }
 
-function renderBonsSortie() {
+async function renderBonsSortie() {
   var list = document.getElementById('bs-list');
   if (!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#999">⏳ Chargement...</div>';
+  var data = await piLoad();
   var search = (document.getElementById('bs-search')||{value:''}).value.toLowerCase();
-  var data = getBonsSortie();
 
   // Stats
   var complets = data.filter(function(d) {
