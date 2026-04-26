@@ -8336,12 +8336,11 @@ function passerEnPlanning() {
   alert('✅ WO ' + d.wo + ' passé en planning !');
 }
 
-function supprimerWO() {
+async function supprimerWO() {
   if (!confirm('Supprimer ce WO ?')) return;
-  var data = getBonsSortie().filter(function(x) { return x.id !== _bsCurrentId; });
-  saveBonsSortieData(data);
+  await piDelete(_bsCurrentId);
   show('s-bons-sortie');
-  renderBonsSortie();
+  await renderBonsSortie();
 }
 
 
