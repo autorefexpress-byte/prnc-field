@@ -8723,13 +8723,68 @@ function renderRelanceCard(r, urgent) {
         '</div>' +
       '</div>' +
       // Boutons
-      '<div style="display:flex;gap:8px">' +
+      '<div style="display:flex;gap:8px;margin-bottom:6px">' +
         '<a href="' + mailTo + '" style="flex:1;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
         '<button onclick="marquerRecupere(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
         '<button onclick="supprimerRelance(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
       '</div>' +
+      '<label style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#F0F4FF;color:#1F3864;border:1.5px solid #B0C4DE;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box">' +
+        '&#128247; Ajouter une photo' +
+        '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="ajouterPhotoRelance(this,\'' + r.id + '\')"/>' +
+      '</label>' +
     '</div>' +
   '</div>';
+}
+
+
+async function ajouterPhotoRelance(input, recordId) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+
+  // Show loading
+  var label = input.parentElement;
+  var origText = label.innerHTML;
+  label.innerHTML = '⏳ Envoi en cours...';
+
+  try {
+    // Upload to Cloudinary
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'prnc-field');
+    formData.append('folder', 'relances');
+
+    var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
+      method: 'POST',
+      body: formData
+    });
+    var data = await resp.json();
+    if (!data.secure_url) throw new Error('Upload échoué');
+
+    var photoUrl = data.secure_url;
+
+    // Get current record photos and add new one
+    var records = await dbLoad();
+    var r = records.find(function(x){ return x.id === recordId; });
+    var currentPhotos = (r && r.photos) ? r.photos : [];
+    currentPhotos = currentPhotos.filter(Boolean);
+    currentPhotos.push(photoUrl);
+
+    // Update in Neon
+    await fetch('/api/db?id=' + encodeURIComponent(recordId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: currentPhotos })
+    });
+
+    invalidateDbCache();
+    label.innerHTML = '✅ Photo ajoutée !';
+    setTimeout(function() { renderRelances(); }, 800);
+
+  } catch(e) {
+    label.innerHTML = origText;
+    alert('Erreur upload : ' + e.message);
+  }
+  input.value = '';
 }
 
 async function supprimerRelance(id, btn) {
