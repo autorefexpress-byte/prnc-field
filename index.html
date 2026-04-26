@@ -8018,7 +8018,7 @@ async function saveBonsSortieWO() {
   if (!_bsnWG) { alert('Sélectionne un Workgroup.'); return; }
 
   var pieces = parsePiecesFromText(text);
-  if (pieces.length === 0) { alert('Colle la liste des pièces depuis Ellipse.'); return; }
+  // pieces can be empty - user can add manually in detail view
 
   var loc = document.getElementById('bsn-loc') ? document.getElementById('bsn-loc').value.trim() : '';
   var wgl = WG_LABELS[_bsnWG] || _bsnWG.toUpperCase();
@@ -8072,7 +8072,7 @@ async function saveBonsSortieWO() {
 
   show('s-bons-sortie');
   await renderBonsSortie();
-  alert('WO ' + wo + ' enregistré — ' + pieces.length + ' pièce(s)');
+  alert('WO ' + wo + ' enregistré !');
 }
 
 async function renderBonsSortie() {
@@ -9390,7 +9390,7 @@ function escapeXmlVal(str) {
 
     <!-- Coller depuis Excel -->
     <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Liste pièces — Coller depuis Ellipse</div>
+      <div class="field-lbl">Liste pièces — Coller depuis Ellipse <span style="font-size:11px;color:#888">(optionnel)</span></div>
       <textarea class="fi" id="bsn-paste" rows="8"
         placeholder="Copier depuis Ellipse (Révision demande) et coller ici :&#10;&#10;F37712/0001&#9;GASKET SET SEAT TI&#9;1,00&#10;F37712/0002&#9;GASKET SET BONNET&#9;1,00&#10;..."
         style="font-family:monospace;font-size:12px;resize:vertical"
