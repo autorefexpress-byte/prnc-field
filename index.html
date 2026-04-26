@@ -8190,11 +8190,11 @@ async function renderBonsSortie() {
   list.innerHTML = html;
 }
 
-function ouvrirDetailBS(id) {
+async function ouvrirDetailBS(id) {
   _bsCurrentId = id;
-  var data = getBonsSortie();
+  var data = await piLoad();
   var d = data.find(function(x) { return x.id === id; });
-  if (!d) return;
+  if (!d) { console.warn('WO not found:', id); return; }
 
   var pieces = d.pieces || [];
   var total = pieces.length;
@@ -8275,8 +8275,8 @@ function updatePieceLoc(woId, pieceIdx, loc) {
   saveBonsSortieData(data);
 }
 
-function togglePiece(woId, pieceIdx, checked) {
-  var data = getBonsSortie();
+async function togglePiece(woId, pieceIdx, checked) {
+  var data = await piLoad();
   var d = data.find(function(x) { return x.id === woId; });
   if (!d || !d.pieces[pieceIdx]) return;
 
@@ -8288,7 +8288,8 @@ function togglePiece(woId, pieceIdx, checked) {
   var complet = recus === total;
   d.statut = complet ? 'Complet' : 'En cours';
 
-  saveBonsSortieData(data);
+  // Save to Neon
+  await piUpdate(woId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
 
   // Mettre à jour le badge et bouton
   var badgeEl = document.getElementById('bs-detail-badge');
