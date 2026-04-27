@@ -6755,6 +6755,10 @@ async function renderEtnaSuivi() {
         (r.statut||'').toUpperCase() === 'RETOUR ETNA'
       ));
     if (!isEtnaType) return false;
+    // Exclude done items (they go to Historique tab)
+    var etnaStatut = r.etna_statut || r.etnaStatut || '';
+    var isDone = etnaStatut.includes('Terminé') || etnaStatut.includes('Livré') || etnaStatut.includes('Réceptionné');
+    if (isDone) return false;
     if (!search) return true;
     return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
   });
@@ -6767,8 +6771,8 @@ async function renderEtnaSuivi() {
   }
 
   list.innerHTML = etnaRecs.map(function(r) {
-    var statut    = r.etnaStatut || 'En attente';
-    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé') || r.etnaStatut.includes('Réceptionné'));
+    var statut    = r.etna_statut || r.etnaStatut || 'En attente';
+    var done      = (r.etna_statut||r.etnaStatut) && ((r.etna_statut||r.etnaStatut||'').includes('Livré') || (r.etna_statut||r.etnaStatut||'').includes('Terminé') || (r.etna_statut||r.etnaStatut||'').includes('Réceptionné'));
     var statColor = done ? '#375623' : (r.etnaStatut ? '#C55A11' : '#888');
     var statBg    = done ? '#E2EFDA' : (r.etnaStatut ? '#FCE4D6' : '#f0f0f0');
     var borderCol = done ? '#375623' : (r.etnaStatut ? '#C55A11' : '#e0e0e0');
@@ -6851,6 +6855,10 @@ async function renderEtnaPrestataire() {
         (r.statut||'').toUpperCase() === 'RETOUR ETNA'
       ));
     if (!isEtnaType) return false;
+    // Exclude done items (they go to Historique tab)
+    var etnaStatut = r.etna_statut || r.etnaStatut || '';
+    var isDone = etnaStatut.includes('Terminé') || etnaStatut.includes('Livré') || etnaStatut.includes('Réceptionné');
+    if (isDone) return false;
     if (!search) return true;
     return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
   });
@@ -6863,7 +6871,7 @@ async function renderEtnaPrestataire() {
   }
 
   list.innerHTML = etnaRecs.map(function(r) {
-    var done      = r.etnaStatut && (r.etnaStatut.includes('Livré') || r.etnaStatut.includes('Terminé') || r.etnaStatut.includes('Réceptionné'));
+    var done      = (r.etna_statut||r.etnaStatut) && ((r.etna_statut||r.etnaStatut||'').includes('Livré') || (r.etna_statut||r.etnaStatut||'').includes('Terminé') || (r.etna_statut||r.etnaStatut||'').includes('Réceptionné'));
     var borderCol = done ? '#375623' : '#C55A11';
     var statLabel = r.etnaStatut || 'En attente de prise en charge';
     var statColor = done ? '#375623' : '#C55A11';
