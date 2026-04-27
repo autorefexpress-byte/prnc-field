@@ -8728,8 +8728,17 @@ function renderRelanceCard(r, urgent) {
         '<button onclick="marquerRecupere(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
         '<button onclick="supprimerRelance(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
       '</div>' +
-      '<label style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#F0F4FF;color:#1F3864;border:1.5px solid #B0C4DE;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box">' +
-        '&#128247; Ajouter une photo' +
+      // Photos strip
+      (photos.length > 0 ?
+        '<div style="display:flex;gap:6px;overflow-x:auto;padding:6px 0;margin-bottom:6px">' +
+          photos.map(function(url, i) {
+            return '<img src="' + url + '" onclick="viewPhotoByKey(\'' + _pidR + '\',' + i + ')" ' +
+              'style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:2px solid #e0e0e0">';
+          }).join('') +
+        '</div>'
+        : '') +
+      '<label id="relance-photo-btn-' + r.id + '" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#F0F4FF;color:#1F3864;border:1.5px solid #B0C4DE;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box">' +
+        '&#128247; ' + (photos.length > 0 ? 'Ajouter une photo (' + photos.length + ')' : 'Ajouter une photo') +
         '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="ajouterPhotoRelance(this,\'' + r.id + '\')"/>' +
       '</label>' +
     '</div>' +
