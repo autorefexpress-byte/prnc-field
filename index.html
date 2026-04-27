@@ -6848,7 +6848,7 @@ async function renderEtnaSuivi() {
             '</div>'
           : '<button onclick="openEtnaUpdate(\'' + r.id + '\')" style="width:100%;padding:10px;background:#C55A11;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Mettre à jour</button>'
         ) +
-        '<button onclick="supprimerCarteEtna(' + JSON.stringify(r.id) + ')" style="width:100%;margin-top:6px;padding:9px;background:#fff;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465; Supprimer</button>' +
+        '<button onclick="supprimerCarteEtna(this.dataset.id)" data-id="' + r.id + '" style="width:100%;margin-top:6px;padding:9px;background:#fff;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465; Supprimer</button>' +
       '</div>' +
     '</div>';
   }).join('');
