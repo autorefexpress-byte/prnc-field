@@ -6508,54 +6508,47 @@ function viewPhotoFullEtna(photos, startIdx) {
 }
 
 // Ajouter une photo à un enregistrement ETNA sans changer le statut
-function ajouterPhotoEtna(input, id) {
+async function ajouterPhotoEtna(input, id) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      // Compresser
-      var canvas = document.createElement('canvas');
-      var MAX = 500; // max 500px pour réduire l'egress
-      var w = img.width, h = img.height;
-      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      var compressed = canvas.toDataURL('image/jpeg', 0.20);
+  var lbl = document.querySelector('[for="etna-add-photo-' + id + '"]');
+  if (lbl) { lbl.innerHTML = '⏳ Envoi...'; }
 
-      // Charger l'enregistrement et ajouter la photo
-      dbLoad().then(function(records) {
-        var r = records.find(function(x){ return x.id === id; });
-        if (!r) return;
-        var photos = (r.photos || []).filter(Boolean);
-        photos.push(compressed);
+  try {
+    // Upload Cloudinary
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'prnc-field');
+    formData.append('folder', 'etna');
+    var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
+      method: 'POST', body: formData
+    });
+    var data = await resp.json();
+    if (!data.secure_url) throw new Error('Upload échoué');
+    var photoUrl = data.secure_url;
 
-        // Mettre à jour Supabase
-        supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-          photos: photos
-        }).then(function() {
-          // Mettre à jour localStorage
-          try {
-            var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-            var idx = local.findIndex(function(x){ return x.id === id; });
-            if (idx >= 0) { local[idx].photos = photos; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
-          } catch(e) {}
-          // Rafraîchir la liste
-          renderEtnaSuivi();
-          // Feedback
-          var btn = document.getElementById('etna-add-photo-' + id);
-          if (btn) {
-            var lbl = document.querySelector('[for="etna-add-photo-' + id + '"]');
-            if (lbl) { lbl.innerHTML = '&#10003; Photo ajoutée !'; lbl.style.color = '#375623'; lbl.style.borderColor = '#375623'; }
-          }
-        }).catch(function(e) { alert('Erreur ajout photo : ' + e.message); });
-      });
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    // Get current photos and add
+    var records = await dbLoad();
+    var r = records.find(function(x){ return x.id === id; });
+    var photos = (r && r.photos ? r.photos : []).filter(Boolean);
+    photos.push(photoUrl);
+
+    // Save to Neon
+    await fetch('/api/db?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: photos })
+    });
+
+    invalidateDbCache();
+    if (lbl) { lbl.innerHTML = '✅ Photo ajoutée !'; lbl.style.color = '#375623'; }
+    setTimeout(function() { renderEtnaSuivi(); }, 800);
+
+  } catch(e) {
+    if (lbl) { lbl.innerHTML = '📷 Ajouter photo'; }
+    alert('Erreur : ' + e.message);
+  }
+  input.value = '';
 }
 
 // Réceptionner un équipement revenu d'ETNA → pré-remplir Retour ETNA
