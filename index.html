@@ -6667,8 +6667,8 @@ async function renderEtnaSuivi() {
         '<div style="margin-bottom:6px">' +
           '<label style="width:100%;padding:9px;background:#f8f9fa;color:#555;border:1.5px dashed #ccc;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" for="etna-add-photo-' + r.id + '">' +
             '&#128247; Ajouter une photo' +
+            '<input type="file" id="etna-add-photo-' + r.id + '" accept="image/*" capture="environment" style="display:none" onchange="ajouterPhotoEtna(this,\''+r.id+'\')">' +
           '</label>' +
-          '' +
         '</div>' +
         // Bouton selon statut
         (r.etnaStatut && r.etnaStatut.includes('Livré')
