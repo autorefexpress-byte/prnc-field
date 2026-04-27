@@ -1,4 +1,3 @@
-// api/db.js - Vercel Function → Neon proxy
 const { neon } = require('@neondatabase/serverless');
 const sql = neon('postgresql://neondb_owner:npg_tOasz0jxXp2M@ep-blue-tree-a79w2h77.ap-southeast-2.aws.neon.tech/neondb?sslmode=require');
 
@@ -47,7 +46,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unknown request' });
     }
 
-    // ── HISTORIQUE ──────────────────────────────────
+    // ── HISTORIQUE GET ──────────────────────────────
     if (method === 'GET') {
       const rows = await sql`
         SELECT id, type, tag, wo, wo_usine, wr, wg, sc, loc, statut,
@@ -61,6 +60,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(rows);
     }
 
+    // ── HISTORIQUE POST ─────────────────────────────
     if (method === 'POST') {
       const d = req.body || {};
       await sql`
@@ -79,39 +79,44 @@ module.exports = async function handler(req, res) {
           ${d.etna_statut||null}, ${d.etna_date_retour||null}, ${d.etna_commentaire||null},
           ${d.callidus_statut||null}, ${d.callidus_date_retour||null},
           ${d.callidus_commentaire||null},
-          ${JSON.stringify(d.dest||[])}::jsonb, ${JSON.stringify(d.photos||[])}::jsonb
+          ${JSON.stringify(d.dest||[])}::jsonb,
+          ${JSON.stringify(d.photos||[])}::jsonb
         )
       `;
       return res.status(201).json({ ok: true });
     }
 
+    // ── HISTORIQUE PATCH ────────────────────────────
     if (method === 'PATCH' && id) {
       const d = req.body || {};
-      // JSONB columns that need special handling
       const jsonbCols = new Set(['photos', 'dest']);
+
+      // Build each field update using tagged template (safe)
+      // We update fields individually to avoid sql.unsafe
       const entries = Object.entries(d).filter(([k]) => k !== 'id');
-      if (!entries.length) return res.status(200).json({ ok: true });
 
-      // Build query with explicit JSONB casting
-      const setParts = entries.map(([k, v], i) => {
-        if (jsonbCols.has(k)) return `${k} = $${i+1}::jsonb`;
-        return `${k} = $${i+1}`;
-      });
-      const params = entries.map(([k, v]) => {
-        if (v === null || v === undefined) return null;
-        if (jsonbCols.has(k)) return JSON.stringify(v);
-        if (typeof v === 'object') return JSON.stringify(v);
-        return String(v);
-      });
-      params.push(id);
+      for (const [k, v] of entries) {
+        if (k === 'photos' || k === 'dest') {
+          const val = JSON.stringify(v || []);
+          if (k === 'photos') await sql`UPDATE historique SET photos = ${val}::jsonb WHERE id = ${id}`;
+          if (k === 'dest')   await sql`UPDATE historique SET dest   = ${val}::jsonb WHERE id = ${id}`;
+        } else if (k === 'statut')            { await sql`UPDATE historique SET statut             = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'etna_statut')         { await sql`UPDATE historique SET etna_statut        = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'etna_date_retour')    { await sql`UPDATE historique SET etna_date_retour   = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'etna_commentaire')    { await sql`UPDATE historique SET etna_commentaire   = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'callidus_statut')     { await sql`UPDATE historique SET callidus_statut    = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'callidus_date_retour'){ await sql`UPDATE historique SET callidus_date_retour = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'callidus_commentaire'){ await sql`UPDATE historique SET callidus_commentaire = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'loc')                 { await sql`UPDATE historique SET loc                = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'statut')              { await sql`UPDATE historique SET statut             = ${v||null} WHERE id = ${id}`; }
+        else if (k === 'recovered_at')        { await sql`UPDATE historique SET recovered_at       = ${v||null} WHERE id = ${id}`; }
+        else { console.warn('Unknown field:', k); }
+      }
 
-      await sql.unsafe(
-        `UPDATE historique SET ${setParts.join(', ')} WHERE id = $${params.length}`,
-        params
-      );
       return res.status(200).json({ ok: true });
     }
 
+    // ── HISTORIQUE DELETE ───────────────────────────
     if (method === 'DELETE' && id) {
       await sql`DELETE FROM historique WHERE id = ${id}`;
       return res.status(200).json({ ok: true });
