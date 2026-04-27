@@ -6741,6 +6741,18 @@ async function renderEtnaHistorique() {
   list.innerHTML = html;
 }
 
+
+async function supprimerCarteEtna(id, tag) {
+  if (!confirm('Supprimer ' + (tag||'cet équipement') + ' de Travaux ETNA ?')) return;
+  try {
+    await fetch('/api/db?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    invalidateDbCache();
+    renderEtnaSuivi();
+  } catch(e) {
+    alert('Erreur suppression : ' + e.message);
+  }
+}
+
 async function renderEtnaSuivi() {
   var list    = document.getElementById('etna-list');
   var countEl = document.getElementById('etna-count');
