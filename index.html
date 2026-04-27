@@ -582,6 +582,17 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     </div>
 
     <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="eq-rem" placeholder="Optionnel..."></textarea></div>
+
+    <!-- Zone photos -->
+    <div class="field-grp">
+      <div class="field-lbl">Photos <span style="font-size:11px;color:#888">(optionnel)</span></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
+        &#128247; Prendre / Ajouter une photo
+        <input type="file" accept="image/*" capture="environment" id="eq-photo-input" style="display:none" onchange="ajouterPhotoEquip(this)">
+      </label>
+      <div id="eq-photos-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+    </div>
+
     <div class="field-grp">
       </div>
     </div>
@@ -3928,7 +3939,8 @@ function sendEquip() {
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
   dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone,
-    dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem});
+    dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
+    photos: _equip_photos || []});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
     var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
@@ -4866,7 +4878,8 @@ async function dbSaveTermine(d) {
     wr:d.wr, sc:d.sc,
     wg:d.wg, statut:d.statut, loc:d.zone,
     desc: d.dest ? d.dest.join(', ') : '',
-    emailDemandeur: d.emailDemandeur || null });
+    emailDemandeur: d.emailDemandeur || null,
+    photos: d.photos || [] });
 }
 async function dbSaveUsage(d) {
   await dbAdd({ type:'USAGE', tag:d.tag, wo:d.wo, sc:d.sc, qty:d.qty,
@@ -7361,6 +7374,102 @@ async function ajouterPhotoRecord(input, recordId) {
       }
     }, 800);
 
+  } catch(e) {
+    label.innerHTML = origHtml;
+    alert('Erreur : ' + e.message);
+  }
+  input.value = '';
+}
+
+
+// ── Photo upload pour formulaire Équipement Terminé ──
+var _equip_photos = [];
+
+function ajouterPhotoEquip(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var preview = document.getElementById('eq-photos-preview');
+  
+  // Show loading thumbnail
+  var loadDiv = document.createElement('div');
+  loadDiv.style.cssText = 'width:72px;height:72px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888';
+  loadDiv.textContent = '⏳';
+  if (preview) preview.appendChild(loadDiv);
+  
+  // Upload to Cloudinary
+  var formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'prnc-field');
+  formData.append('folder', 'termine');
+  
+  fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
+    method: 'POST', body: formData
+  }).then(function(r){ return r.json(); }).then(function(data) {
+    if (!data.secure_url) throw new Error('Upload échoué');
+    _equip_photos.push(data.secure_url);
+    
+    // Replace loading with thumbnail
+    var img = document.createElement('img');
+    img.src = data.secure_url;
+    img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid #e0e0e0;cursor:pointer';
+    img.onclick = function(){ window.open(data.secure_url, '_blank'); };
+    
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative';
+    var del = document.createElement('button');
+    del.textContent = '×';
+    del.style.cssText = 'position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C00;color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center';
+    del.onclick = function() {
+      _equip_photos = _equip_photos.filter(function(u){ return u !== data.secure_url; });
+      wrap.remove();
+    };
+    wrap.appendChild(img);
+    wrap.appendChild(del);
+    if (preview) preview.replaceChild(wrap, loadDiv);
+    
+  }).catch(function(e) {
+    if (preview) preview.removeChild(loadDiv);
+    alert('Erreur upload photo : ' + e.message);
+  });
+  input.value = '';
+}
+
+// ── Photo upload pour overlay détail ──
+async function ajouterPhotoRecord(input, recordId) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var label = input.parentElement;
+  var origHtml = label.innerHTML;
+  label.innerHTML = '⏳ Envoi en cours...';
+
+  try {
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'prnc-field');
+    formData.append('folder', 'termine');
+    var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
+      method: 'POST', body: formData
+    });
+    var data = await resp.json();
+    if (!data.secure_url) throw new Error('Upload échoué');
+
+    var records = await dbLoad();
+    var r = records.find(function(x){ return x.id === recordId; });
+    var photos = (r && r.photos ? r.photos : []).filter(Boolean);
+    photos.push(data.secure_url);
+
+    await fetch('/api/db?id=' + encodeURIComponent(recordId), {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ photos: photos })
+    });
+
+    invalidateDbCache();
+    label.innerHTML = '✅ Photo ajoutée !';
+    setTimeout(function() {
+      var ov = label.closest('.overlay-view');
+      if (ov) { ov.remove(); viewRecord(recordId); }
+    }, 800);
   } catch(e) {
     label.innerHTML = origHtml;
     alert('Erreur : ' + e.message);
