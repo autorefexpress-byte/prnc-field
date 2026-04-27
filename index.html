@@ -6390,42 +6390,55 @@ async function saveEtnaUpdate() {
   if (!_etnaCurrentId) return;
   if (!_etnaStatut) { alert('Sélectionnez un statut.'); return; }
 
-  var dateRetour   = document.getElementById('etna-date-retour') ? document.getElementById('etna-date-retour').value : '';
-  var commentaire  = document.getElementById('etna-commentaire') ? document.getElementById('etna-commentaire').value.trim() : '';
-  var photos       = getPhotos('etna-prev');
-  var statutLabel  = ETNA_STATUT_LABELS[_etnaStatut];
+  var dateRetour  = document.getElementById('etna-date-retour') ? document.getElementById('etna-date-retour').value : '';
+  var commentaire = document.getElementById('etna-commentaire') ? document.getElementById('etna-commentaire').value.trim() : '';
+  var photos      = getPhotos('etna-prev');
+  var statutLabel = ETNA_STATUT_LABELS[_etnaStatut];
 
-  // Mettre à jour dans Supabase
+  // Upload new photos to Cloudinary if any
+  var allPhotos = [];
   try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(_etnaCurrentId), 'PATCH', {
-      etna_statut      : statutLabel,
-      etna_date_retour : dateRetour || null,
-      etna_commentaire : commentaire || null,
-      etna_updated_at  : new Date().toISOString()
-    });
-  } catch(e) { console.warn('DB ETNA update err', e); }
-
-  // Mettre à jour localStorage
-  try {
-    var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-    var idx = local.findIndex(function(r){ return r.id === _etnaCurrentId; });
-    if (idx >= 0) {
-      local[idx].etnaStatut = statutLabel;
-      local[idx].etnaDateRetour = dateRetour;
-      local[idx].etnaCommentaire = commentaire;
-      localStorage.setItem('prnc-historique', JSON.stringify(local));
-    }
+    var records = await dbLoad();
+    var r = records.find(function(x){ return x.id === _etnaCurrentId; });
+    allPhotos = (r && r.photos ? r.photos : []).filter(Boolean);
   } catch(e) {}
+
+  // Upload base64 photos to Cloudinary
+  for (var i = 0; i < photos.length; i++) {
+    try {
+      var blob = await fetch(photos[i]).then(function(r){ return r.blob(); });
+      var fd = new FormData();
+      fd.append('file', blob);
+      fd.append('upload_preset', 'prnc-field');
+      fd.append('folder', 'etna');
+      var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd });
+      var data = await resp.json();
+      if (data.secure_url) allPhotos.push(data.secure_url);
+    } catch(e) { console.warn('Photo upload err', e); }
+  }
+
+  // Save to Neon
+  try {
+    await fetch('/api/db?id=' + encodeURIComponent(_etnaCurrentId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        etna_statut      : statutLabel,
+        etna_date_retour : dateRetour || null,
+        etna_commentaire : commentaire || null,
+        photos           : allPhotos
+      })
+    });
+    invalidateDbCache();
+  } catch(e) { console.warn('DB ETNA update err', e); alert('Erreur sauvegarde : ' + e.message); return; }
 
   clearPhotos('etna-prev');
 
-  // Retour à la bonne vue
   var dest = _isEtnaMode ? 's-etna-prestataire' : 's-etna-suivi';
   show(dest);
   if (_isEtnaMode) renderEtnaPrestataire();
   else renderEtnaSuivi();
 
-  // Flash confirmation
   setTimeout(function() {
     alert('Mise à jour ETNA enregistrée !\nStatut : ' + statutLabel);
   }, 300);
