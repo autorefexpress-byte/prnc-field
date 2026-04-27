@@ -12,10 +12,10 @@ module.exports = async function handler(req, res) {
 
   try {
     const method = req.method;
-    const id = req.query ? req.query.id : null;
-    const table = req.query ? (req.query.table || 'historique') : 'historique';
+    const id     = req.query ? req.query.id    : null;
+    const table  = req.query ? (req.query.table || 'historique') : 'historique';
 
-    // ── PI SUIVI TABLE ──────────────────────────────
+    // ── PI SUIVI ────────────────────────────────────
     if (table === 'pi_suivi') {
       if (method === 'GET') {
         const rows = await sql`SELECT * FROM pi_suivi ORDER BY created_at DESC`;
@@ -32,13 +32,12 @@ module.exports = async function handler(req, res) {
       }
       if (method === 'PATCH' && id) {
         const d = req.body || {};
-        const pieces = JSON.stringify(d.pieces || []);
         await sql`
           UPDATE pi_suivi SET
             statut = ${d.statut || 'En cours'},
-            pieces = ${pieces}::jsonb,
-            loc = ${d.loc || null},
-            tag = ${d.tag || null}
+            pieces = ${JSON.stringify(d.pieces||[])}::jsonb,
+            loc    = ${d.loc  || null},
+            tag    = ${d.tag  || null}
           WHERE id = ${id}
         `;
         return res.status(200).json({ ok: true });
@@ -50,7 +49,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unknown request' });
     }
 
-    // ── HISTORIQUE TABLE ────────────────────────────
+    // ── HISTORIQUE ──────────────────────────────────
     if (method === 'GET') {
       const rows = await sql`
         SELECT id, type, tag, wo, wo_usine, wr, wg, sc, loc, statut,
@@ -92,10 +91,28 @@ module.exports = async function handler(req, res) {
 
     if (method === 'PATCH' && id) {
       const d = req.body || {};
+      // Handle photos specifically as JSONB
+      if (d.photos !== undefined) {
+        const photosJson = JSON.stringify(d.photos);
+        await sql`UPDATE historique SET photos = ${photosJson}::jsonb WHERE id = ${id}`;
+        // Handle other fields if present
+        const others = Object.entries(d).filter(([k]) => k !== 'photos' && k !== 'id');
+        if (others.length > 0) {
+          const params = [];
+          const setClauses = others.map(([k, v], i) => {
+            params.push(typeof v === 'object' ? JSON.stringify(v) : String(v));
+            return `${k} = $${i + 1}`;
+          }).join(', ');
+          params.push(id);
+          await sql.unsafe(`UPDATE historique SET ${setClauses} WHERE id = $${params.length}`, params);
+        }
+        return res.status(200).json({ ok: true });
+      }
+      // Generic PATCH for other fields
       const fields = Object.entries(d).filter(([k]) => k !== 'id');
       if (fields.length > 0) {
         const params = [];
-        let setClauses = fields.map(([k, v], i) => {
+        const setClauses = fields.map(([k, v], i) => {
           params.push(typeof v === 'object' ? JSON.stringify(v) : String(v));
           return `${k} = $${i + 1}`;
         }).join(', ');
