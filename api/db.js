@@ -1,19 +1,17 @@
 // api/db.js - Vercel Function → Neon proxy
 const { neon } = require('@neondatabase/serverless');
-
 const sql = neon('postgresql://neondb_owner:npg_tOasz0jxXp2M@ep-blue-tree-a79w2h77.ap-southeast-2.aws.neon.tech/neondb?sslmode=require');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const method = req.method;
-    const id     = req.query ? req.query.id    : null;
-    const table  = req.query ? (req.query.table || 'historique') : 'historique';
+    const id    = req.query?.id    || null;
+    const table = req.query?.table || 'historique';
 
     // ── PI SUIVI ────────────────────────────────────
     if (table === 'pi_suivi') {
@@ -34,10 +32,10 @@ module.exports = async function handler(req, res) {
         const d = req.body || {};
         await sql`
           UPDATE pi_suivi SET
-            statut = ${d.statut || 'En cours'},
+            statut = ${d.statut||'En cours'},
             pieces = ${JSON.stringify(d.pieces||[])}::jsonb,
-            loc    = ${d.loc  || null},
-            tag    = ${d.tag  || null}
+            loc    = ${d.loc||null},
+            tag    = ${d.tag||null}
           WHERE id = ${id}
         `;
         return res.status(200).json({ ok: true });
@@ -65,8 +63,6 @@ module.exports = async function handler(req, res) {
 
     if (method === 'POST') {
       const d = req.body || {};
-      const photos = JSON.stringify(d.photos || []);
-      const dest   = JSON.stringify(d.dest   || []);
       await sql`
         INSERT INTO historique
           (id, type, tag, wo, wo_usine, wr, wg, sc, loc, statut, date, heure,
@@ -83,7 +79,7 @@ module.exports = async function handler(req, res) {
           ${d.etna_statut||null}, ${d.etna_date_retour||null}, ${d.etna_commentaire||null},
           ${d.callidus_statut||null}, ${d.callidus_date_retour||null},
           ${d.callidus_commentaire||null},
-          ${dest}::jsonb, ${photos}::jsonb
+          ${JSON.stringify(d.dest||[])}::jsonb, ${JSON.stringify(d.photos||[])}::jsonb
         )
       `;
       return res.status(201).json({ ok: true });
@@ -91,34 +87,28 @@ module.exports = async function handler(req, res) {
 
     if (method === 'PATCH' && id) {
       const d = req.body || {};
-      // Handle photos specifically as JSONB
-      if (d.photos !== undefined) {
-        const photosJson = JSON.stringify(d.photos);
-        await sql`UPDATE historique SET photos = ${photosJson}::jsonb WHERE id = ${id}`;
-        // Handle other fields if present
-        const others = Object.entries(d).filter(([k]) => k !== 'photos' && k !== 'id');
-        if (others.length > 0) {
-          const params = [];
-          const setClauses = others.map(([k, v], i) => {
-            params.push(typeof v === 'object' ? JSON.stringify(v) : String(v));
-            return `${k} = $${i + 1}`;
-          }).join(', ');
-          params.push(id);
-          await sql.unsafe(`UPDATE historique SET ${setClauses} WHERE id = $${params.length}`, params);
-        }
-        return res.status(200).json({ ok: true });
-      }
-      // Generic PATCH for other fields
-      const fields = Object.entries(d).filter(([k]) => k !== 'id');
-      if (fields.length > 0) {
-        const params = [];
-        const setClauses = fields.map(([k, v], i) => {
-          params.push(typeof v === 'object' ? JSON.stringify(v) : String(v));
-          return `${k} = $${i + 1}`;
-        }).join(', ');
-        params.push(id);
-        await sql.unsafe(`UPDATE historique SET ${setClauses} WHERE id = $${params.length}`, params);
-      }
+      // JSONB columns that need special handling
+      const jsonbCols = new Set(['photos', 'dest']);
+      const entries = Object.entries(d).filter(([k]) => k !== 'id');
+      if (!entries.length) return res.status(200).json({ ok: true });
+
+      // Build query with explicit JSONB casting
+      const setParts = entries.map(([k, v], i) => {
+        if (jsonbCols.has(k)) return `${k} = $${i+1}::jsonb`;
+        return `${k} = $${i+1}`;
+      });
+      const params = entries.map(([k, v]) => {
+        if (v === null || v === undefined) return null;
+        if (jsonbCols.has(k)) return JSON.stringify(v);
+        if (typeof v === 'object') return JSON.stringify(v);
+        return String(v);
+      });
+      params.push(id);
+
+      await sql.unsafe(
+        `UPDATE historique SET ${setParts.join(', ')} WHERE id = $${params.length}`,
+        params
+      );
       return res.status(200).json({ ok: true });
     }
 
