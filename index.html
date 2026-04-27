@@ -952,14 +952,41 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="form-title">Travaux ETNA</div>
     <div class="form-badge" style="background:#FCE4D6;color:#C55A11">Suivi prestataire</div>
   </div>
-  <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
-    <input class="fi" type="text" id="etna-search"
-      placeholder="Rechercher par TAG ou WO..."
-      oninput="renderEtnaSuivi()"
-      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+  <!-- Tabs -->
+  <div style="display:flex;border-bottom:2px solid var(--border);background:#fff">
+    <button id="etna-tab-suivi" onclick="switchEtnaTab('suivi')"
+      style="flex:1;padding:10px;font-size:13px;font-weight:700;border:none;background:#fff;color:#C55A11;border-bottom:2px solid #C55A11;cursor:pointer;font-family:inherit">
+      🔧 En cours
+    </button>
+    <button id="etna-tab-histo" onclick="switchEtnaTab('histo')"
+      style="flex:1;padding:10px;font-size:13px;font-weight:700;border:none;background:#fff;color:#888;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit">
+      📋 Historique
+    </button>
   </div>
-  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-count">Chargement...</div>
-  <div id="etna-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+
+  <!-- En cours panel -->
+  <div id="etna-panel-suivi">
+    <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+      <input class="fi" type="text" id="etna-search"
+        placeholder="Rechercher par TAG ou WO..."
+        oninput="renderEtnaSuivi()"
+        style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+    </div>
+    <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-count">Chargement...</div>
+    <div id="etna-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+  </div>
+
+  <!-- Historique panel -->
+  <div id="etna-panel-histo" style="display:none">
+    <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
+      <input class="fi" type="text" id="etna-histo-search"
+        placeholder="Rechercher par TAG, WO, WR..."
+        oninput="renderEtnaHistorique()"
+        style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+    </div>
+    <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="etna-histo-count">Chargement...</div>
+    <div id="etna-histo-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+  </div>
 </div>
 
 <!-- ═══════════════ MISE À JOUR ETNA (vue prestataire) ═══════════════ -->
@@ -6600,6 +6627,120 @@ function receptionnerDepuisEtna(id) {
 }
 
 // Rendu vue PRNC (onglet Travaux ETNA)
+
+// ══ ETNA TABS ══
+function switchEtnaTab(tab) {
+  var isHisto = tab === 'histo';
+  document.getElementById('etna-panel-suivi').style.display = isHisto ? 'none' : 'block';
+  document.getElementById('etna-panel-histo').style.display = isHisto ? 'block' : 'none';
+  // Tab styles
+  var tabSuivi = document.getElementById('etna-tab-suivi');
+  var tabHisto = document.getElementById('etna-tab-histo');
+  if (tabSuivi) {
+    tabSuivi.style.color = isHisto ? '#888' : '#C55A11';
+    tabSuivi.style.borderBottom = isHisto ? '2px solid transparent' : '2px solid #C55A11';
+  }
+  if (tabHisto) {
+    tabHisto.style.color = isHisto ? '#C55A11' : '#888';
+    tabHisto.style.borderBottom = isHisto ? '2px solid #C55A11' : '2px solid transparent';
+  }
+  if (isHisto) renderEtnaHistorique();
+}
+
+async function renderEtnaHistorique() {
+  var list    = document.getElementById('etna-histo-list');
+  var countEl = document.getElementById('etna-histo-count');
+  if (!list) return;
+  var search = (document.getElementById('etna-histo-search')||{value:''}).value.toLowerCase();
+
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">⏳ Chargement...</div>';
+
+  var records = await dbLoad();
+
+  // Filter: ETNA records that are Terminé, Livré or Réceptionné
+  var histoRecs = records.filter(function(r) {
+    var isEtna = r.type === 'PEINTURE' ||
+      (r.type === 'ARRIVEE' && (
+        (r.statut||'').toLowerCase().includes('etna') ||
+        (r.statut||'').toUpperCase() === 'RETOUR ETNA'
+      ));
+    if (!isEtna) return false;
+    var done = r.etna_statut && (
+      r.etna_statut.includes('Terminé') ||
+      r.etna_statut.includes('Livré') ||
+      r.etna_statut.includes('Réceptionné')
+    );
+    if (!done) return false;
+    if (!search) return true;
+    return (r.tag||'').toLowerCase().includes(search) ||
+           (r.wo||'').toLowerCase().includes(search) ||
+           (r.wr||'').toLowerCase().includes(search);
+  }).sort(function(a, b) {
+    return (b.created_at||'') > (a.created_at||'') ? 1 : -1;
+  });
+
+  countEl.textContent = histoRecs.length + ' équipement' + (histoRecs.length !== 1 ? 's' : '') + ' terminé(s)';
+
+  if (!histoRecs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px">✅</div><br>Aucun équipement terminé</div>';
+    return;
+  }
+
+  var html = '';
+  histoRecs.forEach(function(r) {
+    var photos = (r.photos || []).filter(Boolean);
+    var statut = r.etna_statut || '--';
+    var statColor = '#375623';
+    var statBg = '#E2EFDA';
+    if (statut.includes('Livré')) { statColor = '#0F6E56'; statBg = '#E1F5EE'; }
+    if (statut.includes('Réceptionné')) { statColor = '#1F3864'; statBg = '#DEEAF1'; }
+
+    html += '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + statColor + '">';
+
+    // Photo header
+    if (photos.length > 0) {
+      html += '<img src="' + photos[0] + '" onclick="viewImg(this.src)" style="width:100%;height:120px;object-fit:cover;cursor:pointer;display:block">';
+    }
+
+    html += '<div style="padding:12px 14px">';
+
+    // Header row
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+    html += '<div>';
+    html += '<div style="font-size:16px;font-weight:800;color:#1F3864">' + (r.tag||'--') + '</div>';
+    if (r.wg) html += '<div style="font-size:11px;color:#888;margin-top:1px">' + r.wg + '</div>';
+    html += '</div>';
+    html += '<span style="background:' + statBg + ';color:' + statColor + ';padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">' + statut + '</span>';
+    html += '</div>';
+
+    // Info grid
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;background:#f8f9fa;border-radius:8px;padding:8px">';
+    if (r.wo) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:13px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>';
+    if (r.wr) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:13px;font-weight:700;color:#C55A11">' + r.wr + '</div></div>';
+    if (r.date) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE ARRIVÉE</div><div style="font-size:12px;font-weight:600">' + r.date + '</div></div>';
+    if (r.etna_date_retour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etna_date_retour + '</div></div>';
+    html += '</div>';
+
+    // Commentaire
+    if (r.etna_commentaire) {
+      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etna_commentaire + '</div>';
+    }
+
+    // Photos strip
+    if (photos.length > 1) {
+      html += '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">';
+      photos.slice(1).forEach(function(url) {
+        html += '<img src="' + url + '" onclick="viewImg(this.src)" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
+      });
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+  });
+
+  list.innerHTML = html;
+}
+
 async function renderEtnaSuivi() {
   var list    = document.getElementById('etna-list');
   var countEl = document.getElementById('etna-count');
@@ -9396,6 +9537,8 @@ function updateTemplateStatus() {
     chaudEl.style.color = c ? '#C55A11' : '#888';
   }
 }
+
+function viewImg(src) { window.open(src, '_blank'); }
 
 function escapeXmlVal(str) {
   return String(str)
