@@ -750,6 +750,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div style="padding:10px 14px;background:#FFF3E0;border-bottom:1px solid #FFE0B2;font-size:11px;color:#E65100;font-weight:600">
     &#128276; Équipements en attente de récupération depuis plus de 3 jours
   </div>
+  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <input type="text" id="relances-search" placeholder="🔍 Rechercher TAG, WO, WR, WG..."
+      oninput="renderRelances()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border);box-sizing:border-box;font-family:inherit">
+  </div>
   <div id="relances-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
 </div>
 
@@ -2607,6 +2612,7 @@ const EQ_CONTACTS = {
       {name:'Abel VENDEGOU',      mail:'abel.vendegou@pronyresources.com', self:false},
       {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com',  self:false},
       {name:'Gerard WEINANE',   mail:'gerard.weinane@pronyresources.com', self:false},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
     ]
   },
   repar_demandeur: {
@@ -2616,6 +2622,7 @@ const EQ_CONTACTS = {
       {name:'Régis EURIMINDIA',   mail:'regis.eurimindia@pronyresources.com', self:false},
       {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com',  self:false},
       {name:'Gerard WEINANE',   mail:'gerard.weinane@pronyresources.com', self:false},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
     ]
   },
   strob_demandeur: {
@@ -2637,9 +2644,19 @@ const EQ_CONTACTS = {
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
       {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com',  self:false},
       {name:'Abel VENDEGOU',      mail:'abel.vendegou@pronyresources.com', self:false},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
     ]
   },
-  // MCREPAR
+
+  chaud_p99vanne: {
+    to: [],
+    cc: [
+      {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
+      {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com',  self:false},
+      {name:'Abel VENDEGOU',      mail:'abel.vendegou@pronyresources.com', self:false},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
+    ]
+  },  // MCREPAR
   repar_p99vanne: {
     to: [
       {name:'Ernest DEMENE',      mail:'ernest.demene@pronyresources.com', self:false},
@@ -2650,6 +2667,7 @@ const EQ_CONTACTS = {
       {name:'Régis EURIMINDIA',   mail:'regis.eurimindia@pronyresources.com',self:false},
       {name:'Pascal BAFUE',       mail:'pascal.bafue@pronyresources.com',  self:false},
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
     ]
   },
   // EN ATTENTE INFO -- tous workgroups -> Abel uniquement
@@ -2681,6 +2699,7 @@ const EQ_CONTACTS = {
       {name:'Emmanuel ROSA ASIK', mail:'emmanuel.rosa@pronyresources.com', self:true},
       {name:'Kendji KASOVIMOIN',  mail:'kendji.kasovimoin.EXT@pronyresources.com',self:false},
       {name:'Régis EURIMINDIA',   mail:'regis.eurimindia@pronyresources.com',self:false},
+      {name:'Jacques TRIMARI',  mail:'jacques.trimari@pronyresources.com', self:false},
     ]
   },
 };
@@ -3927,7 +3946,13 @@ function sendEquip() {
     {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'--'}, {label:'À', value:allTo.join(', ')}
   ], () => {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
-    const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc].filter(Boolean);
+    // Jacques TRIMARI en CC automatique selon WG + statut
+    var _jacquesMail = 'jacques.trimari@pronyresources.com';
+    var _jacquesWG = ['chaud','repar'].includes(wg);
+    var _jacquesStatut = ['demandeur','p99fabric','p99vanne'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
+    var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
+    // Pour STROB: pas de Jacques selon les règles demandées
+    const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
     mailto(allTo[0], subj, body, ccUniqueEq);
       // Récupérer email et nom demandeur depuis les champs
