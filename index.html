@@ -8949,11 +8949,24 @@ async function renderRelances() {
   list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">&#9203; Chargement...</div>';
   var now = new Date();
   try {
-    var data = await supaFetch('/rest/v1/historique?type=eq.TERMINE&order=created_at.desc&limit=200');
-    var records = (data || []).filter(function(r) {
+    var allRecords = await dbLoad();
+    var records = allRecords.filter(function(r) {
       var st = (r.statut || '').toLowerCase();
       return (st.indexOf('retour') >= 0 || st.indexOf('demandeur') >= 0) && st.indexOf('recupere') < 0;
     });
+
+    // Apply search filter
+    var search = (document.getElementById('relances-search')||{value:''}).value.toLowerCase().trim();
+    if (search) {
+      records = records.filter(function(r) {
+        return (r.tag||'').toLowerCase().includes(search) ||
+               (r.wo||'').toLowerCase().includes(search) ||
+               (r.wr||'').toLowerCase().includes(search) ||
+               (r.wg||'').toLowerCase().includes(search) ||
+               (r.sc||'').toLowerCase().includes(search);
+      });
+    }
+
     if (!records.length) {
       list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px;margin-bottom:8px">&#9989;</div>Aucune relance en attente</div>';
       updateRelanceBadge(0);
