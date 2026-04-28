@@ -8665,12 +8665,12 @@ async function ouvrirDetailBS(id) {
   show('s-bs-detail');
 }
 
-function updatePieceLoc(woId, pieceIdx, loc) {
-  var data = getBonsSortie();
+async function updatePieceLoc(woId, pieceIdx, loc) {
+  var data = await piLoad();
   var d = data.find(function(x) { return x.id === woId; });
   if (!d || !d.pieces[pieceIdx]) return;
   d.pieces[pieceIdx].loc = loc;
-  saveBonsSortieData(data);
+  await piUpdate(woId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
 }
 
 async function togglePiece(woId, pieceIdx, checked) {
