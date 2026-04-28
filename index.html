@@ -6603,8 +6603,9 @@ async function ajouterPhotoEtna(input, id) {
 
   try {
     // Upload Cloudinary
+    var compressed = await compressImage(file, 1200, 0.75);
     var formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressed, 'photo.jpg');
     formData.append('upload_preset', 'prnc-field');
     formData.append('folder', 'etna');
     var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
@@ -7374,8 +7375,9 @@ async function ajouterPhotoRecord(input, recordId) {
   label.innerHTML = '⏳ Envoi en cours...';
 
   try {
+    var compressed = await compressImage(file, 1200, 0.75);
     var formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressed, 'photo.jpg');
     formData.append('upload_preset', 'prnc-field');
     formData.append('folder', 'termine');
     var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
@@ -7477,8 +7479,9 @@ async function ajouterPhotoRecord(input, recordId) {
   label.innerHTML = '⏳ Envoi en cours...';
 
   try {
+    var compressed = await compressImage(file, 1200, 0.75);
     var formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressed, 'photo.jpg');
     formData.append('upload_preset', 'prnc-field');
     formData.append('folder', 'termine');
     var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
@@ -9107,6 +9110,29 @@ function renderRelanceCard(r, urgent) {
 }
 
 
+
+// ── Compression image avant upload ──
+async function compressImage(file, maxWidth, quality) {
+  maxWidth = maxWidth || 1200;
+  quality = quality || 0.7;
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob) { resolve(blob); }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function ajouterPhotoRelance(input, recordId) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
@@ -9118,8 +9144,9 @@ async function ajouterPhotoRelance(input, recordId) {
 
   try {
     // Upload to Cloudinary
+    var compressed = await compressImage(file, 1200, 0.75);
     var formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressed, 'photo.jpg');
     formData.append('upload_preset', 'prnc-field');
     formData.append('folder', 'relances');
 
