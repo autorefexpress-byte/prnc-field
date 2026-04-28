@@ -9253,11 +9253,13 @@ async function marquerRecupere(id, btn) {
     var records = await dbLoad();
     var r = records.find(function(x){ return x.id === id; });
 
-    // Mettre à jour Supabase
-    await supaFetch('/rest/v1/historique?id=eq.' + id, 'PATCH', {
-      statut: 'RECUPERE',
-      recovered_at: new Date().toISOString()
+    // Mettre à jour Neon
+    await fetch('/api/db?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ statut: 'RECUPERE', recovered_at: new Date().toISOString() })
     });
+    invalidateDbCache();
 
     var card = btn.parentElement.parentElement.parentElement;
     if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
@@ -9284,15 +9286,19 @@ async function marquerRecupere(id, btn) {
       if (dest) bodyParts.push('  Recupere par : ' + dest);
       bodyParts.push('  Date : ' + now, '', 'Equipement clos.', '', 'Cordialement,', 'Emmanuel ROSA ASIK | PRNC');
       var body = bodyParts.join('\n');
-      if (allTo.length > 0) {
-        var toFirst = allTo[0];
-        var ccRest  = allTo.slice(1).join(',');
-        var mailUrl = 'mailto:' + toFirst +
-          '?subject=' + encodeURIComponent(subj) +
-          '&body='    + encodeURIComponent(body) +
-          (ccRest ? '&cc=' + encodeURIComponent(ccRest) : '');
-        window.location.href = mailUrl;
-      }
+      // Ajouter Emmanuel en CC + emailDemandeur
+      var EMMANUEL = 'emmanuel.rosa@pronyresources.com';
+      var ccList = allTo.slice(1);
+      if (!ccList.includes(EMMANUEL)) ccList.push(EMMANUEL);
+      if (emailDem && !allTo.includes(emailDem) && !ccList.includes(emailDem)) ccList.unshift(emailDem);
+
+      var toFirst = allTo[0] || EMMANUEL;
+      var ccStr   = ccList.filter(Boolean).join(';');
+      var mailUrl = 'mailto:' + toFirst +
+        '?subject=' + encodeURIComponent(subj) +
+        '&body='    + encodeURIComponent(body) +
+        (ccStr ? '&cc=' + encodeURIComponent(ccStr) : '');
+      window.location.href = mailUrl;
     }
 
     setTimeout(renderRelances, 1000);
