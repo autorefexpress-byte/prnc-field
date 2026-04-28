@@ -370,6 +370,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">PI</div>
       <div class="card-sub">Suivi pièces par WO</div>
     </div>
+    <div class="action-card" onclick="show('s-workshop');renderWorkshop()">
+      <div class="card-icon" style="background:#E2EFDA;color:#375623">🏭</div>
+      <div class="card-lbl">Workshop</div>
+      <div class="card-sub">Retours magasin</div>
+    </div>
     <div class="action-card" onclick="show('s-inventaire')">
       <div class="card-icon">📋</div>
       <div class="card-lbl">Inventaire P50</div>
@@ -2751,7 +2756,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-templates','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
+const SCREENS = ['s-home','s-workshop','s-templates','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -2767,6 +2772,7 @@ function show(id) {
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
   if (id === 's-planning') setTimeout(initPlanSig, 50);
   if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
+  if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
     // Pré-charger le cache si vide, puis rendre
     if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
@@ -9798,6 +9804,125 @@ function updateTemplateStatus() {
 
 function viewImg(src) { window.open(src, '_blank'); }
 
+
+// ══ WORKSHOP — Retours magasin ══
+var _wsRetournes = {}; // id → true si retourné (stocké en localStorage)
+
+function wsLoadRetournes() {
+  try { return JSON.parse(localStorage.getItem('prnc-workshop-retournes') || '{}'); } catch(e) { return {}; }
+}
+function wsSaveRetournes(data) {
+  try { localStorage.setItem('prnc-workshop-retournes', JSON.stringify(data)); } catch(e) {}
+}
+
+async function renderWorkshop() {
+  var list = document.getElementById('ws-list');
+  if (!list) return;
+  var search = (document.getElementById('ws-search')||{value:''}).value.toLowerCase().trim();
+
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">⏳ Chargement...</div>';
+
+  var records = await dbLoad();
+  _wsRetournes = wsLoadRetournes();
+
+  // Filter: TERMINE with statut containing "magasin" or "retour magasin"
+  var wsRecs = records.filter(function(r) {
+    var st = (r.statut||'').toLowerCase();
+    return r.type === 'TERMINE' && (
+      st.includes('magasin') || st.includes('retour mag')
+    );
+  });
+
+  // Apply search
+  if (search) {
+    wsRecs = wsRecs.filter(function(r) {
+      return (r.tag||'').toLowerCase().includes(search) ||
+             (r.wo||'').toLowerCase().includes(search) ||
+             (r.wr||'').toLowerCase().includes(search) ||
+             (r.wg||'').toLowerCase().includes(search);
+    });
+  }
+
+  // Sort: pending first, then by date desc
+  wsRecs.sort(function(a, b) {
+    var aDone = _wsRetournes[a.id] ? 1 : 0;
+    var bDone = _wsRetournes[b.id] ? 1 : 0;
+    if (aDone !== bDone) return aDone - bDone;
+    return (b.created_at||'') > (a.created_at||'') ? 1 : -1;
+  });
+
+  // Update stats
+  var totalAll = wsRecs.length;
+  var doneCount = wsRecs.filter(function(r){ return _wsRetournes[r.id]; }).length;
+  var pendingCount = totalAll - doneCount;
+  var t = document.getElementById('ws-cnt-total'); if(t) t.textContent = totalAll;
+  var d = document.getElementById('ws-cnt-done'); if(d) d.textContent = doneCount;
+  var p = document.getElementById('ws-cnt-pending'); if(p) p.textContent = pendingCount;
+
+  if (!wsRecs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px">🏭</div><br>Aucun équipement en attente</div>';
+    return;
+  }
+
+  var wgColors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',STCHAUD:'#1F3864'};
+  var wgBgs    = {MCCHAUD:'#EDE7F6',MCREPAR:'#FCE4D6',STROB:'#E1F5EE',STCHAUD:'#DEEAF1'};
+
+  var html = '';
+  wsRecs.forEach(function(r) {
+    var done = !!_wsRetournes[r.id];
+    var wgColor = wgColors[r.wg] || '#555';
+    var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
+    var photos  = (r.photos||[]).filter(Boolean);
+
+    html += '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + (done ? '#375623' : '#C55A11') + ';' + (done ? 'opacity:.7' : '') + '">';
+    
+    // Photo header
+    if (photos.length > 0) {
+      html += '<img src="' + photos[0] + '" style="width:100%;height:100px;object-fit:cover;display:block">';
+    }
+
+    html += '<div style="padding:12px 14px">';
+
+    // Row 1: TAG + WG badge
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    html += '<div style="font-size:15px;font-weight:800;color:#1F3864">' + (r.tag||'--') + '</div>';
+    html += '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700">' + (r.wg||'--') + '</span>';
+    html += '</div>';
+
+    // Row 2: WO, WR, Date
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#f8f9fa;border-radius:8px;padding:8px;margin-bottom:8px">';
+    html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + (r.wo||'--') + '</div></div>';
+    html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:12px;font-weight:700;color:#C55A11">' + (r.wr||'--') + '</div></div>';
+    html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE</div><div style="font-size:11px;font-weight:600">' + (r.date||'--') + '</div></div>';
+    html += '</div>';
+
+    // Statut
+    html += '<div style="font-size:11px;color:#555;margin-bottom:8px">📌 ' + (r.statut||'--') + '</div>';
+
+    // Checkbox bouton
+    html += '<button onclick="wsToggleRetourne(this.dataset.id)" data-id="' + r.id + '" ' +
+      'style="width:100%;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;' +
+      (done ? 'background:#E2EFDA;color:#375623' : 'background:#FFF3E0;color:#E65100') + '">' +
+      (done ? '✅ Retourné au magasin' : '⏳ Marquer comme retourné') +
+    '</button>';
+
+    html += '</div></div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function wsToggleRetourne(id) {
+  _wsRetournes = wsLoadRetournes();
+  if (_wsRetournes[id]) {
+    delete _wsRetournes[id];
+  } else {
+    _wsRetournes[id] = true;
+  }
+  wsSaveRetournes(_wsRetournes);
+  renderWorkshop();
+}
+
 function escapeXmlVal(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -10048,6 +10173,43 @@ function escapeXmlVal(str) {
     </div>
 
   </div>
+</div>
+
+
+<!-- ═══════════════ WORKSHOP ═══════════════ -->
+<div class="screen" id="s-workshop">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">🏭 Workshop</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Retours magasin en attente</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <div style="background:#f8f9fa;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#C55A11" id="ws-cnt-total">0</div>
+      <div style="font-size:10px;color:#888;font-weight:600">Total</div>
+    </div>
+    <div style="background:#E2EFDA;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#375623" id="ws-cnt-done">0</div>
+      <div style="font-size:10px;color:#375623;font-weight:600">Retournés</div>
+    </div>
+    <div style="background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#E65100" id="ws-cnt-pending">0</div>
+      <div style="font-size:10px;color:#E65100;font-weight:600">En attente</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <input type="text" id="ws-search" placeholder="🔍 Rechercher WO, TAG, WR..."
+      oninput="renderWorkshop()"
+      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border);box-sizing:border-box;font-family:inherit">
+  </div>
+
+  <div id="ws-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
 </div>
 
 </body>
