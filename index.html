@@ -750,6 +750,14 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   <div style="padding:10px 14px;background:#FFF3E0;border-bottom:1px solid #FFE0B2;font-size:11px;color:#E65100;font-weight:600">
     &#128276; Équipements en attente de récupération depuis plus de 3 jours
   </div>
+  <!-- Compteurs par WG -->
+  <div id="relances-wg-counts" style="display:flex;gap:6px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto">
+    <div style="background:#EDE7F6;color:#7030A0;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCCHAUD : <span id="cnt-chaud">0</span></div>
+    <div style="background:#FCE4D6;color:#C55A11;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCREPAR : <span id="cnt-repar">0</span></div>
+    <div style="background:#E1F5EE;color:#0F6E56;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STROB : <span id="cnt-strob">0</span></div>
+    <div style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STCHAUD : <span id="cnt-stchaud">0</span></div>
+    <div style="background:#f0f0f0;color:#555;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">Total : <span id="cnt-total">0</span></div>
+  </div>
   <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
     <input type="text" id="relances-search" placeholder="🔍 Rechercher TAG, WO, WR, WG..."
       oninput="renderRelances()"
