@@ -8970,6 +8970,20 @@ async function renderRelances() {
       html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:12px 0 4px;margin-top:4px">&#9203; En attente recente (&lt; 3 jours) &mdash; ' + recents.length + '</div>';
       recents.forEach(function(r){ html += renderRelanceCard(r, false); });
     }
+    // Update WG counters
+    var wgMap = { MCCHAUD:0, MCREPAR:0, STROB:0, STCHAUD:0 };
+    records.forEach(function(r) {
+      var wg = (r.wg||'').toUpperCase().trim();
+      if (wgMap.hasOwnProperty(wg)) wgMap[wg]++;
+    });
+    var wgKeys = { MCCHAUD:'cnt-chaud', MCREPAR:'cnt-repar', STROB:'cnt-strob', STCHAUD:'cnt-stchaud' };
+    Object.keys(wgKeys).forEach(function(wg) {
+      var el = document.getElementById(wgKeys[wg]);
+      if (el) el.textContent = wgMap[wg];
+    });
+    var totalEl = document.getElementById('cnt-total');
+    if (totalEl) totalEl.textContent = records.length;
+
     list.innerHTML = html;
   } catch(e) {
     list.innerHTML = '<div style="color:red;padding:20px">Erreur : ' + e.message + '</div>';
