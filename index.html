@@ -3992,10 +3992,10 @@ function sendEquip() {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
     // Jacques TRIMARI en CC automatique selon WG + statut
     var _jacquesMail = 'jacques.trimari@pronyresources.com';
-    var _jacquesWG = ['chaud','repar'].includes(wg);
+    var _eqWg = (state.eq && state.eq.wg || '').toLowerCase().replace('mc','');
+    var _jacquesWG = ['chaud','repar','strob'].includes(_eqWg);
     var _jacquesStatut = ['demandeur','p99fabric','p99vanne'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
     var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
-    // Pour STROB: pas de Jacques selon les règles demandées
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
     mailto(allTo[0], subj, body, ccUniqueEq);
