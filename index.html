@@ -6154,19 +6154,54 @@ async function renderInventaire() {
     items.forEach(function(r) {
       var wgColor = wgColors[r.wg] || '#333';
       var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
-      html += '<div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">' +
-        '<div>' +
-          '<div style="font-size:14px;font-weight:700;color:var(--navy)">' + (r.tag||'--') + '</div>' +
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
-            (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.date||'') +
-          '</div>' +
-          '<div style="font-size:11px;color:#555;margin-top:2px">' + (r.statut||r.type||'--') + '</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
-          '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + (r.wg||'--') + '</span>' +
-          '<button onclick="genererQRCode(' + r.id + ')" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128248; QR</button>' +
-        '</div>' +
+      var photos  = (r.photos||[]).filter(Boolean);
+      var desc    = r.desc || r.description || '';
+
+      html += '<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1.5px solid var(--border)">';
+
+      // Photo header
+      if (photos.length > 0) {
+        html += '<img src="' + photos[0] + '" style="width:100%;height:110px;object-fit:cover;display:block;cursor:pointer" onclick="viewImg(this.src)">';
+      }
+
+      html += '<div style="padding:10px 12px">';
+
+      // Row 1: TAG + WG badge
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<div style="font-size:14px;font-weight:800;color:var(--navy)">' + (r.tag||'--') + '</div>' +
+        '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700">' + (r.wg||'--') + '</span>' +
       '</div>';
+
+      // Row 2: WO + date
+      html += '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' +
+        (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.wr ? 'WR ' + r.wr + ' · ' : '') + (r.date||'') +
+      '</div>';
+
+      // Statut
+      html += '<div style="font-size:11px;color:#555;margin-bottom:6px">📌 ' + (r.statut||r.type||'--') + '</div>';
+
+      // Remarques
+      if (desc) {
+        html += '<div style="background:#FFF8E1;border-left:3px solid #FFC107;border-radius:0 8px 8px 0;padding:6px 8px;font-size:11px;color:#555;margin-bottom:8px">💬 ' + desc + '</div>';
+      }
+
+      // Thumbnails supplémentaires
+      if (photos.length > 1) {
+        html += '<div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:8px">';
+        photos.slice(1).forEach(function(url) {
+          html += '<img src="' + url + '" onclick="viewImg(this.src)" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
+        });
+        html += '</div>';
+      }
+
+      // Buttons row
+      html += '<div style="display:flex;gap:6px">' +
+        '<button onclick="genererQRCode(' + r.id + ')" style="flex:1;background:#E2EFDA;color:#375623;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">📷 QR</button>' +
+        '<button onclick="ouvrirEditionInventaire(' + JSON.stringify(r.id) + ')" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✏️ Modifier</button>' +
+        '<button onclick="supprimerInventaire(' + JSON.stringify(r.id) + ')" style="background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer">🗑</button>' +
+      '</div>';
+
+      html += '</div></div>';
     });
   });
   list.innerHTML = html;
@@ -7941,7 +7976,7 @@ function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
         ${zone?'Zone depot : <strong>'+zone+'</strong>':''}
       </div>
       <div style="display:flex;gap:10px;margin-top:4px">
-        <button onclick="this.closest('div[style*=rgba]').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Plus tard</button>
+        <button onclick="fermerOverlay(this)" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Plus tard</button>
         <button onclick="this.closest('div[style*=rgba]').remove();sendWhatsAppMagasin('${tag}','${statut}','${loc}','${woUsine}','${woMtc}')" style="flex:2;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128172; Envoyer WhatsApp</button>
       </div>
     </div>`;
@@ -9970,6 +10005,62 @@ function wsToggleRetourne(id) {
   wsSaveRetournes(_wsRetournes);
   renderWorkshop();
 }
+
+
+async function supprimerInventaire(id) {
+  if (!confirm('Supprimer cet équipement de l\'inventaire ?')) return;
+  try {
+    await fetch('/api/db?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    invalidateDbCache();
+    renderInventaire();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+function ouvrirEditionInventaire(id) {
+  dbLoad().then(function(records) {
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end';
+
+    ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 30px">' +
+      '<div style="font-weight:800;font-size:16px;margin-bottom:16px">✏️ Modifier — ' + (r.tag||'') + '</div>' +
+
+      '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">REMARQUES</div>' +
+      '<textarea id="inv-edit-desc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;height:80px">' + (r.desc||r.description||'') + '</textarea></div>' +
+
+      '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
+      '<input id="inv-edit-loc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" value="' + (r.loc||'') + '"></div>' +
+
+      '<div style="display:flex;gap:8px">' +
+      '<button onclick="fermerOverlay(this)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>' +
+      '<button onclick="sauvegarderEditionInventaire(this.dataset.recid,this)" data-recid="' + id + '" style="flex:2;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Enregistrer</button>' +
+      '</div></div>';
+
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+  });
+}
+
+async function sauvegarderEditionInventaire(id, btn) {
+  var desc = document.getElementById('inv-edit-desc').value.trim();
+  var loc  = document.getElementById('inv-edit-loc').value.trim();
+  btn.textContent = '⏳';
+  try {
+    await fetch('/api/db?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ loc: loc })
+    });
+    // Also update description in local cache
+    invalidateDbCache();
+    btn.closest('div[style*=rgba]').remove();
+    renderInventaire();
+  } catch(e) { alert('Erreur : ' + e.message); btn.textContent = 'Enregistrer'; }
+}
+
+function fermerOverlay(btn) { var ov = btn.closest('[style*="rgba"]'); if(ov) ov.remove(); }
 
 function escapeXmlVal(str) {
   return String(str)
