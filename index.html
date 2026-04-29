@@ -3140,44 +3140,73 @@ async function addPhotos(input, prevId) {
 
   for (var i = 0; i < files.length; i++) {
     var file = files[i];
-    (function(f) {
-      compressImage(f, 600, 0.35, async function(blob) {
-        var localUrl = URL.createObjectURL(blob);
+    // Show loading thumb
+    var thumbDiv = document.createElement('div');
+    thumbDiv.className = 'photo-thumb';
+    var img = document.createElement('img');
+    img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;opacity:0.5';
+    var del = document.createElement('div');
+    del.className = 'photo-thumb-del';
+    del.textContent = '×';
+    thumbDiv.appendChild(img);
+    thumbDiv.appendChild(del);
+    if (prev) prev.appendChild(thumbDiv);
 
-        // Créer la miniature avec bouton supprimer
-        var thumbDiv = document.createElement('div');
-        thumbDiv.className = 'photo-thumb';
-        var img = document.createElement('img');
-        img.src = localUrl;
-        img.style.opacity = '0.5';
-        var del = document.createElement('div');
-        del.className = 'photo-thumb-del';
-        del.textContent = '×';
-        thumbDiv.appendChild(img);
-        thumbDiv.appendChild(del);
-        if (prev) prev.appendChild(thumbDiv);
-
-        // Upload Cloudinary
-        var cloudUrl = await uploadToCloudinary(new File([blob], f.name, {type:'image/jpeg'}));
-        var finalUrl = cloudUrl;
-        if (!finalUrl) {
-          // Fallback base64
-          finalUrl = await new Promise(function(resolve) {
-            var reader = new FileReader();
-            reader.onload = function(e) { resolve(e.target.result); };
-            reader.readAsDataURL(blob);
-          });
-        }
-        _photoStore[prevId].push(finalUrl);
-        img.style.opacity = '1';
-        // Bouton supprimer
-        del.onclick = function() {
-          var idx = _photoStore[prevId].indexOf(finalUrl);
-          if (idx >= 0) _photoStore[prevId].splice(idx, 1);
-          thumbDiv.remove();
+    try {
+      // Compress
+      var blob = await new Promise(function(resolve) {
+        var imgEl = new Image();
+        var objUrl = URL.createObjectURL(file);
+        imgEl.onload = function() {
+          var w = imgEl.width, h = imgEl.height;
+          var MAX = 1000;
+          if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+          if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+          URL.revokeObjectURL(objUrl);
+          canvas.toBlob(function(b) { resolve(b); }, 'image/jpeg', 0.6);
         };
+        imgEl.onerror = function() { URL.revokeObjectURL(objUrl); resolve(file); };
+        imgEl.src = objUrl;
       });
-    })(file);
+
+      img.src = URL.createObjectURL(blob);
+
+      // Upload to Cloudinary
+      var formData = new FormData();
+      formData.append('file', blob, 'photo.jpg');
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('folder', 'prnc-field');
+      var resp = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
+        method: 'POST', body: formData
+      });
+      var data = await resp.json();
+      var finalUrl = data.secure_url || null;
+
+      if (!finalUrl) {
+        // Fallback base64
+        finalUrl = await new Promise(function(resolve) {
+          var reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      _photoStore[prevId].push(finalUrl);
+      img.src = finalUrl;
+      img.style.opacity = '1';
+
+      del.onclick = function() {
+        var idx = _photoStore[prevId].indexOf(finalUrl);
+        if (idx >= 0) _photoStore[prevId].splice(idx, 1);
+        thumbDiv.remove();
+      };
+    } catch(e) {
+      console.error('Photo upload error:', e);
+      thumbDiv.remove();
+    }
   }
   input.value = '';
 }
