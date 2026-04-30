@@ -6197,8 +6197,8 @@ async function renderInventaire() {
       // Buttons row
       html += '<div style="display:flex;gap:6px">' +
         '<button onclick="genererQRCode(' + r.id + ')" style="flex:1;background:#E2EFDA;color:#375623;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">📷 QR</button>' +
-        '<button onclick="ouvrirEditionInventaire(' + JSON.stringify(r.id) + ')" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✏️ Modifier</button>' +
-        '<button onclick="supprimerInventaire(' + JSON.stringify(r.id) + ')" style="background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer">🗑</button>' +
+        '<button onclick="ouvrirEditionInventaire(this.dataset.id)" data-id="' + r.id + '" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✏️ Modifier</button>' +
+        '<button onclick="supprimerInventaire(this.dataset.id)" data-id="' + r.id + '" style="background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer">🗑</button>' +
       '</div>';
 
       html += '</div></div>';
