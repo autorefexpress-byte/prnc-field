@@ -8805,7 +8805,7 @@ async function ouvrirDetailBS(id) {
           '<input type="text" data-woid="' + id + '" data-pidx="' + idx + '"' +
             ' value="' + (p.loc||'') + '"' +
             ' placeholder="Localisation de cette pièce..."' +
-            ' onchange="updatePieceLoc(this.dataset.woid,this.dataset.pidx,this.value)"' +
+            ' oninput="markPieceLocChanged(this)"' +
             ' style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:5px 8px;font-size:11px;font-family:inherit;color:#1F4E79;background:' + (p.recu?'#F1F8E9':'#fafafa') + '">' +
         '</div>' +
       '</div>';
@@ -8813,6 +8813,42 @@ async function ouvrirDetailBS(id) {
   }
 
   show('s-bs-detail');
+}
+
+function markPieceLocChanged(input) {
+  // Juste marque visuellement que c'est modifié
+  input.style.borderColor = '#2E75B6';
+  var btn = document.getElementById('bs-save-btn');
+  if (btn) { btn.style.background = '#C55A11'; btn.textContent = '💾 Modifications non enregistrées'; }
+}
+
+async function enregistrerModifWO() {
+  var btn = document.getElementById('bs-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
+  try {
+    var data = await piLoad();
+    var d = data.find(function(x) { return x.id === _bsCurrentId; });
+    if (!d) return;
+
+    // Récupérer toutes les valeurs de localisation depuis les inputs
+    var locInputs = document.querySelectorAll('#bs-detail-list input[type="text"][data-woid]');
+    locInputs.forEach(function(inp) {
+      var pidx = parseInt(inp.dataset.pidx);
+      if (!isNaN(pidx) && d.pieces[pidx]) {
+        d.pieces[pidx].loc = inp.value;
+        inp.style.borderColor = '#e0e0e0';
+      }
+    });
+
+    await piUpdate(_bsCurrentId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
+
+    if (btn) { btn.style.background = '#375623'; btn.textContent = '✅ Enregistré !'; btn.disabled = false; }
+    setTimeout(function() {
+      if (btn) { btn.style.background = '#1F3864'; btn.textContent = '💾 Enregistrer les modifications'; }
+    }, 2000);
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.style.background = '#C55A11'; btn.textContent = '❌ Erreur — Réessayer'; }
+  }
 }
 
 async function updatePieceLoc(woId, pieceIdx, loc) {
@@ -10290,6 +10326,14 @@ function escapeXmlVal(str) {
       <button onclick="supprimerWO()" 
         style="background:#FCE4D6;color:#C55A11;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
         🗑
+      </button>
+    </div>
+
+    <!-- Bouton Enregistrer -->
+    <div style="padding:10px 14px;background:#f7f8fa;border-bottom:1px solid var(--border)">
+      <button id="bs-save-btn" onclick="enregistrerModifWO()"
+        style="width:100%;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        💾 Enregistrer les modifications
       </button>
     </div>
 
