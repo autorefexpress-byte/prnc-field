@@ -7134,19 +7134,58 @@ async function confirmEnvoi(titre, lignes, callback) {
 // ========================================
 async function deleteRecord(id) {
   if (checkConsultMode()) return;
-  if (!confirm('Supprimer cet enregistrement ?')) return;
 
-  // Supprimer dans Supabase
-  try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
-    console.log('Supprimé dans Supabase');
-  } catch(e) { console.warn('DB delete err', e); }
+  // Récupérer le WO de cet enregistrement
+  const records = await dbLoad();
+  const rec = records.find(r => r.id === id);
+  const wo = rec ? (rec.wo || '') : '';
 
-  // Supprimer en localStorage
-  try {
-    const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-    localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id)));
-  } catch(e) {}
+  var msg = wo
+    ? '⚠️ Supprimer tout ce qui est lié au WO ' + wo + ' ?\n\n• Tous les enregistrements historique de ce WO\n• Toutes les photos Cloudinary associées\n• Le WO dans PI Suivi\n\nCette action est irréversible.'
+    : '⚠️ Supprimer cet enregistrement ?\n\nCette action est irréversible.';
+
+  if (!confirm(msg)) return;
+
+  if (wo) {
+    // ── Suppression en cascade par WO ──────────────
+
+    // 1. Récupérer l'id pi_suivi correspondant au WO
+    try {
+      const piRows = await fetch(DB_API + '?table=pi_suivi').then(r => r.json());
+      const piRow = Array.isArray(piRows) ? piRows.find(p => p.wo === wo) : null;
+      if (piRow) {
+        // DELETE pi_suivi → le backend supprime historique + Cloudinary en cascade
+        await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method: 'DELETE' });
+        _piCache = null;
+      } else {
+        // Pas de PI trouvé → supprimer historique + Cloudinary directement via Neon
+        // Récupérer tous les ids historique liés à ce WO
+        const allHist = records.filter(r => r.wo === wo);
+        for (const h of allHist) {
+          await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' });
+        }
+      }
+    } catch(e) { console.warn('Cascade delete err', e); }
+
+    // 2. Purger le cache et le localStorage pour tous les enregistrements de ce WO
+    _dbCache = null;
+    try {
+      const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.wo !== wo)));
+    } catch(e) {}
+
+  } else {
+    // ── Suppression simple (pas de WO) ─────────────
+    try {
+      await fetch(DB_API + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
+    } catch(e) { console.warn('DB delete err', e); }
+
+    _dbCache = null;
+    try {
+      const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id)));
+    } catch(e) {}
+  }
 
   renderHist();
   updateStats();
@@ -8847,10 +8886,21 @@ function passerEnPlanning() {
 }
 
 async function supprimerWO() {
-  if (!confirm('Supprimer ce WO ?')) return;
-  await piDelete(_bsCurrentId);
-  show('s-bons-sortie');
-  await renderBonsSortie();
+  var wo = document.getElementById('bs-detail-wo') ? document.getElementById('bs-detail-wo').textContent : '';
+  if (!confirm('⚠️ Supprimer le WO ' + (wo||'') + ' ?\n\nCela supprimera aussi :\n• Tout l\'historique lié à ce WO\n• Toutes les photos Cloudinary associées\n\nCette action est irréversible.')) return;
+  
+  // Afficher un indicateur de chargement
+  var btn = event && event.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  
+  try {
+    await piDelete(_bsCurrentId);
+    show('s-bons-sortie');
+    await renderBonsSortie();
+  } catch(e) {
+    alert('Erreur lors de la suppression : ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🗑'; }
+  }
 }
 
 
