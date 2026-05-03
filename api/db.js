@@ -64,6 +64,26 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
+        // ── SUPPRESSION EN CASCADE ──────────────────
+        // 1. Récupérer le WO depuis pi_suivi
+        const piRows = await sql`SELECT wo FROM pi_suivi WHERE id=${id}`;
+        if (piRows.length && piRows[0].wo) {
+          const wo = piRows[0].wo;
+
+          // 2. Récupérer toutes les photos des lignes historique liées à ce WO
+          const histRows = await sql`SELECT photos FROM historique WHERE wo=${wo}`;
+          const allPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
+
+          // 3. Supprimer les photos Cloudinary
+          if (allPhotos.length > 0) {
+            await deleteCloudinaryPhotos(allPhotos);
+          }
+
+          // 4. Supprimer toutes les lignes historique liées à ce WO
+          await sql`DELETE FROM historique WHERE wo=${wo}`;
+        }
+
+        // 5. Supprimer le WO dans pi_suivi
         await sql`DELETE FROM pi_suivi WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
@@ -106,7 +126,7 @@ module.exports = async function handler(req, res) {
       const d = req.body || {};
       const entries = Object.entries(d).filter(([k]) => k !== 'id');
       for (const [k, v] of entries) {
-        if (k === 'photos') { await sql`UPDATE historique SET photos=${JSON.stringify(v||[])}::jsonb WHERE id=${id}`; }
+        if (k === 'photos')                    { await sql`UPDATE historique SET photos=${JSON.stringify(v||[])}::jsonb WHERE id=${id}`; }
         else if (k === 'dest')                 { await sql`UPDATE historique SET dest=${JSON.stringify(v||[])}::jsonb WHERE id=${id}`; }
         else if (k === 'statut')               { await sql`UPDATE historique SET statut=${v||null} WHERE id=${id}`; }
         else if (k === 'etna_statut')          { await sql`UPDATE historique SET etna_statut=${v||null} WHERE id=${id}`; }
