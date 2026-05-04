@@ -4883,7 +4883,11 @@ async function renderHist() {
           <span style="font-size:13px;font-weight:700;color:${c.fg}">${tag}</span>
           <span style="font-size:10px;color:var(--muted)">${r.date} ${r.heure}</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${r.type}${wg?' -- '+wg:''}${wo&&wo!=='--'?' -- WO '+wo:''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${r.type}${wg?' -- '+wg:''}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px">
+          ${r.wo?`<span style="background:#EEF2FF;color:#3730A3;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700">WO ${r.wo}</span>`:''}
+          ${r.sc?`<span style="background:#FFF7ED;color:#9A3412;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700">SC ${r.sc}</span>`:''}
+        </div>
         ${info?`<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>`:''}
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
         ${r.loc?`<div style="font-size:10px;color:var(--muted)">${r.loc}</div>`:''}
@@ -8001,11 +8005,20 @@ async function saveEdit(id) {
   const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
 
   try {
-    // Sauvegarder dans Neon
+    // Sauvegarder dans Neon — tous les champs modifiables
     await fetch(DB_API + '?id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ statut: s, loc: loc || null })
+      body: JSON.stringify({
+        statut   : s       || null,
+        loc      : loc     || null,
+        wo       : wo      || null,
+        sc       : sc      || null,
+        tag      : tag     || null,
+        type_eqt : typeEqt || null,
+        serie    : serie   || null,
+        zone     : zone    || null
+      })
     });
 
     // Mettre à jour le cache local
