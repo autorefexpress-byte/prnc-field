@@ -7904,54 +7904,83 @@ function creerFicheDepuisArrivee(id) {
 
 function editRecord(id) {
   if (checkConsultMode()) return;
-  // Ouvre une modal légère pour modifier le statut/localisation
   dbLoad().then(records => {
     const r = records.find(x => x.id === id);
     if (!r) return;
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
     overlay.innerHTML = `
-      <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px">
-        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px">Modifier -- ${r.tag||'--'}</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:#fff;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:430px;max-height:90vh;overflow-y:auto">
+
+        <!-- Header -->
+        <div style="background:var(--navy);border-radius:20px 20px 0 0;padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">TAG</div>
-            <input class="fi" id="edit-tag" value="${r.tag||''}" style="width:100%">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Modifier</div>
+            <div style="font-size:16px;font-weight:800;color:#fff">${r.tag||'--'}</div>
           </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">${'WO MTC'}</div>
-            <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%">
-          </div>
-          ${r.type==='TERMINE' ? `<div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
-            <input class="fi" id="edit-wousine" value="${r.woMtc||''}" style="width:100%" placeholder="Ex : 837500">
-          </div>` : ''}
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Statut / Info</div>
-            <input class="fi" id="edit-statut" value="${r.statut||r.shutdown||''}" style="width:100%">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Type d'équipement</div>
-            <input class="fi" id="edit-typeeqt" value="${r.typeEqt||r.typeeqt||''}" style="width:100%" placeholder="Ex : VANNE / POMPE / ÉCHANGEUR...">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">N° Série</div>
-            <input class="fi" id="edit-serie" value="${r.serie||''}" style="width:100%" placeholder="Ex : SN-2021-047">
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
-            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%">
-          </div>
-          ${r.type==='TERMINE' ? `<div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Zone à déposer</div>
-            <input class="fi" id="edit-zone" value="${r.zone||''}" style="width:100%" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-          </div>` : ''}
+          <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff">${r.type||''}</div>
         </div>
-        <div style="display:flex;gap:10px;margin-top:16px">
-          <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
-          <button onclick="saveEdit('${id}')" style="flex:2;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Enregistrer</button>
+
+        <!-- Champs -->
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">TAG</div>
+              <input class="fi" id="edit-tag" value="${r.tag||''}" style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
+              <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%;box-sizing:border-box">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Stock Code</div>
+              <input class="fi" id="edit-sc" value="${r.sc||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : 158659">
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">N° Série</div>
+              <input class="fi" id="edit-serie" value="${r.serie||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : SN-2021-047">
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Statut / Info</div>
+            <input class="fi" id="edit-statut" value="${r.statut||r.shutdown||''}" style="width:100%;box-sizing:border-box">
+          </div>
+
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Type d'équipement</div>
+            <input class="fi" id="edit-typeeqt" value="${r.typeEqt||r.typeeqt||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : VANNE / POMPE / ÉCHANGEUR...">
+          </div>
+
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
+            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box">
+          </div>
+
+          ${r.type==='TERMINE' ? `
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Zone à déposer</div>
+            <input class="fi" id="edit-zone" value="${r.zone||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
+          </div>` : '<input type="hidden" id="edit-zone" value="">'}
+
         </div>
-        <button onclick="genererQRCode('${id}')" style="width:100%;margin-top:10px;padding:11px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#128248; Générer QR Code</button>
+
+        <!-- Boutons -->
+        <div style="padding:0 20px 28px;display:flex;flex-direction:column;gap:8px">
+          <button id="edit-save-btn" onclick="saveEdit('${id}')"
+            style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+            💾 Enregistrer les modifications
+          </button>
+          <button onclick="this.closest('div[style*=rgba]').remove()"
+            style="width:100%;padding:12px;background:#f0f0f0;color:#555;border:none;border-radius:12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">
+            Annuler
+          </button>
+        </div>
+
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
@@ -7959,47 +7988,58 @@ function editRecord(id) {
 }
 
 async function saveEdit(id) {
+  const btn     = document.getElementById('edit-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
+
   const tag     = document.getElementById('edit-tag').value.trim();
   const wo      = document.getElementById('edit-wo').value.trim();
-  const woUsine = document.getElementById('edit-wousine') ? document.getElementById('edit-wousine').value.trim() : '';
+  const sc      = document.getElementById('edit-sc') ? document.getElementById('edit-sc').value.trim() : '';
   const s       = document.getElementById('edit-statut').value.trim();
   const typeEqt = document.getElementById('edit-typeeqt') ? document.getElementById('edit-typeeqt').value.trim() : '';
   const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
   const loc     = document.getElementById('edit-loc').value.trim();
   const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
 
-  // Mettre à jour dans Supabase
   try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-      tag, wo, wo_mtc: woUsine||null, statut: s, type_eqt: typeEqt, serie, loc, zone: zone||null
+    // Sauvegarder dans Neon
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ statut: s, loc: loc || null })
     });
-  } catch(e) { console.warn('DB update err', e); }
 
-  // Mettre à jour aussi en localStorage
-  try {
-    const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-    const idx = local.findIndex(r => r.id === id);
-    if (idx >= 0) {
-      local[idx].tag = tag; local[idx].wo = wo; local[idx].statut = s;
-      // Ne pas écraser shutdown pour les types qui l'utilisent (USAGE)
-      local[idx].typeEqt = typeEqt; local[idx].serie = serie; local[idx].loc = loc;
-      if (woUsine) local[idx].woMtc = woUsine;
-      if (zone) local[idx].zone = zone;
-      localStorage.setItem(DB_KEY, JSON.stringify(local));
+    // Mettre à jour le cache local
+    _dbCache = null;
+    try {
+      const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+      const idx = local.findIndex(r => r.id === id);
+      if (idx >= 0) {
+        local[idx].tag = tag; local[idx].wo = wo; local[idx].sc = sc;
+        local[idx].statut = s; local[idx].typeEqt = typeEqt;
+        local[idx].serie = serie; local[idx].loc = loc;
+        if (zone) local[idx].zone = zone;
+        localStorage.setItem(DB_KEY, JSON.stringify(local));
+      }
+    } catch(e) {}
+
+    if (btn) { btn.style.background = '#375623'; btn.textContent = '✅ Enregistré !'; }
+
+    // Proposer WhatsApp si c'est un équipement TERMINE
+    const records2 = await dbLoad();
+    const rec2 = records2.find(r => r.id === id);
+    if (rec2 && rec2.type === 'TERMINE' && (loc || s)) {
+      showWhatsAppPrompt(tag, s, loc, '', wo, zone);
     }
-  } catch(e) {}
 
-  document.querySelectorAll('.overlay-view,[style*="rgba(0,0,0,.5)"]').forEach(el=>el.remove());
-  renderHist();
+    setTimeout(function() {
+      document.querySelectorAll('.overlay-view,[style*="rgba(0,0,0,.6)"]').forEach(el=>el.remove());
+      renderHist();
+    }, 800);
 
-  // Proposer WhatsApp si c'est un équipement TERMINE avec une zone renseignée
-  if (loc || s) {
-    // Récupérer le type de l'enregistrement
-    const records = await dbLoad();
-    const rec = records.find(r => r.id === id);
-    if (rec && rec.type === 'TERMINE') {
-      showWhatsAppPrompt(tag, s, loc, woUsine, wo, zone);
-    }
+  } catch(e) {
+    console.warn('saveEdit err', e);
+    if (btn) { btn.disabled = false; btn.style.background = ''; btn.textContent = '💾 Enregistrer les modifications'; }
+    alert('Erreur : ' + e.message);
   }
 }
 
