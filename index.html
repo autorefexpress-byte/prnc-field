@@ -292,6 +292,17 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div class="stat-card"><div class="stat-num orange" id="stat-usage">—</div><div class="stat-label">Usages</div></div>
   </div>
   <hr class="sec" style="margin:0 16px">
+
+  <!-- ── Section À planifier ── -->
+  <div style="padding:12px 0 4px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📋 À planifier</div>
+    <div id="planifier-count" style="font-size:10px;font-weight:700;color:var(--navy);background:#EEF2FF;border-radius:20px;padding:2px 8px"></div>
+  </div>
+  <div id="planifier-list" style="margin-bottom:12px">
+    <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Chargement...</div>
+  </div>
+
+  <hr class="sec" style="margin:0 0 4px">
   <div class="section-lbl">Actions rapides</div>
   <!-- Section 1 : Flux équipements -->
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
@@ -2781,6 +2792,7 @@ function show(id) {
     if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
     else { renderHist(); }
   }
+  if (id === 's-home') { renderPlanifier(); }
   if (id === 's-relances')      renderRelances();
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
@@ -2792,7 +2804,7 @@ function show(id) {
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home')     {
     // Chargement différé pour ne pas bloquer l'affichage
-    setTimeout(function() { updateStats(); }, 100);
+    setTimeout(function() { updateStats(); renderPlanifier(); }, 100);
     setTimeout(function() { checkRelances(); }, 200);
     // En mode STT, s-home est autorisé (accueil simplifié)
   }
@@ -4982,6 +4994,40 @@ async function dbSavePeinture(d) {
 
 
 // ------ STATS ACCUEIL ------
+async function renderPlanifier() {
+  var list = document.getElementById('planifier-list');
+  var countEl = document.getElementById('planifier-count');
+  if (!list) return;
+
+  dbLoad().then(function(records) {
+    var arrivees = records.filter(function(r) { return r.type === 'ARRIVEE'; })
+      .sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+
+    if (countEl) countEl.textContent = arrivees.length + ' équipement' + (arrivees.length > 1 ? 's' : '');
+
+    if (!arrivees.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px;background:#f8f9fa;border-radius:10px">Aucun équipement en attente</div>';
+      return;
+    }
+
+    list.innerHTML = arrivees.map(function(r) {
+      var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : r.wg === 'STROB' ? '#7030A0' : '#555';
+      var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : r.wg === 'STROB' ? '#EDE7F6' : '#f0f0f0';
+      return '<div onclick="viewRecord(&quot;' + r.id + '&quot;)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)">' +
+        '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0">' + (r.wg||'--') + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:1px">' +
+            (r.wo ? 'WO ' + r.wo + ' · ' : '') +
+            (r.statut || '') +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--muted);flex-shrink:0">' + (r.date||'') + '</div>' +
+      '</div>';
+    }).join('');
+  });
+}
+
 async function updateStats() {
   try {
     // Afficher placeholder pendant chargement
@@ -7409,18 +7455,25 @@ function buildWorkflowSteps(r) {
 }
 
 function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
+  // Fermer l'overlay
   document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
 
-  // Supprimer la fiche suiveuse source et marquer "from_fiche"
-  if (id) {
-    deleteFicheSupabase(id);
-    window._lastFromFiche = true; // flag pour le prochain enregistrement
+  if (action === 'prefillEtna') {
+    if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
+    prefillEtna(wo, tag, wg, woUsine);
+  } else if (action === 'prefillRetourEtna') {
+    if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
+    prefillRetourEtna(wo, tag, wr, wg, woUsine);
+  } else if (action === 'prefillTermine') {
+    // Ne pas supprimer la fiche avant — prefillTermine en a besoin pour les photos
+    prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem);
+    // Supprimer après le pré-remplissage
+    setTimeout(function() {
+      if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
+    }, 500);
+  } else if (action === 'prefillArrivee') {
+    prefillArrivee(wo, tag, wr, wg, sc);
   }
-
-  if (action === 'prefillEtna')            { prefillEtna(wo, tag, wg, woUsine); }
-  else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg, woUsine); }
-  else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem); }
-  else if (action === 'prefillArrivee')   { show('s-arrivee'); setTimeout(function(){ var t=document.getElementById('ar-tag'); if(t) t.value=tag; var w=document.getElementById('ar-wo'); if(w) w.value=wo; var wr2=document.getElementById('ar-wr'); if(wr2) wr2.value=wr; }, 200); }
 }
 
 // Supprimer une fiche suiveuse de Supabase + localStorage
@@ -10180,11 +10233,18 @@ async function renderWorkshop() {
     html += '</div>';
 
     // Row 2: WO, WR, Date
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#f8f9fa;border-radius:8px;padding:8px;margin-bottom:8px">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#f8f9fa;border-radius:8px;padding:8px;margin-bottom:6px">';
     html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + (r.wo||'--') + '</div></div>';
     html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:12px;font-weight:700;color:#C55A11">' + (r.wr||'--') + '</div></div>';
     html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE</div><div style="font-size:11px;font-weight:600">' + (r.date||'--') + '</div></div>';
     html += '</div>';
+    // Row 3: SC + TAG
+    if (r.sc || r.tag) {
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">';
+      html += '<div style="background:#EEF2FF;border-radius:8px;padding:6px 8px"><div style="font-size:9px;color:#999;font-weight:700">STOCK CODE</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + (r.sc||'--') + '</div></div>';
+      html += '<div style="background:#FFF8E1;border-radius:8px;padding:6px 8px"><div style="font-size:9px;color:#999;font-weight:700">TAG</div><div style="font-size:12px;font-weight:700;color:#E65100;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div></div>';
+      html += '</div>';
+    }
 
     // Statut
     html += '<div style="font-size:11px;color:#555;margin-bottom:8px">📌 ' + (r.statut||'--') + '</div>';
