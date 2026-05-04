@@ -10108,43 +10108,130 @@ function ouvrirEditionInventaire(id) {
     var r = records.find(function(x){ return x.id === id; });
     if (!r) return;
 
-    var ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end';
+    var existingPhotos = (r.photos || []).filter(Boolean);
 
-    ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 30px">' +
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end;overflow-y:auto';
+
+    // Générer les miniatures des photos existantes
+    var photosHtml = existingPhotos.map(function(url, idx) {
+      return '<div style="position:relative;display:inline-block">' +
+        '<img src="' + url + '" onclick="viewImg(this.src)" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer">' +
+        '<button onclick="invSupprimerPhoto(' + idx + ',this)" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C00;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;font-weight:700">×</button>' +
+      '</div>';
+    }).join('');
+
+    ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 30px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">' +
       '<div style="font-weight:800;font-size:16px;margin-bottom:16px">✏️ Modifier — ' + (r.tag||'') + '</div>' +
 
       '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">REMARQUES</div>' +
       '<textarea id="inv-edit-desc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;height:80px">' + (r.desc||r.description||'') + '</textarea></div>' +
 
-      '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
+      '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
       '<input id="inv-edit-loc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" value="' + (r.loc||'') + '"></div>' +
+
+      '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PHOTOS</div>' +
+
+      // Photos existantes
+      (existingPhotos.length ? '<div id="inv-photos-existing" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' + photosHtml + '</div>' : '<div id="inv-photos-existing" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>') +
+
+      // Prévisualisation nouvelles photos
+      '<div id="inv-photos-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>' +
+
+      // Bouton ajouter photo
+      '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:#F0F4FF;border:1.5px dashed #2E75B6;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#1F3864">' +
+      '📷 Ajouter une photo' +
+      '<input type="file" id="inv-photo-input" accept="image/*" multiple onchange="invAperçuPhotos(this)" style="display:none">' +
+      '</label></div>' +
 
       '<div style="display:flex;gap:8px">' +
       '<button onclick="fermerOverlay(this)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>' +
-      '<button onclick="sauvegarderEditionInventaire(this.dataset.recid,this)" data-recid="' + id + '" style="flex:2;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Enregistrer</button>' +
+      '<button id="inv-save-btn" onclick="sauvegarderEditionInventaire('' + id + '',this)" style="flex:2;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer</button>' +
       '</div></div>';
 
+    // Stocker les photos existantes dans un tableau sur l'overlay
+    ov._existingPhotos = existingPhotos.slice();
     document.body.appendChild(ov);
     ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
   });
 }
 
+function invAperçuPhotos(input) {
+  var prev = document.getElementById('inv-photos-preview');
+  if (!prev) return;
+  Array.from(input.files).forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px';
+      prev.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function invSupprimerPhoto(idx, btn) {
+  // Retirer du tableau existingPhotos sur l'overlay
+  var ov = btn.closest('[style*="rgba"]');
+  if (!ov || !ov._existingPhotos) return;
+  ov._existingPhotos.splice(idx, 1);
+  // Reconstruire les miniatures
+  var existingDiv = document.getElementById('inv-photos-existing');
+  if (!existingDiv) return;
+  existingDiv.innerHTML = ov._existingPhotos.map(function(url, i) {
+    return '<div style="position:relative;display:inline-block">' +
+      '<img src="' + url + '" onclick="viewImg(this.src)" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer">' +
+      '<button onclick="invSupprimerPhoto(' + i + ',this)" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C00;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;font-weight:700">×</button>' +
+    '</div>';
+  }).join('');
+}
+
 async function sauvegarderEditionInventaire(id, btn) {
   var desc = document.getElementById('inv-edit-desc').value.trim();
   var loc  = document.getElementById('inv-edit-loc').value.trim();
-  btn.textContent = '⏳';
+  var ov   = btn.closest('[style*="rgba"]');
+  btn.textContent = '⏳ Enregistrement...';
+  btn.disabled = true;
+
   try {
+    // 1. Récupérer photos existantes (après éventuelles suppressions)
+    var existingPhotos = (ov && ov._existingPhotos) ? ov._existingPhotos.slice() : [];
+
+    // 2. Uploader les nouvelles photos sur Cloudinary
+    var fileInput = document.getElementById('inv-photo-input');
+    var newPhotos = [];
+    if (fileInput && fileInput.files.length) {
+      for (var i = 0; i < fileInput.files.length; i++) {
+        try {
+          var fd = new FormData();
+          fd.append('file', fileInput.files[i]);
+          fd.append('upload_preset', 'prnc-field');
+          fd.append('folder', 'inventaire');
+          var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd });
+          var data = await resp.json();
+          if (data.secure_url) newPhotos.push(data.secure_url);
+        } catch(e) { console.warn('Photo upload err', e); }
+      }
+    }
+
+    var allPhotos = existingPhotos.concat(newPhotos);
+
+    // 3. Sauvegarder dans Neon
     await fetch('/api/db?id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ loc: loc })
+      body: JSON.stringify({ loc: loc, photos: allPhotos })
     });
-    // Also update description in local cache
+
     invalidateDbCache();
-    btn.closest('div[style*=rgba]').remove();
+    if (ov) ov.remove();
     renderInventaire();
-  } catch(e) { alert('Erreur : ' + e.message); btn.textContent = 'Enregistrer'; }
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+    btn.textContent = '💾 Enregistrer';
+    btn.disabled = false;
+  }
 }
 
 function fermerOverlay(btn) { var ov = btn.closest('[style*="rgba"]'); if(ov) ov.remove(); }
