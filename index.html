@@ -5666,7 +5666,7 @@ async function renderCallidusSuivi() {
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_cpid] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _cpid + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + cloudThumb(photos[0],600,280) + '" loading="lazy" onclick="viewPhotoByKey(' + _cpid + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
     return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">' +
       photoHtml +
@@ -5714,7 +5714,7 @@ async function renderCallidusPrestataire() {
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_cpidP] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _cpidP + ',0)" style="width:100%;height:130px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + cloudThumb(photos[0],600,260) + '" loading="lazy" onclick="viewPhotoByKey(' + _cpidP + ',0)" style="width:100%;height:130px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:60px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
     return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:' + (done?.75:1) + '">' +
       photoHtml +
@@ -6092,6 +6092,13 @@ function traiterQRCode(url) {
 
 
 // ══ INVENTAIRE P50 ══
+// ── Optimiser URL Cloudinary pour miniature ──────────
+function cloudThumb(url, w, h) {
+  if (!url) return url;
+  // Injecter les transformations après /upload/
+  return url.replace('/upload/', '/upload/w_' + (w||400) + ',h_' + (h||300) + ',c_fill,q_auto,f_auto/');
+}
+
 async function renderInventaire() {
   var list    = document.getElementById('inv-list');
   var countEl = document.getElementById('inv-count');
@@ -6161,7 +6168,7 @@ async function renderInventaire() {
 
       // Photo header
       if (photos.length > 0) {
-        html += '<img src="' + photos[0] + '" style="width:100%;height:110px;object-fit:cover;display:block;cursor:pointer" onclick="viewImg(this.src)">';
+        html += '<img src="' + cloudThumb(photos[0],600,220) + '" loading="lazy" style="width:100%;height:110px;object-fit:cover;display:block;cursor:pointer" onclick="viewImg(this.src)">';
       }
 
       html += '<div style="padding:10px 12px">';
@@ -6190,7 +6197,7 @@ async function renderInventaire() {
       if (photos.length > 1) {
         html += '<div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:8px">';
         photos.slice(1).forEach(function(url) {
-          html += '<img src="' + url + '" onclick="viewImg(this.src)" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
+          html += '<img src="' + cloudThumb(url,120,120) + '" loading="lazy" onclick="viewImg(this.src)" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
         });
         html += '</div>';
       }
@@ -6391,7 +6398,7 @@ async function ouvrirFicheQR(id) {
   var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
 
   if (content) content.innerHTML =
-    (photos.length ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;cursor:pointer">' : '') +
+    (photos.length ? '<img src="' + cloudThumb(photos[0],600,400) + '" loading="lazy" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;cursor:pointer">' : '') +
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
         '<div style="font-size:20px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
@@ -6818,7 +6825,7 @@ async function renderEtnaHistorique() {
 
     // Photo header
     if (photos.length > 0) {
-      html += '<img src="' + photos[0] + '" onclick="viewImg(this.src)" style="width:100%;height:120px;object-fit:cover;cursor:pointer;display:block">';
+      html += '<img src="' + cloudThumb(photos[0],600,240) + '" loading="lazy" onclick="viewImg(this.src)" style="width:100%;height:120px;object-fit:cover;cursor:pointer;display:block">';
     }
 
     html += '<div style="padding:12px 14px">';
@@ -6914,7 +6921,7 @@ async function renderEtnaSuivi() {
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_pid] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + cloudThumb(photos[0],600,320) + '" loading="lazy" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:160px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:90px;background:linear-gradient(135deg,#FCE4D6,#FFD0A8);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:36px">&#127912;</div>';
 
     // WG badge color
@@ -7013,7 +7020,7 @@ async function renderEtnaPrestataire() {
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_pidP] = photos;
     var photoHtml = photos.length > 0
-      ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pidP + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+      ? '<img src="' + cloudThumb(photos[0],600,280) + '" loading="lazy" onclick="viewPhotoByKey(' + _pidP + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
       : '<div style="width:100%;height:80px;background:linear-gradient(135deg,#FCE4D6,#FFD0A8);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:32px">&#127912;</div>';
     var trait = r.statut || (r.type === 'PEINTURE' ? 'Demande peinture' : 'Retour ETNA');
 
@@ -9201,7 +9208,7 @@ function renderRelanceCard(r, urgent) {
   window._etnaPhotosMap = window._etnaPhotosMap || {};
   window._etnaPhotosMap[_pidR] = photos;
   var photoHtml = photos.length > 0
-    ? '<img src="' + photos[0] + '" onclick="viewPhotoByKey(' + _pidR + ',0)" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+    ? '<img src="' + cloudThumb(photos[0],600,300) + '" loading="lazy" onclick="viewPhotoByKey(' + _pidR + ',0)" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
     : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
 
   // Mail de relance
@@ -10048,7 +10055,7 @@ async function renderWorkshop() {
     
     // Photo header
     if (photos.length > 0) {
-      html += '<img src="' + photos[0] + '" style="width:100%;height:100px;object-fit:cover;display:block">';
+      html += '<img src="' + cloudThumb(photos[0],600,200) + '" loading="lazy" style="width:100%;height:100px;object-fit:cover;display:block">';
     }
 
     html += '<div style="padding:12px 14px">';
