@@ -704,7 +704,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" onclick="ouvrirNumpad('fs-wr','N° WR')" style="cursor:pointer"></div>
     </div>
     <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" onclick="ouvrirNumpad('fs-wo-usine','WO Usine')" style="cursor:pointer"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
+      <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="fs-sc" placeholder="Ex : 158659" onclick="ouvrirNumpad('fs-sc','Stock Code')" style="cursor:pointer"></div>
+    </div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
     <div class="field-grp"><div class="field-lbl">Email du demandeur</div><input class="fi" type="email" id="fs-email-demandeur" placeholder="Ex : jade.honakoko@pronyresources.com"></div>
 
@@ -3530,7 +3533,7 @@ async function saveFichesuiveuse() {
     var el = document.getElementById(id); if(el) el.value = '';
   });
   if(state.fs) state.fs.wg = '';
-  resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
+  resetForm(['fs-wo','fs-wr','fs-tag','fs-sc','fs-demandeur','fs-rem'], [], 'fs');
 
   var linkedMsg = existing
     ? '<br><br>&#128279; Lie a un enregistrement : <strong>' + existing.type + '</strong> du ' + (existing.date||'')
@@ -7872,6 +7875,8 @@ function creerFicheDepuisArriveeRecord(r) {
     }
     var demEl = document.getElementById('fs-demandeur');
     if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+    var scEl = document.getElementById('fs-sc');
+    if (scEl) scEl.value = r.sc || '';
   }, 200);
 }
 
@@ -7902,6 +7907,9 @@ function creerFicheDepuisArrivee(id) {
       // Demandeur
       var demEl = document.getElementById('fs-demandeur');
       if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+      // Stock Code
+      var scEl = document.getElementById('fs-sc');
+      if (scEl) scEl.value = r.sc || '';
     }, 200);
   });
 }
@@ -9823,44 +9831,22 @@ async function genFicheWord() {
     var today = new Date().toLocaleDateString('fr-FR');
 
     if (wgLabel === 'MCREPAR') {
-      // Remplacer les Content Controls SDT par les vraies valeurs
-      // Les SDT ont un alias du nom du champ et contiennent le placeholder
-      var fields = {
-        'WO':               wo || '',
-        'DATE':             today,
-        'RETOUR_MAGASIN':   '',
-        'RETOUR_DEMANDEUR': '',
-        'STOCK_CODE':       sc || '',
-        'DEMANDEUR':        dem || '',
-        'TAG':              tag || '',
-        'WR':               wr || '',
-        'DEFAILLANCES':     rem || '',
-        'COMMENTAIRES_PAP': '',
-        'INSTRUCTIONS':     '',
-        'FLUIDE':           '',
-        'FABRICANT':        '',
-        'TAILLE':           '',
-        'CLASSE_PRESSION':  '',
-        'MODELE':           '',
-        'MATERIAU':         '',
-        'NUMERO_SERIE':     '',
-      };
-
-      // Remplacer chaque SDT par son contenu
-      Object.keys(fields).forEach(function(key) {
-          var val = fields[key] || '';
-          var sdt_re = new RegExp(
-            '(<w:sdt><w:sdtPr>(?:.|\\n)*?<w:alias w:val="' + key + '"(?:.|\\n)*?</w:sdtPr>' +
-            '(?:<w:sdtEndPr/>)?)(<w:sdtContent>)((?:.|\\n)*?)(</w:sdtContent></w:sdt>)', 'gm'
-          );
-          docXml = docXml.replace(sdt_re, function(match, sdtPr, contentOpen, cellXml, contentClose) {
-            var newCell = cellXml.replace(
-              /<w:t(\s[^>]*)?>([^<]*)<\/w:t>/,
-              '<w:t xml:space="preserve">' + escapeXmlVal(val) + '</w:t>'
-            );
-            return sdtPr + contentOpen + newCell + contentClose;
-          });
-        });
+      // Injecter les valeurs dans les cellules vides du tableau
+      docXml = injectFieldValue(docXml, 'WO', wo);
+      docXml = injectFieldValue(docXml, 'STOCK CODE', sc);
+      docXml = injectFieldValue(docXml, 'TAG EQUIPEMENT', tag);
+      docXml = injectFieldValue(docXml, 'WR', wr);
+      // DATE : cellule vide après DATE label (même pattern)
+      var dateEmpty = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+      var dateLabelPos = docXml.indexOf('>DATE<');
+      if (dateLabelPos > 0) {
+        var dateIdx = docXml.indexOf(dateEmpty, dateLabelPos);
+        if (dateIdx > 0) {
+          docXml = docXml.slice(0, dateIdx) +
+            '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + today + '</w:t></w:r></w:p></w:tc>' +
+            docXml.slice(dateIdx + dateEmpty.length);
+        }
+      }
     } else {
       // MCCHAUD : remplacer les valeurs d'exemple
       docXml = docXml.replace(/350-BLR-1010/g, tag || '');
@@ -9916,30 +9902,27 @@ async function telechargerFicheWord(r) {
 
     var isRepar = (wg === 'repar' || wg === 'strob');
     var fields = isRepar ? {
-      'WO': wo, 'DATE': dateRecep, 'RETOUR_MAGASIN': '', 'RETOUR_DEMANDEUR': '',
-      'STOCK_CODE': sc, 'DEMANDEUR': rem, 'TAG': tag, 'WR': wr,
-      'DEFAILLANCES': '', 'COMMENTAIRES_PAP': '', 'INSTRUCTIONS': '',
-      'FLUIDE': '', 'FABRICANT': '', 'TAILLE': '', 'CLASSE_PRESSION': '',
-      'MODELE': '', 'MATERIAU': '', 'NUMERO_SERIE': serie
+      'WO': wo, 'STOCK CODE': sc, 'TAG EQUIPEMENT': tag, 'WR': wr
     } : {
-      'WO': wo, 'TAG': tag, 'DEMANDEUR': rem,
-      'WR': wr, 'DESCRIPTION_WO': '', 'FLUIDE': '', 'MODELE': ''
+      'WO': wo, 'TAG EQUIPEMENT': tag, 'WR': wr
     };
 
-    Object.keys(fields).forEach(function(key) {
-          var val = fields[key] || '';
-          var sdt_re = new RegExp(
-            '(<w:sdt><w:sdtPr>(?:.|\\n)*?<w:alias w:val="' + key + '"(?:.|\\n)*?</w:sdtPr>' +
-            '(?:<w:sdtEndPr/>)?)(<w:sdtContent>)((?:.|\\n)*?)(</w:sdtContent></w:sdt>)', 'gm'
-          );
-          docXml = docXml.replace(sdt_re, function(match, sdtPr, contentOpen, cellXml, contentClose) {
-            var newCell = cellXml.replace(
-              /<w:t(\s[^>]*)?>([^<]*)<\/w:t>/,
-              '<w:t xml:space="preserve">' + escapeXmlVal(val) + '</w:t>'
-            );
-            return sdtPr + contentOpen + newCell + contentClose;
-          });
-        });
+    // Injecter les valeurs dans les cellules du tableau Word
+    docXml = injectFieldValue(docXml, 'WO', fields['WO'] || wo);
+    docXml = injectFieldValue(docXml, 'STOCK CODE', fields['STOCK CODE'] || sc);
+    docXml = injectFieldValue(docXml, 'TAG EQUIPEMENT', fields['TAG EQUIPEMENT'] || tag);
+    docXml = injectFieldValue(docXml, 'WR', fields['WR'] || wr);
+    // DATE
+    var dateEmpty = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+    var dateLabelPos = docXml.indexOf('>DATE<');
+    if (dateLabelPos > 0) {
+      var dateIdx = docXml.indexOf(dateEmpty, dateLabelPos);
+      if (dateIdx > 0) {
+        docXml = docXml.slice(0, dateIdx) +
+          '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + dateRecep + '</w:t></w:r></w:p></w:tc>' +
+          docXml.slice(dateIdx + dateEmpty.length);
+      }
+    }
 
     // Supprimer le saut de page explicite
     docXml = docXml.replace(/<w:r><w:br w:type="page"\/><\/w:r>/g, '');
@@ -10309,6 +10292,21 @@ async function sauvegarderEditionInventaire(id, btn) {
 }
 
 function fermerOverlay(btn) { var ov = btn.closest('[style*="rgba"]'); if(ov) ov.remove(); }
+
+
+// ── Injecter une valeur dans la cellule vide après un label dans le XML Word ──
+function injectFieldValue(xml, label, value) {
+  if (!value) return xml;
+  var pos = xml.indexOf('>' + label + '<');
+  if (pos < 0) return xml;
+  var emptyPattern = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+  var idx = xml.indexOf(emptyPattern, pos);
+  if (idx < 0) return xml;
+  var escaped = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return xml.slice(0, idx) +
+    '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + escaped + '</w:t></w:r></w:p></w:tc>' +
+    xml.slice(idx + emptyPattern.length);
+}
 
 function escapeXmlVal(str) {
   return String(str)
