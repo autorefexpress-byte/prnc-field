@@ -704,7 +704,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" onclick="ouvrirNumpad('fs-wr','N° WR')" style="cursor:pointer"></div>
     </div>
     <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" onclick="ouvrirNumpad('fs-wo-usine','WO Usine')" style="cursor:pointer"></div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
+      <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="fs-sc" placeholder="Ex : 158659" onclick="ouvrirNumpad('fs-sc','Stock Code')" style="cursor:pointer"></div>
+    </div>
     <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
     <div class="field-grp"><div class="field-lbl">Email du demandeur</div><input class="fi" type="email" id="fs-email-demandeur" placeholder="Ex : jade.honakoko@pronyresources.com"></div>
 
@@ -3530,7 +3533,7 @@ async function saveFichesuiveuse() {
     var el = document.getElementById(id); if(el) el.value = '';
   });
   if(state.fs) state.fs.wg = '';
-  resetForm(['fs-wo','fs-wr','fs-tag','fs-demandeur','fs-rem'], [], 'fs');
+  resetForm(['fs-wo','fs-wr','fs-tag','fs-sc','fs-demandeur','fs-rem'], [], 'fs');
 
   var linkedMsg = existing
     ? '<br><br>&#128279; Lie a un enregistrement : <strong>' + existing.type + '</strong> du ' + (existing.date||'')
@@ -7324,6 +7327,55 @@ function buildWorkflowHtml(r) {
     '</div>';
 }
 
+function buildWorkflowArriveeHtml(r) {
+  var html = '<div style="background:#F0F4FF;border-radius:12px;padding:12px 14px;margin-bottom:2px">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#9881; Workflow -- ' + (r.tag||'') + '</div>';
+
+  var steps = [
+    { num:1, label:'Arrivée enregistrée', done:true, date:r.date, color:'#375623' },
+    { num:2, label:'Créer fiche suiveuse', done:false, color:'#1F3864',
+      btnLabel:'&#128196; Fiche suiveuse', action:'fiche' },
+    { num:3, label:'Mettre au rebus', done:false, color:'#C00',
+      btnLabel:'&#128465; Rebus', action:'rebus' },
+  ];
+
+  steps.forEach(function(s) {
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E8FF">';
+    html += '<div style="width:26px;height:26px;border-radius:50%;background:' + (s.done?s.color:'#E0E0E0') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">' + s.num + '</div>';
+    html += '<div style="flex:1">';
+    html += '<div style="font-size:12px;font-weight:700;color:' + (s.done?s.color:'#555') + '">' + (s.done?'&#9989; ':'&#9633; ') + s.label + '</div>';
+    if (s.done && s.date) html += '<div style="font-size:10px;color:#888;margin-top:2px">' + s.date + '</div>';
+    html += '</div>';
+    if (!s.done && s.action) {
+      var rid = r.id || '';
+            html += '<button data-action="' + s.action + '" data-wo="' + (r.wo||'') + '" data-tag="' + (r.tag||'') + '" data-wr="' + (r.wr||'') + '" data-wg="' + (r.wg||'') + '" data-sc="' + (r.sc||'') + '" data-id="' + rid + '" data-wousine="' + (r.woUsine||r.wo_usine||'') + '" data-email="' + (r.emailDemandeur||r.email_demandeur||'') + '" onclick="var d=this.dataset;triggerWorkflowArrivee(d.action,d.wo,d.tag,d.wr,d.wg,d.sc,d.id,d.wousine,d.email)" style="padding:6px 10px;background:' + s.color + ';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">' + s.btnLabel + '</button>';
+    }
+    html += '</div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function triggerWorkflowArrivee(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
+  document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
+  if (action === 'fiche') {
+    creerFicheDepuisArrivee(id);
+  } else if (action === 'rebus') {
+    if (confirm('Mettre ' + (tag||'cet équipement') + ' au rebus ?')) {
+      show('s-rebus');
+      setTimeout(function() {
+        var tagEl = document.getElementById('rb-tag');
+        if (tagEl) tagEl.value = tag || '';
+        var woEl = document.getElementById('rb-wo');
+        if (woEl) woEl.value = wo || '';
+        var scEl = document.getElementById('rb-sc');
+        if (scEl) scEl.value = sc || '';
+      }, 200);
+    }
+  }
+}
+
 function buildWorkflowSteps(r) {
   var steps = [
     { num:1, label:'Fiche suiveuse reçue', done:true, date:r.date, color:'#375623', icon:'&#9989;' },
@@ -7333,6 +7385,8 @@ function buildWorkflowSteps(r) {
       action:'prefillRetourEtna', btnLabel:'&#128229; Retour ETNA' },
     { num:4, label:'Équipement terminé -- Dépôt', done:false, color:'#0F6E56', icon:'&#9989;',
       action:'prefillTermine', btnLabel:'&#9989; Équipement terminé' },
+    { num:5, label:'Arrivée équipement', done:false, color:'#1F3864', icon:'&#128666;',
+      action:'prefillArrivee', btnLabel:'&#128666; Arrivée' },
   ];
 
   return steps.map(function(s) {
@@ -7366,6 +7420,7 @@ function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
   if (action === 'prefillEtna')            { prefillEtna(wo, tag, wg, woUsine); }
   else if (action === 'prefillRetourEtna') { prefillRetourEtna(wo, tag, wr, wg, woUsine); }
   else if (action === 'prefillTermine')    { prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem); }
+  else if (action === 'prefillArrivee')   { show('s-arrivee'); setTimeout(function(){ var t=document.getElementById('ar-tag'); if(t) t.value=tag; var w=document.getElementById('ar-wo'); if(w) w.value=wo; var wr2=document.getElementById('ar-wr'); if(wr2) wr2.value=wr; }, 200); }
 }
 
 // Supprimer une fiche suiveuse de Supabase + localStorage
@@ -7644,7 +7699,7 @@ function viewRecord(id) {
     const r = records.find(x => x.id === id);
     if (!r) return;
     // Si ARRIVEE → ouvrir overlay workflow
-    if (r.type === 'ARRIVEE') { ouvrirWorkflowArrivee(r); return; }
+    // ARRIVEE → on continue pour afficher la fiche avec workflow intégré
     const c = TYPE_COLORS[r.type] || {bg:'#f5f5f5', fg:'#555', icon:'?'};
 
     // Construire les lignes d'infos
@@ -7709,6 +7764,7 @@ function viewRecord(id) {
             &#128172; WhatsApp Magasinier
           </button>` : ''}
           ${r.type==='FICHE' && !_isConsultMode ? buildWorkflowHtml(r) : ''}
+          ${r.type==='ARRIVEE' && !_isConsultMode ? buildWorkflowArriveeHtml(r) : ''}
           <div style="display:flex;gap:8px">
             <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
             ${!_isConsultMode ? `
@@ -7872,6 +7928,8 @@ function creerFicheDepuisArriveeRecord(r) {
     }
     var demEl = document.getElementById('fs-demandeur');
     if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+    var scEl = document.getElementById('fs-sc');
+    if (scEl) scEl.value = r.sc || '';
   }, 200);
 }
 
@@ -7902,6 +7960,9 @@ function creerFicheDepuisArrivee(id) {
       // Demandeur
       var demEl = document.getElementById('fs-demandeur');
       if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
+      // Stock Code
+      var scEl = document.getElementById('fs-sc');
+      if (scEl) scEl.value = r.sc || '';
     }, 200);
   });
 }
@@ -9823,44 +9884,22 @@ async function genFicheWord() {
     var today = new Date().toLocaleDateString('fr-FR');
 
     if (wgLabel === 'MCREPAR') {
-      // Remplacer les Content Controls SDT par les vraies valeurs
-      // Les SDT ont un alias du nom du champ et contiennent le placeholder
-      var fields = {
-        'WO':               wo || '',
-        'DATE':             today,
-        'RETOUR_MAGASIN':   '',
-        'RETOUR_DEMANDEUR': '',
-        'STOCK_CODE':       sc || '',
-        'DEMANDEUR':        dem || '',
-        'TAG':              tag || '',
-        'WR':               wr || '',
-        'DEFAILLANCES':     rem || '',
-        'COMMENTAIRES_PAP': '',
-        'INSTRUCTIONS':     '',
-        'FLUIDE':           '',
-        'FABRICANT':        '',
-        'TAILLE':           '',
-        'CLASSE_PRESSION':  '',
-        'MODELE':           '',
-        'MATERIAU':         '',
-        'NUMERO_SERIE':     '',
-      };
-
-      // Remplacer chaque SDT par son contenu
-      Object.keys(fields).forEach(function(key) {
-          var val = fields[key] || '';
-          var sdt_re = new RegExp(
-            '(<w:sdt><w:sdtPr>(?:.|\\n)*?<w:alias w:val="' + key + '"(?:.|\\n)*?</w:sdtPr>' +
-            '(?:<w:sdtEndPr/>)?)(<w:sdtContent>)((?:.|\\n)*?)(</w:sdtContent></w:sdt>)', 'gm'
-          );
-          docXml = docXml.replace(sdt_re, function(match, sdtPr, contentOpen, cellXml, contentClose) {
-            var newCell = cellXml.replace(
-              /<w:t(\s[^>]*)?>([^<]*)<\/w:t>/,
-              '<w:t xml:space="preserve">' + escapeXmlVal(val) + '</w:t>'
-            );
-            return sdtPr + contentOpen + newCell + contentClose;
-          });
-        });
+      // Injecter les valeurs dans les cellules vides du tableau
+      docXml = injectFieldValue(docXml, 'WO', wo);
+      docXml = injectFieldValue(docXml, 'STOCK CODE', sc);
+      docXml = injectFieldValue(docXml, 'TAG EQUIPEMENT', tag);
+      docXml = injectFieldValue(docXml, 'WR', wr);
+      // DATE : cellule vide après DATE label (même pattern)
+      var dateEmpty = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+      var dateLabelPos = docXml.indexOf('>DATE<');
+      if (dateLabelPos > 0) {
+        var dateIdx = docXml.indexOf(dateEmpty, dateLabelPos);
+        if (dateIdx > 0) {
+          docXml = docXml.slice(0, dateIdx) +
+            '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + today + '</w:t></w:r></w:p></w:tc>' +
+            docXml.slice(dateIdx + dateEmpty.length);
+        }
+      }
     } else {
       // MCCHAUD : remplacer les valeurs d'exemple
       docXml = docXml.replace(/350-BLR-1010/g, tag || '');
@@ -9916,30 +9955,27 @@ async function telechargerFicheWord(r) {
 
     var isRepar = (wg === 'repar' || wg === 'strob');
     var fields = isRepar ? {
-      'WO': wo, 'DATE': dateRecep, 'RETOUR_MAGASIN': '', 'RETOUR_DEMANDEUR': '',
-      'STOCK_CODE': sc, 'DEMANDEUR': rem, 'TAG': tag, 'WR': wr,
-      'DEFAILLANCES': '', 'COMMENTAIRES_PAP': '', 'INSTRUCTIONS': '',
-      'FLUIDE': '', 'FABRICANT': '', 'TAILLE': '', 'CLASSE_PRESSION': '',
-      'MODELE': '', 'MATERIAU': '', 'NUMERO_SERIE': serie
+      'WO': wo, 'STOCK CODE': sc, 'TAG EQUIPEMENT': tag, 'WR': wr
     } : {
-      'WO': wo, 'TAG': tag, 'DEMANDEUR': rem,
-      'WR': wr, 'DESCRIPTION_WO': '', 'FLUIDE': '', 'MODELE': ''
+      'WO': wo, 'TAG EQUIPEMENT': tag, 'WR': wr
     };
 
-    Object.keys(fields).forEach(function(key) {
-          var val = fields[key] || '';
-          var sdt_re = new RegExp(
-            '(<w:sdt><w:sdtPr>(?:.|\\n)*?<w:alias w:val="' + key + '"(?:.|\\n)*?</w:sdtPr>' +
-            '(?:<w:sdtEndPr/>)?)(<w:sdtContent>)((?:.|\\n)*?)(</w:sdtContent></w:sdt>)', 'gm'
-          );
-          docXml = docXml.replace(sdt_re, function(match, sdtPr, contentOpen, cellXml, contentClose) {
-            var newCell = cellXml.replace(
-              /<w:t(\s[^>]*)?>([^<]*)<\/w:t>/,
-              '<w:t xml:space="preserve">' + escapeXmlVal(val) + '</w:t>'
-            );
-            return sdtPr + contentOpen + newCell + contentClose;
-          });
-        });
+    // Injecter les valeurs dans les cellules du tableau Word
+    docXml = injectFieldValue(docXml, 'WO', fields['WO'] || wo);
+    docXml = injectFieldValue(docXml, 'STOCK CODE', fields['STOCK CODE'] || sc);
+    docXml = injectFieldValue(docXml, 'TAG EQUIPEMENT', fields['TAG EQUIPEMENT'] || tag);
+    docXml = injectFieldValue(docXml, 'WR', fields['WR'] || wr);
+    // DATE
+    var dateEmpty = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+    var dateLabelPos = docXml.indexOf('>DATE<');
+    if (dateLabelPos > 0) {
+      var dateIdx = docXml.indexOf(dateEmpty, dateLabelPos);
+      if (dateIdx > 0) {
+        docXml = docXml.slice(0, dateIdx) +
+          '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + dateRecep + '</w:t></w:r></w:p></w:tc>' +
+          docXml.slice(dateIdx + dateEmpty.length);
+      }
+    }
 
     // Supprimer le saut de page explicite
     docXml = docXml.replace(/<w:r><w:br w:type="page"\/><\/w:r>/g, '');
@@ -10309,6 +10345,21 @@ async function sauvegarderEditionInventaire(id, btn) {
 }
 
 function fermerOverlay(btn) { var ov = btn.closest('[style*="rgba"]'); if(ov) ov.remove(); }
+
+
+// ── Injecter une valeur dans la cellule vide après un label dans le XML Word ──
+function injectFieldValue(xml, label, value) {
+  if (!value) return xml;
+  var pos = xml.indexOf('>' + label + '<');
+  if (pos < 0) return xml;
+  var emptyPattern = '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr></w:r></w:p></w:tc>';
+  var idx = xml.indexOf(emptyPattern, pos);
+  if (idx < 0) return xml;
+  var escaped = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return xml.slice(0, idx) +
+    '<w:b w:val="0"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">' + escaped + '</w:t></w:r></w:p></w:tc>' +
+    xml.slice(idx + emptyPattern.length);
+}
 
 function escapeXmlVal(str) {
   return String(str)
