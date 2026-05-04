@@ -3138,76 +3138,83 @@ async function addPhotos(input, prevId) {
   if (!_photoStore[prevId]) _photoStore[prevId] = [];
   var prev = document.getElementById(prevId);
 
-  for (var i = 0; i < files.length; i++) {
-    var file = files[i];
-    // Show loading thumb
+  // Créer les thumbs de chargement immédiatement pour toutes les photos
+  var thumbInfos = files.map(function(file) {
     var thumbDiv = document.createElement('div');
     thumbDiv.className = 'photo-thumb';
     var img = document.createElement('img');
-    img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;opacity:0.5';
+    img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;opacity:0.4';
     var del = document.createElement('div');
     del.className = 'photo-thumb-del';
     del.textContent = '×';
     thumbDiv.appendChild(img);
     thumbDiv.appendChild(del);
     if (prev) prev.appendChild(thumbDiv);
+    // Aperçu local immédiat
+    var objUrl = URL.createObjectURL(file);
+    img.src = objUrl;
+    return { thumbDiv, img, del, objUrl };
+  });
 
-    try {
-      // Compress
-      var blob = await new Promise(function(resolve) {
-        var imgEl = new Image();
-        var objUrl = URL.createObjectURL(file);
-        imgEl.onload = function() {
-          var w = imgEl.width, h = imgEl.height;
-          var MAX = 1000;
-          if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-          if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-          var canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
-          URL.revokeObjectURL(objUrl);
-          canvas.toBlob(function(b) { resolve(b); }, 'image/jpeg', 0.6);
-        };
-        imgEl.onerror = function() { URL.revokeObjectURL(objUrl); resolve(file); };
-        imgEl.src = objUrl;
-      });
-
-      img.src = URL.createObjectURL(blob);
-
-      // Upload to Cloudinary
-      var formData = new FormData();
-      formData.append('file', blob, 'photo.jpg');
-      formData.append('upload_preset', CLOUDINARY_PRESET);
-      formData.append('folder', 'prnc-field');
-      var resp = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
-        method: 'POST', body: formData
-      });
-      var data = await resp.json();
-      var finalUrl = data.secure_url || null;
-
-      if (!finalUrl) {
-        // Fallback base64
-        finalUrl = await new Promise(function(resolve) {
-          var reader = new FileReader();
-          reader.onload = function(e) { resolve(e.target.result); };
-          reader.readAsDataURL(blob);
+  // Compresser + uploader TOUTES les photos en parallèle
+  var uploadPromises = files.map(function(file, i) {
+    return (async function() {
+      var info = thumbInfos[i];
+      try {
+        // Compress
+        var blob = await new Promise(function(resolve) {
+          var imgEl = new Image();
+          imgEl.onload = function() {
+            var w = imgEl.width, h = imgEl.height;
+            var MAX = 1000;
+            if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+            if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+            URL.revokeObjectURL(info.objUrl);
+            canvas.toBlob(function(b) { resolve(b); }, 'image/jpeg', 0.6);
+          };
+          imgEl.onerror = function() { URL.revokeObjectURL(info.objUrl); resolve(file); };
+          imgEl.src = info.objUrl;
         });
+
+        // Upload Cloudinary
+        var formData = new FormData();
+        formData.append('file', blob, 'photo.jpg');
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+        formData.append('folder', 'prnc-field');
+        var resp = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
+          method: 'POST', body: formData
+        });
+        var data = await resp.json();
+        var finalUrl = data.secure_url || null;
+
+        if (!finalUrl) {
+          finalUrl = await new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onload = function(e) { resolve(e.target.result); };
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        _photoStore[prevId].push(finalUrl);
+        info.img.src = finalUrl;
+        info.img.style.opacity = '1';
+
+        info.del.onclick = function() {
+          var idx = _photoStore[prevId].indexOf(finalUrl);
+          if (idx >= 0) _photoStore[prevId].splice(idx, 1);
+          info.thumbDiv.remove();
+        };
+      } catch(e) {
+        console.error('Photo upload error:', e);
+        info.thumbDiv.remove();
       }
+    })();
+  });
 
-      _photoStore[prevId].push(finalUrl);
-      img.src = finalUrl;
-      img.style.opacity = '1';
-
-      del.onclick = function() {
-        var idx = _photoStore[prevId].indexOf(finalUrl);
-        if (idx >= 0) _photoStore[prevId].splice(idx, 1);
-        thumbDiv.remove();
-      };
-    } catch(e) {
-      console.error('Photo upload error:', e);
-      thumbDiv.remove();
-    }
-  }
+  await Promise.all(uploadPromises);
   input.value = '';
 }
 
@@ -6555,18 +6562,12 @@ async function saveEtnaUpdate() {
     allPhotos = (r && r.photos ? r.photos : []).filter(Boolean);
   } catch(e) {}
 
-  // Upload base64 photos to Cloudinary
-  for (var i = 0; i < photos.length; i++) {
-    try {
-      var blob = await fetch(photos[i]).then(function(r){ return r.blob(); });
-      var fd = new FormData();
-      fd.append('file', blob);
-      fd.append('upload_preset', 'prnc-field');
-      fd.append('folder', 'etna');
-      var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd });
-      var data = await resp.json();
-      if (data.secure_url) allPhotos.push(data.secure_url);
-    } catch(e) { console.warn('Photo upload err', e); }
+  // Upload photos en parallèle sur Cloudinary
+  var blobs = await Promise.all(photos.map(function(p){ return fetch(p).then(function(r){ return r.blob(); }).catch(function(){ return null; }); }));
+  var validBlobs = blobs.filter(Boolean);
+  if (validBlobs.length) {
+    var uploaded = await uploadPhotosParallel(validBlobs, 'etna');
+    allPhotos = allPhotos.concat(uploaded);
   }
 
   // Save to Neon
@@ -9306,6 +9307,29 @@ function renderRelanceCard(r, urgent) {
 
 
 // ── Compression image avant upload ──
+
+// ── Upload photos en parallèle sur Cloudinary ────────
+async function uploadPhotosParallel(files, folder) {
+  if (!files || !files.length) return [];
+  folder = folder || 'prnc-field';
+  var uploads = Array.from(files).map(function(file) {
+    return (async function() {
+      try {
+        var compressed = await compressImage(file, 1200, 0.75);
+        var fd = new FormData();
+        fd.append('file', compressed, 'photo.jpg');
+        fd.append('upload_preset', 'prnc-field');
+        fd.append('folder', folder);
+        var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd });
+        var data = await resp.json();
+        return data.secure_url || null;
+      } catch(e) { console.warn('Upload err:', e); return null; }
+    })();
+  });
+  var results = await Promise.all(uploads);
+  return results.filter(Boolean);
+}
+
 async function compressImage(file, maxWidth, quality) {
   maxWidth = maxWidth || 1200;
   quality = quality || 0.7;
@@ -10209,17 +10233,7 @@ async function sauvegarderEditionInventaire(id, btn) {
     var fileInput = document.getElementById('inv-photo-input');
     var newPhotos = [];
     if (fileInput && fileInput.files.length) {
-      for (var i = 0; i < fileInput.files.length; i++) {
-        try {
-          var fd = new FormData();
-          fd.append('file', fileInput.files[i]);
-          fd.append('upload_preset', 'prnc-field');
-          fd.append('folder', 'inventaire');
-          var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd });
-          var data = await resp.json();
-          if (data.secure_url) newPhotos.push(data.secure_url);
-        } catch(e) { console.warn('Photo upload err', e); }
-      }
+      newPhotos = await uploadPhotosParallel(fileInput.files, 'inventaire');
     }
 
     var allPhotos = existingPhotos.concat(newPhotos);
