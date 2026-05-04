@@ -136,6 +136,12 @@ module.exports = async function handler(req, res) {
         else if (k === 'callidus_date_retour') { await sql`UPDATE historique SET callidus_date_retour=${v||null} WHERE id=${id}`; }
         else if (k === 'callidus_commentaire') { await sql`UPDATE historique SET callidus_commentaire=${v||null} WHERE id=${id}`; }
         else if (k === 'loc')                  { await sql`UPDATE historique SET loc=${v||null} WHERE id=${id}`; }
+        else if (k === 'wo')                   { await sql`UPDATE historique SET wo=${v||null} WHERE id=${id}`; }
+        else if (k === 'sc')                   { await sql`UPDATE historique SET sc=${v||null} WHERE id=${id}`; }
+        else if (k === 'tag')                  { await sql`UPDATE historique SET tag=${v||null} WHERE id=${id}`; }
+        else if (k === 'type_eqt')             { await sql`UPDATE historique SET type_eqt=${v||null} WHERE id=${id}`; }
+        else if (k === 'serie')                { await sql`UPDATE historique SET serie=${v||null} WHERE id=${id}`; }
+        else if (k === 'zone')                 { await sql`UPDATE historique SET zone=${v||null} WHERE id=${id}`; }
         else if (k === 'recovered_at')         { await sql`UPDATE historique SET recovered_at=${v||null} WHERE id=${id}`; }
         else { console.warn('Unknown field:', k); }
       }
