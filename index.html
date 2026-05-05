@@ -363,10 +363,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Relances</div>
       <div class="card-sub" id="relance-badge-home">Retour demandeur</div>
     </div>
-    <div class="action-card" onclick="show('s-relance-credit')">
-      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#128230;</div>
-      <div class="card-lbl">Relances Crédit</div>
-      <div class="card-sub" id="cr-badge-home">Crédit magasin</div>
+    <div class="action-card" onclick="show('s-transport');renderTransport()">
+      <div class="card-icon" style="background:#E1F5EE;color:#0F6E56">🚛</div>
+      <div class="card-lbl">Planning Transport</div>
+      <div class="card-sub" id="transport-badge-home">Camions & expéditions</div>
     </div>
     <div class="action-card" onclick="show('s-credit-magasin')">
       <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
@@ -1333,19 +1333,129 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 </div>
 
 <!-- ═══════════════ RELANCES CRÉDIT MAGASIN ═══════════════ -->
-<div class="screen" id="s-relance-credit">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
-    <div class="form-title">Relances Crédit</div>
-    <div class="form-badge" style="background:#FCE4D6;color:#C55A11">&#128276;</div>
+<div class="screen" id="s-transport">
+  <div class="form-header" style="background:linear-gradient(135deg,#0F6E56,#1a9e7a);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">🚛 Planning Transport</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Interventions camion & expéditions</div>
+    </div>
+    <div onclick="ouvrirFormulaireTransport()" style="background:rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;color:#fff;cursor:pointer">+ Ajouter</div>
   </div>
-  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
-    <input class="fi" type="text" id="cr-search" placeholder="Rechercher IR, WO, Stock Code..."
-      oninput="renderRelancesCredit()"
-      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
+
+  <!-- Stats transport -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
+    <div style="background:#E1F5EE;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#0F6E56" id="tr-cnt-total">0</div>
+      <div style="font-size:10px;color:#0F6E56;font-weight:600">Total</div>
+    </div>
+    <div style="background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#E65100" id="tr-cnt-encours">0</div>
+      <div style="font-size:10px;color:#E65100;font-weight:600">En cours</div>
+    </div>
+    <div style="background:#f0f4ff;border-radius:10px;padding:10px;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#1F3864" id="tr-cnt-planifier">0</div>
+      <div style="font-size:10px;color:#1F3864;font-weight:600">À planifier</div>
+    </div>
   </div>
-  <div style="padding:8px 14px 4px;font-size:11px;color:var(--muted)" id="cr-relance-count">Chargement...</div>
-  <div id="cr-relance-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+
+  <!-- Filtres type -->
+  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:7px;overflow-x:auto">
+    <button onclick="setTransportFilter('all')" id="tr-f-all"
+      style="padding:6px 14px;border-radius:20px;border:2px solid #0F6E56;background:#0F6E56;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
+      Tous
+    </button>
+    <button onclick="setTransportFilter('intransit')" id="tr-f-intransit"
+      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
+      🔄 Intransit
+    </button>
+    <button onclick="setTransportFilter('local')" id="tr-f-local"
+      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
+      📍 Local
+    </button>
+    <button onclick="setTransportFilter('international')" id="tr-f-international"
+      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
+      ✈️ International
+    </button>
+  </div>
+
+  <div id="tr-list" style="padding:10px 14px 80px;display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+<!-- MODAL Formulaire Transport -->
+<div id="modal-transport" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:5000;align-items:flex-end">
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,0);width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:700;color:#0F6E56">🚛 Nouvelle intervention</div>
+      <div onclick="fermerFormulaireTransport()" style="width:30px;height:30px;border-radius:50%;background:var(--grey);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--muted)">×</div>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+
+      <!-- Date -->
+      <div class="field-grp">
+        <div class="field-lbl">Date intervention <span class="req">*</span></div>
+        <input class="fi" type="date" id="tr-date">
+      </div>
+
+      <!-- Type de transport -->
+      <div class="field-grp">
+        <div class="field-lbl">Type de transport <span class="req">*</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div onclick="selectTypeTransport('intransit')" id="tr-type-intransit"
+            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
+            <div style="font-size:20px">🔄</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">Intransit</div>
+          </div>
+          <div onclick="selectTypeTransport('local')" id="tr-type-local"
+            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
+            <div style="font-size:20px">📍</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">Local</div>
+          </div>
+          <div onclick="selectTypeTransport('international')" id="tr-type-international"
+            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
+            <div style="font-size:20px">✈️</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">International</div>
+          </div>
+        </div>
+        <input type="hidden" id="tr-type-val">
+      </div>
+
+      <!-- Statut -->
+      <div class="field-grp">
+        <div class="field-lbl">Statut <span class="req">*</span></div>
+        <select class="fi" id="tr-statut">
+          <option value="">— Sélectionner —</option>
+          <option value="a_planifier">📋 À planifier</option>
+          <option value="en_cours">🔄 En cours</option>
+          <option value="expedie">📦 Expédié</option>
+          <option value="livre">✅ Livré</option>
+        </select>
+      </div>
+
+      <!-- Description / Reference -->
+      <div class="field-grp">
+        <div class="field-lbl">Référence / Description</div>
+        <input class="fi" type="text" id="tr-ref" placeholder="N° WO, référence, description...">
+      </div>
+
+      <!-- Destination -->
+      <div class="field-grp">
+        <div class="field-lbl">Destination</div>
+        <input class="fi" type="text" id="tr-dest" placeholder="Lieu de livraison...">
+      </div>
+
+      <!-- Notes -->
+      <div class="field-grp">
+        <div class="field-lbl">Notes / Remarques</div>
+        <textarea class="fi" id="tr-notes" placeholder="Informations complémentaires..."></textarea>
+      </div>
+
+      <button onclick="sauvegarderTransport()"
+        style="width:100%;background:linear-gradient(135deg,#0F6E56,#1a9e7a);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+        💾 Enregistrer
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -2774,7 +2884,7 @@ const state = {
 };
 
 // ------ NAVIGATION ------
-const SCREENS = ['s-home','s-workshop','s-templates','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-relance-credit','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
+const SCREENS = ['s-home','s-workshop','s-templates','s-planning','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
 const NAV = {'s-home':'nav-home','s-planning':'nav-planning','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -2802,7 +2912,7 @@ function show(id) {
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-inventaire')      renderInventaire();
-  if (id === 's-relance-credit') renderRelancesCredit();
+  if (id === 's-transport') renderTransport();
   // Arrêter la caméra si on quitte le scanner
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
@@ -5956,155 +6066,166 @@ async function sendCreditMagasin() {
 }
 
 // ══ RELANCES CRÉDIT MAGASIN ══
-async function renderRelancesCredit() {
-  var list    = document.getElementById('cr-relance-list');
-  var countEl = document.getElementById('cr-relance-count');
-  if (!list) return;
-  var search = (document.getElementById('cr-search')||{value:''}).value.toLowerCase();
-  var records = await dbLoad();
-  var now = new Date();
+// ═══════════════ PLANNING TRANSPORT ═══════════════
+var transportFilter = 'all';
 
-  // Filtrer les crédits non confirmés depuis + de 5 jours
-  var credits = records.filter(function(r) {
-    if (r.type !== 'CREDIT') return false;
-    if (r.statut === 'Confirmé magasin') return false;
-    if (search) {
-      var ir = r.loc || '';
-      return ir.toLowerCase().includes(search) ||
-             (r.wo||'').toLowerCase().includes(search) ||
-             (r.sc||'').toLowerCase().includes(search);
+function getTransportData() {
+  try { return JSON.parse(localStorage.getItem('prnc-transport') || '[]'); }
+  catch(e) { return []; }
+}
+function saveTransportData(data) {
+  localStorage.setItem('prnc-transport', JSON.stringify(data));
+}
+
+function setTransportFilter(f) {
+  transportFilter = f;
+  ['all','intransit','local','international'].forEach(function(k) {
+    var btn = document.getElementById('tr-f-' + k);
+    if (!btn) return;
+    if (k === f) {
+      btn.style.background = '#0F6E56'; btn.style.color = '#fff'; btn.style.borderColor = '#0F6E56';
+    } else {
+      btn.style.background = 'var(--grey)'; btn.style.color = 'var(--muted)'; btn.style.borderColor = 'var(--border)';
     }
-    return true;
   });
+  renderTransport();
+}
 
-  // Calculer les jours depuis le dépôt
-  credits.forEach(function(r) {
-    var d = r.created_at ? new Date(r.created_at) : new Date(r.ts||now);
-    r._jours = Math.floor((now - d) / 86400000);
-    r._urgent = r._jours >= 5;
+function selectTypeTransport(type) {
+  document.getElementById('tr-type-val').value = type;
+  ['intransit','local','international'].forEach(function(k) {
+    var el = document.getElementById('tr-type-' + k);
+    if (!el) return;
+    if (k === type) {
+      el.style.borderColor = '#0F6E56'; el.style.background = '#E1F5EE';
+    } else {
+      el.style.borderColor = 'var(--border)'; el.style.background = 'var(--grey)';
+    }
   });
+}
 
-  var urgents = credits.filter(function(r){ return r._urgent; });
-  var recents = credits.filter(function(r){ return !r._urgent; });
+function ouvrirFormulaireTransport() {
+  document.getElementById('tr-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('tr-type-val').value = '';
+  document.getElementById('tr-statut').value = '';
+  document.getElementById('tr-ref').value = '';
+  document.getElementById('tr-dest').value = '';
+  document.getElementById('tr-notes').value = '';
+  ['intransit','local','international'].forEach(function(k) {
+    var el = document.getElementById('tr-type-' + k);
+    if (el) { el.style.borderColor = 'var(--border)'; el.style.background = 'var(--grey)'; }
+  });
+  var modal = document.getElementById('modal-transport');
+  modal.style.display = 'flex';
+}
 
-  countEl.innerHTML = urgents.length > 0
-    ? '<span style="color:#C55A11;font-weight:700">&#9888; ' + urgents.length + ' en retard (&ge;5j)</span> &nbsp;|&nbsp; ' + recents.length + ' r&eacute;cents'
-    : credits.length + ' cr&eacute;dit(s) en attente';
+function fermerFormulaireTransport() {
+  document.getElementById('modal-transport').style.display = 'none';
+}
 
-  if (!credits.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128230;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun cr&eacute;dit en attente</div></div>';
+function sauvegarderTransport() {
+  var date   = document.getElementById('tr-date').value;
+  var type   = document.getElementById('tr-type-val').value;
+  var statut = document.getElementById('tr-statut').value;
+  var ref    = document.getElementById('tr-ref').value.trim();
+  var dest   = document.getElementById('tr-dest').value.trim();
+  var notes  = document.getElementById('tr-notes').value.trim();
+
+  if (!date) { alert('Veuillez saisir une date.'); return; }
+  if (!type) { alert('Veuillez sélectionner un type de transport.'); return; }
+  if (!statut) { alert('Veuillez sélectionner un statut.'); return; }
+
+  var data = getTransportData();
+  data.push({
+    id: Date.now().toString(),
+    date: date,
+    type: type,
+    statut: statut,
+    ref: ref,
+    dest: dest,
+    notes: notes,
+    created_at: new Date().toISOString()
+  });
+  saveTransportData(data);
+  fermerFormulaireTransport();
+  renderTransport();
+}
+
+function supprimerTransport(id) {
+  if (!confirm('Supprimer cette intervention ?')) return;
+  var data = getTransportData().filter(function(r){ return r.id !== id; });
+  saveTransportData(data);
+  renderTransport();
+}
+
+function changerStatutTransport(id, newStatut) {
+  var data = getTransportData();
+  var idx = data.findIndex(function(r){ return r.id === id; });
+  if (idx >= 0) { data[idx].statut = newStatut; saveTransportData(data); renderTransport(); }
+}
+
+function renderTransport() {
+  var list = document.getElementById('tr-list');
+  if (!list) return;
+  var data = getTransportData();
+
+  // Trier par date
+  data.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+
+  // Filtrer
+  var filtered = transportFilter === 'all' ? data : data.filter(function(r){ return r.type === transportFilter; });
+
+  // Compteurs
+  var total = data.length;
+  var encours = data.filter(function(r){ return r.statut === 'en_cours'; }).length;
+  var aplanifier = data.filter(function(r){ return r.statut === 'a_planifier'; }).length;
+  var el = document.getElementById('tr-cnt-total'); if (el) el.textContent = total;
+  el = document.getElementById('tr-cnt-encours'); if (el) el.textContent = encours;
+  el = document.getElementById('tr-cnt-planifier'); if (el) el.textContent = aplanifier;
+
+  // Badge accueil
+  var badge = document.getElementById('transport-badge-home');
+  if (badge) badge.textContent = total > 0 ? total + ' intervention(s)' : 'Camions & expéditions';
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">'
+      + '<div style="font-size:40px">🚛</div>'
+      + '<div style="font-size:14px;font-weight:600;margin-top:10px">Aucune intervention</div>'
+      + '<div style="font-size:12px;margin-top:6px">Appuyez sur "+ Ajouter" pour planifier</div>'
+      + '</div>';
     return;
   }
 
-  function renderCreditCard(r) {
-    var ir   = r.loc || '--';
-    var wo   = r.wo  || '--';
-    var sc   = r.sc  || '--';
-    var wg   = r.wg  || '';
-    var date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
-    var borderColor = r._urgent ? '#C55A11' : '#b0bec5';
-    var joursBadge = r._urgent
-      ? '<span style="background:#FCE4D6;color:#C55A11;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + r._jours + 'j &#9888;</span>'
-      : '<span style="background:#f0f0f0;color:#888;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + r._jours + 'j</span>';
+  var typeLabels  = { intransit:'🔄 Intransit', local:'📍 Local', international:'✈️ International' };
+  var statutLabels= { a_planifier:'📋 À planifier', en_cours:'🔄 En cours', expedie:'📦 Expédié', livre:'✅ Livré' };
+  var statutColors= { a_planifier:'#1F3864', en_cours:'#E65100', expedie:'#7030A0', livre:'#375623' };
+  var statutBgs   = { a_planifier:'#f0f4ff', en_cours:'#FFF3E0', expedie:'#EDE7F6', livre:'#E2EFDA' };
 
-    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
-    var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
-
-    // Mail de relance
-    var cc = (WG_CC_CREDIT[wg] || []).join(',');
-    var subj = '[RELANCE CREDIT] IR ' + ir + (wo !== '--' ? ' -- WO ' + wo : '');
-    var bodyParts = [
-      'Bonjour,', '',
-      'Nous relançons pour le credit magasin suivant non encore confirme :',
-      '',
-      '  N IR        : ' + ir,
-      wo !== '--' ? '  WO         : ' + wo : null,
-      sc !== '--' ? '  Stock Code : ' + sc : null,
-      '  Workgroup  : ' + wg,
-      '  Depose le  : ' + date,
-      '  En attente depuis : ' + r._jours + ' jour' + (r._jours>1?'s':''),
-      '', 'Merci de confirmer la reception et de proceder au credit.',
-      '', 'Cordialement,',
-      'Emmanuel ROSA ASIK',
-      'Prepose aux pieces | PRNC -- Maintenance Centrale P50'
-    ].filter(function(l){ return l !== null; }).join('\n');
-
-    var mailTo = 'mailto:' + MAIL_MAGASIN +
-      '?subject=' + encodeURIComponent(subj) +
-      '&body='    + encodeURIComponent(bodyParts) +
-      (cc ? '&cc=' + cc : '');
-
-    return '<div class="credit-card" style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;padding:14px;margin-bottom:4px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
-        '<div>' +
-          '<div style="font-size:15px;font-weight:700;color:#1F3864">IR : ' + ir + '</div>' +
-          (wg ? '<span style="background:' + (wgBgs[wg]||'#f0f0f0') + ';color:' + (wgColors[wg]||'#333') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + wg + '</span>' : '') +
-        '</div>' +
-        joursBadge +
-      '</div>' +
-      '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;font-size:11px;line-height:2;margin-bottom:10px">' +
-        (wo !== '--' ? '<div><span style="color:#888;font-weight:700">WO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><strong>' + wo + '</strong></div>' : '') +
-        (sc !== '--' ? '<div><span style="color:#888;font-weight:700">Stock Code</span><strong>' + sc + '</strong></div>' : '') +
-        '<div><span style="color:#888;font-weight:700">Déposé le &nbsp;</span>' + date + '</div>' +
-        '<div><span style="color:#888;font-weight:700">Destinataire</span><strong>' + MAIL_MAGASIN + '</strong></div>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<a href="' + mailTo + '" style="flex:2;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
-        '<button onclick="confirmerCreditMagasin(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:2;background:#E2EFDA;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Confirmé</button>' +
-        '<button onclick="supprimerCredit(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer">&#128465;</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  var html = '';
-  if (urgents.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#C55A11;text-transform:uppercase;padding:4px 0;margin-top:4px">&#9888; En retard (&ge;5 jours)</div>';
-    html += urgents.map(renderCreditCard).join('');
-  }
-  if (recents.length) {
-    html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:4px 0;margin-top:8px">Recents (&lt;5 jours)</div>';
-    html += recents.map(renderCreditCard).join('');
-  }
-  list.innerHTML = html;
-}
-
-async function confirmerCreditMagasin(id, btn) {
-  btn.disabled = true;
-  btn.textContent = '&#8987;';
-  try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', {
-      statut: 'Confirme magasin'
-    });
-    try {
-      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-      var idx = local.findIndex(function(r){ return r.id === id; });
-      if (idx >= 0) { local[idx].statut = 'Confirme magasin'; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
-    } catch(e) {}
-    invalidateDbCache();
-    setTimeout(renderRelancesCredit, 400);
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = '&#9989; Confirmé';
-  }
-}
-
-async function supprimerCredit(id, btn) {
-  if (!confirm('Supprimer cet enregistrement ?')) return;
-  btn.disabled = true;
-  btn.innerHTML = '&#8987;';
-  try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
-    try {
-      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-      local = local.filter(function(r){ return r.id !== id; });
-      localStorage.setItem('prnc-historique', JSON.stringify(local));
-    } catch(e) {}
-    invalidateDbCache();
-    setTimeout(renderRelancesCredit, 400);
-  } catch(e) {
-    btn.disabled = false;
-    btn.innerHTML = '&#128465;';
-  }
+  list.innerHTML = filtered.map(function(r) {
+    var dateStr = r.date ? new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'short',day:'2-digit',month:'short',year:'numeric'}) : '--';
+    var sColor = statutColors[r.statut] || '#888';
+    var sBg    = statutBgs[r.statut] || '#f0f0f0';
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + sColor + '">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+        + '<div>'
+          + '<div style="font-size:16px;font-weight:700;color:#1F3864">' + dateStr + '</div>'
+          + '<div style="margin-top:4px">'
+            + '<span style="background:#E1F5EE;color:#0F6E56;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-right:5px">' + (typeLabels[r.type]||r.type) + '</span>'
+            + '<span style="background:' + sBg + ';color:' + sColor + ';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">' + (statutLabels[r.statut]||r.statut) + '</span>'
+          + '</div>'
+        + '</div>'
+        + '<button onclick="supprimerTransport(\'' + r.id + '\')" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">🗑️</button>'
+      + '</div>'
+      + (r.ref ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Réf :</span> ' + r.ref + '</div>' : '')
+      + (r.dest ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Destination :</span> ' + r.dest + '</div>' : '')
+      + (r.notes ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-top:6px">' + r.notes + '</div>' : '')
+      + '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'
+        + (r.statut !== 'a_planifier' ? '' : '<button onclick="changerStatutTransport(\'' + r.id + '\',\'en_cours\')" style="flex:1;background:#FFF3E0;color:#E65100;border:1.5px solid #E65100;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🔄 En cours</button>')
+        + (r.statut === 'en_cours' ? '<button onclick="changerStatutTransport(\'' + r.id + '\',\'expedie\')" style="flex:1;background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">📦 Expédié</button>' : '')
+        + (r.statut === 'expedie' ? '<button onclick="changerStatutTransport(\'' + r.id + '\',\'livre\')" style="flex:1;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ Livré</button>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
 }
 
 
