@@ -5012,7 +5012,6 @@ function renderPlanifier() {
   var countEl = document.getElementById('planifier-count');
   if (!list) return;
 
-  // Utiliser le cache si disponible — pas de nouvel appel réseau
   var records = _dbCache || [];
   var arrivees = records.filter(function(r) { return r.type === 'ARRIVEE'; })
     .sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
@@ -5024,21 +5023,65 @@ function renderPlanifier() {
     return;
   }
 
-  list.innerHTML = arrivees.map(function(r) {
-    var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : r.wg === 'STROB' ? '#7030A0' : '#555';
-    var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : r.wg === 'STROB' ? '#EDE7F6' : '#f0f0f0';
-    return '<div onclick="viewRecord(&quot;' + r.id + '&quot;)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)">' +
-      '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0">' + (r.wg||'--') + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:1px">' +
-          (r.wo ? 'WO ' + r.wo + ' · ' : '') +
-          (r.statut || '') +
-        '</div>' +
-      '</div>' +
-      '<div style="font-size:10px;color:var(--muted);flex-shrink:0">' + (r.date||'') + '</div>' +
-    '</div>';
-  }).join('');
+  // Grouper par WG
+  var wgConfig = {
+    'MCREPAR':  { color:'#1F3864', bg:'#DEEAF1', icon:'🔧' },
+    'MCCHAUD':  { color:'#C55A11', bg:'#FCE4D6', icon:'🔥' },
+    'STROB':    { color:'#7030A0', bg:'#EDE7F6', icon:'⚡' },
+    'STCHAUD':  { color:'#375623', bg:'#E2EFDA', icon:'🌡️' },
+  };
+
+  var groups = {};
+  arrivees.forEach(function(r) {
+    var wg = r.wg || 'AUTRE';
+    if (!groups[wg]) groups[wg] = [];
+    groups[wg].push(r);
+  });
+
+  var html = '';
+  Object.keys(groups).forEach(function(wg) {
+    var items = groups[wg];
+    var cfg = wgConfig[wg] || { color:'#555', bg:'#f0f0f0', icon:'📦' };
+    var gid = 'pg-' + wg.replace(/[^a-z0-9]/gi,'');
+
+    html += '<div style="margin-bottom:8px;border-radius:11px;overflow:hidden;border:1px solid ' + cfg.bg + '">';
+
+    // Header accordéon du groupe
+    html += '<div onclick="togglePlanGroup(&quot;' + gid + '&quot;,this)" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:' + cfg.bg + ';cursor:pointer">';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<span style="font-size:14px">' + cfg.icon + '</span>';
+    html += '<span style="font-size:12px;font-weight:800;color:' + cfg.color + '">' + wg + '</span>';
+    html += '<span style="background:' + cfg.color + ';color:#fff;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700">' + items.length + '</span>';
+    html += '</div>';
+    html += '<span class="pg-arrow" style="font-size:14px;color:' + cfg.color + ';transition:transform .2s">›</span>';
+    html += '</div>';
+
+    // Liste des équipements (fermée par défaut)
+    html += '<div id="' + gid + '" style="display:none;background:#fff">';
+    items.forEach(function(r) {
+      html += '<div onclick="viewRecord(&quot;' + r.id + '&quot;)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer">';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>';
+      html += '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + (r.wo ? 'WO ' + r.wo : '') + (r.wo && r.statut ? ' · ' : '') + (r.statut||'') + '</div>';
+      html += '</div>';
+      html += '<div style="font-size:10px;color:var(--muted);flex-shrink:0;text-align:right">' + (r.date||'') + '</div>';
+      html += '<div style="font-size:14px;color:#ccc">›</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function togglePlanGroup(gid, header) {
+  var el = document.getElementById(gid);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  var arrow = header.querySelector('.pg-arrow');
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 async function updateStats() {
