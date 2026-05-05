@@ -5012,33 +5012,33 @@ function renderPlanifier() {
   var countEl = document.getElementById('planifier-count');
   if (!list) return;
 
-  dbLoad().then(function(records) {
-    var arrivees = records.filter(function(r) { return r.type === 'ARRIVEE'; })
-      .sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+  // Utiliser le cache si disponible — pas de nouvel appel réseau
+  var records = _dbCache || [];
+  var arrivees = records.filter(function(r) { return r.type === 'ARRIVEE'; })
+    .sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
 
-    if (countEl) countEl.textContent = arrivees.length + ' équipement' + (arrivees.length > 1 ? 's' : '');
+  if (countEl) countEl.textContent = arrivees.length + ' équipement' + (arrivees.length > 1 ? 's' : '');
 
-    if (!arrivees.length) {
-      list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px;background:#f8f9fa;border-radius:10px">Aucun équipement en attente</div>';
-      return;
-    }
+  if (!arrivees.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:16px;background:#f8f9fa;border-radius:10px">Aucun équipement en attente</div>';
+    return;
+  }
 
-    list.innerHTML = arrivees.map(function(r) {
-      var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : r.wg === 'STROB' ? '#7030A0' : '#555';
-      var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : r.wg === 'STROB' ? '#EDE7F6' : '#f0f0f0';
-      return '<div onclick="viewRecord(&quot;' + r.id + '&quot;)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)">' +
-        '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0">' + (r.wg||'--') + '</div>' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>' +
-          '<div style="font-size:10px;color:var(--muted);margin-top:1px">' +
-            (r.wo ? 'WO ' + r.wo + ' · ' : '') +
-            (r.statut || '') +
-          '</div>' +
+  list.innerHTML = arrivees.map(function(r) {
+    var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : r.wg === 'STROB' ? '#7030A0' : '#555';
+    var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : r.wg === 'STROB' ? '#EDE7F6' : '#f0f0f0';
+    return '<div onclick="viewRecord(&quot;' + r.id + '&quot;)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)">' +
+      '<div style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 8px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0">' + (r.wg||'--') + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:1px">' +
+          (r.wo ? 'WO ' + r.wo + ' · ' : '') +
+          (r.statut || '') +
         '</div>' +
-        '<div style="font-size:10px;color:var(--muted);flex-shrink:0">' + (r.date||'') + '</div>' +
-      '</div>';
-    }).join('');
-  });
+      '</div>' +
+      '<div style="font-size:10px;color:var(--muted);flex-shrink:0">' + (r.date||'') + '</div>' +
+    '</div>';
+  }).join('');
 }
 
 async function updateStats() {
