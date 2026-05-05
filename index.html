@@ -2796,7 +2796,7 @@ function show(id) {
     if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
     else { renderHist(); }
   }
-  if (id === 's-home') { renderPlanifier(); }
+  if (id === 's-home') { if (_dbCache) renderPlanifier(); }
   if (id === 's-relances')      renderRelances();
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
@@ -5008,18 +5008,24 @@ async function togglePlanifier() {
 }
 
 // ── Agrège toutes les photos de tous les enregistrements d'un même WO ──
+// Cache des photos par WO pour éviter de recalculer à chaque appel
+var _photosByWOCache = null;
+var _photosByWOCacheLen = 0;
+
 function getPhotosByWO(wo) {
   if (!wo || !_dbCache) return [];
-  var seen = {};
-  var photos = [];
-  _dbCache.forEach(function(r) {
-    if ((r.wo || '') === wo && r.photos && r.photos.length) {
-      r.photos.filter(Boolean).forEach(function(p) {
-        if (!seen[p]) { seen[p] = true; photos.push(p); }
-      });
-    }
-  });
-  return photos;
+  // Reconstruire le cache si les données ont changé
+  if (!_photosByWOCache || _photosByWOCacheLen !== _dbCache.length) {
+    _photosByWOCache = {};
+    _photosByWOCacheLen = _dbCache.length;
+    _dbCache.forEach(function(r) {
+      var w = r.wo || '';
+      if (!w || !r.photos || !r.photos.length) return;
+      if (!_photosByWOCache[w]) _photosByWOCache[w] = {};
+      r.photos.filter(Boolean).forEach(function(p) { _photosByWOCache[w][p] = true; });
+    });
+  }
+  return _photosByWOCache[wo] ? Object.keys(_photosByWOCache[wo]) : [];
 }
 
 function renderPlanifier() {
@@ -5792,7 +5798,7 @@ async function renderCallidusSuivi() {
     var statut = r.callidusStatut || 'En attente';
     var statColor = done ? '#375623' : (r.callidusStatut ? '#1F3864' : '#888');
     var statBg    = done ? '#E2EFDA' : (r.callidusStatut ? '#DEEAF1' : '#f0f0f0');
-    var photos = getPhotosByWO(r.wo||'').length ? getPhotosByWO(r.wo||'') : (r.photos||[]).filter(Boolean);
+    var _wop=getPhotosByWO(r.wo||''); var photos = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
     var _cpid = 'cp_' + r.id;
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_cpid] = photos;
@@ -5840,7 +5846,7 @@ async function renderCallidusPrestataire() {
   list.innerHTML = calRecs.map(function(r) {
     var done = r.callidusStatut && (r.callidusStatut.includes('Livré') || r.callidusStatut.includes('Terminé'));
     var statut = r.callidusStatut || 'En attente';
-    var photos = getPhotosByWO(r.wo||'').length ? getPhotosByWO(r.wo||'') : (r.photos||[]).filter(Boolean);
+    var _wop=getPhotosByWO(r.wo||''); var photos = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
     var _cpidP = 'cpP_' + r.id;
     window._etnaPhotosMap = window._etnaPhotosMap || {};
     window._etnaPhotosMap[_cpidP] = photos;
@@ -6292,7 +6298,7 @@ async function renderInventaire() {
     items.forEach(function(r) {
       var wgColor = wgColors[r.wg] || '#333';
       var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
-      var photos  = getPhotosByWO(r.wo||'').length ? getPhotosByWO(r.wo||'') : (r.photos||[]).filter(Boolean);
+      var _wop=getPhotosByWO(r.wo||''); var photos  = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
       var desc    = r.motif || r.desc || r.description || '';
 
       html += '<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1.5px solid var(--border)">';
@@ -6520,7 +6526,7 @@ async function ouvrirFicheQR(id) {
     return;
   }
 
-  var photos = getPhotosByWO(r.wo||'').length ? getPhotosByWO(r.wo||'') : (r.photos||[]).filter(Boolean);
+  var _wop=getPhotosByWO(r.wo||''); var photos = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
   var _pid = 'qr_' + r.id;
   window._etnaPhotosMap = window._etnaPhotosMap || {};
   if (photos.length) window._etnaPhotosMap[_pid] = photos;
@@ -9431,7 +9437,7 @@ function renderRelanceCard(r, urgent) {
   var date    = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '--';
   var statut  = r.statut || r.status || '--';
   var woUsine = r.woUsine || r.wo_usine || '';
-  var photos  = getPhotosByWO(wo).length ? getPhotosByWO(wo) : (r.photos || []).filter(Boolean);
+  var _wop=getPhotosByWO(wo); var photos  = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
 
   var borderColor = urgent ? '#C55A11' : '#b0bec5';
   var joursBadge  = urgent
@@ -10286,7 +10292,7 @@ async function renderWorkshop() {
     var done = !!_wsRetournes[r.id];
     var wgColor = wgColors[r.wg] || '#555';
     var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
-    var photos  = getPhotosByWO(r.wo||'').length ? getPhotosByWO(r.wo||'') : (r.photos||[]).filter(Boolean);
+    var _wop=getPhotosByWO(r.wo||''); var photos  = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
 
     html += '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + (done ? '#375623' : '#C55A11') + ';' + (done ? 'opacity:.7' : '') + '">';
     
