@@ -7831,7 +7831,6 @@ async function ajouterPhotoRecord(input, recordId) {
 async function addPhotosToRecord(id, input) {
   if (!input.files.length) return;
   var overlay = input.closest('.overlay-view');
-  // Spinner
   var btn = input.closest('label');
   if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
 
@@ -7843,27 +7842,26 @@ async function addPhotosToRecord(id, input) {
     var existing = (r.photos || []).filter(Boolean);
     var files = Array.from(input.files);
 
-    // Compresser et uploader en parallèle
+    // Upload vers Cloudinary
     var newUrls = await uploadPhotosParallel(files, 'historique');
     var allPhotos = existing.concat(newUrls);
 
-    // Sauvegarder
-    await fetch('/api/db?table=historique&action=patch&id=' + id, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ photos: allPhotos })
-    });
+    // Sauvegarder via Supabase (même méthode que saveEdit)
+    await supaFetch('/rest/v1/historique?id=eq.' + id, 'PATCH', { photos: allPhotos });
 
-    // Invalider cache
-    _dbCache = null;
+    // Mettre à jour le cache local directement sans recharger
+    if (_dbCache) {
+      var rec = _dbCache.find(function(x){ return x.id === id; });
+      if (rec) rec.photos = allPhotos;
+    }
     _photosByWOCache = null;
 
     // Rafraîchir la fiche
     if (overlay) overlay.remove();
     viewRecord(id);
-    alert('✅ ' + newUrls.length + ' photo(s) ajoutée(s) !');
   } catch(e) {
     console.error(e);
-    alert('❌ Erreur upload photos');
+    alert('❌ Erreur : ' + e.message);
     if (btn) { btn.textContent = '+ Ajouter'; btn.style.pointerEvents = ''; }
   }
 }
