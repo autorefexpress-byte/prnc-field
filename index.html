@@ -2806,11 +2806,15 @@ function show(id) {
   // Arrêter la caméra si on quitte le scanner
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
-  if (id === 's-home')     {
-    // Chargement différé pour ne pas bloquer l'affichage
-    setTimeout(function() { updateStats(); renderPlanifier(); }, 100);
-    setTimeout(function() { checkRelances(); }, 200);
-    // En mode STT, s-home est autorisé (accueil simplifié)
+  if (id === 's-home') {
+    // Un seul dbLoad pour tout — on passe le cache à toutes les fonctions
+    setTimeout(function() {
+      updateStats().then(function() {
+        // updateStats a chargé/rafraîchi le cache — renderPlanifier utilise _dbCache directement
+        renderPlanifier();
+      });
+    }, 80);
+    setTimeout(function() { checkRelances(); }, 300);
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
 }
@@ -9243,8 +9247,11 @@ function validerNumpad() {
 
 // ------ INIT ------
 initSemaines();
-updateStats();
-checkRelances();
+// Un seul chargement initial — renderPlanifier et checkRelances utilisent le cache
+updateStats().then(function() {
+  renderPlanifier();
+  checkRelances();
+});
 // Vérifier si c'est un lien signature ?sig=
 (async function() {
   const params = new URLSearchParams(window.location.search);
