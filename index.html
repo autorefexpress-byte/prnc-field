@@ -293,12 +293,16 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   </div>
   <hr class="sec" style="margin:0 16px">
 
-  <!-- ── Section À planifier ── -->
-  <div style="padding:12px 0 4px;display:flex;align-items:center;justify-content:space-between">
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">📋 À planifier</div>
-    <div id="planifier-count" style="font-size:10px;font-weight:700;color:var(--navy);background:#EEF2FF;border-radius:20px;padding:2px 8px"></div>
+  <!-- ── Section À planifier (accordéon) ── -->
+  <div id="planifier-toggle" onclick="togglePlanifier()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 12px;background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:14px">📋</span>
+      <span style="font-size:12px;font-weight:700;color:var(--navy)">À planifier</span>
+      <span id="planifier-count" style="font-size:10px;font-weight:700;color:var(--navy);background:#EEF2FF;border-radius:20px;padding:2px 8px"></span>
+    </div>
+    <span id="planifier-arrow" style="font-size:14px;color:var(--muted);transition:transform .2s">›</span>
   </div>
-  <div id="planifier-list" style="margin-bottom:12px">
+  <div id="planifier-list" style="display:none;margin-bottom:12px">
     <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Chargement...</div>
   </div>
 
@@ -4994,7 +4998,16 @@ async function dbSavePeinture(d) {
 
 
 // ------ STATS ACCUEIL ------
-async function renderPlanifier() {
+async function togglePlanifier() {
+  var list = document.getElementById('planifier-list');
+  var arrow = document.getElementById('planifier-arrow');
+  if (!list) return;
+  var open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
+}
+
+function renderPlanifier() {
   var list = document.getElementById('planifier-list');
   var countEl = document.getElementById('planifier-count');
   if (!list) return;
