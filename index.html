@@ -843,7 +843,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div style="position:relative;flex:1">
   <input class="fi" type="text" id="hist-search"
       placeholder="Rechercher par TAG ou WO..."
-      autocomplete="off"
+      autocomplete="off" value=""
       oninput="debounceRenderHist()"
       style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
     <button onclick="clearHistSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:4px">&#10005;</button>
@@ -1584,7 +1584,14 @@ function show(id) {
     var filtreEl = document.getElementById('hist-filtre');
     if (filtreEl) filtreEl.value = '';
     invalidateDbCache();
-    dbLoad().then(function(){ renderHist(); });
+    // Délai pour laisser Android finir sa restauration du DOM avant de lire les champs
+    setTimeout(function() {
+      var s2 = document.getElementById('hist-search');
+      if (s2) s2.value = '';
+      var f2 = document.getElementById('hist-filtre');
+      if (f2) f2.value = '';
+      dbLoad().then(function(){ renderHist(); });
+    }, 100);
   }
   if (id === 's-home') { if (_dbCache) renderPlanifier(); }
   if (id === 's-relances')      renderRelances();
