@@ -3554,6 +3554,7 @@ async function renderHist() {
       ts: r.created_at, created_at: r.created_at
     }; });
     _dbCache = all; _dbCacheTs = Date.now();
+    countEl.textContent = '⏳ ' + all.length + ' enregistrements chargés de Neon...';
   } catch(e) {
     list.innerHTML = '<div style="color:red;padding:20px">Erreur réseau: ' + e.message + '</div>';
     return;
