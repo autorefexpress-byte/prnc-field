@@ -843,6 +843,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
     <div style="position:relative;flex:1">
   <input class="fi" type="text" id="hist-search"
       placeholder="Rechercher par TAG ou WO..."
+      autocomplete="off"
       oninput="debounceRenderHist()"
       style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
     <button onclick="clearHistSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:4px">&#10005;</button>
@@ -1579,7 +1580,7 @@ function show(id) {
   if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
     var searchEl = document.getElementById('hist-search');
-    if (searchEl) searchEl.value = '';
+    if (searchEl) { searchEl.value = ''; searchEl.blur(); }
     var filtreEl = document.getElementById('hist-filtre');
     if (filtreEl) filtreEl.value = '';
     invalidateDbCache();
