@@ -3398,7 +3398,12 @@ async function dbLoad() {
     return _dbCache;
   }
   try {
-    const data = await supaFetch('/rest/v1/historique?order=created_at.desc&limit=500');
+    const resp = await fetch(DB_API);
+    if (!resp.ok) {
+      console.warn('DB GET failed:', resp.status, resp.statusText);
+      throw new Error('HTTP ' + resp.status);
+    }
+    const data = await resp.json();
     if (Array.isArray(data) && data.length >= 0) {
       const records = data.map(function(r) {
         return {
@@ -3416,7 +3421,7 @@ async function dbLoad() {
           callidusDateRetour   : r.callidus_date_retour  || null,
           callidusCommentaire  : r.callidus_commentaire  || null,
           shutdown: r.shutdown, qty: r.qty,
-          desc: r.designation || r.desc || '',
+          desc: r.description || r.designation || r.desc || '',
           serie: r.serie, typeEqt: r.type_eqt || r.typeEqt || '',
           dateRecep: r.date_recep, motif: r.motif,
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
@@ -3510,6 +3515,7 @@ async function renderHist() {
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
   const all = await dbLoad(); // cache géré dans dbLoad()
+  console.log('[renderHist] total records:', all.length, 'types:', [...new Set(all.map(r=>r.type))]);
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
