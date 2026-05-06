@@ -854,6 +854,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <option value="">Tous les mouvements</option>
       <option value="ARRIVEE">Arrivées</option>
       <option value="TERMINE">Terminés / Sortis</option>
+      <option value="FICHE">Fiches suiveuses</option>
       <option value="USAGE">Usages directs</option>
       <option value="TRANSPORT">Transports</option>
       <option value="PEINTURE">Peintures</option>
@@ -1577,8 +1578,8 @@ function show(id) {
   if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
   if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
-    if (!_dbCache) { dbLoad().then(function(){ renderHist(); }); }
-    else { renderHist(); }
+    invalidateDbCache();
+    dbLoad().then(function(){ renderHist(); });
   }
   if (id === 's-home') { if (_dbCache) renderPlanifier(); }
   if (id === 's-relances')      renderRelances();
