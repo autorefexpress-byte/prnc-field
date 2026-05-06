@@ -3523,49 +3523,49 @@ function debounceRenderHist() {
 async function renderHist() {
   const list    = document.getElementById('hist-list');
   const countEl = document.getElementById('hist-count');
-  const filtre  = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
-  const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
+  if (!list || !countEl) return;
 
-  // Test direct Neon
+  const filtre = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
+  const search = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
+
+  countEl.textContent = 'Chargement...';
+
   let all = [];
   try {
-    const r = await fetch(DB_API);
-    const txt = await r.text();
-    try { all = JSON.parse(txt); } catch(e) { 
-      list.innerHTML = '<div style="color:red;padding:20px">Erreur JSON: ' + txt.substring(0,200) + '</div>';
-      return;
+    const resp = await fetch(DB_API);
+    const raw = await resp.json();
+    if (Array.isArray(raw)) {
+      all = raw.map(function(r) {
+        return {
+          id: r.id, type: r.type, tag: r.tag,
+          wo: r.wo || '', woUsine: r.wo_usine || '', woMtc: r.wo_mtc || '',
+          wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
+          emailDemandeur: r.email_demandeur || null,
+          fromFiche: r.from_fiche || false,
+          etnaStatut: r.etna_statut || null, etnaDateRetour: r.etna_date_retour || null, etnaCommentaire: r.etna_commentaire || null,
+          callidusStatut: r.callidus_statut || null, callidusDateRetour: r.callidus_date_retour || null, callidusCommentaire: r.callidus_commentaire || null,
+          shutdown: r.shutdown, qty: r.qty,
+          desc: r.description || r.designation || r.desc || '',
+          serie: r.serie, typeEqt: r.type_eqt || '', motif: r.motif, zone: r.zone,
+          date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || [],
+          ts: r.created_at, created_at: r.created_at
+        };
+      });
+      _dbCache = all;
+      _dbCacheTs = Date.now();
     }
-    if (!Array.isArray(all)) {
-      list.innerHTML = '<div style="color:red;padding:20px">Réponse inattendue: ' + JSON.stringify(all).substring(0,200) + '</div>';
-      return;
-    }
-    all = all.map(function(r) { return {
-      id: r.id, type: r.type, tag: r.tag,
-      wo: r.wo || '', woUsine: r.wo_usine || '', woMtc: r.wo_mtc || '',
-      wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
-      emailDemandeur: r.email_demandeur || null,
-      fromFiche: r.from_fiche || false,
-      etnaStatut: r.etna_statut || null, etnaDateRetour: r.etna_date_retour || null, etnaCommentaire: r.etna_commentaire || null,
-      callidusStatut: r.callidus_statut || null, callidusDateRetour: r.callidus_date_retour || null, callidusCommentaire: r.callidus_commentaire || null,
-      shutdown: r.shutdown, qty: r.qty,
-      desc: r.description || r.designation || r.desc || '',
-      serie: r.serie, typeEqt: r.type_eqt || '', motif: r.motif, zone: r.zone,
-      date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || [],
-      ts: r.created_at, created_at: r.created_at
-    }; });
-    _dbCache = all; _dbCacheTs = Date.now();
-    countEl.textContent = '⏳ ' + all.length + ' enregistrements chargés de Neon...';
   } catch(e) {
-    list.innerHTML = '<div style="color:red;padding:20px">Erreur réseau: ' + e.message + '</div>';
+    countEl.textContent = 'Erreur de connexion';
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:red">Impossible de charger les données.<br>' + e.message + '</div>';
     return;
   }
+
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
       (r.tag     || '').toLowerCase().includes(search) ||
       (r.wo      || '').toLowerCase().includes(search) ||
       (r.woUsine || '').toLowerCase().includes(search) ||
-      (r.woMtc   || '').toLowerCase().includes(search) ||
       (r.wr      || '').toLowerCase().includes(search) ||
       (r.sc      || '').toLowerCase().includes(search) ||
       (r.wg      || '').toLowerCase().includes(search) ||
@@ -3576,7 +3576,7 @@ async function renderHist() {
 
   const searchTxt = search ? ' pour "' + search + '"' : '';
   const filtreTxt = filtre ? ' (' + filtre + ')' : '';
-  countEl.textContent = records.length + ' résultat' + (records.length!==1?'s':'') +
+  countEl.textContent = records.length + ' résultat' + (records.length !== 1 ? 's' : '') +
     searchTxt + filtreTxt + ' -- ' + all.length + ' au total';
 
   if (records.length === 0) {
@@ -3611,16 +3611,17 @@ async function renderHist() {
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
         ${_isConsultMode
-          ? '<button onclick="viewRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
-          : '<button onclick="editRecord(\''+r.id+'\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
+          ? '<button onclick="viewRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
+          : '<button onclick="editRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
             (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(this.dataset.rid)" data-rid="' + r.id + '" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
-            '<button onclick="deleteRecord(\''+r.id+'\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
-            (r.wo ? '<button onclick="cloturerWO(\''+r.wo+'\',\''+r.tag+'\',\''+r.wg+'\',\''+r.date+'\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
+            '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
+            (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
         }
       </div>
     </div>`;
   }).join('');
 }
+
 
 async function exportExcel() {
   const records = await dbLoad();
