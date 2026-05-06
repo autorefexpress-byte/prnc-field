@@ -9124,8 +9124,9 @@ function escapeXmlVal(str) {
 
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('./sw.js');
+  // Désinscrire tous les SW pour forcer le chargement de la dernière version
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){ r.unregister(); });
   });
 }
 </script>
