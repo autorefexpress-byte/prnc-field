@@ -2195,6 +2195,7 @@ async function saveFichesuiveuse() {
     statut: st, desc: dem ? 'Demandeur : ' + dem : '',
     emailDemandeur: emailDem || null, motif: rem
   });
+  invalidateDbCache();
 
   var wgContacts = WG_CONTACTS[wg];
   var toList = wgContacts ? wgContacts.contacts.filter(function(c){ return !c.cc; }).map(function(c){ return c.mail; }) : [];
