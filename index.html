@@ -1578,6 +1578,10 @@ function show(id) {
   if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
   if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
+    var searchEl = document.getElementById('hist-search');
+    if (searchEl) searchEl.value = '';
+    var filtreEl = document.getElementById('hist-filtre');
+    if (filtreEl) filtreEl.value = '';
     invalidateDbCache();
     dbLoad().then(function(){ renderHist(); });
   }
@@ -3515,7 +3519,6 @@ async function renderHist() {
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
   const all = await dbLoad(); // cache géré dans dbLoad()
-  console.log('[renderHist] total records:', all.length, 'types:', [...new Set(all.map(r=>r.type))]);
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
