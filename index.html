@@ -2198,6 +2198,14 @@ async function saveFichesuiveuse() {
   });
   invalidateDbCache();
 
+  // Vérification AVANT l'envoi email
+  try {
+    var check = await fetch(DB_API);
+    var checkData = await check.json();
+    var fiches = checkData.filter(function(r){ return r.type === 'FICHE'; });
+    alert('DEBUG NEON:\nTotal: ' + checkData.length + '\nFICHES: ' + fiches.length + '\nDernier type: ' + (checkData[0] ? checkData[0].type : 'vide'));
+  } catch(e) { alert('Erreur: ' + e.message); }
+
   var wgContacts = WG_CONTACTS[wg];
   var toList = wgContacts ? wgContacts.contacts.filter(function(c){ return !c.cc; }).map(function(c){ return c.mail; }) : [];
   var ccList = wgContacts ? wgContacts.contacts.filter(function(c){ return c.cc; }).map(function(c){ return c.mail; }) : [];
@@ -3451,7 +3459,7 @@ async function dbAdd(record) {
   if (window._lastFromFiche) { record.fromFiche = true; window._lastFromFiche = false; }
 
   try {
-    await supaFetch('/rest/v1/historique', 'POST', {
+    const postResp = await supaFetch('/rest/v1/historique', 'POST', {
       id: record.id, type: record.type, tag: record.tag, wo: record.wo,
       wo_usine: record.woUsine || null, wr: record.wr || null, sc: record.sc || null,
       email_demandeur: record.emailDemandeur || null,
@@ -3466,6 +3474,9 @@ async function dbAdd(record) {
       dest: record.dest || [],
       photos: record.photos || []
     });
+    console.log('[dbAdd] POST status:', postResp.status, 'type:', record.type, 'tag:', record.tag);
+    const postBody = await postResp.text();
+    console.log('[dbAdd] POST response:', postBody);
   } catch(e) { console.warn('DB add err', e); }
 
   try {
