@@ -47,6 +47,49 @@ module.exports = async function handler(req, res) {
     const id    = req.query?.id    || null;
     const table = req.query?.table || 'historique';
 
+    // ── TRANSPORT ────────────────────────────────────
+    if (table === 'transport') {
+      // Créer la table si elle n'existe pas
+      await sql`CREATE TABLE IF NOT EXISTS transport (
+        id TEXT PRIMARY KEY,
+        date TEXT,
+        type TEXT,
+        statut TEXT,
+        ref TEXT,
+        dest TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`;
+
+      if (method === 'GET') {
+        const rows = await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`;
+        return res.status(200).json(rows);
+      }
+      if (method === 'POST') {
+        const d = req.body || {};
+        await sql`INSERT INTO transport (id,date,type,statut,ref,dest,notes)
+          VALUES (${d.id||null},${d.date||null},${d.type||null},${d.statut||null},${d.ref||null},${d.dest||null},${d.notes||null})`;
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'PATCH' && id) {
+        const d = req.body || {};
+        await sql`UPDATE transport SET
+          statut=${d.statut||null},
+          date=${d.date||null},
+          type=${d.type||null},
+          ref=${d.ref||null},
+          dest=${d.dest||null},
+          notes=${d.notes||null}
+          WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        await sql`DELETE FROM transport WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown transport request' });
+    }
+
     // ── PI SUIVI ─────────────────────────────────────
     if (table === 'pi_suivi') {
       if (method === 'GET') {
@@ -64,26 +107,14 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
-        // ── SUPPRESSION EN CASCADE ──────────────────
-        // 1. Récupérer le WO depuis pi_suivi
         const piRows = await sql`SELECT wo FROM pi_suivi WHERE id=${id}`;
         if (piRows.length && piRows[0].wo) {
           const wo = piRows[0].wo;
-
-          // 2. Récupérer toutes les photos des lignes historique liées à ce WO
           const histRows = await sql`SELECT photos FROM historique WHERE wo=${wo}`;
           const allPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
-
-          // 3. Supprimer les photos Cloudinary
-          if (allPhotos.length > 0) {
-            await deleteCloudinaryPhotos(allPhotos);
-          }
-
-          // 4. Supprimer toutes les lignes historique liées à ce WO
+          if (allPhotos.length > 0) await deleteCloudinaryPhotos(allPhotos);
           await sql`DELETE FROM historique WHERE wo=${wo}`;
         }
-
-        // 5. Supprimer le WO dans pi_suivi
         await sql`DELETE FROM pi_suivi WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
@@ -150,7 +181,6 @@ module.exports = async function handler(req, res) {
 
     // ── HISTORIQUE DELETE (+ Cloudinary cleanup) ─────
     if (method === 'DELETE' && id) {
-      // Get photos before deleting
       const rows = await sql`SELECT photos FROM historique WHERE id=${id}`;
       if (rows.length && rows[0].photos && rows[0].photos.length) {
         await deleteCloudinaryPhotos(rows[0].photos);
