@@ -4526,14 +4526,6 @@ async function sendCreditMagasin() {
 
 var transportFilter = 'all';
 
-function getTransportData() {
-  try { return JSON.parse(localStorage.getItem('prnc-transport') || '[]'); }
-  catch(e) { return []; }
-}
-function saveTransportData(data) {
-  localStorage.setItem('prnc-transport', JSON.stringify(data));
-}
-
 function setTransportFilter(f) {
   transportFilter = f;
   ['all','intransit','local','international'].forEach(function(k) {
@@ -4572,15 +4564,14 @@ function ouvrirFormulaireTransport() {
     var el = document.getElementById('tr-type-' + k);
     if (el) { el.style.borderColor = 'var(--border)'; el.style.background = 'var(--grey)'; }
   });
-  var modal = document.getElementById('modal-transport');
-  modal.style.display = 'flex';
+  document.getElementById('modal-transport').style.display = 'flex';
 }
 
 function fermerFormulaireTransport() {
   document.getElementById('modal-transport').style.display = 'none';
 }
 
-function sauvegarderTransport() {
+async function sauvegarderTransport() {
   var date   = document.getElementById('tr-date').value;
   var type   = document.getElementById('tr-type-val').value;
   var statut = document.getElementById('tr-statut').value;
@@ -4592,42 +4583,63 @@ function sauvegarderTransport() {
   if (!type) { alert('Veuillez sélectionner un type de transport.'); return; }
   if (!statut) { alert('Veuillez sélectionner un statut.'); return; }
 
-  var data = getTransportData();
-  data.push({
-    id: Date.now().toString(),
-    date: date,
-    type: type,
-    statut: statut,
-    ref: ref,
-    dest: dest,
-    notes: notes,
-    created_at: new Date().toISOString()
-  });
-  saveTransportData(data);
-  fermerFormulaireTransport();
-  renderTransport();
+  var btn = document.querySelector('#modal-transport button[onclick="sauvegarderTransport()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
+
+  try {
+    await fetch(DB_API + '?table=transport', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: Date.now().toString(),
+        date: date, type: type, statut: statut,
+        ref: ref || null, dest: dest || null, notes: notes || null
+      })
+    });
+    fermerFormulaireTransport();
+    renderTransport();
+  } catch(e) {
+    alert('Erreur lors de l\'enregistrement.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
+  }
 }
 
-function supprimerTransport(id) {
+async function supprimerTransport(id) {
   if (!confirm('Supprimer cette intervention ?')) return;
-  var data = getTransportData().filter(function(r){ return r.id !== id; });
-  saveTransportData(data);
-  renderTransport();
+  try {
+    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), { method: 'DELETE' });
+    renderTransport();
+  } catch(e) { alert('Erreur suppression.'); }
 }
 
-function changerStatutTransport(id, newStatut) {
-  var data = getTransportData();
-  var idx = data.findIndex(function(r){ return r.id === id; });
-  if (idx >= 0) { data[idx].statut = newStatut; saveTransportData(data); renderTransport(); }
+async function changerStatutTransport(id, newStatut) {
+  try {
+    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ statut: newStatut })
+    });
+    renderTransport();
+  } catch(e) { alert('Erreur mise à jour.'); }
 }
 
-function renderTransport() {
+async function renderTransport() {
   var list = document.getElementById('tr-list');
   if (!list) return;
-  var data = getTransportData();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+
+  var data = [];
+  try {
+    var resp = await fetch(DB_API + '?table=transport');
+    data = await resp.json();
+    if (!Array.isArray(data)) data = [];
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur de connexion</div>';
+    return;
+  }
 
   data.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
-
   var filtered = transportFilter === 'all' ? data : data.filter(function(r){ return r.type === transportFilter; });
 
   var total = data.length;
@@ -7800,7 +7812,17 @@ function renderRelanceCard(r, urgent) {
     : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
 
   var sujet = '[RELANCE] Equipement disponible -- ' + tag + (wo !== '--' ? ' -- WO ' + wo : '');
-  var nomDest = dest !== '--' ? dest : (emailDem || 'Demandeur');
+  // Construire un nom lisible (jamais afficher l'adresse email brute)
+  function extraireNom(val) {
+    if (!val || val === '--') return '';
+    if (val.indexOf('@') >= 0) {
+      // Extraire partie avant @ et capitaliser : "loic.hellouin@..." → "Loic Hellouin"
+      var local = val.split('@')[0];
+      return local.split('.').map(function(p){ return p.charAt(0).toUpperCase() + p.slice(1); }).join(' ');
+    }
+    return val;
+  }
+  var nomDest = extraireNom(dest) || extraireNom(emailDem) || 'Demandeur';
   var corps_txt = [
     'Bonjour ' + nomDest + ',',
     '',
