@@ -3526,7 +3526,38 @@ async function renderHist() {
   const filtre  = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
   const search  = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
-  const all = await dbLoad(); // cache géré dans dbLoad()
+  // Test direct Neon
+  let all = [];
+  try {
+    const r = await fetch(DB_API);
+    const txt = await r.text();
+    try { all = JSON.parse(txt); } catch(e) { 
+      list.innerHTML = '<div style="color:red;padding:20px">Erreur JSON: ' + txt.substring(0,200) + '</div>';
+      return;
+    }
+    if (!Array.isArray(all)) {
+      list.innerHTML = '<div style="color:red;padding:20px">Réponse inattendue: ' + JSON.stringify(all).substring(0,200) + '</div>';
+      return;
+    }
+    all = all.map(function(r) { return {
+      id: r.id, type: r.type, tag: r.tag,
+      wo: r.wo || '', woUsine: r.wo_usine || '', woMtc: r.wo_mtc || '',
+      wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
+      emailDemandeur: r.email_demandeur || null,
+      fromFiche: r.from_fiche || false,
+      etnaStatut: r.etna_statut || null, etnaDateRetour: r.etna_date_retour || null, etnaCommentaire: r.etna_commentaire || null,
+      callidusStatut: r.callidus_statut || null, callidusDateRetour: r.callidus_date_retour || null, callidusCommentaire: r.callidus_commentaire || null,
+      shutdown: r.shutdown, qty: r.qty,
+      desc: r.description || r.designation || r.desc || '',
+      serie: r.serie, typeEqt: r.type_eqt || '', motif: r.motif, zone: r.zone,
+      date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || [],
+      ts: r.created_at, created_at: r.created_at
+    }; });
+    _dbCache = all; _dbCacheTs = Date.now();
+  } catch(e) {
+    list.innerHTML = '<div style="color:red;padding:20px">Erreur réseau: ' + e.message + '</div>';
+    return;
+  }
   let records = filtre ? all.filter(r => r.type === filtre) : all;
   if (search) {
     records = records.filter(r =>
