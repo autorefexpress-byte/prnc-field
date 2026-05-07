@@ -8794,10 +8794,10 @@ async function sauvegarderEditionInventaire(id, btn) {
 
     var allPhotos = existingPhotos.concat(newPhotos);
 
-    await fetch('/api/db?id=' + encodeURIComponent(id), {
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
       method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ loc: loc, photos: allPhotos })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loc: loc, description: desc, photos: allPhotos })
     });
 
     invalidateDbCache();
