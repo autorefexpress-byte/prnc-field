@@ -4760,7 +4760,10 @@ async function trEditAjouterPhotos(input) {
 async function sauvegarderModifTransport(id, btn) {
   var date   = document.getElementById('tr-edit-date').value;
   var type   = document.getElementById('tr-edit-type').value;
-  var ref    = document.getElementById('tr-edit-ref').value.trim();
+  var wo     = document.getElementById('tr-edit-wo') ? document.getElementById('tr-edit-wo').value.trim() : '';
+  var tag    = document.getElementById('tr-edit-tag') ? document.getElementById('tr-edit-tag').value.trim() : '';
+  var sc     = document.getElementById('tr-edit-sc') ? document.getElementById('tr-edit-sc').value.trim() : '';
+  var serie  = document.getElementById('tr-edit-serie') ? document.getElementById('tr-edit-serie').value.trim() : '';
   var dest   = document.getElementById('tr-edit-dest').value.trim();
   var statut = document.getElementById('tr-edit-statut').value;
   var notes  = document.getElementById('tr-edit-notes').value.trim();
@@ -4774,7 +4777,7 @@ async function sauvegarderModifTransport(id, btn) {
     await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: date, type: type, wo: document.getElementById('tr-edit-wo').value.trim(), tag: document.getElementById('tr-edit-tag').value.trim(), sc: document.getElementById('tr-edit-sc').value.trim(), serie: document.getElementById('tr-edit-serie').value.trim(), dest: dest, statut: statut, notes: notes, photos: photos })
+      body: JSON.stringify({ date: date, type: type, wo: wo, tag: tag, sc: sc, serie: serie, dest: dest, statut: statut, notes: notes, photos: photos })
     });
     invalidateDbCache();
     if (ov) ov.remove();
