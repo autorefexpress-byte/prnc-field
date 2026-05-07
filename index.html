@@ -4860,7 +4860,12 @@ async function renderTransport() {
         + '<button onclick="supprimerTransport(\'' + r.id + '\')" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">🗑️</button>'
         + '</div>'
       + '</div>'
-      + (r.ref ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Réf :</span> ' + r.ref + '</div>' : '')
+      + ((r.wo||r.tag||r.sc||r.serie) ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">' : '')
+      + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
+      + (r.tag ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">TAG</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.tag + '</div></div>' : '')
+      + (r.sc ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">STOCK CODE</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.sc + '</div></div>' : '')
+      + (r.serie ? '<div style="background:#EDE7F6;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#7030A0">' + r.serie + '</div></div>' : '')
+      + ((r.wo||r.tag||r.sc||r.serie) ? '</div>' : '')
       + (r.dest ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Destination :</span> ' + r.dest + '</div>' : '')
       + (r.notes ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-top:6px">' + r.notes + '</div>' : '')
       + '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'
