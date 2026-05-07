@@ -4665,6 +4665,72 @@ async function supprimerTransport(id) {
   } catch(e) { alert('Erreur suppression.'); }
 }
 
+async function modifierTransport(id) {
+  var records = await dbLoad();
+  var r = records.find(function(x){ return x.id == id; });
+  if (!r) return;
+
+  var typeLabels = { intransit:'🔄 Intransit', local:'📍 Local', international:'✈️ International' };
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = '<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 36px;max-height:90vh;overflow-y:auto">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+      + '<div style="font-size:16px;font-weight:800;color:#1F3864">✏️ Modifier le transport</div>'
+      + '<button onclick="this.closest('[style*=fixed]').remove()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>'
+    + '</div>'
+    + '<div class="field-grp"><div class="field-lbl">Date</div><input class="fi" id="tr-edit-date" type="date" value="' + (r.date||'') + '"></div>'
+    + '<div class="field-grp"><div class="field-lbl">Type</div>'
+      + '<select class="fi" id="tr-edit-type">'
+        + '<option value="intransit"' + (r.type==='intransit'?' selected':'') + '>🔄 Intransit</option>'
+        + '<option value="local"' + (r.type==='local'?' selected':'') + '>📍 Local</option>'
+        + '<option value="international"' + (r.type==='international'?' selected':'') + '>✈️ International</option>'
+      + '</select>'
+    + '</div>'
+    + '<div class="field-grp"><div class="field-lbl">Référence / TAG</div><input class="fi" id="tr-edit-ref" value="' + (r.ref||'') + '" placeholder="Réf ou TAG équipement"></div>'
+    + '<div class="field-grp"><div class="field-lbl">Destination</div><input class="fi" id="tr-edit-dest" value="' + (r.dest||'') + '" placeholder="Ex: CALLIDUS NC, Atelier..."></div>'
+    + '<div class="field-grp"><div class="field-lbl">Statut</div>'
+      + '<select class="fi" id="tr-edit-statut">'
+        + '<option value="a_planifier"' + (r.statut==='a_planifier'?' selected':'') + '>📋 À planifier</option>'
+        + '<option value="en_cours"' + (r.statut==='en_cours'?' selected':'') + '>🔄 En cours</option>'
+        + '<option value="expedie"' + (r.statut==='expedie'?' selected':'') + '>📦 Expédié</option>'
+        + '<option value="livre"' + (r.statut==='livre'?' selected':'') + '>✅ Livré</option>'
+      + '</select>'
+    + '</div>'
+    + '<div class="field-grp"><div class="field-lbl">Notes</div><textarea class="fi" id="tr-edit-notes" style="height:70px;resize:none">' + (r.notes||'') + '</textarea></div>'
+    + '<button onclick="sauvegarderModifTransport('' + id + '',this)" style="width:100%;padding:14px;background:#1F3864;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Enregistrer</button>'
+  + '</div>';
+
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+}
+
+async function sauvegarderModifTransport(id, btn) {
+  var date   = document.getElementById('tr-edit-date').value;
+  var type   = document.getElementById('tr-edit-type').value;
+  var ref    = document.getElementById('tr-edit-ref').value.trim();
+  var dest   = document.getElementById('tr-edit-dest').value.trim();
+  var statut = document.getElementById('tr-edit-statut').value;
+  var notes  = document.getElementById('tr-edit-notes').value.trim();
+
+  btn.textContent = '⏳ Enregistrement...';
+  btn.disabled = true;
+
+  try {
+    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, type, ref, dest, statut, notes })
+    });
+    invalidateDbCache();
+    btn.closest('[style*="fixed"]').remove();
+    renderTransport();
+  } catch(e) {
+    btn.textContent = '💾 Enregistrer';
+    btn.disabled = false;
+    alert('Erreur enregistrement : ' + e.message);
+  }
+}
+
 async function changerStatutTransport(id, newStatut) {
   try {
     await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
@@ -4731,7 +4797,10 @@ async function renderTransport() {
             + '<span style="background:' + sBg + ';color:' + sColor + ';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">' + (statutLabels[r.statut]||r.statut) + '</span>'
           + '</div>'
         + '</div>'
+        + '<div style="display:flex;gap:6px">'
+        + '<button onclick="modifierTransport(\'' + r.id + '\')" style="background:#EEF2FF;color:#1F3864;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">✏️</button>'
         + '<button onclick="supprimerTransport(\'' + r.id + '\')" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">🗑️</button>'
+        + '</div>'
       + '</div>'
       + (r.ref ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Réf :</span> ' + r.ref + '</div>' : '')
       + (r.dest ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Destination :</span> ' + r.dest + '</div>' : '')
