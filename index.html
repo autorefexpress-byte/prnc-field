@@ -4688,7 +4688,14 @@ async function modifierTransport(id) {
         + '<option value="international"' + (r.type==='international'?' selected':'') + '>✈️ International</option>'
       + '</select>'
     + '</div>'
-    + '<div class="field-grp"><div class="field-lbl">Référence / TAG</div><input class="fi" id="tr-edit-ref" value="' + (r.ref||'') + '" placeholder="Réf ou TAG équipement"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="tr-edit-wo" value="' + (r.wo||r.ref||'') + '" placeholder="Ex: 886483"></div>'
+    + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="tr-edit-tag" value="' + (r.tag||'') + '" placeholder="Ex: 220-PPD-201"></div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + '<div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" id="tr-edit-sc" value="' + (r.sc||'') + '" placeholder="Ex: 200-1234"></div>'
+    + '<div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="tr-edit-serie" value="' + (r.serie||'') + '" placeholder="Ex: SN-2025-001"></div>'
+    + '</div>'
     + '<div class="field-grp"><div class="field-lbl">Destination</div><input class="fi" id="tr-edit-dest" value="' + (r.dest||'') + '" placeholder="Ex: CALLIDUS NC, Atelier..."></div>'
     + '<div class="field-grp"><div class="field-lbl">Statut</div>'
       + '<select class="fi" id="tr-edit-statut">'
@@ -4767,7 +4774,7 @@ async function sauvegarderModifTransport(id, btn) {
     await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: date, type: type, ref: ref, dest: dest, statut: statut, notes: notes, photos: photos })
+      body: JSON.stringify({ date: date, type: type, wo: document.getElementById('tr-edit-wo').value.trim(), tag: document.getElementById('tr-edit-tag').value.trim(), sc: document.getElementById('tr-edit-sc').value.trim(), serie: document.getElementById('tr-edit-serie').value.trim(), dest: dest, statut: statut, notes: notes, photos: photos })
     });
     invalidateDbCache();
     if (ov) ov.remove();
