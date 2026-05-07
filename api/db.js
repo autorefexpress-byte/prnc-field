@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
 
     // ── TRANSPORT ────────────────────────────────────
     if (table === 'transport') {
-      // Créer la table si elle n'existe pas
+      // Créer la table avec toutes les colonnes
       await sql`CREATE TABLE IF NOT EXISTS transport (
         id TEXT PRIMARY KEY,
         date TEXT,
@@ -58,8 +58,20 @@ module.exports = async function handler(req, res) {
         ref TEXT,
         dest TEXT,
         notes TEXT,
+        wo TEXT,
+        tag TEXT,
+        sc TEXT,
+        serie TEXT,
+        photos JSONB DEFAULT '[]',
         created_at TIMESTAMP DEFAULT NOW()
       )`;
+
+      // Ajouter les colonnes manquantes si la table existe déjà
+      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS wo TEXT`;
+      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS tag TEXT`;
+      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS sc TEXT`;
+      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS serie TEXT`;
+      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
 
       if (method === 'GET') {
         const rows = await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`;
@@ -67,8 +79,13 @@ module.exports = async function handler(req, res) {
       }
       if (method === 'POST') {
         const d = req.body || {};
-        await sql`INSERT INTO transport (id,date,type,statut,ref,dest,notes)
-          VALUES (${d.id||null},${d.date||null},${d.type||null},${d.statut||null},${d.ref||null},${d.dest||null},${d.notes||null})`;
+        await sql`INSERT INTO transport (id,date,type,statut,ref,dest,notes,wo,tag,sc,serie,photos)
+          VALUES (
+            ${d.id||null},${d.date||null},${d.type||null},${d.statut||null},
+            ${d.ref||null},${d.dest||null},${d.notes||null},
+            ${d.wo||null},${d.tag||null},${d.sc||null},${d.serie||null},
+            ${JSON.stringify(d.photos||[])}::jsonb
+          )`;
         return res.status(201).json({ ok: true });
       }
       if (method === 'PATCH' && id) {
@@ -79,7 +96,12 @@ module.exports = async function handler(req, res) {
           type=${d.type||null},
           ref=${d.ref||null},
           dest=${d.dest||null},
-          notes=${d.notes||null}
+          notes=${d.notes||null},
+          wo=${d.wo||null},
+          tag=${d.tag||null},
+          sc=${d.sc||null},
+          serie=${d.serie||null},
+          photos=${JSON.stringify(d.photos||[])}::jsonb
           WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
@@ -173,6 +195,7 @@ module.exports = async function handler(req, res) {
         else if (k === 'type_eqt')             { await sql`UPDATE historique SET type_eqt=${v||null} WHERE id=${id}`; }
         else if (k === 'serie')                { await sql`UPDATE historique SET serie=${v||null} WHERE id=${id}`; }
         else if (k === 'zone')                 { await sql`UPDATE historique SET zone=${v||null} WHERE id=${id}`; }
+        else if (k === 'description')          { await sql`UPDATE historique SET description=${v||null} WHERE id=${id}`; }
         else if (k === 'recovered_at')         { await sql`UPDATE historique SET recovered_at=${v||null} WHERE id=${id}`; }
         else { console.warn('Unknown field:', k); }
       }
