@@ -121,6 +121,49 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unknown transport request' });
     }
 
+    // ── CALLIDUS PRNC ────────────────────────────────
+    if (table === 'callidus_prnc') {
+      await sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
+        id TEXT PRIMARY KEY,
+        wo TEXT, tag TEXT, serie TEXT, qty TEXT,
+        remarques TEXT, photos JSONB DEFAULT '[]',
+        statut TEXT DEFAULT 'Envoyé',
+        date TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`;
+      if (method === 'GET') {
+        const rows = await sql`SELECT * FROM callidus_prnc ORDER BY created_at DESC`;
+        return res.status(200).json(rows);
+      }
+      if (method === 'POST') {
+        const d = req.body || {};
+        await sql`INSERT INTO callidus_prnc (id,wo,tag,serie,qty,remarques,photos,statut,date)
+          VALUES (${d.id||null},${d.wo||null},${d.tag||null},${d.serie||null},${d.qty||null},
+                  ${d.remarques||null},${JSON.stringify(d.photos||[])}::jsonb,
+                  ${d.statut||'Envoyé'},${d.date||null})`;
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'PATCH' && id) {
+        const d = req.body || {};
+        await sql`UPDATE callidus_prnc SET
+          wo=${d.wo||null}, tag=${d.tag||null}, serie=${d.serie||null},
+          qty=${d.qty||null}, remarques=${d.remarques||null},
+          photos=${JSON.stringify(d.photos||[])}::jsonb,
+          statut=${d.statut||null}
+          WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        const rows = await sql`SELECT photos FROM callidus_prnc WHERE id=${id}`;
+        if (rows.length && rows[0].photos && rows[0].photos.length) {
+          await deleteCloudinaryPhotos(rows[0].photos);
+        }
+        await sql`DELETE FROM callidus_prnc WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown callidus_prnc request' });
+    }
+
     // ── PI SUIVI ─────────────────────────────────────
     if (table === 'pi_suivi') {
       if (method === 'GET') {
