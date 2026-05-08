@@ -6448,6 +6448,43 @@ async function ajouterPhotoRecord(input, recordId) {
   input.value = '';
 }
 
+async function supprimerPhotoRecord(id, photoUrl) {
+  if (!confirm('Supprimer cette photo ?')) return;
+  try {
+    var records = await dbLoad();
+    var r = records.find(function(x){ return x.id === id; });
+    if (!r) return;
+    var newPhotos = (r.photos || []).filter(function(p){ return p !== photoUrl; });
+
+    // 1. Supprimer sur Cloudinary via db.js
+    await fetch(DB_API + '?action=delete_photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_url: photoUrl })
+    });
+
+    // 2. Mettre à jour les photos dans Neon
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: newPhotos })
+    });
+
+    // 3. Mettre à jour le cache local
+    if (_dbCache) {
+      var rec = _dbCache.find(function(x){ return x.id === id; });
+      if (rec) rec.photos = newPhotos;
+    }
+    _photosByWOCache = null;
+
+    // 4. Rafraîchir la fiche
+    document.querySelectorAll('[style*="z-index: 8000"], [style*="z-index:8000"]').forEach(function(ov){ ov.remove(); });
+    viewRecord(id);
+  } catch(e) {
+    alert('Erreur suppression photo : ' + e.message);
+  }
+}
+
 async function addPhotosToRecord(id, input) {
   if (!input.files.length) return;
   var overlay = input.closest('.overlay-view');
@@ -6527,8 +6564,13 @@ function viewRecord(id) {
       </div>
       ${photos.length > 0
         ? `<div style="display:flex;flex-wrap:wrap;gap:8px">
-             ${photos.map((p,i) => `<img src="${cloudThumb(p,200,200)}" loading="lazy" onclick="viewPhotoFull('${i}','${r.id}')"
-               style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer">`).join('')}
+             ${photos.map((p,i) => `
+               <div style="position:relative">
+                 <img src="${cloudThumb(p,200,200)}" loading="lazy" onclick="viewPhotoFull('${i}','${r.id}')"
+                   style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer">
+                 <button onclick="supprimerPhotoRecord('${r.id}','${p}')" 
+                   style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;line-height:1;font-weight:700;display:flex;align-items:center;justify-content:center">✕</button>
+               </div>`).join('')}
            </div>`
         : `<div style="font-size:12px;color:var(--muted);padding:8px 0">Aucune photo — clique sur Ajouter</div>`
       }
