@@ -47,6 +47,15 @@ module.exports = async function handler(req, res) {
     const id    = req.query?.id    || null;
     const table = req.query?.table || 'historique';
 
+    // ── SUPPRIMER UNE PHOTO CLOUDINARY ──────────────
+    if (req.query?.action === 'delete_photo') {
+      const { photo_url } = req.body || {};
+      if (photo_url) {
+        await deleteCloudinaryPhotos([photo_url]);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
     // ── TRANSPORT ────────────────────────────────────
     if (table === 'transport') {
       // Créer la table avec toutes les colonnes
