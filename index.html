@@ -181,6 +181,10 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .photo-thumb img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border)}
 .photo-thumb-del{position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;cursor:pointer;font-weight:700}
 .photo-btn{display:inline-block;background:var(--navy2);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;margin-top:4px}
+.cp-tab{flex:1;padding:10px 4px 8px;border:none;background:none;font-family:inherit;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:3px solid transparent;transition:all .2s;}
+.cp-tab.active{color:#7030A0;border-bottom-color:#7030A0;}
+.cp-pane{display:none;}
+.cp-pane.active{display:block;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -341,13 +345,11 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
       <div class="card-lbl">Planning Transport</div>
       <div class="card-sub" id="transport-badge-home">Camions & expéditions</div>
     </div>
-    <div class="action-card" onclick="show('s-credit-magasin')">
-      <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
-      <div class="card-lbl">Crédit Magasin</div>
-      <div class="card-sub">Retour pièces non utilisées</div>
-        
-        </div>
-    
+    <div class="action-card" onclick="show('s-callidus-prnc')">
+      <div class="card-icon" style="background:#EDE7F6;color:#7030A0">🔧</div>
+      <div class="card-lbl">Callidus</div>
+      <div class="card-sub">Vannes chez Callidus</div>
+    </div>
     <div class="action-card" onclick="show('s-etna-suivi')">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
       <div class="card-lbl">Travaux ETNA</div>
@@ -1564,7 +1566,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-workshop','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-credit-magasin','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
+const SCREENS = ['s-home','s-workshop','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -1600,11 +1602,201 @@ function show(id) {
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-inventaire')      renderInventaire();
   if (id === 's-transport') renderTransport();
+  if (id === 's-callidus-prnc') { renderCallidusPrnc(); cpShowTab('liste'); }
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home') {
     setTimeout(function() {
-      updateStats().then(function() {
+      
+// ══ CALLIDUS PRNC ══
+var _cpPhotos = [];
+
+function fermerOverlayCP(btn) {
+  var ov = btn.closest('[style*="rgba"]') || btn.closest('[style*="fixed"]');
+  if (ov) ov.remove();
+}
+
+function cpShowTab(t) {
+  document.querySelectorAll('.cp-pane').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.cp-tab').forEach(function(b){ b.classList.remove('active'); });
+  var p = document.getElementById('cp-' + t); if(p) p.classList.add('active');
+  var b = document.getElementById('cp-tab-' + t); if(b) b.classList.add('active');
+  if (t === 'liste') renderCallidusPrnc();
+}
+
+function cpRefreshPrev(containerId, photos) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = photos.map(function(p, i) {
+    return '<div style="position:relative">'
+      + '<img src="' + cloudThumb(p,200,200) + '" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)">'
+      + '<button onclick="cpDelPhoto(' + i + ',&quot;' + containerId + '&quot;)" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function cpDelPhoto(idx, containerId) {
+  if (containerId === 'cp-photos-prev') {
+    _cpPhotos.splice(idx, 1);
+    cpRefreshPrev('cp-photos-prev', _cpPhotos);
+  } else {
+    var ov = document.querySelector('[data-cp-edit="1"]');
+    if (ov && ov._photos) { ov._photos.splice(idx, 1); cpRefreshPrev('cpe-photos-prev', ov._photos); }
+  }
+}
+
+async function cpAjouterPhotos(input) {
+  if (!input.files.length) return;
+  var label = input.closest('label');
+  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
+  try {
+    var urls = await uploadPhotosParallel(input.files, 'callidus');
+    _cpPhotos = _cpPhotos.concat(urls);
+    cpRefreshPrev('cp-photos-prev', _cpPhotos);
+  } catch(e) { alert('Erreur upload : ' + e.message); }
+  if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; }
+}
+
+async function cpEnregistrer() {
+  var wo    = document.getElementById('cp-wo').value.trim();
+  var tag   = document.getElementById('cp-tag').value.trim();
+  var serie = document.getElementById('cp-serie').value.trim();
+  var qty   = document.getElementById('cp-qty').value || '1';
+  var rem   = document.getElementById('cp-rem').value.trim();
+  if (!tag && !wo) { alert('Renseigne au moins le TAG ou le WO.'); return; }
+  var btn = document.querySelector('#cp-nouveau button[onclick="cpEnregistrer()"]');
+  if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
+  try {
+    await fetch(DB_API + '?table=callidus_prnc', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ id: Date.now().toString(), wo: wo, tag: tag, serie: serie, qty: qty, remarques: rem, photos: _cpPhotos, date: new Date().toLocaleDateString('fr-FR'), statut: 'Envoyé' })
+    });
+    ['cp-wo','cp-tag','cp-serie','cp-rem'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    document.getElementById('cp-qty').value = '1';
+    _cpPhotos = [];
+    cpRefreshPrev('cp-photos-prev', []);
+    cpShowTab('liste');
+  } catch(e) { alert('Erreur : ' + e.message); }
+  if (btn) { btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
+}
+
+async function renderCallidusPrnc() {
+  var list = document.getElementById('cp-list-content');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  try {
+    var resp = await fetch(DB_API + '?table=callidus_prnc');
+    var data = await resp.json();
+    if (!Array.isArray(data)) data = [];
+    data.forEach(function(r) {
+      if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
+      if (!Array.isArray(r.photos)) r.photos = [];
+    });
+    if (!data.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne enregistrée</div></div>';
+      return;
+    }
+    list.innerHTML = data.map(function(r) {
+      var photoHtml = r.photos && r.photos.length
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + r.photos.map(function(p){ return '<img src="' + cloudThumb(p,200,200) + '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer" onclick="window.open(this.src)">'; }).join('') + '</div>'
+        : '';
+      return '<div style="background:#fff;border-radius:14px;border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05)">'
+        + '<div style="background:#EDE7F6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
+          + '<div><div style="font-size:14px;font-weight:800;color:#7030A0">' + (r.tag||'--') + '</div><div style="font-size:10px;color:#555">' + (r.date||'') + '</div></div>'
+          + '<div style="display:flex;gap:6px">'
+            + '<button onclick="cpModifier(&quot;' + r.id + '&quot;)" style="background:#7030A0;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">✏️</button>'
+            + '<button onclick="cpSupprimer(&quot;' + r.id + '&quot;)" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">🗑️</button>'
+          + '</div>'
+        + '</div>'
+        + '<div style="padding:10px 14px">'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+            + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
+            + (r.serie ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.serie + '</div></div>' : '')
+            + (r.qty ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">QTÉ</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.qty + '</div></div>' : '')
+          + '</div>'
+          + (r.remarques ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-bottom:6px">' + r.remarques + '</div>' : '')
+          + photoHtml
+        + '</div>'
+      + '</div>';
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur connexion</div>';
+  }
+}
+
+async function cpSupprimer(id) {
+  if (!confirm('Supprimer cet enregistrement ?')) return;
+  try {
+    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), { method: 'DELETE' });
+    renderCallidusPrnc();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function cpModifier(id) {
+  var resp = await fetch(DB_API + '?table=callidus_prnc');
+  var data = await resp.json();
+  var r = data.find(function(x){ return String(x.id) === String(id); });
+  if (!r) return;
+  if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
+  if (!Array.isArray(r.photos)) r.photos = [];
+
+  var ov = document.createElement('div');
+  ov.setAttribute('data-cp-edit', '1');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = '<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 36px;max-height:90vh;overflow-y:auto">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+      + '<div style="font-size:16px;font-weight:800;color:#7030A0">✏️ Modifier</div>'
+      + '<button onclick="fermerOverlayCP(this)" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cpe-wo" value="' + (r.wo||'') + '"></div>'
+      + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cpe-tag" value="' + (r.tag||'') + '"></div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      + '<div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="cpe-serie" value="' + (r.serie||'') + '"></div>'
+      + '<div class="field-grp"><div class="field-lbl">Quantité</div><input class="fi" type="number" id="cpe-qty" value="' + (r.qty||1) + '"></div>'
+    + '</div>'
+    + '<div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="cpe-rem" style="height:70px;resize:none">' + (r.remarques||'') + '</textarea></div>'
+    + '<div class="field-grp"><div class="field-lbl">Photos</div>'
+      + '<div id="cpe-photos-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>'
+      + '<label style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:#EDE7F6;color:#7030A0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">📷 Ajouter photos<input type="file" accept="image/*" multiple style="display:none" onchange="cpeAjouterPhotos(this)"></label>'
+    + '</div>'
+    + '<button onclick="cpeSauvegarder(&quot;' + id + '&quot;,this)" style="width:100%;padding:14px;background:#7030A0;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">💾 Enregistrer</button>'
+  + '</div>';
+
+  document.body.appendChild(ov);
+  ov._photos = r.photos.slice();
+  cpRefreshPrev('cpe-photos-prev', ov._photos);
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+}
+
+async function cpeAjouterPhotos(input) {
+  if (!input.files.length) return;
+  var label = input.closest('label');
+  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
+  try {
+    var urls = await uploadPhotosParallel(input.files, 'callidus');
+    var ov = document.querySelector('[data-cp-edit="1"]');
+    if (ov) { ov._photos = (ov._photos||[]).concat(urls); cpRefreshPrev('cpe-photos-prev', ov._photos); }
+  } catch(e) { alert('Erreur : ' + e.message); }
+  if (label) { label.textContent = '📷 Ajouter photos'; label.style.pointerEvents = ''; }
+}
+
+async function cpeSauvegarder(id, btn) {
+  var ov = btn.closest('[data-cp-edit="1"]');
+  var photos = ov ? (ov._photos||[]) : [];
+  btn.textContent = '⏳...'; btn.disabled = true;
+  try {
+    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ wo: document.getElementById('cpe-wo').value.trim(), tag: document.getElementById('cpe-tag').value.trim(), serie: document.getElementById('cpe-serie').value.trim(), qty: document.getElementById('cpe-qty').value, remarques: document.getElementById('cpe-rem').value.trim(), photos: photos })
+    });
+    if (ov) ov.remove();
+    renderCallidusPrnc();
+  } catch(e) { alert('Erreur : ' + e.message); btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
+}
+
+updateStats().then(function() {
         renderPlanifier();
       });
     }, 80);
@@ -9306,5 +9498,41 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+
+<div class="screen" id="s-callidus-prnc">
+  <div class="hdr" style="display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10">
+    <div class="back-btn" onclick="show('s-home')">←</div>
+    <div style="font-size:16px;font-weight:700;color:#fff">🔧 Callidus</div>
+  </div>
+  <div style="display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0">
+    <button class="cp-tab active" id="cp-tab-liste" onclick="cpShowTab('liste')"><span style="font-size:16px">📋</span><br>Liste</button>
+    <button class="cp-tab" id="cp-tab-nouveau" onclick="cpShowTab('nouveau')"><span style="font-size:16px">➕</span><br>Nouveau</button>
+  </div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="cp-pane active" id="cp-liste" style="padding:14px">
+      <div id="cp-list-content"><div style="text-align:center;color:var(--muted);padding:40px">⏳ Chargement...</div></div>
+    </div>
+    <div class="cp-pane" id="cp-nouveau" style="padding:14px;padding-bottom:40px">
+      <div class="sec-lbl">📋 Informations équipement</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cp-wo" placeholder="Ex: 886483"></div>
+        <div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cp-tag" placeholder="Ex: 220-VLS-030"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="cp-serie" placeholder="Ex: SN-2025-001"></div>
+        <div class="field-grp"><div class="field-lbl">Quantité</div><input class="fi" type="number" id="cp-qty" value="1" min="1"></div>
+      </div>
+      <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="cp-rem" style="height:70px;resize:none" placeholder="Description des travaux..."></textarea></div>
+      <div class="sec-lbl">📷 Photos</div>
+      <div id="cp-photos-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">
+        📷 Ajouter des photos
+        <input type="file" accept="image/*" multiple style="display:none" onchange="cpAjouterPhotos(this)">
+      </label>
+      <button onclick="cpEnregistrer()" style="width:100%;padding:14px;background:#7030A0;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
