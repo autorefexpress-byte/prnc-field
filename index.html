@@ -4720,18 +4720,15 @@ async function modifierTransport(id) {
 
   document.body.appendChild(ov);
   // Stocker les photos existantes
-  ov._photos = r.photos ? r.photos.slice() : [];
+  _trEditPhotos = r.photos ? r.photos.slice() : [];
   ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
 }
 
 function trEditSupprimerPhoto(idx) {
-  var ov = document.querySelector('[style*="rgba(0,0,0,.6)"]');
-  if (!ov) return;
-  ov._photos.splice(idx, 1);
-  // Rafraîchir la preview
+  _trEditPhotos.splice(idx, 1);
   var prev = document.getElementById('tr-edit-photos-prev');
   if (prev) {
-    prev.innerHTML = ov._photos.map(function(p, i) {
+    prev.innerHTML = _trEditPhotos.map(function(p, i) {
       return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>';
     }).join('');
   }
@@ -4743,15 +4740,12 @@ async function trEditAjouterPhotos(input) {
   if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
   try {
     var newUrls = await uploadPhotosParallel(input.files, 'transport');
-    var ov = document.querySelector('[style*="rgba(0,0,0,.6)"]');
-    if (ov) {
-      ov._photos = (ov._photos || []).concat(newUrls);
-      var prev = document.getElementById('tr-edit-photos-prev');
-      if (prev) {
-        prev.innerHTML = ov._photos.map(function(p, i) {
-          return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>';
-        }).join('');
-      }
+    _trEditPhotos = _trEditPhotos.concat(newUrls);
+    var prev = document.getElementById('tr-edit-photos-prev');
+    if (prev) {
+      prev.innerHTML = _trEditPhotos.map(function(p, i) {
+        return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>';
+      }).join('');
     }
   } catch(e) { alert('Erreur upload : ' + e.message); }
   if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; label.style.cursor = 'pointer'; }
@@ -4772,8 +4766,8 @@ async function sauvegarderModifTransport(id, btn) {
   btn.disabled = true;
 
   try {
+    var photos = _trEditPhotos || [];
     var ov = btn.closest('[style*="rgba"]') || btn.closest('[style*="fixed"]');
-    var photos = ov && ov._photos ? ov._photos : [];
     await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -4815,6 +4809,13 @@ async function renderTransport() {
     return;
   }
 
+  // Parser les photos (Neon renvoie JSONB parfois en string)
+  data.forEach(function(r) {
+    if (typeof r.photos === 'string') {
+      try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; }
+    }
+    if (!Array.isArray(r.photos)) r.photos = [];
+  });
   data.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
   var filtered = transportFilter === 'all' ? data : data.filter(function(r){ return r.type === transportFilter; });
 
