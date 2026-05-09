@@ -115,6 +115,19 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
+        // Supprimer photos Cloudinary
+        const trRows = await sql`SELECT photos, wo FROM transport WHERE id=${id}`;
+        if (trRows.length) {
+          const photos = trRows[0].photos || [];
+          if (photos.length > 0) await deleteCloudinaryPhotos(photos);
+          // Supprimer les enregistrements historique liés au WO
+          if (trRows[0].wo) {
+            const histRows = await sql`SELECT photos FROM historique WHERE wo=${trRows[0].wo}`;
+            const histPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
+            if (histPhotos.length > 0) await deleteCloudinaryPhotos(histPhotos);
+            await sql`DELETE FROM historique WHERE wo=${trRows[0].wo}`;
+          }
+        }
         await sql`DELETE FROM transport WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
@@ -154,9 +167,18 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
-        const rows = await sql`SELECT photos FROM callidus_prnc WHERE id=${id}`;
-        if (rows.length && rows[0].photos && rows[0].photos.length) {
-          await deleteCloudinaryPhotos(rows[0].photos);
+        const rows = await sql`SELECT photos, wo FROM callidus_prnc WHERE id=${id}`;
+        if (rows.length) {
+          // Supprimer photos Cloudinary du callidus
+          const photos = rows[0].photos || [];
+          if (photos.length > 0) await deleteCloudinaryPhotos(photos);
+          // Supprimer les enregistrements historique liés au WO
+          if (rows[0].wo) {
+            const histRows = await sql`SELECT photos FROM historique WHERE wo=${rows[0].wo}`;
+            const histPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
+            if (histPhotos.length > 0) await deleteCloudinaryPhotos(histPhotos);
+            await sql`DELETE FROM historique WHERE wo=${rows[0].wo}`;
+          }
         }
         await sql`DELETE FROM callidus_prnc WHERE id=${id}`;
         return res.status(200).json({ ok: true });
