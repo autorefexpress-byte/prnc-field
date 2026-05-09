@@ -9200,7 +9200,16 @@ async function sauvegarderEditionInventaire(id, btn) {
       body: JSON.stringify({ loc: loc, description: desc, photos: allPhotos })
     });
 
-    invalidateDbCache();
+    // Mettre à jour le cache local directement (évite un rechargement réseau)
+    if (_dbCache) {
+      var rec = _dbCache.find(function(x){ return x.id === id; });
+      if (rec) {
+        rec.loc = loc;
+        rec.description = desc;
+        rec.photos = allPhotos;
+      }
+    }
+    _photosByWOCache = null;
     if (ov) ov.remove();
     renderInventaire();
   } catch(e) {
