@@ -1601,8 +1601,8 @@ function show(id) {
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-inventaire')      renderInventaire();
-  if (id === 's-transport') renderTransport();
   if (id === 's-callidus-prnc') { renderCallidusPrnc(); cpShowTab('liste'); }
+  if (id === 's-transport') renderTransport();
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home') {
@@ -1610,9 +1610,10 @@ function show(id) {
       
 // ══ CALLIDUS PRNC ══
 var _cpPhotos = [];
+var _cpCache  = null;
 
 function fermerOverlayCP(btn) {
-  var ov = btn.closest('[style*="rgba"]') || btn.closest('[style*="fixed"]');
+  var ov = btn.closest('[data-cp-edit="1"]') || btn.closest('[style*="rgba"]');
   if (ov) ov.remove();
 }
 
@@ -1658,11 +1659,11 @@ async function cpAjouterPhotos(input) {
 }
 
 async function cpEnregistrer() {
-  var wo    = document.getElementById('cp-wo').value.trim();
-  var tag   = document.getElementById('cp-tag').value.trim();
+  var wo = document.getElementById('cp-wo').value.trim();
+  var tag = document.getElementById('cp-tag').value.trim();
   var serie = document.getElementById('cp-serie').value.trim();
-  var qty   = document.getElementById('cp-qty').value || '1';
-  var rem   = document.getElementById('cp-rem').value.trim();
+  var qty = document.getElementById('cp-qty').value || '1';
+  var rem = document.getElementById('cp-rem').value.trim();
   if (!tag && !wo) { alert('Renseigne au moins le TAG ou le WO.'); return; }
   var btn = document.querySelector('#cp-nouveau button[onclick="cpEnregistrer()"]');
   if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
@@ -1675,14 +1676,16 @@ async function cpEnregistrer() {
     document.getElementById('cp-qty').value = '1';
     _cpPhotos = [];
     cpRefreshPrev('cp-photos-prev', []);
+    _cpCache = null;
     cpShowTab('liste');
   } catch(e) { alert('Erreur : ' + e.message); }
   if (btn) { btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
 }
 
-async function renderCallidusPrnc() {
+async function renderCallidusPrnc(forceRefresh) {
   var list = document.getElementById('cp-list-content');
   if (!list) return;
+  if (_cpCache && !forceRefresh) { cpRenderList(_cpCache); return; }
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
   try {
     var resp = await fetch(DB_API + '?table=callidus_prnc');
@@ -1692,50 +1695,63 @@ async function renderCallidusPrnc() {
       if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
       if (!Array.isArray(r.photos)) r.photos = [];
     });
-    if (!data.length) {
-      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne enregistrée</div></div>';
-      return;
-    }
-    list.innerHTML = data.map(function(r) {
-      var photoHtml = r.photos && r.photos.length
-        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + r.photos.map(function(p){ return '<img src="' + cloudThumb(p,200,200) + '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer" onclick="window.open(this.src)">'; }).join('') + '</div>'
-        : '';
-      return '<div style="background:#fff;border-radius:14px;border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05)">'
-        + '<div style="background:#EDE7F6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
-          + '<div><div style="font-size:14px;font-weight:800;color:#7030A0">' + (r.tag||'--') + '</div><div style="font-size:10px;color:#555">' + (r.date||'') + '</div></div>'
-          + '<div style="display:flex;gap:6px">'
-            + '<button onclick="cpModifier(&quot;' + r.id + '&quot;)" style="background:#7030A0;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">✏️</button>'
-            + '<button onclick="cpSupprimer(&quot;' + r.id + '&quot;)" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">🗑️</button>'
-          + '</div>'
-        + '</div>'
-        + '<div style="padding:10px 14px">'
-          + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
-            + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
-            + (r.serie ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.serie + '</div></div>' : '')
-            + (r.qty ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">QTÉ</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.qty + '</div></div>' : '')
-          + '</div>'
-          + (r.remarques ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-bottom:6px">' + r.remarques + '</div>' : '')
-          + photoHtml
-        + '</div>'
-      + '</div>';
-    }).join('');
+    _cpCache = data;
+    cpRenderList(data);
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur connexion</div>';
   }
+}
+
+function cpRenderList(data) {
+  var list = document.getElementById('cp-list-content');
+  if (!list) return;
+  if (!data.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne enregistrée</div></div>';
+    return;
+  }
+  list.innerHTML = data.map(function(r) {
+    var photoHtml = r.photos && r.photos.length
+      ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + r.photos.map(function(p){ return '<img src="' + cloudThumb(p,200,200) + '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer" onclick="window.open(this.src)">'; }).join('') + '</div>'
+      : '';
+    return '<div style="background:#fff;border-radius:14px;border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05)">'
+      + '<div style="background:#EDE7F6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
+        + '<div><div style="font-size:14px;font-weight:800;color:#7030A0">' + (r.tag||'--') + '</div><div style="font-size:10px;color:#555">' + (r.date||'') + '</div></div>'
+        + '<div style="display:flex;gap:6px">'
+          + '<button onclick="cpModifier(&quot;' + r.id + '&quot;)" style="background:#7030A0;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">✏️</button>'
+          + '<button onclick="cpSupprimer(&quot;' + r.id + '&quot;)" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">🗑️</button>'
+        + '</div>'
+      + '</div>'
+      + '<div style="padding:10px 14px">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+          + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
+          + (r.serie ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.serie + '</div></div>' : '')
+          + (r.qty ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">QTÉ</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.qty + '</div></div>' : '')
+        + '</div>'
+        + (r.remarques ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-bottom:6px">' + r.remarques + '</div>' : '')
+        + photoHtml
+      + '</div>'
+    + '</div>';
+  }).join('');
 }
 
 async function cpSupprimer(id) {
   if (!confirm('Supprimer cet enregistrement ?')) return;
   try {
     await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), { method: 'DELETE' });
-    renderCallidusPrnc();
+    _cpCache = null;
+    renderCallidusPrnc(true);
   } catch(e) { alert('Erreur : ' + e.message); }
 }
 
 async function cpModifier(id) {
-  var resp = await fetch(DB_API + '?table=callidus_prnc');
-  var data = await resp.json();
+  var data = _cpCache || [];
   var r = data.find(function(x){ return String(x.id) === String(id); });
+  if (!r) {
+    var resp = await fetch(DB_API + '?table=callidus_prnc');
+    data = await resp.json();
+    _cpCache = data;
+    r = data.find(function(x){ return String(x.id) === String(id); });
+  }
   if (!r) return;
   if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
   if (!Array.isArray(r.photos)) r.photos = [];
@@ -1792,7 +1808,8 @@ async function cpeSauvegarder(id, btn) {
       body: JSON.stringify({ wo: document.getElementById('cpe-wo').value.trim(), tag: document.getElementById('cpe-tag').value.trim(), serie: document.getElementById('cpe-serie').value.trim(), qty: document.getElementById('cpe-qty').value, remarques: document.getElementById('cpe-rem').value.trim(), photos: photos })
     });
     if (ov) ov.remove();
-    renderCallidusPrnc();
+    _cpCache = null;
+    renderCallidusPrnc(true);
   } catch(e) { alert('Erreur : ' + e.message); btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
 }
 
@@ -9533,6 +9550,5 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 </div>
-
 </body>
 </html>
