@@ -8168,7 +8168,11 @@ async function renderRelances() {
     var allRecords = await dbLoad();
     var records = allRecords.filter(function(r) {
       var st = (r.statut || '').toLowerCase();
-      return (st.indexOf('retour') >= 0 || st.indexOf('demandeur') >= 0) && st.indexOf('recupere') < 0;
+      // Inclure uniquement "Retour demandeur" — exclure "Retour magasin" et "Récupéré"
+      var isRetourDemandeur = st.indexOf('demandeur') >= 0 || st === 'retour demandeur';
+      var isRetourMagasin   = st.indexOf('magasin') >= 0 || st.indexOf('magasin') >= 0;
+      var isRecupere        = st.indexOf('recupere') >= 0 || st.indexOf('récupéré') >= 0;
+      return isRetourDemandeur && !isRetourMagasin && !isRecupere;
     });
 
     var search = (document.getElementById('relances-search')||{value:''}).value.toLowerCase().trim();
@@ -8519,13 +8523,11 @@ async function marquerRecupere(id, btn) {
       bodyParts.push('  Date : ' + now, '', 'Equipement clos.', '', 'Cordialement,', 'Emmanuel ROSA ASIK | PRNC');
       var body = bodyParts.join('\n');
       var EMMANUEL = 'emmanuel.rosa@pronyresources.com';
-      var ccList = allTo.slice(1);
-      if (!ccList.includes(EMMANUEL)) ccList.push(EMMANUEL);
-      if (emailDem && !allTo.includes(emailDem) && !ccList.includes(emailDem)) ccList.unshift(emailDem);
-
-      var toFirst = allTo[0] || EMMANUEL;
-      var ccStr   = ccList.filter(Boolean).join(';');
-      var mailUrl = 'mailto:' + toFirst +
+      // Emmanuel en destinataire principal
+      var ccList = [].concat(allTo).filter(function(e){ return e && e !== EMMANUEL; });
+      if (emailDem && !ccList.includes(emailDem)) ccList.unshift(emailDem);
+      var ccStr = ccList.filter(Boolean).join(';');
+      var mailUrl = 'mailto:' + EMMANUEL +
         '?subject=' + encodeURIComponent(subj) +
         '&body='    + encodeURIComponent(body) +
         (ccStr ? '&cc=' + encodeURIComponent(ccStr) : '');
