@@ -1601,7 +1601,7 @@ function show(id) {
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-inventaire')      renderInventaire();
-  if (id === 's-callidus-prnc') { renderCallidusPrnc(); cpShowTab('liste'); }
+  if (id === 's-callidus-prnc') { cpShowTab('liste'); }
   if (id === 's-transport') renderTransport();
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
@@ -1622,7 +1622,7 @@ function cpShowTab(t) {
   document.querySelectorAll('.cp-tab').forEach(function(b){ b.classList.remove('active'); });
   var p = document.getElementById('cp-' + t); if(p) p.classList.add('active');
   var b = document.getElementById('cp-tab-' + t); if(b) b.classList.add('active');
-  if (t === 'liste') renderCallidusPrnc();
+  if (t === 'liste') renderCallidusPrnc(false);
 }
 
 function cpRefreshPrev(containerId, photos) {
@@ -1676,7 +1676,6 @@ async function cpEnregistrer() {
     document.getElementById('cp-qty').value = '1';
     _cpPhotos = [];
     cpRefreshPrev('cp-photos-prev', []);
-    _cpCache = null;
     cpShowTab('liste');
   } catch(e) { alert('Erreur : ' + e.message); }
   if (btn) { btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
@@ -1812,6 +1811,9 @@ async function cpeSauvegarder(id, btn) {
     renderCallidusPrnc(true);
   } catch(e) { alert('Erreur : ' + e.message); btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
 }
+
+// Précharger Callidus en arrière-plan
+fetch(DB_API + '?table=callidus_prnc').then(function(r){ return r.json(); }).then(function(data){ if(Array.isArray(data)){ data.forEach(function(r){ if(typeof r.photos==='string'){try{r.photos=JSON.parse(r.photos);}catch(e){r.photos=[];}} if(!Array.isArray(r.photos))r.photos=[]; }); _cpCache=data; } }).catch(function(){});
 
 updateStats().then(function() {
         renderPlanifier();
