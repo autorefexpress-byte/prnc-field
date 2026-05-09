@@ -1684,8 +1684,14 @@ async function cpEnregistrer() {
 async function renderCallidusPrnc(forceRefresh) {
   var list = document.getElementById('cp-list-content');
   if (!list) return;
-  if (_cpCache && !forceRefresh) { cpRenderList(_cpCache); return; }
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  // Afficher immédiatement le cache si dispo
+  if (_cpCache) {
+    cpRenderList(_cpCache);
+    if (!forceRefresh) return; // Cache valide, pas besoin de recharger
+  } else {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  }
+  // Charger en arrière-plan (silencieux si cache déjà affiché)
   try {
     var resp = await fetch(DB_API + '?table=callidus_prnc');
     var data = await resp.json();
@@ -1697,7 +1703,7 @@ async function renderCallidusPrnc(forceRefresh) {
     _cpCache = data;
     cpRenderList(data);
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur connexion</div>';
+    if (!_cpCache) list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur connexion</div>';
   }
 }
 
@@ -1811,9 +1817,6 @@ async function cpeSauvegarder(id, btn) {
     renderCallidusPrnc(true);
   } catch(e) { alert('Erreur : ' + e.message); btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
 }
-
-// Précharger Callidus en arrière-plan
-fetch(DB_API + '?table=callidus_prnc').then(function(r){ return r.json(); }).then(function(data){ if(Array.isArray(data)){ data.forEach(function(r){ if(typeof r.photos==='string'){try{r.photos=JSON.parse(r.photos);}catch(e){r.photos=[];}} if(!Array.isArray(r.photos))r.photos=[]; }); _cpCache=data; } }).catch(function(){});
 
 updateStats().then(function() {
         renderPlanifier();
@@ -8058,6 +8061,18 @@ updateStats().then(function() {
   renderPlanifier();
   checkRelances();
 });
+// Précharger Callidus en arrière-plan
+setTimeout(function() {
+  fetch(DB_API + '?table=callidus_prnc').then(function(r){ return r.json(); }).then(function(data){
+    if(Array.isArray(data)){
+      data.forEach(function(r){
+        if(typeof r.photos==='string'){try{r.photos=JSON.parse(r.photos);}catch(e){r.photos=[];}}
+        if(!Array.isArray(r.photos))r.photos=[];
+      });
+      _cpCache=data;
+    }
+  }).catch(function(){});
+}, 2000);
 (async function() {
   const params = new URLSearchParams(window.location.search);
   const sigId  = params.get('sig');
