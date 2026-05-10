@@ -590,6 +590,7 @@ function cloudThumb(url, w, h) {
 
 var _data = [];
 var _occupMap = {};
+var _ZONES = [];
 
 async function loadData() {
   setStatus('loading', 'Chargement...');
@@ -674,7 +675,7 @@ function renderGrids() {
   });
 
   // ── Zones spéciales ──
-  var _ZONES = [
+  _ZONES = [
     { id:'Zona A1',        label:'Zone A1',         icon:'🅰️' },
     { id:'Dalle de lavage',label:'Dalle de lavage',  icon:'🚿' },
     { id:'Retour demandeur',label:'Retour demandeur',icon:'👤' },
