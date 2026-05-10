@@ -812,7 +812,7 @@ function showDetail(loc, equips) {
     var wgColor = wgColors[r.wg] || '#555';
     var hasDetail = r.wo || r.wr || r.sc || r.description || r.motif || (r.photos && r.photos.length);
     var thumbHtml = (r.photos && r.photos.length)
-      ? '<img src="' + r.photos[0] + '" onerror="this.style.display='none'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+      ? '<img src="' + r.photos[0] + '" onerror="this.style.display=\'none\'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">'
       : '<div style="width:36px;height:36px;border-radius:6px;background:' + wgColor + '20;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔧</div>';
 
     return '<div style="background:#fff;border-radius:10px;border:1.5px solid var(--border);margin-bottom:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
@@ -823,7 +823,7 @@ function showDetail(loc, equips) {
           + '<div style="font-size:10px;color:' + wgColor + ';font-weight:700;margin-top:1px">' + (r.wg||'--') + (r.wo ? ' · WO ' + r.wo : '') + '</div>'
         + '</div>'
         + '<div style="display:flex;align-items:center;gap:5px">'
-          + '<button onclick="event.stopPropagation();ouvrirModif('' + r.id + '')" style="background:#EEF2FF;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:700;color:#1F3864;font-family:inherit">✏️</button>'
+          + '<button onclick="event.stopPropagation();ouvrirModif(&quot;' + r.id + '&quot;)" style="background:#EEF2FF;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:700;color:#1F3864;font-family:inherit">✏️</button>'
           + (hasDetail ? '<span id="chevron-' + idx + '" style="color:var(--muted);font-size:11px;transition:transform .2s;display:inline-block">▼</span>' : '')
         + '</div>'
       + '</div>'
@@ -836,9 +836,7 @@ function showDetail(loc, equips) {
             + '</div>'
             + '<div style="font-size:10px;color:var(--muted);margin-bottom:5px">📌 ' + (r.statut||r.type||'--') + (r.date ? ' · ' + r.date : '') + '</div>'
             + (r.description||r.motif ? '<div style="font-size:11px;color:#555;font-style:italic;margin-bottom:6px">' + (r.description||r.motif) + '</div>' : '')
-            + (r.photos && r.photos.length
-              ? '<div style="display:flex;gap:4px;flex-wrap:wrap">' + r.photos.map(function(p){ return '<img src="' + p + '" onclick="openPhoto('' + p + '')" onerror="this.parentNode.removeChild(this)" style="width:54px;height:54px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">'; }).join('') + '</div>'
-              : '')
+            + (r.photos && r.photos.length ? renderPhotos(r.photos) : '')
           + '</div>'
         : '')
     + '</div>';
@@ -846,6 +844,21 @@ function showDetail(loc, equips) {
 
   body.innerHTML = html;
 }
+
+function renderPhotos(photos) {
+  if (!photos || !photos.length) return '';
+  // Stocker les photos dans une variable globale et utiliser un index
+  var startIdx = _photoCache.length;
+  photos.forEach(function(p){ _photoCache.push(p); });
+  return '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">'
+    + photos.map(function(p, i) {
+        return '<img src="' + p + '" onclick="_openPhotoIdx(' + (startIdx+i) + ')" onerror="this.remove()" style="width:54px;height:54px;object-fit:cover;border-radius:6px;border:1.5px solid #dde2ea;cursor:pointer">';
+      }).join('')
+    + '</div>';
+}
+
+var _photoCache = [];
+function _openPhotoIdx(idx) { openPhoto(_photoCache[idx]); }
 
 function toggleEquip(idx) {
   var detail = document.getElementById('equip-detail-' + idx);
