@@ -584,8 +584,8 @@ const API_URL = 'https://prnc-field.vercel.app/api/db';
 
 // Transformer URL Cloudinary en miniature
 function cloudThumb(url, w, h) {
-  if (!url) return url;
-  return url.replace('/upload/', '/upload/w_' + (w||400) + ',h_' + (h||300) + ',c_fill,q_auto,f_auto/');
+  // Retourner l'URL originale sans transformation
+  return url || '';
 }
 
 var _data = [];
