@@ -674,7 +674,7 @@ function renderGrids() {
   });
 
   // ── Zones spéciales ──
-  var ZONES = [
+  var _ZONES = [
     { id:'Zona A1',        label:'Zone A1',         icon:'🅰️' },
     { id:'Dalle de lavage',label:'Dalle de lavage',  icon:'🚿' },
     { id:'Retour demandeur',label:'Retour demandeur',icon:'👤' },
@@ -691,7 +691,7 @@ function renderGrids() {
   var zonesGrid = document.getElementById('grid-zones');
   if (zonesGrid) {
     zonesGrid.innerHTML = '';
-    ZONES.forEach(function(z) {
+    _ZONES.forEach(function(z) {
       var equips = _occupMap[z.id] || [];
       var isOccupe = equips.length > 0;
       var div = document.createElement('div');
@@ -791,48 +791,71 @@ function updateStats() {
 }
 
 function showDetail(loc, equips) {
-  document.querySelectorAll('.plan-cell.selected').forEach(function(c){ c.classList.remove('selected'); });
+  document.querySelectorAll('.plan-cell.selected, .zone-card.selected').forEach(function(c){ c.classList.remove('selected'); });
   var cell = document.querySelector('[data-loc="' + loc + '"]');
   if (cell) cell.classList.add('selected');
 
-  document.getElementById('detail-loc').textContent = loc;
+  var zone = _ZONES.find(function(z){ return z.id === loc; });
+  document.getElementById('detail-loc').textContent = zone ? zone.icon + ' ' + zone.label : loc;
 
   var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#2d6a4f', STCHAUD:'#1F3864' };
-
   var body = document.getElementById('detail-body');
+
   if (!equips.length) {
     body.innerHTML = '<div class="detail-empty"><div class="detail-empty-icon">📭</div><div class="detail-empty-txt">Emplacement libre</div></div>';
     return;
   }
 
-  body.innerHTML = equips.map(function(r) {
+  var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:IBM Plex Mono,monospace">' + equips.length + ' équipement(s) — clic pour détails</div>';
+
+  html += equips.map(function(r, idx) {
     var wgColor = wgColors[r.wg] || '#555';
-    return '<div class="equip-card" style="border-left-color:' + wgColor + '">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-        + '<span class="equip-tag">' + (r.tag||'--') + '</span>'
-        + '<div style="display:flex;align-items:center;gap:6px">'
-          + '<span class="equip-badge" style="background:' + wgColor + '20;color:' + wgColor + '">' + (r.wg||'--') + '</span>'
-          + '<button onclick="ouvrirModif(\'' + r.id + '\')" style="background:#EEF2FF;border:none;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:700;color:#1F3864;font-family:inherit">✏️ Modifier</button>'
+    var hasDetail = r.wo || r.wr || r.sc || r.description || r.motif || (r.photos && r.photos.length);
+    var thumbHtml = (r.photos && r.photos.length)
+      ? '<img src="' + r.photos[0] + '" onerror="this.style.display='none'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+      : '<div style="width:36px;height:36px;border-radius:6px;background:' + wgColor + '20;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔧</div>';
+
+    return '<div style="background:#fff;border-radius:10px;border:1.5px solid var(--border);margin-bottom:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+      + '<div onclick="toggleEquip(' + idx + ')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-left:3px solid ' + wgColor + '">'
+        + thumbHtml
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:12px;font-weight:800;color:var(--navy);font-family:IBM Plex Mono,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div>'
+          + '<div style="font-size:10px;color:' + wgColor + ';font-weight:700;margin-top:1px">' + (r.wg||'--') + (r.wo ? ' · WO ' + r.wo : '') + '</div>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:5px">'
+          + '<button onclick="event.stopPropagation();ouvrirModif('' + r.id + '')" style="background:#EEF2FF;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:700;color:#1F3864;font-family:inherit">✏️</button>'
+          + (hasDetail ? '<span id="chevron-' + idx + '" style="color:var(--muted);font-size:11px;transition:transform .2s;display:inline-block">▼</span>' : '')
         + '</div>'
       + '</div>'
-      + '<div class="equip-row">'
-        + (r.wo ? '<span class="equip-chip">WO ' + r.wo + '</span>' : '')
-        + (r.wr ? '<span class="equip-chip">WR ' + r.wr + '</span>' : '')
-        + (r.sc ? '<span class="equip-chip">SC ' + r.sc + '</span>' : '')
-      + '</div>'
-      + '<div class="equip-status">📌 ' + (r.statut||r.type||'--') + (r.date ? ' · ' + r.date : '') + '</div>'
-      + (r.description||r.motif ? '<div style="font-size:11px;color:#666;margin-top:6px;font-style:italic">' + (r.description||r.motif) + '</div>' : '')
-      + (r.photos && r.photos.length
-          ? '<div style="margin-top:10px"><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">📷 Photos (' + r.photos.length + ')</div>'
-            + '<div style="display:flex;gap:5px;flex-wrap:wrap">'
-            + r.photos.map(function(p){
-                return '<img src="' + cloudThumb(p,200,200) + '" onclick="openPhoto(\'' + p + '\')" onerror="console.warn(\'[PRNC] Image non chargée:\',this.src);this.parentNode.style.display=\'none\'" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1.5px solid #dde2ea;cursor:pointer;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'\'">';
-              }).join('')
-            + '</div></div>'
-          : '')
+      + (hasDetail
+        ? '<div id="equip-detail-' + idx + '" style="display:none;padding:8px 10px 10px;border-top:1px solid var(--border);background:#f8f9fc">'
+            + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">'
+              + (r.wo ? '<span style="background:#EEF2FF;border-radius:5px;padding:3px 7px;font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--blue);font-weight:600">WO ' + r.wo + '</span>' : '')
+              + (r.wr ? '<span style="background:#FFF3E0;border-radius:5px;padding:3px 7px;font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--orange);font-weight:600">WR ' + r.wr + '</span>' : '')
+              + (r.sc ? '<span style="background:#E8F5E9;border-radius:5px;padding:3px 7px;font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--green);font-weight:600">SC ' + r.sc + '</span>' : '')
+            + '</div>'
+            + '<div style="font-size:10px;color:var(--muted);margin-bottom:5px">📌 ' + (r.statut||r.type||'--') + (r.date ? ' · ' + r.date : '') + '</div>'
+            + (r.description||r.motif ? '<div style="font-size:11px;color:#555;font-style:italic;margin-bottom:6px">' + (r.description||r.motif) + '</div>' : '')
+            + (r.photos && r.photos.length
+              ? '<div style="display:flex;gap:4px;flex-wrap:wrap">' + r.photos.map(function(p){ return '<img src="' + p + '" onclick="openPhoto('' + p + '')" onerror="this.parentNode.removeChild(this)" style="width:54px;height:54px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;transition:transform .15s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">'; }).join('') + '</div>'
+              : '')
+          + '</div>'
+        : '')
     + '</div>';
   }).join('');
+
+  body.innerHTML = html;
 }
+
+function toggleEquip(idx) {
+  var detail = document.getElementById('equip-detail-' + idx);
+  var chevron = document.getElementById('chevron-' + idx);
+  if (!detail) return;
+  var isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 
 async function ouvrirModif(id) {
   // Récupérer l'enregistrement depuis les données chargées
