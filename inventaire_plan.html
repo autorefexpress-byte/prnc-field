@@ -590,7 +590,20 @@ function cloudThumb(url, w, h) {
 
 var _data = [];
 var _occupMap = {};
-var _ZONES = [];
+var _ZONES = [
+  { id:'Zona A1',         label:'Zone A1',         icon:'🅰️' },
+  { id:'Dalle de lavage', label:'Dalle de lavage',  icon:'🚿' },
+  { id:'Retour demandeur',label:'Retour demandeur', icon:'👤' },
+  { id:'Retour magasin',  label:'Retour magasin',   icon:'🏪' },
+  { id:'retour magasin',  label:'Retour magasin 2', icon:'🏪' },
+  { id:'R9',              label:'R9',               icon:'📍' },
+  { id:'R10',             label:'R10',              icon:'📍' },
+  { id:'Parking p02',     label:'Parking P02',      icon:'🅿️' },
+  { id:'DDL',             label:'DDL',              icon:'💧' },
+  { id:'Devant p50',      label:'Devant P50',       icon:'🏭' },
+  { id:'Devant mcchaud',  label:'Devant MCCHAUD',   icon:'🔥' },
+  { id:'DEVANT MCCHAUD',  label:'Devant MCCHAUD 2', icon:'🔥' },
+];
 
 async function loadData() {
   setStatus('loading', 'Chargement...');
@@ -674,21 +687,7 @@ function renderGrids() {
     }
   });
 
-  // ── Zones spéciales ──
-  _ZONES = [
-    { id:'Zona A1',        label:'Zone A1',         icon:'🅰️' },
-    { id:'Dalle de lavage',label:'Dalle de lavage',  icon:'🚿' },
-    { id:'Retour demandeur',label:'Retour demandeur',icon:'👤' },
-    { id:'Retour magasin', label:'Retour magasin',   icon:'🏪' },
-    { id:'retour magasin', label:'Retour magasin 2', icon:'🏪' },
-    { id:'R9',             label:'R9',               icon:'📍' },
-    { id:'R10',            label:'R10',              icon:'📍' },
-    { id:'Parking p02',    label:'Parking P02',      icon:'🅿️' },
-    { id:'DDL',            label:'DDL',              icon:'💧' },
-    { id:'Devant p50',     label:'Devant P50',       icon:'🏭' },
-    { id:'Devant mcchaud', label:'Devant MCCHAUD',   icon:'🔥' },
-    { id:'DEVANT MCCHAUD', label:'Devant MCCHAUD 2', icon:'🔥' },
-  ];
+  // Zones définies globalement
   var zonesGrid = document.getElementById('grid-zones');
   if (zonesGrid) {
     zonesGrid.innerHTML = '';
@@ -792,6 +791,8 @@ function updateStats() {
 }
 
 function showDetail(loc, equips) {
+  console.log('[showDetail] loc=', loc, 'equips=', equips ? equips.length : 'null');
+  if (!equips) equips = [];
   document.querySelectorAll('.plan-cell.selected, .zone-card.selected').forEach(function(c){ c.classList.remove('selected'); });
   var cell = document.querySelector('[data-loc="' + loc + '"]');
   if (cell) cell.classList.add('selected');
@@ -801,6 +802,8 @@ function showDetail(loc, equips) {
 
   var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#2d6a4f', STCHAUD:'#1F3864' };
   var body = document.getElementById('detail-body');
+  console.log('[showDetail] body=', body);
+  if (!body) return;
 
   if (!equips.length) {
     body.innerHTML = '<div class="detail-empty"><div class="detail-empty-icon">📭</div><div class="detail-empty-txt">Emplacement libre</div></div>';
