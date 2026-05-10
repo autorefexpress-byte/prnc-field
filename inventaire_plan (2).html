@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan Inventaire P50 — PRNC</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;700;800&display=swap');
+
+  :root {
+    --navy: #0f1c2e;
+    --blue: #1F3864;
+    --green: #2d6a4f;
+    --orange: #C55A11;
+    --purple: #7030A0;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #dde2ea;
+    --muted: #7a8494;
+    --text: #1a2332;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--navy);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #2E75B6;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: #2E75B6;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    letter-spacing: 0.05em;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,.5);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-refresh {
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-refresh:hover { background: rgba(255,255,255,.2); }
+  .btn-export {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-export:hover { opacity: .85; }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #888;
+    transition: background .3s;
+  }
+  .status-dot.ok { background: #4CAF50; box-shadow: 0 0 6px #4CAF50; }
+  .status-dot.err { background: #f44336; }
+  .status-dot.loading { background: #FF9800; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .status-text { font-size: 11px; color: rgba(255,255,255,.6); font-family: 'IBM Plex Mono', monospace; }
+
+  /* MAIN */
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .stat-icon { font-size: 24px; }
+  .stat-num {
+    font-size: 26px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--navy);
+    line-height: 1;
+  }
+  .stat-lbl { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* PLAN CARD */
+  .plan-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .plan-header {
+    padding: 14px 20px;
+    background: var(--navy);
+    color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .plan-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .legend {
+    display: flex; gap: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: rgba(255,255,255,.7);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  .plan-body { padding: 20px; }
+  .rangee-section { margin-bottom: 24px; }
+  .rangee-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .col-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .col-header {
+    text-align: center;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    padding-bottom: 3px;
+    letter-spacing: 0.05em;
+  }
+  .plan-cell {
+    border-radius: 6px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+    border: 1.5px solid transparent;
+    padding: 2px;
+    position: relative;
+  }
+  .plan-cell.libre {
+    background: #E8F5E9;
+    border-color: #A5D6A7;
+  }
+  .plan-cell.libre:hover {
+    background: #C8E6C9;
+    transform: scale(1.05);
+  }
+  .plan-cell.occupe {
+    background: var(--blue);
+    border-color: #2E75B6;
+  }
+  .plan-cell.occupe:hover {
+    background: #162d52;
+    transform: scale(1.05);
+  }
+  .plan-cell.selected {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 2px var(--orange);
+  }
+  .cell-row {
+    font-size: 9px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    color: rgba(0,0,0,.4);
+    line-height: 1;
+  }
+  .plan-cell.occupe .cell-row { color: rgba(255,255,255,.5); }
+  .cell-tag {
+    font-size: 7px;
+    font-weight: 700;
+    color: rgba(255,255,255,.9);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 98%;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 1px;
+  }
+  .plan-cell.libre .cell-tag { color: rgba(0,0,0,.5); }
+  .multi-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: var(--orange);
+    color: #fff;
+    border-radius: 50%;
+    width: 14px; height: 14px;
+    font-size: 8px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: sticky;
+    top: 24px;
+  }
+  .detail-header {
+    padding: 14px 18px;
+    background: var(--navy);
+    color: #fff;
+  }
+  .detail-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .detail-loc {
+    font-size: 22px;
+    font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 4px;
+    color: #7db8f7;
+  }
+  .detail-body { padding: 16px; }
+  .detail-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+  .detail-empty-icon { font-size: 36px; margin-bottom: 10px; }
+  .detail-empty-txt { font-size: 13px; }
+  .equip-card {
+    background: #f8f9fc;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--blue);
+  }
+  .equip-tag {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--navy);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .equip-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .equip-row {
+    display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .equip-chip {
+    background: #eef2ff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--blue);
+    font-weight: 600;
+  }
+  .equip-status {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* IMPORT SECTION */
+  .import-section {
+    margin-top: 20px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .import-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .import-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .btn-import {
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity .2s;
+  }
+  .btn-import:hover { opacity: .85; }
+  label.btn-import { cursor: pointer; }
+  .import-log {
+    margin-top: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-height: 20px;
+  }
+  .import-log.ok { color: var(--green); }
+  .import-log.err { color: #f44336; }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(15,28,46,.7);
+    z-index: 999;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-txt { color: #fff; font-size: 14px; font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2,1fr); }
+    .detail-panel { position: static; }
+  }
+.search-bar {
+  padding: 12px 20px;
+  background: #f8f9fc;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.search-inp {
+  flex: 1;
+  padding: 9px 14px 9px 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  outline: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a8494' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  transition: border .2s;
+}
+.search-inp:focus { border-color: var(--blue); }
+.search-clear {
+  padding: 8px 12px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  display: none;
+}
+.search-results {
+  padding: 8px 20px;
+  font-size:11px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+  display: none;
+}
+.highlight { background: #FFF9C4; border-radius: 3px; padding: 1px 2px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Chargement...</div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏭</div>
+    <div>
+      <div class="logo-text">PRNC — Plan Atelier P50</div>
+      <div class="logo-sub">Inventaire Maintenance Centrale</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span class="status-text" id="status-text">Connexion...</span>
+    <button class="btn-refresh" onclick="loadData()">↻ Actualiser</button>
+    <button class="btn-export" onclick="exportExcel()">📥 Exporter Excel</button>
+  </div>
+</header>
+
+<main>
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div>
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-lbl">Total équipements</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🟦</div>
+      <div>
+        <div class="stat-num" id="stat-places">—</div>
+        <div class="stat-lbl">Emplacements occupés</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🟩</div>
+      <div>
+        <div class="stat-num" id="stat-libres">—</div>
+        <div class="stat-lbl">Emplacements libres</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏰</div>
+      <div>
+        <div class="stat-num" id="stat-time" style="font-size:14px;margin-top:3px">—</div>
+        <div class="stat-lbl">Dernière mise à jour</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Plan -->
+    <div>
+      <div class="plan-card">
+        <div class="plan-header">
+          <div class="plan-title">🗺️ PLAN ATELIER P50</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9;border:1px solid #A5D6A7"></div>Libre</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1F3864"></div>Occupé</div>
+          </div>
+        </div>
+        <div class="search-bar">
+          <input class="search-inp" id="plan-search" type="text" placeholder="Rechercher TAG, WO, statut..." oninput="rechercherPlan(this.value)">
+          <button class="search-clear" id="search-clear" onclick="effacerRecherche()">✕ Effacer</button>
+        </div>
+        <div class="search-results" id="search-results"></div>
+        <div class="plan-body">
+          <div class="rangee-section">
+            <div class="rangee-label">▶ Rangée F</div>
+            <div class="plan-grid" id="grid-F"></div>
+          </div>
+          <div class="rangee-section">
+            <div class="rangee-label">▶ Rangée G</div>
+            <div class="plan-grid" id="grid-G"></div>
+          </div>
+          <div class="rangee-section">
+            <div class="rangee-label">⚡ Zones spéciales</div>
+            <div id="grid-zones" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Import -->
+      <div class="import-section">
+        <div class="import-title">⚙️ Synchronisation Excel</div>
+        <div class="import-actions">
+          <button class="btn-export" onclick="exportExcel()">📥 Exporter Excel</button>
+          <label class="btn-import">
+            📤 Importer Excel
+            <input type="file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
+          </label>
+        </div>
+        <div class="import-log" id="import-log">Glisse un fichier Excel ici ou clique Importer</div>
+      </div>
+    </div>
+
+    <!-- Détail -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-header">
+        <div class="detail-title">📍 DÉTAIL EMPLACEMENT</div>
+        <div class="detail-loc" id="detail-loc">—</div>
+      </div>
+      <div class="detail-body" id="detail-body">
+        <div class="detail-empty">
+          <div class="detail-empty-icon">👆</div>
+          <div class="detail-empty-txt">Clique sur un emplacement<br>pour voir les détails</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ══ CONFIG ══
+const API_URL = 'https://prnc-field.vercel.app/api/db';
+
+// Transformer URL Cloudinary en miniature
+function cloudThumb(url, w, h) {
+  if (!url) return url;
+  return url.replace('/upload/', '/upload/w_' + (w||400) + ',h_' + (h||300) + ',c_fill,q_auto,f_auto/');
+}
+
+var _data = [];
+var _occupMap = {};
+
+async function loadData() {
+  setStatus('loading', 'Chargement...');
+  showLoading('Connexion à Neon...');
+  try {
+    const resp = await fetch(API_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const raw = await resp.json();
+
+    // Filtrer équipements présents
+    _data = raw.filter(function(r) {
+      if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
+      if (r.statut && r.statut.includes('RECUPERE')) return false;
+      return ['ARRIVEE','TERMINE','FICHE'].includes(r.type);
+    });
+
+    // Parser photos
+    var photosCount = 0;
+    _data.forEach(function(r) {
+      if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
+      if (!Array.isArray(r.photos)) r.photos = [];
+      photosCount += r.photos.length;
+    });
+    console.log('[PRNC] Données chargées:', _data.length, 'équipements,', photosCount, 'photos au total');
+    if (_data.length > 0) {
+      console.log('[PRNC] Exemple enregistrement:', JSON.stringify(_data[0]).slice(0,200));
+    }
+
+    buildOccupMap();
+    renderGrids();
+    updateStats();
+    setStatus('ok', 'Connecté · ' + _data.length + ' équipements');
+    document.getElementById('stat-time').textContent = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    setStatus('err', 'Erreur: ' + e.message);
+    console.error(e);
+  }
+  hideLoading();
+}
+
+function buildOccupMap() {
+  _occupMap = {};
+  _data.forEach(function(r) {
+    var loc = (r.loc || '').trim();
+    if (!loc) return;
+    if (!_occupMap[loc]) _occupMap[loc] = [];
+    _occupMap[loc].push(r);
+  });
+}
+
+function renderGrids() {
+  ['F','G'].forEach(function(rangee) {
+    var grid = document.getElementById('grid-' + rangee);
+    grid.innerHTML = '';
+    for (var col = 1; col <= 7; col++) {
+      var colDiv = document.createElement('div');
+      colDiv.className = 'col-group';
+      var header = document.createElement('div');
+      header.className = 'col-header';
+      header.textContent = rangee + col;
+      colDiv.appendChild(header);
+      for (var row = 1; row <= 5; row++) {
+        var locId = rangee + col + '-' + row;
+        var equips = _occupMap[locId] || [];
+        var cell = document.createElement('div');
+        cell.className = 'plan-cell ' + (equips.length ? 'occupe' : 'libre');
+        cell.setAttribute('data-loc', locId);
+        var tag = equips.length ? (equips[0].tag || '').slice(0,7) : '';
+        cell.innerHTML = '<span class="cell-row">' + row + '</span>'
+          + (tag ? '<span class="cell-tag">' + tag + '</span>' : '');
+        if (equips.length > 1) {
+          var badge = document.createElement('div');
+          badge.className = 'multi-badge';
+          badge.textContent = equips.length;
+          cell.appendChild(badge);
+        }
+        cell.onclick = (function(id, eqs){ return function(){ showDetail(id, eqs); }; })(locId, equips);
+        colDiv.appendChild(cell);
+      }
+      grid.appendChild(colDiv);
+    }
+  });
+
+  // ── Zones spéciales ──
+  var ZONES = [
+    { id:'zone-A1',     label:'Zone A1',         icon:'🅰️' },
+    { id:'dalle-lav',   label:'Dalle de lavage',  icon:'🚿' },
+    { id:'ret-dem',     label:'Retour demandeur', icon:'👤' },
+    { id:'ret-mag',     label:'Retour magasin',   icon:'🏪' },
+    { id:'R9',          label:'R9',               icon:'📍' },
+    { id:'R10',         label:'R10',              icon:'📍' },
+    { id:'parking-P02', label:'Parking P02',      icon:'🅿️' },
+  ];
+  var zonesGrid = document.getElementById('grid-zones');
+  if (zonesGrid) {
+    zonesGrid.innerHTML = '';
+    ZONES.forEach(function(z) {
+      var equips = _occupMap[z.id] || [];
+      var isOccupe = equips.length > 0;
+      var div = document.createElement('div');
+      div.setAttribute('data-loc', z.id);
+      div.style.cssText = 'border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .15s;border:1.5px solid;position:relative;'
+        + (isOccupe
+          ? 'background:#1F3864;border-color:#2E75B6;'
+          : 'background:#E8F5E9;border-color:#A5D6A7;');
+      div.innerHTML = '<div style="display:flex;align-items:center;gap:8px">'
+          + '<span style="font-size:18px">' + z.icon + '</span>'
+          + '<div>'
+            + '<div style="font-size:11px;font-weight:800;font-family:IBM Plex Mono,monospace;color:' + (isOccupe ? '#fff' : '#2d6a4f') + '">' + z.label + '</div>'
+            + '<div style="font-size:10px;margin-top:1px;color:' + (isOccupe ? 'rgba(255,255,255,.6)' : '#7a8494') + '">'
+              + (isOccupe ? equips.length + ' équipement(s)' : 'Libre')
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        + (equips.length > 1 ? '<div style="position:absolute;top:-5px;right:-5px;background:#C55A11;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">'+equips.length+'</div>' : '');
+      div.onclick = (function(id, eqs){ return function(){ showDetail(id, eqs); }; })(z.id, equips);
+      div.onmouseover = function(){ this.style.opacity='.8'; };
+      div.onmouseout  = function(){ this.style.opacity='1'; };
+      zonesGrid.appendChild(div);
+    });
+  }
+}
+
+function rechercherPlan(query) {
+  var q = (query || '').toLowerCase().trim();
+  var clearBtn = document.getElementById('search-clear');
+  var resultsEl = document.getElementById('search-results');
+
+  if (!q) {
+    effacerRecherche();
+    return;
+  }
+
+  clearBtn.style.display = 'block';
+
+  // Chercher dans toutes les données
+  var matches = _data.filter(function(r) {
+    return (r.tag||'').toLowerCase().includes(q)
+      || (r.wo||'').toLowerCase().includes(q)
+      || (r.wr||'').toLowerCase().includes(q)
+      || (r.statut||'').toLowerCase().includes(q)
+      || (r.loc||'').toLowerCase().includes(q)
+      || (r.description||'').toLowerCase().includes(q)
+      || (r.wg||'').toLowerCase().includes(q);
+  });
+
+  // Afficher le nombre de résultats
+  resultsEl.style.display = 'block';
+  resultsEl.textContent = matches.length + ' résultat(s) pour "' + query + '"';
+
+  // Mettre en surbrillance les cellules correspondantes
+  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
+    cell.style.opacity = '0.25';
+    cell.style.transform = '';
+  });
+
+  var locsMatches = {};
+  matches.forEach(function(r) {
+    if (r.loc) locsMatches[r.loc] = true;
+  });
+
+  Object.keys(locsMatches).forEach(function(loc) {
+    var cell = document.querySelector('[data-loc="' + loc + '"]');
+    if (cell) {
+      cell.style.opacity = '1';
+      cell.style.boxShadow = '0 0 0 2px #FFB300, 0 4px 12px rgba(255,179,0,.3)';
+    }
+  });
+
+  // Si un seul résultat, afficher son détail
+  if (matches.length === 1 && matches[0].loc) {
+    var equips = _occupMap[matches[0].loc] || [];
+    showDetail(matches[0].loc, equips);
+  }
+}
+
+function effacerRecherche() {
+  document.getElementById('plan-search').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  document.getElementById('search-results').style.display = 'none';
+  // Remettre toutes les cellules visibles
+  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
+    cell.style.opacity = '1';
+    cell.style.boxShadow = '';
+  });
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = _data.length;
+  var occupies = Object.keys(_occupMap).length;
+  var total = 7 * 5 * 2; // F + G
+  document.getElementById('stat-places').textContent = occupies;
+  document.getElementById('stat-libres').textContent = total - occupies;
+}
+
+function showDetail(loc, equips) {
+  document.querySelectorAll('.plan-cell.selected').forEach(function(c){ c.classList.remove('selected'); });
+  var cell = document.querySelector('[data-loc="' + loc + '"]');
+  if (cell) cell.classList.add('selected');
+
+  document.getElementById('detail-loc').textContent = loc;
+
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#2d6a4f', STCHAUD:'#1F3864' };
+
+  var body = document.getElementById('detail-body');
+  if (!equips.length) {
+    body.innerHTML = '<div class="detail-empty"><div class="detail-empty-icon">📭</div><div class="detail-empty-txt">Emplacement libre</div></div>';
+    return;
+  }
+
+  body.innerHTML = equips.map(function(r) {
+    var wgColor = wgColors[r.wg] || '#555';
+    return '<div class="equip-card" style="border-left-color:' + wgColor + '">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+        + '<span class="equip-tag">' + (r.tag||'--') + '</span>'
+        + '<div style="display:flex;align-items:center;gap:6px">'
+          + '<span class="equip-badge" style="background:' + wgColor + '20;color:' + wgColor + '">' + (r.wg||'--') + '</span>'
+          + '<button onclick="ouvrirModif(\'' + r.id + '\')" style="background:#EEF2FF;border:none;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:700;color:#1F3864;font-family:inherit">✏️ Modifier</button>'
+        + '</div>'
+      + '</div>'
+      + '<div class="equip-row">'
+        + (r.wo ? '<span class="equip-chip">WO ' + r.wo + '</span>' : '')
+        + (r.wr ? '<span class="equip-chip">WR ' + r.wr + '</span>' : '')
+        + (r.sc ? '<span class="equip-chip">SC ' + r.sc + '</span>' : '')
+      + '</div>'
+      + '<div class="equip-status">📌 ' + (r.statut||r.type||'--') + (r.date ? ' · ' + r.date : '') + '</div>'
+      + (r.description||r.motif ? '<div style="font-size:11px;color:#666;margin-top:6px;font-style:italic">' + (r.description||r.motif) + '</div>' : '')
+      + (r.photos && r.photos.length
+          ? '<div style="margin-top:10px"><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">📷 Photos (' + r.photos.length + ')</div>'
+            + '<div style="display:flex;gap:5px;flex-wrap:wrap">'
+            + r.photos.map(function(p){
+                return '<img src="' + cloudThumb(p,200,200) + '" onclick="openPhoto(\'' + p + '\')" onerror="console.warn(\'[PRNC] Image non chargée:\',this.src);this.parentNode.style.display=\'none\'" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1.5px solid #dde2ea;cursor:pointer;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'\'">';
+              }).join('')
+            + '</div></div>'
+          : '')
+    + '</div>';
+  }).join('');
+}
+
+async function ouvrirModif(id) {
+  // Récupérer l'enregistrement depuis les données chargées
+  var r = _data.find(function(x){ return String(x.id) === String(id); });
+  if (!r) { alert('Équipement introuvable'); return; }
+
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#2d6a4f', STCHAUD:'#1F3864' };
+  var wgColor = wgColors[r.wg] || '#1F3864';
+
+  // Créer l'overlay
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    // Header
+    + '<div style="background:#0f1c2e;padding:16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between">'
+      + '<div>'
+        + '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em">Modifier équipement</div>'
+        + '<div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:800;color:#7db8f7;margin-top:2px">' + (r.tag||'--') + '</div>'
+      + '</div>'
+      + '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;color:#fff">✕</button>'
+    + '</div>'
+    // Body
+    + '<div style="padding:20px">'
+      // Localisation
+      + '<div style="margin-bottom:12px">'
+        + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📍 Emplacement</label>'
+        + '<input id="modif-loc" value="' + (r.loc||'') + '" list="locs-list" placeholder="Ex: F3-2 ou Zone A1" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:14px;font-family:IBM Plex Mono,monospace;font-weight:700;outline:none" onfocus="this.style.borderColor=\'#1F3864\'" onblur="this.style.borderColor=\'#dde2ea\'">'
+      + '</div>'
+      // Statut
+      + '<div style="margin-bottom:12px">'
+        + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📌 Statut</label>'
+        + '<select id="modif-statut" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:13px;font-family:IBM Plex Sans,sans-serif;outline:none;background:#fff">'
+          + '<option value="ARRIVEE"' + (r.statut==='ARRIVEE'?' selected':'') + '>ARRIVEE</option>'
+          + '<option value="TERMINE"' + (r.statut==='TERMINE'?' selected':'') + '>TERMINE</option>'
+          + '<option value="Retour demandeur"' + (r.statut==='Retour demandeur'?' selected':'') + '>Retour demandeur</option>'
+          + '<option value="Retour magasin"' + (r.statut==='Retour magasin'?' selected':'') + '>Retour magasin</option>'
+        + '</select>'
+      + '</div>'
+      // Description
+      + '<div style="margin-bottom:16px">'
+        + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📝 Remarques</label>'
+        + '<textarea id="modif-desc" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:13px;font-family:IBM Plex Sans,sans-serif;height:70px;resize:none;outline:none" onfocus="this.style.borderColor=\'#1F3864\'" onblur="this.style.borderColor=\'#dde2ea\'">' + (r.description||r.motif||'') + '</textarea>'
+      + '</div>'
+      // Infos non modifiables
+      + '<div style="background:#f8f9fc;border-radius:10px;padding:12px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+        + (r.wo ? '<div><div style="font-size:9px;color:#7a8494;font-weight:700;text-transform:uppercase">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864;font-family:IBM Plex Mono,monospace">' + r.wo + '</div></div>' : '')
+        + (r.wr ? '<div><div style="font-size:9px;color:#7a8494;font-weight:700;text-transform:uppercase">WR</div><div style="font-size:12px;font-weight:700;color:#C55A11;font-family:IBM Plex Mono,monospace">' + r.wr + '</div></div>' : '')
+        + (r.wg ? '<div><div style="font-size:9px;color:#7a8494;font-weight:700;text-transform:uppercase">WG</div><div style="font-size:12px;font-weight:700;color:' + wgColor + ';font-family:IBM Plex Mono,monospace">' + r.wg + '</div></div>' : '')
+        + (r.date ? '<div><div style="font-size:9px;color:#7a8494;font-weight:700;text-transform:uppercase">Date</div><div style="font-size:12px;font-weight:700;color:#333;font-family:IBM Plex Mono,monospace">' + r.date + '</div></div>' : '')
+      + '</div>'
+      // Bouton sauvegarder
+      + '<button onclick="sauvegarderModif(\'' + id + '\',this)" style="width:100%;padding:13px;background:#1F3864;color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:IBM Plex Sans,sans-serif;transition:opacity .2s" onmouseover="this.style.opacity=\'.85\'" onmouseout="this.style.opacity=\'1\'">💾 Enregistrer les modifications</button>'
+    + '</div>'
+  + '</div>';
+
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+}
+
+async function sauvegarderModif(id, btn) {
+  var loc   = document.getElementById('modif-loc').value.trim();
+  var statut= document.getElementById('modif-statut').value;
+  var desc  = document.getElementById('modif-desc').value.trim();
+
+  btn.textContent = '⏳ Enregistrement...';
+  btn.disabled = true;
+
+  try {
+    await fetch(API_URL + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loc: loc, statut: statut, description: desc })
+    });
+
+    // Mettre à jour localement
+    var rec = _data.find(function(x){ return String(x.id) === String(id); });
+    if (rec) { rec.loc = loc; rec.statut = statut; rec.description = desc; }
+
+    buildOccupMap();
+    renderGrids();
+
+    // Fermer l'overlay
+    btn.closest('[style*="fixed"]').remove();
+
+    // Rafraîchir le panneau de détail
+    var newEquips = _occupMap[loc] || [];
+    showDetail(loc, newEquips);
+
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+    btn.textContent = '💾 Enregistrer les modifications';
+    btn.disabled = false;
+  }
+}
+
+function openPhoto(url) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML = '<img src="' + url + '" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5)">';
+  ov.onclick = function(){ ov.remove(); };
+  document.body.appendChild(ov);
+}
+
+// ── Export Excel ──
+function exportExcel() {
+  if (typeof XLSX === 'undefined') { alert('SheetJS non chargé'); return; }
+  var rows = [['Emplacement','TAG','WO','WR','WG','Statut','Désignation','Date']];
+  _data.forEach(function(r) {
+    rows.push([r.loc||'', r.tag||'', r.wo||'', r.wr||'', r.wg||'', r.statut||r.type||'', r.description||r.motif||'', r.date||'']);
+  });
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:14},{wch:18},{wch:12},{wch:12},{wch:12},{wch:20},{wch:30},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Inventaire P50');
+  XLSX.writeFile(wb, 'Inventaire_P50_' + new Date().toLocaleDateString('fr-FR').replace(/\//g,'-') + '.xlsx');
+}
+
+// ── Import Excel ──
+async function importExcel(input) {
+  if (!input.files || !input.files[0]) return;
+  var log = document.getElementById('import-log');
+  log.textContent = '⏳ Lecture du fichier...';
+  log.className = 'import-log';
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      if (rows.length < 2) { log.textContent = '❌ Fichier vide'; log.className='import-log err'; return; }
+
+      var headers = rows[0].map(function(h){ return (h||'').toString().toLowerCase().trim(); });
+      var iLoc = headers.findIndex(function(h){ return h.includes('emplacement'); });
+      var iTag = headers.findIndex(function(h){ return h.includes('tag'); });
+      if (iTag < 0) { log.textContent = '❌ Colonne TAG introuvable'; log.className='import-log err'; return; }
+
+      log.textContent = '⏳ Mise à jour en cours...';
+      showLoading('Envoi vers Neon...');
+
+      var updated = 0, errors = 0;
+      for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        if (!row || !row[iTag]) continue;
+        var tag = (row[iTag]||'').toString().trim();
+        var loc = iLoc >= 0 ? (row[iLoc]||'').toString().trim() : '';
+        if (!loc) continue;
+
+        var rec = _data.find(function(r){ return (r.tag||'').toUpperCase()===tag.toUpperCase(); });
+        if (rec) {
+          try {
+            await fetch(API_URL + '?id=' + encodeURIComponent(rec.id), {
+              method: 'PATCH',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({loc: loc})
+            });
+            rec.loc = loc;
+            updated++;
+          } catch(e) { errors++; }
+        }
+      }
+      hideLoading();
+      buildOccupMap();
+      renderGrids();
+      updateStats();
+      log.textContent = '✅ ' + updated + ' équipement(s) mis à jour' + (errors ? ' · ' + errors + ' erreur(s)' : '');
+      log.className = 'import-log ok';
+    } catch(err) {
+      hideLoading();
+      log.textContent = '❌ Erreur : ' + err.message;
+      log.className = 'import-log err';
+    }
+  };
+  reader.readAsArrayBuffer(input.files[0]);
+  input.value = '';
+}
+
+// ── Utilitaires ──
+function setStatus(type, text) {
+  var dot = document.getElementById('status-dot');
+  dot.className = 'status-dot ' + type;
+  document.getElementById('status-text').textContent = text;
+}
+function showLoading(txt) {
+  document.getElementById('loading-txt').textContent = txt;
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+// Auto-refresh toutes les 5 minutes
+setInterval(loadData, 5 * 60 * 1000);
+
+// Chargement initial
+loadData();
+</script>
+</body>
+</html>
