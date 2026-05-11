@@ -746,29 +746,33 @@ function rechercherPlan(query) {
   resultsEl.style.display = 'block';
   resultsEl.textContent = matches.length + ' résultat(s) pour "' + query + '"';
 
-  // Mettre en surbrillance les cellules correspondantes
-  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
-    cell.style.opacity = '0.25';
-    cell.style.transform = '';
-  });
-
+  // Construire la liste des emplacements qui matchent
   var locsMatches = {};
   matches.forEach(function(r) {
     if (r.loc) locsMatches[r.loc] = true;
   });
 
-  Object.keys(locsMatches).forEach(function(loc) {
-    var cell = document.querySelector('[data-loc="' + loc + '"]');
-    if (cell) {
+  // Appliquer surbrillance sur TOUTES les cellules
+  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
+    var loc = cell.getAttribute('data-loc');
+    if (locsMatches[loc]) {
+      // Match — illuminer
       cell.style.opacity = '1';
       cell.style.boxShadow = '0 0 0 2px #FFB300, 0 4px 12px rgba(255,179,0,.3)';
+      cell.style.transform = '';
+    } else {
+      // Pas de match — estomper
+      cell.style.opacity = '0.2';
+      cell.style.boxShadow = '';
+      cell.style.transform = '';
     }
   });
 
-  // Si un seul résultat, afficher son détail
-  if (matches.length === 1 && matches[0].loc) {
-    var equips = _occupMap[matches[0].loc] || [];
-    showDetail(matches[0].loc, equips);
+  // Si un seul emplacement trouvé, afficher son détail
+  var locsArr = Object.keys(locsMatches);
+  if (locsArr.length === 1) {
+    var equips = _occupMap[locsArr[0]] || [];
+    showDetail(locsArr[0], equips);
   }
 }
 
