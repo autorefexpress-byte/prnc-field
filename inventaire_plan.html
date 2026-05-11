@@ -623,23 +623,49 @@ async function loadData() {
   setStatus('loading', 'Chargement...');
   showLoading('Connexion à Neon...');
   try {
-    const resp = await fetch(API_URL);
+    // Charger historique + etna_suivi en parallèle
+    var [resp, respEtna] = await Promise.all([
+      fetch(API_URL),
+      fetch(API_URL + '?table=etna_suivi')
+    ]);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const raw = await resp.json();
+    var rawEtna = [];
+    try { rawEtna = await respEtna.json(); if (!Array.isArray(rawEtna)) rawEtna = []; } catch(e) { rawEtna = []; }
 
-    // Filtrer équipements présents
+    // Filtrer équipements historique présents
     _data = raw.filter(function(r) {
       if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
       if (r.statut && r.statut.includes('RECUPERE')) return false;
       return ['ARRIVEE','TERMINE','FICHE'].includes(r.type);
     });
 
+    // Ajouter équipements ETNA avec loc définie
+    rawEtna.forEach(function(r) {
+      if (!r.loc) return;
+      if (r.statut && (r.statut.includes('RECUPERE') || r.statut.includes('Terminé'))) return;
+      // Normaliser pour être compatible avec showDetail
+      _data.push({
+        id: r.id,
+        tag: r.tag,
+        wo: r.wo,
+        wr: r.wr,
+        wg: r.wg,
+        sc: r.sc,
+        loc: r.loc,
+        statut: r.statut || 'ETNA',
+        type: 'ETNA',
+        date: r.date,
+        description: r.commentaire || r.remarques || '',
+        photos: r.photos || [],
+        _source: 'etna'
+      });
+    });
+
     // Parser photos
-    var photosCount = 0;
     _data.forEach(function(r) {
       if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
       if (!Array.isArray(r.photos)) r.photos = [];
-      photosCount += r.photos.length;
     });
 
     buildOccupMap();
