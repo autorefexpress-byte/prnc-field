@@ -591,18 +591,19 @@ function cloudThumb(url, w, h) {
 var _data = [];
 var _occupMap = {};
 var _ZONES = [
-  { id:'Zona A1',         label:'Zone A1',         icon:'🅰️' },
-  { id:'Dalle de lavage', label:'Dalle de lavage',  icon:'🚿' },
-  { id:'Retour demandeur',label:'Retour demandeur', icon:'👤' },
-  { id:'Retour magasin',  label:'Retour magasin',   icon:'🏪' },
-  { id:'retour magasin',  label:'Retour magasin 2', icon:'🏪' },
-  { id:'R9',              label:'R9',               icon:'📍' },
-  { id:'R10',             label:'R10',              icon:'📍' },
-  { id:'Parking p02',     label:'Parking P02',      icon:'🅿️' },
-  { id:'DDL',             label:'DDL',              icon:'💧' },
-  { id:'Devant p50',      label:'Devant P50',       icon:'🏭' },
-  { id:'Devant mcchaud',  label:'Devant MCCHAUD',   icon:'🔥' },
-  { id:'DEVANT MCCHAUD',  label:'Devant MCCHAUD 2', icon:'🔥' },
+  { id:'Zona A1',              label:'Zone A1',              icon:'🅰️' },
+  { id:'Dalle de lavage',      label:'Dalle de lavage',      icon:'🚿' },
+  { id:'Retour demandeur',     label:'Retour demandeur',     icon:'👤' },
+  { id:'Retour magasin',       label:'Retour magasin',       icon:'🏪' },
+  { id:'R9',                   label:'R9',                   icon:'📍' },
+  { id:'R10',                  label:'R10',                  icon:'📍' },
+  { id:'Parking p02',          label:'Parking P02',          icon:'🅿️' },
+  { id:'Devant p50',           label:'Devant P50',           icon:'🏭' },
+  { id:'Devant mcchaud',       label:'Devant MCCHAUD',       icon:'🔥' },
+  { id:'Zone fer',             label:'Zone fer',             icon:'⚙️' },
+  { id:'ETNA',                 label:'ETNA',                 icon:'🔬' },
+  { id:'P17',                  label:'P17',                  icon:'🏗️' },
+  { id:'Zone fin de travaux p17', label:'Zone fin travaux P17', icon:'✅' },
 ];
 
 async function loadData() {
