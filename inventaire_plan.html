@@ -628,10 +628,6 @@ async function loadData() {
       if (!Array.isArray(r.photos)) r.photos = [];
       photosCount += r.photos.length;
     });
-    console.log('[PRNC] Données chargées:', _data.length, 'équipements,', photosCount, 'photos au total');
-    if (_data.length > 0) {
-      console.log('[PRNC] Exemple enregistrement:', JSON.stringify(_data[0]).slice(0,200));
-    }
 
     buildOccupMap();
     renderGrids();
@@ -735,11 +731,16 @@ function rechercherPlan(query) {
   var matches = _data.filter(function(r) {
     return (r.tag||'').toLowerCase().includes(q)
       || (r.wo||'').toLowerCase().includes(q)
+      || (r.wo_usine||'').toLowerCase().includes(q)
       || (r.wr||'').toLowerCase().includes(q)
+      || (r.sc||'').toLowerCase().includes(q)
+      || (r.serie||'').toLowerCase().includes(q)
       || (r.statut||'').toLowerCase().includes(q)
       || (r.loc||'').toLowerCase().includes(q)
       || (r.description||'').toLowerCase().includes(q)
-      || (r.wg||'').toLowerCase().includes(q);
+      || (r.motif||'').toLowerCase().includes(q)
+      || (r.wg||'').toLowerCase().includes(q)
+      || (r.type_eqt||'').toLowerCase().includes(q);
   });
 
   // Afficher le nombre de résultats
@@ -751,6 +752,7 @@ function rechercherPlan(query) {
   matches.forEach(function(r) {
     if (r.loc) locsMatches[r.loc] = true;
   });
+
 
   // Appliquer surbrillance sur TOUTES les cellules
   document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
@@ -796,8 +798,6 @@ function updateStats() {
 }
 
 function showDetail(loc, equips) {
-  console.log('[showDetail] loc=', loc, 'equips=', equips ? equips.length : 'null');
-  if (!equips) equips = [];
   document.querySelectorAll('.plan-cell.selected, .zone-card.selected').forEach(function(c){ c.classList.remove('selected'); });
   var cell = document.querySelector('[data-loc="' + loc + '"]');
   if (cell) cell.classList.add('selected');
@@ -807,7 +807,6 @@ function showDetail(loc, equips) {
 
   var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#2d6a4f', STCHAUD:'#1F3864' };
   var body = document.getElementById('detail-body');
-  console.log('[showDetail] body=', body);
   if (!body) return;
 
   if (!equips.length) {
