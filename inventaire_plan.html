@@ -754,16 +754,15 @@ function rechercherPlan(query) {
   });
 
 
-  // Appliquer surbrillance sur TOUTES les cellules
-  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
+  // Appliquer surbrillance sur TOUTES les cellules et zones
+  document.querySelectorAll('.plan-cell, .zone-card, [data-loc]').forEach(function(cell) {
     var loc = cell.getAttribute('data-loc');
+    if (!loc) return;
     if (locsMatches[loc]) {
-      // Match — illuminer
       cell.style.opacity = '1';
       cell.style.boxShadow = '0 0 0 2px #FFB300, 0 4px 12px rgba(255,179,0,.3)';
-      cell.style.transform = '';
+      cell.style.transform = 'scale(1.03)';
     } else {
-      // Pas de match — estomper
       cell.style.opacity = '0.2';
       cell.style.boxShadow = '';
       cell.style.transform = '';
@@ -783,9 +782,10 @@ function effacerRecherche() {
   document.getElementById('search-clear').style.display = 'none';
   document.getElementById('search-results').style.display = 'none';
   // Remettre toutes les cellules visibles
-  document.querySelectorAll('.plan-cell, .zone-card').forEach(function(cell) {
+  document.querySelectorAll('[data-loc]').forEach(function(cell) {
     cell.style.opacity = '1';
     cell.style.boxShadow = '';
+    cell.style.transform = '';
   });
 }
 
