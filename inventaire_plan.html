@@ -640,35 +640,38 @@ async function loadData() {
       return ['ARRIVEE','TERMINE','FICHE'].includes(r.type);
     });
 
-    // Ajouter équipements ETNA avec loc définie — éviter les doublons par WO/TAG
-    var existingWOs = {};
-    var existingTags = {};
-    _data.forEach(function(r) {
-      if (r.wo) existingWOs[r.wo] = true;
-      if (r.tag) existingTags[r.tag] = true;
-    });
-
+    // Fusionner ETNA avec historique — ETNA a priorité pour la localisation
     rawEtna.forEach(function(r) {
-      if (!r.loc) return;
       if (r.statut && (r.statut.includes('RECUPERE') || r.statut.includes('Terminé'))) return;
-      // Ignorer si le WO ou TAG existe déjà dans historique
-      if (r.wo && existingWOs[r.wo]) return;
-      if (r.tag && existingTags[r.tag]) return;
-      _data.push({
-        id: r.id,
-        tag: r.tag,
-        wo: r.wo,
-        wr: r.wr,
-        wg: r.wg,
-        sc: r.sc,
-        loc: r.loc,
-        statut: r.statut || 'ETNA',
-        type: 'ETNA',
-        date: r.date,
-        description: r.commentaire || r.remarques || '',
-        photos: r.photos || [],
-        _source: 'etna'
-      });
+
+      // Chercher si l'équipement existe déjà dans _data (par WO ou TAG)
+      var existing = null;
+      if (r.wo) existing = _data.find(function(x){ return x.wo === r.wo; });
+      if (!existing && r.tag) existing = _data.find(function(x){ return x.tag === r.tag; });
+
+      if (existing) {
+        // Mettre à jour la loc de l'enregistrement existant avec celle d'ETNA
+        if (r.loc) existing.loc = r.loc;
+        if (r.statut) existing.statut = r.statut;
+        existing._etna = true;
+      } else if (r.loc) {
+        // Ajouter comme nouvel enregistrement ETNA
+        _data.push({
+          id: r.id,
+          tag: r.tag,
+          wo: r.wo,
+          wr: r.wr,
+          wg: r.wg,
+          sc: r.sc,
+          loc: r.loc,
+          statut: r.statut || 'ETNA',
+          type: 'ETNA',
+          date: r.date,
+          description: r.commentaire || r.remarques || '',
+          photos: r.photos || [],
+          _source: 'etna'
+        });
+      }
     });
 
     // Parser photos
