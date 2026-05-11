@@ -640,11 +640,20 @@ async function loadData() {
       return ['ARRIVEE','TERMINE','FICHE'].includes(r.type);
     });
 
-    // Ajouter équipements ETNA avec loc définie
+    // Ajouter équipements ETNA avec loc définie — éviter les doublons par WO/TAG
+    var existingWOs = {};
+    var existingTags = {};
+    _data.forEach(function(r) {
+      if (r.wo) existingWOs[r.wo] = true;
+      if (r.tag) existingTags[r.tag] = true;
+    });
+
     rawEtna.forEach(function(r) {
       if (!r.loc) return;
       if (r.statut && (r.statut.includes('RECUPERE') || r.statut.includes('Terminé'))) return;
-      // Normaliser pour être compatible avec showDetail
+      // Ignorer si le WO ou TAG existe déjà dans historique
+      if (r.wo && existingWOs[r.wo]) return;
+      if (r.tag && existingTags[r.tag]) return;
       _data.push({
         id: r.id,
         tag: r.tag,
