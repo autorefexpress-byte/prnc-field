@@ -646,8 +646,23 @@ async function loadData() {
     _data = raw.filter(function(r) {
       if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
       if (r.statut && r.statut.includes('RECUPERE')) return false;
+      if (r.from_fiche === true || r.from_fiche === 'true') return false; // Exclure fiches suiveuses
       return ['ARRIVEE','TERMINE'].includes(r.type);
     });
+
+    // Dédupliquer par TAG — garder celui avec WO si doublon
+    var tagMap = {};
+    _data.forEach(function(r) {
+      if (!r.tag) return;
+      var tag = r.tag.toUpperCase();
+      if (!tagMap[tag]) {
+        tagMap[tag] = r;
+      } else {
+        // Garder celui qui a un WO
+        if (r.wo && !tagMap[tag].wo) tagMap[tag] = r;
+      }
+    });
+    _data = Object.values(tagMap);
 
     // Fusionner ETNA avec historique — ETNA a priorité pour la localisation
     rawEtna.forEach(function(r) {
