@@ -637,7 +637,7 @@ async function loadData() {
     _data = raw.filter(function(r) {
       if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
       if (r.statut && r.statut.includes('RECUPERE')) return false;
-      return ['ARRIVEE','TERMINE','FICHE'].includes(r.type);
+      return ['ARRIVEE','TERMINE'].includes(r.type);
     });
 
     // Fusionner ETNA avec historique — ETNA a priorité pour la localisation
