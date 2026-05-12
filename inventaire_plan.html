@@ -224,6 +224,20 @@
     background: #C8E6C9;
     transform: scale(1.05);
   }
+  /* Couleurs par statut */
+  .plan-cell.type-ARRIVEE  { background:#EDE7F6 !important; border-color:#7030A0 !important; }
+  .plan-cell.type-TERMINE  { background:#E2EFDA !important; border-color:#375623 !important; }
+  .plan-cell.type-USAGE    { background:#FCEBEB !important; border-color:#E24B4A !important; }
+  .plan-cell.type-TRANSPORT{ background:#DEEAF1 !important; border-color:#1F3864 !important; }
+  .plan-cell.type-PEINTURE { background:#FCE4D6 !important; border-color:#C55A11 !important; }
+  .plan-cell.type-FICHE    { background:#DEEAF1 !important; border-color:#2E75B6 !important; }
+  .plan-cell.type-ARRIVEE  .cell-tag, .plan-cell.type-ARRIVEE  .cell-row { color:#7030A0 !important; }
+  .plan-cell.type-TERMINE  .cell-tag, .plan-cell.type-TERMINE  .cell-row { color:#375623 !important; }
+  .plan-cell.type-USAGE    .cell-tag, .plan-cell.type-USAGE    .cell-row { color:#E24B4A !important; }
+  .plan-cell.type-TRANSPORT .cell-tag,.plan-cell.type-TRANSPORT .cell-row{ color:#1F3864 !important; }
+  .plan-cell.type-PEINTURE .cell-tag, .plan-cell.type-PEINTURE .cell-row { color:#C55A11 !important; }
+  .plan-cell.type-FICHE    .cell-tag, .plan-cell.type-FICHE    .cell-row { color:#2E75B6 !important; }
+
   .plan-cell.occupe {
     background: var(--blue);
     border-color: #2E75B6;
@@ -274,6 +288,18 @@
   .zone-card { border-radius:10px; padding:10px 14px; cursor:pointer; transition:all .2s; border:1.5px solid; position:relative; }
   .zone-card.libre { background:#E8F5E9; border-color:#A5D6A7; }
   .zone-card.occupe { background:#1F3864; border-color:#2E75B6; }
+  .zone-card.type-ARRIVEE  { background:#EDE7F6; border-color:#7030A0; }
+  .zone-card.type-TERMINE  { background:#E2EFDA; border-color:#375623; }
+  .zone-card.type-USAGE    { background:#FCEBEB; border-color:#E24B4A; }
+  .zone-card.type-TRANSPORT{ background:#DEEAF1; border-color:#1F3864; }
+  .zone-card.type-PEINTURE { background:#FCE4D6; border-color:#C55A11; }
+  .zone-card.type-FICHE    { background:#DEEAF1; border-color:#2E75B6; }
+  .zone-card.type-ARRIVEE  .zone-label, .zone-card.type-ARRIVEE  .zone-count { color:#7030A0; }
+  .zone-card.type-TERMINE  .zone-label, .zone-card.type-TERMINE  .zone-count { color:#375623; }
+  .zone-card.type-USAGE    .zone-label, .zone-card.type-USAGE    .zone-count { color:#E24B4A; }
+  .zone-card.type-TRANSPORT .zone-label,.zone-card.type-TRANSPORT .zone-count{ color:#1F3864; }
+  .zone-card.type-PEINTURE .zone-label, .zone-card.type-PEINTURE .zone-count { color:#C55A11; }
+  .zone-card.type-FICHE    .zone-label, .zone-card.type-FICHE    .zone-count  { color:#2E75B6; }
   .zone-card:hover { opacity:.85; transform:translateY(-1px); }
   .zone-card.selected { border-color:var(--orange)!important; box-shadow:0 0 0 2px var(--orange); }
   .zone-card.found { border-color:#FFB300!important; box-shadow:0 0 0 2px #FFB300, 0 4px 12px rgba(255,179,0,.3); opacity:1!important; }
@@ -535,6 +561,11 @@
           <div class="plan-title">🗺️ PLAN ATELIER P50</div>
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9;border:1px solid #A5D6A7"></div>Libre</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#EDE7F6;border:1px solid #7030A0"></div>Arrivée</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#E2EFDA;border:1px solid #375623"></div>Terminé</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#FCEBEB;border:1px solid #E24B4A"></div>Usage</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#DEEAF1;border:1px solid #1F3864"></div>Transport</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#FCE4D6;border:1px solid #C55A11"></div>Peinture</div>
             <div class="legend-item"><div class="legend-dot" style="background:#1F3864"></div>Occupé</div>
           </div>
         </div>
@@ -729,7 +760,13 @@ function renderGrids() {
         var locId = rangee + col + '-' + row;
         var equips = _occupMap[locId] || [];
         var cell = document.createElement('div');
-        cell.className = 'plan-cell ' + (equips.length ? 'occupe' : 'libre');
+        var typeClass = '';
+        if (equips.length) {
+          var types = equips.map(function(e){ return e.type||''; });
+          var mainType = types[0];
+          typeClass = ' type-' + mainType;
+        }
+        cell.className = 'plan-cell ' + (equips.length ? 'occupe' + typeClass : 'libre');
         cell.setAttribute('data-loc', locId);
         var tag = equips.length ? (equips[0].tag || '').slice(0,7) : '';
         cell.innerHTML = '<span class="cell-row">' + row + '</span>'
@@ -755,7 +792,9 @@ function renderGrids() {
       var equips = _occupMap[z.id] || [];
       var isOccupe = equips.length > 0;
       var div = document.createElement('div');
-      div.className = 'zone-card ' + (isOccupe ? 'occupe' : 'libre');
+      var zTypeClass = '';
+      if (isOccupe && equips[0]) zTypeClass = ' type-' + (equips[0].type||'');
+      div.className = 'zone-card ' + (isOccupe ? 'occupe' + zTypeClass : 'libre');
       div.setAttribute('data-loc', z.id);
       div.innerHTML = '<div style="display:flex;align-items:center;gap:8px">'
           + '<span style="font-size:18px">' + z.icon + '</span>'
