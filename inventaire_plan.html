@@ -491,6 +491,7 @@
     <span class="status-text" id="status-text">Connexion...</span>
     <button class="btn-refresh" onclick="loadData()">↻ Actualiser</button>
     <button class="btn-export" onclick="exportExcel()">📥 Exporter Excel</button>
+    <button onclick="ouvrirPanneauEllipse()" style="position:relative;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;height:34px">🔄 Ellipse<span id="ellipse-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:#E24B4A;color:#fff;border-radius:50%;width:19px;height:19px;font-size:10px;font-weight:700;align-items:center;justify-content:center">0</span></button>
   </div>
 </header>
 
@@ -1152,6 +1153,145 @@ setInterval(loadData, 5 * 60 * 1000);
 
 // Chargement initial
 loadData();
+
+var _API_URL_PLAN = 'https://prnc-field.vercel.app/api/db';
+
+async function chargerMouvements() {
+  try {
+    var resp = await fetch(_API_URL_PLAN + '?table=loc_mouvements');
+    var data = await resp.json();
+    return (data || []).filter(function(m){ return !m.fait; })
+      .sort(function(a,b){ return new Date(b.date_mouv) - new Date(a.date_mouv); });
+  } catch(e) { return []; }
+}
+
+function formatDateMouv(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  var now = new Date();
+  var diffH = Math.floor((now - d) / 3600000);
+  if (diffH < 1) return 'Il y a ' + Math.floor((now - d) / 60000) + ' min';
+  if (diffH < 24) return 'Il y a ' + diffH + 'h';
+  return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+}
+
+async function ouvrirPanneauEllipse() {
+  var ov = document.getElementById('ellipse-overlay');
+  ov.style.display = 'flex';
+  var list = document.getElementById('ellipse-list');
+  list.innerHTML = '<div style="text-align:center;color:#888;padding:30px;font-size:13px">⏳ Chargement...</div>';
+  var mouvements = await chargerMouvements();
+  renderMouvements(mouvements);
+}
+
+function fermerEllipse() {
+  document.getElementById('ellipse-overlay').style.display = 'none';
+}
+
+function renderMouvements(mouvements) {
+  var list = document.getElementById('ellipse-list');
+  var countLbl = document.getElementById('ellipse-count-lbl');
+  if (countLbl) countLbl.textContent = mouvements.length;
+  if (!mouvements.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 0"><div style="font-size:32px">✅</div><div style="color:#375623;font-weight:700;margin-top:8px">Tout est à jour dans Ellipse !</div></div>';
+    return;
+  }
+  var TYPE_C = { ARRIVEE:'#7030A0',TERMINE:'#375623',USAGE:'#E24B4A',TRANSPORT:'#1F3864',PEINTURE:'#C55A11',FICHE:'#2E75B6' };
+  var TYPE_BG = { ARRIVEE:'#EDE7F6',TERMINE:'#E2EFDA',USAGE:'#FCEBEB',TRANSPORT:'#DEEAF1',PEINTURE:'#FCE4D6',FICHE:'#DEEAF1' };
+  list.innerHTML = mouvements.map(function(m) {
+    var wgColor = { MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#2d6a4f',STCHAUD:'#1F3864' }[m.wg] || '#555';
+    return '<div id="mouv-' + m.id + '" style="background:#f8f9fc;border-radius:10px;border:1.5px solid #e0e4ea;margin-bottom:8px;overflow:hidden">'
+      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px">'
+        + '<div style="width:34px;height:34px;border-radius:8px;background:' + wgColor + '22;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📦</div>'
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">' + (m.tag||'--') + '</div>'
+          + '<div style="font-size:11px;margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+            + '<span style="background:#eee;border-radius:4px;padding:1px 6px;font-size:10px;color:#555">' + (m.ancien_loc||'—') + '</span>'
+            + '<span style="color:#888">→</span>'
+            + '<span style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">' + (m.nouveau_loc||'—') + '</span>'
+          + '</div>'
+          + '<div style="font-size:10px;color:#888;margin-top:3px">' + formatDateMouv(m.date_mouv) + (m.wg ? ' · ' + m.wg : '') + '</div>'
+        + '</div>'
+        + '<button onclick="marquerFait(&quot;' + m.id + '&quot;)" style="background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">✓ Fait</button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+async function marquerFait(id) {
+  try {
+    await fetch(_API_URL_PLAN + '?table=loc_mouvements&id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fait: true })
+    });
+    var el = document.getElementById('mouv-' + id);
+    if (el) el.style.opacity = '0.4';
+    setTimeout(async function() {
+      if (el) el.remove();
+      var restants = document.querySelectorAll('[id^="mouv-"]').length;
+      var countLbl = document.getElementById('ellipse-count-lbl');
+      if (countLbl) countLbl.textContent = restants;
+      await mettreAJourBadge();
+      if (!restants) {
+        document.getElementById('ellipse-list').innerHTML = '<div style="text-align:center;padding:40px 0"><div style="font-size:32px">✅</div><div style="color:#375623;font-weight:700;margin-top:8px">Tout est à jour dans Ellipse !</div></div>';
+      }
+    }, 400);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function ellipseToutFait() {
+  var cards = document.querySelectorAll('[id^="mouv-"]');
+  for (var i = 0; i < cards.length; i++) {
+    var id = cards[i].id.replace('mouv-','');
+    await marquerFait(id);
+    await new Promise(function(r){ setTimeout(r, 100); });
+  }
+}
+
+async function mettreAJourBadge() {
+  try {
+    var mouvements = await chargerMouvements();
+    var badge = document.getElementById('ellipse-badge');
+    if (!badge) return;
+    if (mouvements.length > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = mouvements.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
+// Fermer en cliquant outside
+document.getElementById('ellipse-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fermerEllipse();
+});
+
+// Charger le badge au démarrage (après que les données soient chargées)
+setTimeout(mettreAJourBadge, 3000);
+
 </script>
+
+<!-- Panneau mouvements Ellipse -->
+<div id="ellipse-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px">
+  <div style="background:#fff;border-radius:16px;width:92%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">🔄</span>
+        <span style="font-weight:700;font-size:14px;color:#1F3864">À mettre à jour dans Ellipse</span>
+        <span id="ellipse-count-lbl" style="background:#E24B4A;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">0</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="ellipseToutFait()" style="background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">✓ Tout fait</button>
+        <button onclick="fermerEllipse()" style="background:#eee;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer">✕</button>
+      </div>
+    </div>
+    <div id="ellipse-list" style="overflow-y:auto;padding:12px;flex:1">
+      <div style="text-align:center;color:#888;padding:30px;font-size:13px">Chargement...</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
