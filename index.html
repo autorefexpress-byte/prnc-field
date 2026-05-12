@@ -186,7 +186,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-pane{display:none;}
 .cp-pane.active{display:block;}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
 var _LOC_LIST = ['Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
 function _locOpts(curVal) {
   var html = '<option value="">-- Sélectionner --</option>';
@@ -209,6 +210,7 @@ function _initLocSel(selId, inpId, val) {
   if(val && _LOC_LIST.indexOf(val)===-1){ i.style.display='block'; }
   else { i.style.display='none'; i.value=val||''; }
 }
+
 
 </script>
 </head>
@@ -6912,7 +6914,7 @@ function editRecord(id) {
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
-    _initLocSel('edit-loc-sel','edit-loc', r.loc||'');
+    setTimeout(function(){ _initLocSel('edit-loc-sel','edit-loc', r.loc||''); }, 0);
   });
 }
 
@@ -9195,7 +9197,7 @@ function ouvrirEditionInventaire(id) {
     ov._existingPhotos = existingPhotos.slice();
     document.body.appendChild(ov);
     ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-    _initLocSel('inv-edit-loc-sel','inv-edit-loc', r.loc||'');
+    setTimeout(function(){ _initLocSel('inv-edit-loc-sel','inv-edit-loc', r.loc||''); }, 0);
   });
 }
 
