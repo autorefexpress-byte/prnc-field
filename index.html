@@ -6887,8 +6887,8 @@ function editRecord(id) {
 
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
-            <select class="fi" id="edit-loc-sel" onchange="_locChange('edit-loc-sel','edit-loc')" style="width:100%;font-size:14px;color:#1a2332" data-curval="${r.loc||''}"></select>
-            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box;margin-top:6px;display:none" placeholder="Saisir...">
+            <select class="fi" id="edit-loc-sel" onchange="_locChange('edit-loc-sel','edit-loc')" style="width:100%;font-size:14px;color:#1a2332">${_locOpts(r.loc||'')}</select>
+            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box;margin-top:6px;display:${r.loc && _LOC_LIST.indexOf(r.loc)===-1?'block':'none'}" placeholder="Saisir...">
           </div>
 
           ${r.type==='TERMINE' ? `
@@ -6914,7 +6914,6 @@ function editRecord(id) {
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
-    setTimeout(function(){ _initLocSel('edit-loc-sel','edit-loc', r.loc||''); }, 0);
   });
 }
 
