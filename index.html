@@ -186,26 +186,31 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-pane{display:none;}
 .cp-pane.active{display:block;}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+var _LOC_LIST = ['Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
+function _locOpts(curVal) {
+  var html = '<option value="">-- Sélectionner --</option>';
+  _LOC_LIST.forEach(function(l){
+    html += '<option value="'+l+'"'+(curVal===l?' selected':'')+'>'+l+'</option>';
+  });
+  html += '<option value="__autre__"'+(curVal && _LOC_LIST.indexOf(curVal)===-1?' selected':'')+'>✏️ Autre...</option>';
+  return html;
+}
+function _locChange(selId, inpId) {
+  var s=document.getElementById(selId), i=document.getElementById(inpId);
+  if(!s||!i) return;
+  if(s.value==='__autre__'){ i.style.display='block'; i.value=''; i.focus(); }
+  else { i.style.display='none'; i.value=s.value; }
+}
+function _initLocSel(selId, inpId, val) {
+  var s=document.getElementById(selId), i=document.getElementById(inpId);
+  if(!s||!i) return;
+  s.innerHTML = _locOpts(val);
+  if(val && _LOC_LIST.indexOf(val)===-1){ i.style.display='block'; }
+  else { i.style.display='none'; i.value=val||''; }
+}
 
-<datalist id="loc-suggestions">
-  <option value="Atelier P17">
-  <option value="CLN">
-  <option value="Dalle de lavage">
-  <option value="Devant MCCHAUD">
-  <option value="Devant P50">
-  <option value="Etagere Callidus P17">
-  <option value="ETNA">
-  <option value="Parking P02">
-  <option value="R10">
-  <option value="R9">
-  <option value="Retour demandeur">
-  <option value="Retour magasin">
-  <option value="Zone A1">
-  <option value="Zone fer">
-  <option value="Zone fin de travaux P17">
-  <option value="Zone planifier P17">
-</datalist>
+</script>
 </head>
 <body>
 
@@ -446,7 +451,30 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="statut-btn" id="ar-etna" onclick="setStatut('etna')"><div class="statut-icon">&#127912;</div><div class="statut-lbl" style="color:var(--orange)">Retour ETNA</div><div class="statut-sub">Check qualité à faire</div></div>
       </div>
     </div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Localisation</div><input class="fi" type="text" id="ar-loc" list="loc-suggestions" placeholder="Sélectionner ou saisir..."></div>
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Localisation</div>
+      <select class="fi" id="ar-loc-sel" onchange="_locChange('ar-loc-sel','ar-loc')" style="font-size:15px;color:#1a2332">
+        <option value="">-- Sélectionner --</option>
+        <option value="Atelier P17">Atelier P17</option>
+        <option value="CLN">CLN</option>
+        <option value="Dalle de lavage">Dalle de lavage</option>
+        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
+        <option value="Devant P50">Devant P50</option>
+        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
+        <option value="ETNA">ETNA</option>
+        <option value="Parking P02">Parking P02</option>
+        <option value="R10">R10</option>
+        <option value="R9">R9</option>
+        <option value="Retour demandeur">Retour demandeur</option>
+        <option value="Retour magasin">Retour magasin</option>
+        <option value="Zone A1">Zone A1</option>
+        <option value="Zone fer">Zone fer</option>
+        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
+        <option value="Zone planifier P17">Zone planifier P17</option>
+        <option value="__autre__">✏️ Autre...</option>
+      </select>
+      <input class="fi" type="text" id="ar-loc" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
+    </div>
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Destinataires <span class="dest-badge" id="ar-badge"></span></div>
       <div class="contacts-box" id="ar-contacts"><div class="contacts-hdr"><span>Sélectionne un workgroup</span><span class="contacts-hint">Liste auto</span></div></div>
@@ -6857,7 +6885,8 @@ function editRecord(id) {
 
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
-            <input class="fi" id="edit-loc" list="loc-suggestions" value="${r.loc||''}" style="width:100%;box-sizing:border-box">
+            <select class="fi" id="edit-loc-sel" onchange="_locChange('edit-loc-sel','edit-loc')" style="width:100%;font-size:14px;color:#1a2332" data-curval="${r.loc||''}"></select>
+            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box;margin-top:6px;display:none" placeholder="Saisir...">
           </div>
 
           ${r.type==='TERMINE' ? `
@@ -6883,6 +6912,7 @@ function editRecord(id) {
       </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    _initLocSel('edit-loc-sel','edit-loc', r.loc||'');
   });
 }
 
@@ -9144,7 +9174,7 @@ function ouvrirEditionInventaire(id) {
       '<textarea id="inv-edit-desc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;height:80px">' + (r.desc||r.description||'') + '</textarea></div>' +
 
       '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
-      '<input id="inv-edit-loc" list="loc-suggestions" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" value="' + (r.loc||'') + '"></div>' +
+      '<select id="inv-edit-loc-sel" onchange="_locChange(\'inv-edit-loc-sel\',\'inv-edit-loc\')" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box"></select><input id="inv-edit-loc" style="display:none;width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:6px" value="' + (r.loc||'') + '"></div>' +
 
       '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PHOTOS</div>' +
 
@@ -9165,6 +9195,7 @@ function ouvrirEditionInventaire(id) {
     ov._existingPhotos = existingPhotos.slice();
     document.body.appendChild(ov);
     ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+    _initLocSel('inv-edit-loc-sel','inv-edit-loc', r.loc||'');
   });
 }
 
