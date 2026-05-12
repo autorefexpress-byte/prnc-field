@@ -601,32 +601,34 @@ function cloudThumb(url, w, h) {
   return url || '';
 }
 
+
+function _planLocChange() {
+  var s = document.getElementById('modif-loc-sel');
+  var i = document.getElementById('modif-loc');
+  if(!s||!i) return;
+  if(s.value==='__autre__'){ i.style.display='block'; i.value=''; i.focus(); }
+  else { i.style.display='none'; i.value=s.value; }
+}
+var _PLAN_LOCS = ['Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
 var _data = [];
 var _occupMap = {};
 var _ZONES = [
-  { id:'Zona A1',              label:'Zone A1',              icon:'🅰️' },
-  { id:'Dalle de lavage',      label:'Dalle de lavage',      icon:'🚿' },
-  { id:'Retour demandeur',     label:'Retour demandeur',     icon:'👤' },
-  { id:'Retour magasin',       label:'Retour magasin',       icon:'🏪' },
-  { id:'R9',                   label:'R9',                   icon:'📍' },
-  { id:'R10',                  label:'R10',                  icon:'📍' },
-  { id:'Parking p02',          label:'Parking P02',          icon:'🅿️' },
-  { id:'Devant p50',           label:'Devant P50',           icon:'🏭' },
-  { id:'Devant mcchaud',       label:'Devant MCCHAUD',       icon:'🔥' },
-  { id:'Zone fer',             label:'Zone fer',             icon:'⚙️' },
-  { id:'ETNA',                 label:'ETNA',                 icon:'🔬' },
-  { id:'P17',                  label:'P17',                  icon:'🏗️' },
-  { id:'Zone fin de travaux p17',  label:'Zone fin travaux P17',   icon:'✅' },
-  { id:'Zone planifier P17',        label:'Zone planifier P17',      icon:'📋' },
-  { id:'Etagere Callidus P17',       label:'Etagere Callidus P17',    icon:'📦' },
-  { id:'Zone planifier p17',        label:'Zone planifier P17 (2)',  icon:'📋' },
-  { id:'Zone fin travaux P17',      label:'Zone fin travaux P17 (2)',icon:'✅' },
-  { id:'Zone planifier P17 WR 143623', label:'Zone planifier P17 WR 143623', icon:'📋' },
-  { id:'Devant p50',                label:'Devant P50',              icon:'🏭' },
-  { id:'CLN',                       label:'CLN',                     icon:'🔧' },
-  { id:'Cln',                       label:'CLN (2)',                 icon:'🔧' },
-  { id:'Atelier p17',               label:'Atelier P17',             icon:'🏗️' },
-  { id:'En attente de planification', label:'En attente planif.',    icon:'⏳' },
+  { id:'Atelier P17', label:'Atelier P17', icon:'🏗️' },
+  { id:'CLN', label:'CLN', icon:'🔧' },
+  { id:'Dalle de lavage', label:'Dalle de lavage', icon:'🚿' },
+  { id:'Devant MCCHAUD', label:'Devant MCCHAUD', icon:'🔥' },
+  { id:'Devant P50', label:'Devant P50', icon:'🏭' },
+  { id:'Etagere Callidus P17', label:'Etagere Callidus P17', icon:'📦' },
+  { id:'ETNA', label:'ETNA', icon:'🔬' },
+  { id:'Parking P02', label:'Parking P02', icon:'🅿️' },
+  { id:'R10', label:'R10', icon:'📍' },
+  { id:'R9', label:'R9', icon:'📍' },
+  { id:'Retour demandeur', label:'Retour demandeur', icon:'👤' },
+  { id:'Retour magasin', label:'Retour magasin', icon:'🏪' },
+  { id:'Zone A1', label:'Zone A1', icon:'🅰️' },
+  { id:'Zone fer', label:'Zone fer', icon:'⚙️' },
+  { id:'Zone fin de travaux P17', label:'Zone fin de travaux P17', icon:'✅' },
+  { id:'Zone planifier P17', label:'Zone planifier P17', icon:'📋' },
 ];
 
 async function loadData() {
@@ -957,7 +959,17 @@ async function ouvrirModif(id) {
       // Localisation
       + '<div style="margin-bottom:12px">'
         + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📍 Emplacement</label>'
-        + '<input id="modif-loc" value="' + (r.loc||'') + '" list="locs-list" placeholder="Ex: F3-2 ou Zone A1" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:14px;font-family:IBM Plex Mono,monospace;font-weight:700;outline:none" onfocus="this.style.borderColor=\'#1F3864\'" onblur="this.style.borderColor=\'#dde2ea\'">'
+        + (function(){
+          var locs = _PLAN_LOCS;
+          var cur = r.loc||'';
+          var isOther = cur && locs.indexOf(cur)===-1;
+          var opts = '<option value="">-- Sélectionner --</option>';
+          locs.forEach(function(l){ opts += '<option value="'+l+'"'+(cur===l?' selected':'')+'>'+l+'</option>'; });
+          opts += '<option value="__autre__"'+(isOther?' selected':'')+'>✏️ Autre (saisir)...</option>';
+          var sel = '<select id="modif-loc-sel" onchange="_planLocChange()" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:14px;font-family:IBM Plex Sans,sans-serif;outline:none;background:#fff">'+opts+'</select>';
+          var inp = '<input id="modif-loc" value="'+cur+'" placeholder="Saisir..." style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:14px;font-family:IBM Plex Mono,monospace;font-weight:700;outline:none;margin-top:6px;'+(isOther?'':'display:none')+'">';
+          return sel + inp;
+        })()
       + '</div>'
       // Statut
       + '<div style="margin-bottom:12px">'
