@@ -547,10 +547,53 @@ function _initLocSel(selId, inpId, val) {
         <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
       </div>
     </div>
-    <div class="field-grp"><div class="field-lbl">Localisation</div><input class="fi" type="text" id="eq-zone" placeholder="Ex : Rack 3 / Benne B / Zone A1 / P50..."></div>
+    <div class="field-grp">
+      <div class="field-lbl">Localisation</div>
+      <select class="fi" id="eq-zone-sel" onchange="_locChange('eq-zone-sel','eq-zone')" style="font-size:15px;color:#1a2332">
+        <option value="">-- Sélectionner --</option>
+        <option value="Atelier P17">Atelier P17</option>
+        <option value="CLN">CLN</option>
+        <option value="Dalle de lavage">Dalle de lavage</option>
+        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
+        <option value="Devant P50">Devant P50</option>
+        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
+        <option value="ETNA">ETNA</option>
+        <option value="Parking P02">Parking P02</option>
+        <option value="R10">R10</option>
+        <option value="R9">R9</option>
+        <option value="Retour demandeur">Retour demandeur</option>
+        <option value="Retour magasin">Retour magasin</option>
+        <option value="Zone A1">Zone A1</option>
+        <option value="Zone fer">Zone fer</option>
+        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
+        <option value="Zone planifier P17">Zone planifier P17</option>
+        <option value="__autre__">✏️ Autre...</option>
+      </select>
+      <input class="fi" type="text" id="eq-zone" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
+    </div>
     <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
       <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
-      <input class="fi" type="text" id="eq-loc-p50" placeholder="Ex : Benne B3 / Rack 2 / Allée 4...">
+      <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
+        <option value="">-- Sélectionner --</option>
+        <option value="Atelier P17">Atelier P17</option>
+        <option value="CLN">CLN</option>
+        <option value="Dalle de lavage">Dalle de lavage</option>
+        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
+        <option value="Devant P50">Devant P50</option>
+        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
+        <option value="ETNA">ETNA</option>
+        <option value="Parking P02">Parking P02</option>
+        <option value="R10">R10</option>
+        <option value="R9">R9</option>
+        <option value="Retour demandeur">Retour demandeur</option>
+        <option value="Retour magasin">Retour magasin</option>
+        <option value="Zone A1">Zone A1</option>
+        <option value="Zone fer">Zone fer</option>
+        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
+        <option value="Zone planifier P17">Zone planifier P17</option>
+        <option value="__autre__">✏️ Autre...</option>
+      </select>
+      <input class="fi" type="text" id="eq-loc-p50" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
     </div>
 
     <!-- Destinataires auto par workgroup -->
@@ -2810,6 +2853,8 @@ function sendEquip() {
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
     var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
     var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
+    var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
+    var s2=document.getElementById('eq-loc-p50-sel'); if(s2) s2.value='';
     resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
