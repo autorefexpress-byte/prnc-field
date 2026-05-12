@@ -6962,6 +6962,26 @@ function editRecord(id) {
   });
 }
 
+
+async function enregistrerMouvement(tag, wg, ancienLoc, nouveauLoc, recordId) {
+  if (!nouveauLoc || ancienLoc === nouveauLoc) return;
+  try {
+    await fetch(DB_API + '?table=loc_mouvements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tag        : tag        || '',
+        wg         : wg         || '',
+        ancien_loc : ancienLoc  || '',
+        nouveau_loc: nouveauLoc || '',
+        record_id  : recordId   || '',
+        fait       : false,
+        date_mouv  : new Date().toISOString()
+      })
+    });
+  } catch(e) { console.warn('mouvement err', e); }
+}
+
 async function saveEdit(id) {
   const btn     = document.getElementById('edit-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
@@ -6974,6 +6994,12 @@ async function saveEdit(id) {
   const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
   const loc     = document.getElementById('edit-loc').value.trim();
   const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
+
+  // Capturer ancienne loc avant modification
+  const _records = await dbLoad();
+  const _recOld = _records.find(r => r.id === id);
+  const _ancienLoc = _recOld ? (_recOld.loc || '') : '';
+  const _wg = _recOld ? (_recOld.wg || '') : '';
 
   try {
     await fetch(DB_API + '?id=' + encodeURIComponent(id), {
@@ -7003,6 +7029,9 @@ async function saveEdit(id) {
         localStorage.setItem(DB_KEY, JSON.stringify(local));
       }
     } catch(e) {}
+
+    // Enregistrer mouvement si loc a changé
+    await enregistrerMouvement(tag, _wg, _ancienLoc, loc, id);
 
     if (btn) { btn.style.background = '#375623'; btn.textContent = '✅ Enregistré !'; }
 
@@ -9281,6 +9310,13 @@ async function sauvegarderEditionInventaire(id, btn) {
   btn.textContent = '⏳ Enregistrement...';
   btn.disabled = true;
 
+  // Capturer ancienne loc
+  var _invRecords = await dbLoad();
+  var _invRec = _invRecords.find(function(x){ return x.id === id; });
+  var _invAncienLoc = _invRec ? (_invRec.loc || '') : '';
+  var _invTag = _invRec ? (_invRec.tag || '') : '';
+  var _invWg  = _invRec ? (_invRec.wg  || '') : '';
+
   try {
     var existingPhotos = (ov && ov._existingPhotos) ? ov._existingPhotos.slice() : [];
 
@@ -9308,6 +9344,8 @@ async function sauvegarderEditionInventaire(id, btn) {
       }
     }
     _photosByWOCache = null;
+    // Enregistrer mouvement si loc a changé
+    await enregistrerMouvement(_invTag, _invWg, _invAncienLoc, loc, id);
     if (ov) ov.remove();
     renderInventaire();
   } catch(e) {
