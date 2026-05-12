@@ -187,6 +187,25 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-pane.active{display:block;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<datalist id="loc-suggestions">
+  <option value="Atelier P17">
+  <option value="CLN">
+  <option value="Dalle de lavage">
+  <option value="Devant MCCHAUD">
+  <option value="Devant P50">
+  <option value="Etagere Callidus P17">
+  <option value="ETNA">
+  <option value="Parking P02">
+  <option value="R10">
+  <option value="R9">
+  <option value="Retour demandeur">
+  <option value="Retour magasin">
+  <option value="Zone A1">
+  <option value="Zone fer">
+  <option value="Zone fin de travaux P17">
+  <option value="Zone planifier P17">
+</datalist>
 </head>
 <body>
 
@@ -427,7 +446,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
         <div class="statut-btn" id="ar-etna" onclick="setStatut('etna')"><div class="statut-icon">&#127912;</div><div class="statut-lbl" style="color:var(--orange)">Retour ETNA</div><div class="statut-sub">Check qualité à faire</div></div>
       </div>
     </div>
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Localisation</div><input class="fi" type="text" id="ar-loc" placeholder="Ex : Zone A1 Maintenance Centrale / P50 / Quai..."></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Localisation</div><input class="fi" type="text" id="ar-loc" list="loc-suggestions" placeholder="Sélectionner ou saisir..."></div>
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Destinataires <span class="dest-badge" id="ar-badge"></span></div>
       <div class="contacts-box" id="ar-contacts"><div class="contacts-hdr"><span>Sélectionne un workgroup</span><span class="contacts-hint">Liste auto</span></div></div>
@@ -6838,7 +6857,7 @@ function editRecord(id) {
 
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Localisation</div>
-            <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box">
+            <input class="fi" id="edit-loc" list="loc-suggestions" value="${r.loc||''}" style="width:100%;box-sizing:border-box">
           </div>
 
           ${r.type==='TERMINE' ? `
@@ -9125,7 +9144,7 @@ function ouvrirEditionInventaire(id) {
       '<textarea id="inv-edit-desc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;height:80px">' + (r.desc||r.description||'') + '</textarea></div>' +
 
       '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
-      '<input id="inv-edit-loc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" value="' + (r.loc||'') + '"></div>' +
+      '<input id="inv-edit-loc" list="loc-suggestions" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" value="' + (r.loc||'') + '"></div>' +
 
       '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PHOTOS</div>' +
 
