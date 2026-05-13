@@ -491,7 +491,7 @@
     <span class="status-text" id="status-text">Connexion...</span>
     <button class="btn-refresh" onclick="loadData()">↻ Actualiser</button>
     <button class="btn-export" onclick="exportExcel()">📥 Exporter Excel</button>
-    <button onclick="ouvrirPanneauEllipse()" style="position:relative;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;height:34px">🔄 Ellipse<span id="ellipse-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:#E24B4A;color:#fff;border-radius:50%;width:19px;height:19px;font-size:10px;font-weight:700;align-items:center;justify-content:center">0</span></button>
+    <button onclick="ouvrirPanneauEllipse()" style="position:relative;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;height:34px">🔄 Ellipse<span id="ellipse-badge" style="display:none;position:absolute;top:-8px;right:-8px;background:#E24B4A;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:11px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;border:2px solid #fff">0</span></button>
   </div>
 </header>
 
@@ -1264,8 +1264,9 @@ async function mettreAJourBadge() {
 }
 
 // Fermer en cliquant outside
-document.getElementById('ellipse-overlay').addEventListener('click', function(e) {
-  if (e.target === this) fermerEllipse();
+document.addEventListener('DOMContentLoaded', function() {
+  var ov = document.getElementById('ellipse-overlay');
+  if (ov) ov.addEventListener('click', function(e) { if (e.target === this) fermerEllipse(); });
 });
 
 // Charger le badge au démarrage (après que les données soient chargées)
