@@ -279,6 +279,8 @@ module.exports = async function handler(req, res) {
         else if (k === 'type_eqt')             { await sql`UPDATE historique SET type_eqt=${v||null} WHERE id=${id}`; }
         else if (k === 'serie')                { await sql`UPDATE historique SET serie=${v||null} WHERE id=${id}`; }
         else if (k === 'zone')                 { await sql`UPDATE historique SET zone=${v||null} WHERE id=${id}`; }
+        else if (k === 'type')                 { await sql`UPDATE historique SET type=${v||null} WHERE id=${id}`; }
+        else if (k === 'wo_usine')             { await sql`UPDATE historique SET wo_usine=${v||null} WHERE id=${id}`; }
         else if (k === 'description')          { await sql`UPDATE historique SET description=${v||null} WHERE id=${id}`; }
         else if (k === 'recovered_at')         { await sql`UPDATE historique SET recovered_at=${v||null} WHERE id=${id}`; }
         else { console.warn('Unknown field:', k); }
