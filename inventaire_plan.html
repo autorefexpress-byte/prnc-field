@@ -886,7 +886,7 @@ function showDetail(loc, equips) {
     var wgColor = wgColors[r.wg] || '#555';
     var hasDetail = r.wo || r.wr || r.sc || r.description || r.motif || (r.photos && r.photos.length);
     var thumbHtml = (r.photos && r.photos.length)
-      ? '<img src="' + r.photos[0] + '" onerror="this.style.display=\'none\'" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+      ? '<img src="' + r.photos[0] + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">'
       : '<div style="width:36px;height:36px;border-radius:6px;background:' + wgColor + '20;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔧</div>';
 
     var tc = TYPE_COLORS[r.type] || { bg:'#f8f9fc', border:'#ccc', label:r.type||' ? ' };
@@ -1193,26 +1193,38 @@ function renderMouvements(mouvements) {
   var countLbl = document.getElementById('ellipse-count-lbl');
   if (countLbl) countLbl.textContent = mouvements.length;
   if (!mouvements.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px 0"><div style="font-size:32px">✅</div><div style="color:#375623;font-weight:700;margin-top:8px">Tout est à jour dans Ellipse !</div></div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px 0"><div style="font-size:32px">&#9989;</div><div style="color:#375623;font-weight:700;margin-top:8px">Tout est a jour dans Ellipse !</div></div>';
     return;
   }
-  var TYPE_C = { ARRIVEE:'#7030A0',TERMINE:'#375623',USAGE:'#E24B4A',TRANSPORT:'#1F3864',PEINTURE:'#C55A11',FICHE:'#2E75B6' };
-  var TYPE_BG = { ARRIVEE:'#EDE7F6',TERMINE:'#E2EFDA',USAGE:'#FCEBEB',TRANSPORT:'#DEEAF1',PEINTURE:'#FCE4D6',FICHE:'#DEEAF1' };
   list.innerHTML = mouvements.map(function(m) {
     var wgColor = { MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#2d6a4f',STCHAUD:'#1F3864' }[m.wg] || '#555';
+    var rec = _data.find(function(r){ return r.id === m.record_id || r.tag === m.tag; });
+    var wo = (rec && rec.wo) ? rec.wo : (m.wo || '');
+    var photo = rec && rec.photos && rec.photos.length ? rec.photos[0] : '';
+    var imgEl = document.createElement('img');
+    imgEl.src = photo;
+    imgEl.style.cssText = 'width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0';
+    imgEl.onclick = function(){ viewImg(this.src); };
+    imgEl.onerror = function(){ this.style.display='none'; };
+    var photoHtml = photo
+      ? '<img src="' + photo + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0" onclick="viewImg(this.src)">'
+      : '<div style="width:48px;height:48px;border-radius:8px;background:' + wgColor + '22;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">&#128246;</div>';
     return '<div id="mouv-' + m.id + '" style="background:#f8f9fc;border-radius:10px;border:1.5px solid #e0e4ea;margin-bottom:8px;overflow:hidden">'
       + '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px">'
-        + '<div style="width:34px;height:34px;border-radius:8px;background:' + wgColor + '22;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">📦</div>'
+        + photoHtml
         + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">' + (m.tag||'--') + '</div>'
-          + '<div style="font-size:11px;margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
-            + '<span style="background:#eee;border-radius:4px;padding:1px 6px;font-size:10px;color:#555">' + (m.ancien_loc||'—') + '</span>'
-            + '<span style="color:#888">→</span>'
-            + '<span style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">' + (m.nouveau_loc||'—') + '</span>'
+          + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+            + '<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">' + (m.tag||'--') + '</span>'
+            + (wo ? '<span style="background:#1F3864;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">WO ' + wo + '</span>' : '')
           + '</div>'
-          + '<div style="font-size:10px;color:#888;margin-top:3px">' + formatDateMouv(m.date_mouv) + (m.wg ? ' · ' + m.wg : '') + '</div>'
+          + '<div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+            + '<span style="background:#eee;border-radius:4px;padding:1px 6px;font-size:10px;color:#555">' + (m.ancien_loc||'--') + '</span>'
+            + '<span style="color:#888">&rarr;</span>'
+            + '<span style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">' + (m.nouveau_loc||'--') + '</span>'
+          + '</div>'
+          + '<div style="font-size:10px;color:#888;margin-top:3px">' + formatDateMouv(m.date_mouv) + (m.wg ? ' &middot; ' + m.wg : '') + '</div>'
         + '</div>'
-        + '<button onclick="marquerFait(&quot;' + m.id + '&quot;)" style="background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">✓ Fait</button>'
+        + '<button onclick="marquerFait(&quot;' + m.id + '&quot;)" style="background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">&#10003; Fait</button>'
       + '</div>'
     + '</div>';
   }).join('');
