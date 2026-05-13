@@ -1214,8 +1214,8 @@ function renderMouvements(mouvements) {
         + photoHtml
         + '<div style="flex:1;min-width:0">'
           + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
-            + '<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">' + (m.tag||'--') + '</span>'
-            + (wo ? '<span style="background:#1F3864;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">WO ' + wo + '</span>' : '')
+            + (wo ? '<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">WO ' + wo + '</span>' : '<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:IBM Plex Mono,monospace">' + (m.tag||'--') + '</span>')
+            + (m.tag ? '<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600">' + m.tag + '</span>' : '')
           + '</div>'
           + '<div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
             + '<span style="background:#eee;border-radius:4px;padding:1px 6px;font-size:10px;color:#555">' + (m.ancien_loc||'--') + '</span>'
