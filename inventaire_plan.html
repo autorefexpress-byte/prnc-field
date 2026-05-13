@@ -610,7 +610,7 @@ function _planLocChange() {
   if(s.value==='__autre__'){ i.style.display='block'; i.value=''; i.focus(); }
   else { i.style.display='none'; i.value=s.value; }
 }
-var _PLAN_LOCS = ['Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
+var _PLAN_LOCS = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
 
 var TYPE_COLORS = {
   ARRIVEE  : { bg:'#EDE7F6', border:'#7030A0', label:'ARRIVÉE'   },
@@ -623,6 +623,7 @@ var TYPE_COLORS = {
 var _data = [];
 var _occupMap = {};
 var _ZONES = [
+  { id:'A-cal', label:'A-cal', icon:'🅰️' },
   { id:'Atelier P17', label:'Atelier P17', icon:'🏗️' },
   { id:'CLN', label:'CLN', icon:'🔧' },
   { id:'Dalle de lavage', label:'Dalle de lavage', icon:'🚿' },
@@ -636,6 +637,7 @@ var _ZONES = [
   { id:'Retour demandeur', label:'Retour demandeur', icon:'👤' },
   { id:'Retour magasin', label:'Retour magasin', icon:'🏪' },
   { id:'Zone A1', label:'Zone A1', icon:'🅰️' },
+  { id:'Zone départ Callidus', label:'Zone départ Callidus', icon:'📤' },
   { id:'Zone fer', label:'Zone fer', icon:'⚙️' },
   { id:'Zone fin de travaux P17', label:'Zone fin de travaux P17', icon:'✅' },
   { id:'Zone planifier P17', label:'Zone planifier P17', icon:'📋' },
