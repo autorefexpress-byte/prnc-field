@@ -197,6 +197,17 @@ function _locOpts(curVal) {
   html += '<option value="__autre__"'+(curVal && _LOC_LIST.indexOf(curVal)===-1?' selected':'')+'>✏️ Autre...</option>';
   return html;
 }
+
+function _editTypeChange() {
+  var t = document.getElementById('edit-type');
+  if (!t) return;
+  var isTermine = t.value === 'TERMINE';
+  var zg = document.getElementById('edit-zone-grp');
+  var wg = document.getElementById('edit-wo-usine-grp');
+  if (zg) zg.style.display = isTermine ? 'block' : 'none';
+  if (wg) wg.style.display = isTermine ? 'block' : 'none';
+}
+
 function _locChange(selId, inpId) {
   var s=document.getElementById(selId), i=document.getElementById(inpId);
   if(!s||!i) return;
@@ -6892,7 +6903,14 @@ function editRecord(id) {
             <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Modifier</div>
             <div style="font-size:16px;font-weight:800;color:#fff">${r.tag||'--'}</div>
           </div>
-          <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff">${r.type||''}</div>
+          <select id="edit-type" onchange="_editTypeChange()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:4px 10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">
+            <option value="ARRIVEE"  ${r.type==='ARRIVEE'  ?'selected':''} style="color:#000">ARRIVÉE</option>
+            <option value="TERMINE"  ${r.type==='TERMINE'  ?'selected':''} style="color:#000">TERMINÉ</option>
+            <option value="USAGE"    ${r.type==='USAGE'    ?'selected':''} style="color:#000">USAGE</option>
+            <option value="TRANSPORT"${r.type==='TRANSPORT'?'selected':''} style="color:#000">TRANSPORT</option>
+            <option value="PEINTURE" ${r.type==='PEINTURE' ?'selected':''} style="color:#000">PEINTURE</option>
+            <option value="FICHE"    ${r.type==='FICHE'    ?'selected':''} style="color:#000">FICHE</option>
+          </select>
         </div>
 
         <!-- Champs -->
@@ -6936,11 +6954,14 @@ function editRecord(id) {
             <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box;margin-top:6px;display:${r.loc && _LOC_LIST.indexOf(r.loc)===-1?'block':'none'}" placeholder="Saisir...">
           </div>
 
-          ${r.type==='TERMINE' ? `
-          <div>
+          <div id="edit-zone-grp" style="display:${r.type==='TERMINE'?'block':'none'}">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Zone à déposer</div>
             <input class="fi" id="edit-zone" value="${r.zone||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-          </div>` : '<input type="hidden" id="edit-zone" value="">'}
+          </div>
+          <div id="edit-wo-usine-grp" style="display:${r.type==='TERMINE'?'block':'none'}">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
+            <input class="fi" id="edit-wo-usine" value="${r.woUsine||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : 876230">
+          </div>
 
         </div>
 
@@ -6995,6 +7016,8 @@ async function saveEdit(id) {
   const serie   = document.getElementById('edit-serie') ? document.getElementById('edit-serie').value.trim() : '';
   const loc     = document.getElementById('edit-loc').value.trim();
   const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
+  const newType = document.getElementById('edit-type') ? document.getElementById('edit-type').value : null;
+  const woUsine = document.getElementById('edit-wo-usine') ? document.getElementById('edit-wo-usine').value.trim() : '';
 
   // Capturer ancienne loc avant modification
   const _records = await dbLoad();
@@ -7014,7 +7037,9 @@ async function saveEdit(id) {
         tag      : tag     || null,
         type_eqt : typeEqt || null,
         serie    : serie   || null,
-        zone     : zone    || null
+        zone     : zone    || null,
+        ...(newType  ? { type     : newType  } : {}),
+        ...(woUsine  ? { wo_usine : woUsine  } : {})
       })
     });
 
@@ -7027,6 +7052,8 @@ async function saveEdit(id) {
         local[idx].statut = s; local[idx].typeEqt = typeEqt;
         local[idx].serie = serie; local[idx].loc = loc;
         if (zone) local[idx].zone = zone;
+        if (newType) local[idx].type = newType;
+        if (woUsine) local[idx].woUsine = woUsine;
         localStorage.setItem(DB_KEY, JSON.stringify(local));
       }
     } catch(e) {}
