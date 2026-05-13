@@ -188,7 +188,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-var _LOC_LIST = ['Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
+var _LOC_LIST = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
 function _locOpts(curVal) {
   var html = '<option value="">-- Sélectionner --</option>';
   _LOC_LIST.forEach(function(l){
@@ -468,6 +468,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="field-lbl"><span class="req">*</span> Localisation</div>
       <select class="fi" id="ar-loc-sel" onchange="_locChange('ar-loc-sel','ar-loc')" style="font-size:15px;color:#1a2332">
         <option value="">-- Sélectionner --</option>
+        <option value="A-cal">A-cal</option>
         <option value="Atelier P17">Atelier P17</option>
         <option value="CLN">CLN</option>
         <option value="Dalle de lavage">Dalle de lavage</option>
@@ -481,6 +482,7 @@ function _initLocSel(selId, inpId, val) {
         <option value="Retour demandeur">Retour demandeur</option>
         <option value="Retour magasin">Retour magasin</option>
         <option value="Zone A1">Zone A1</option>
+        <option value="Zone départ Callidus">Zone départ Callidus</option>
         <option value="Zone fer">Zone fer</option>
         <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
         <option value="Zone planifier P17">Zone planifier P17</option>
@@ -562,6 +564,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="field-lbl">Localisation</div>
       <select class="fi" id="eq-zone-sel" onchange="_locChange('eq-zone-sel','eq-zone')" style="font-size:15px;color:#1a2332">
         <option value="">-- Sélectionner --</option>
+        <option value="A-cal">A-cal</option>
         <option value="Atelier P17">Atelier P17</option>
         <option value="CLN">CLN</option>
         <option value="Dalle de lavage">Dalle de lavage</option>
@@ -575,6 +578,7 @@ function _initLocSel(selId, inpId, val) {
         <option value="Retour demandeur">Retour demandeur</option>
         <option value="Retour magasin">Retour magasin</option>
         <option value="Zone A1">Zone A1</option>
+        <option value="Zone départ Callidus">Zone départ Callidus</option>
         <option value="Zone fer">Zone fer</option>
         <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
         <option value="Zone planifier P17">Zone planifier P17</option>
@@ -586,6 +590,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
       <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
         <option value="">-- Sélectionner --</option>
+        <option value="A-cal">A-cal</option>
         <option value="Atelier P17">Atelier P17</option>
         <option value="CLN">CLN</option>
         <option value="Dalle de lavage">Dalle de lavage</option>
@@ -599,6 +604,7 @@ function _initLocSel(selId, inpId, val) {
         <option value="Retour demandeur">Retour demandeur</option>
         <option value="Retour magasin">Retour magasin</option>
         <option value="Zone A1">Zone A1</option>
+        <option value="Zone départ Callidus">Zone départ Callidus</option>
         <option value="Zone fer">Zone fer</option>
         <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
         <option value="Zone planifier P17">Zone planifier P17</option>
