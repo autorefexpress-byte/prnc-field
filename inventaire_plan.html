@@ -491,7 +491,7 @@
     <span class="status-text" id="status-text">Connexion...</span>
     <button class="btn-refresh" onclick="loadData()">↻ Actualiser</button>
     <button class="btn-export" onclick="exportExcel()">📥 Exporter Excel</button>
-    <button onclick="ouvrirPanneauEllipse()" style="position:relative;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;height:34px">🔄 Ellipse<span id="ellipse-badge" style="display:none;position:absolute;top:-8px;right:-8px;background:#E24B4A;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:11px;font-weight:700;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;border:2px solid #fff">0</span></button>
+    <button onclick="ouvrirPanneauEllipse()" style="position:relative;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;height:34px">🔄 Ellipse<span id="ellipse-badge" style="display:none;position:absolute;top:-8px;right:-8px;background:#E24B4A;color:#fff;border-radius:50%;min-width:20px;height:20px;line-height:20px;font-size:11px;font-weight:700;text-align:center;padding:0 4px;box-sizing:border-box;border:2px solid #fff">0</span></button>
   </div>
 </header>
 
@@ -1267,7 +1267,7 @@ async function mettreAJourBadge() {
     var badge = document.getElementById('ellipse-badge');
     if (!badge) return;
     if (mouvements.length > 0) {
-      badge.style.display = 'flex';
+      badge.style.display = 'inline-block';
       badge.textContent = mouvements.length;
     } else {
       badge.style.display = 'none';
