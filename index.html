@@ -3618,7 +3618,8 @@ const TYPE_COLORS = {
   USAGE     : {bg:'#FCEBEB',fg:'#E24B4A',icon:'USE'},
   TRANSPORT : {bg:'#DEEAF1',fg:'#1F3864',icon:'TRP'},
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
-  FICHE     : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'}
+  FICHE      : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'},
+  ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'}
 };
 
 function clearHistSearch() {
@@ -3921,7 +3922,7 @@ async function updateStats() {
     const el = id => document.getElementById(id);
     if(el('stat-planning')) el('stat-planning').textContent = n('PLANNING') || records.filter(r=>r.type==='PLANNING').length || '--';
     const planning = records.filter(r => r.type === 'PLANNING').length;
-    const arrive   = records.filter(r => r.type === 'ARRIVEE').length;
+    const arrive   = records.filter(r => r.type === 'ARRIVEE' || r.type === 'ATT_PIECES').length;
     const repare   = records.filter(r => r.type === 'TERMINE').length;
     const usage    = records.filter(r => r.type === 'USAGE').length;
     if(el('stat-planning')) el('stat-planning').textContent = planning || 0;
@@ -5130,7 +5131,7 @@ async function renderInventaire() {
   var present = records.filter(function(r) {
     if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
     if (r.statut && r.statut.includes('RECUPERE')) return false;
-    if (r.type === 'ARRIVEE' || r.type === 'TERMINE' || r.type === 'FICHE') {
+    if (r.type === 'ARRIVEE' || r.type === 'TERMINE' || r.type === 'FICHE' || r.type === 'ATT_PIECES') {
       if (wgFilter && r.wg !== wgFilter) return false;
       if (search) {
         return (r.tag||'').toLowerCase().includes(search) ||
@@ -6915,7 +6916,8 @@ function editRecord(id) {
             <option value="USAGE"    ${r.type==='USAGE'    ?'selected':''} style="color:#000">USAGE</option>
             <option value="TRANSPORT"${r.type==='TRANSPORT'?'selected':''} style="color:#000">TRANSPORT</option>
             <option value="PEINTURE" ${r.type==='PEINTURE' ?'selected':''} style="color:#000">PEINTURE</option>
-            <option value="FICHE"    ${r.type==='FICHE'    ?'selected':''} style="color:#000">FICHE</option>
+            <option value="FICHE"       ${r.type==='FICHE'       ?'selected':''} style="color:#000">FICHE</option>
+            <option value="ATT_PIECES" ${r.type==='ATT_PIECES' ?'selected':''} style="color:#000">ATT PIÈCES</option>
           </select>
         </div>
 
