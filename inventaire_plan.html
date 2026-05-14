@@ -681,7 +681,8 @@ async function loadData() {
       if (existing) {
         // Mettre à jour la loc de l'enregistrement existant avec celle d'ETNA
         if (r.loc) existing.loc = r.loc;
-        if (r.statut) existing.statut = r.statut;
+        // Ne pas écraser ATT_PIECES avec le statut ETNA
+        if (r.statut && existing.statut !== 'ATT_PIECES') existing.statut = r.statut;
         existing._etna = true;
       } else if (r.loc) {
         // Ajouter comme nouvel enregistrement ETNA
