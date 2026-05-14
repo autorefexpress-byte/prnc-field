@@ -1203,7 +1203,7 @@ function renderMouvements(mouvements) {
   }
   list.innerHTML = mouvements.map(function(m) {
     var wgColor = { MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#2d6a4f',STCHAUD:'#1F3864' }[m.wg] || '#555';
-    var rec = _data.find(function(r){ return r.id === m.record_id || r.tag === m.tag; });
+    var rec = _data.find(function(r){ return m.wo && r.wo && r.wo === m.wo; }) || _data.find(function(r){ return r.id === m.record_id; });
     var wo = (rec && rec.wo) ? rec.wo : (m.wo || '');
     var photo = rec && rec.photos && rec.photos.length ? rec.photos[0] : '';
     var imgEl = document.createElement('img');
