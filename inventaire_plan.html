@@ -994,12 +994,10 @@ async function ouvrirModif(id) {
       // Statut
       + '<div style="margin-bottom:12px">'
         + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📌 Statut</label>'
-        + '<select id="modif-statut" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:13px;font-family:IBM Plex Sans,sans-serif;outline:none;background:#fff">'
-          + '<option value="ARRIVEE"' + (r.statut==='ARRIVEE'?' selected':'') + '>ARRIVEE</option>'
-          + '<option value="ATT_PIECES"' + (r.statut==='ATT_PIECES'?' selected':'') + '>⏳ ATT PIÈCES</option>'
-          + '<option value="TERMINE"' + (r.statut==='TERMINE'?' selected':'') + '>TERMINE</option>'
-          + '<option value="Retour demandeur"' + (r.statut==='Retour demandeur'?' selected':'') + '>Retour demandeur</option>'
-          + '<option value="Retour magasin"' + (r.statut==='Retour magasin'?' selected':'') + '>Retour magasin</option>'
+        + '<select id="modif-type" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:13px;font-family:IBM Plex Sans,sans-serif;outline:none;background:#fff">'
+          + '<option value="ARRIVEE"'   + (r.type==='ARRIVEE'   ?' selected':'') + '>ARRIVÉE</option>'
+          + '<option value="ATT_PIECES"'+ (r.type==='ATT_PIECES'?' selected':'') + '>⏳ ATT PIÈCES</option>'
+          + '<option value="TERMINE"'   + (r.type==='TERMINE'   ?' selected':'') + '>TERMINÉ</option>'
         + '</select>'
       + '</div>'
       // Description
@@ -1025,7 +1023,7 @@ async function ouvrirModif(id) {
 
 async function sauvegarderModif(id, btn) {
   var loc   = document.getElementById('modif-loc').value.trim();
-  var statut= document.getElementById('modif-statut').value;
+  var newType = document.getElementById('modif-type').value;
   var desc  = document.getElementById('modif-desc').value.trim();
 
   btn.textContent = '⏳ Enregistrement...';
@@ -1035,12 +1033,12 @@ async function sauvegarderModif(id, btn) {
     await fetch(API_URL + '?id=' + encodeURIComponent(id), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ loc: loc, statut: statut, description: desc })
+      body: JSON.stringify({ loc: loc, type: newType, description: desc })
     });
 
     // Mettre à jour localement
     var rec = _data.find(function(x){ return String(x.id) === String(id); });
-    if (rec) { rec.loc = loc; rec.statut = statut; rec.description = desc; }
+    if (rec) { rec.loc = loc; rec.type = newType; rec.description = desc; }
 
     buildOccupMap();
     renderGrids();
