@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Plan Inventaire P50 — PRNC</title>
 <style>
@@ -537,6 +540,7 @@
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9;border:1px solid #A5D6A7"></div>Libre</div>
             <div class="legend-item"><div class="legend-dot" style="background:#1F3864"></div>Occupé</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#FFF8E1;border:1px solid #F57F17"></div>Att. pièces</div>
           </div>
         </div>
         <div class="search-bar">
@@ -613,12 +617,13 @@ function _planLocChange() {
 var _PLAN_LOCS = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17'];
 
 var TYPE_COLORS = {
-  ARRIVEE  : { bg:'#EDE7F6', border:'#7030A0', label:'ARRIVÉE'   },
-  TERMINE  : { bg:'#E2EFDA', border:'#375623', label:'TERMINÉ'   },
-  USAGE    : { bg:'#FCEBEB', border:'#E24B4A', label:'USAGE'     },
-  TRANSPORT: { bg:'#DEEAF1', border:'#1F3864', label:'TRANSPORT' },
-  PEINTURE : { bg:'#FCE4D6', border:'#C55A11', label:'PEINTURE'  },
-  FICHE    : { bg:'#DEEAF1', border:'#2E75B6', label:'FICHE'     },
+  ARRIVEE   : { bg:'#EDE7F6', border:'#7030A0', label:'ARRIVÉE'    },
+  TERMINE   : { bg:'#E2EFDA', border:'#375623', label:'TERMINÉ'    },
+  USAGE     : { bg:'#FCEBEB', border:'#E24B4A', label:'USAGE'      },
+  TRANSPORT : { bg:'#DEEAF1', border:'#1F3864', label:'TRANSPORT'  },
+  PEINTURE  : { bg:'#FCE4D6', border:'#C55A11', label:'PEINTURE'   },
+  FICHE     : { bg:'#DEEAF1', border:'#2E75B6', label:'FICHE'      },
+  ATT_PIECES: { bg:'#FFF8E1', border:'#F57F17', label:'ATT PIÈCES' },
 };
 var _data = [];
 var _occupMap = {};
@@ -661,7 +666,7 @@ async function loadData() {
     _data = raw.filter(function(r) {
       if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
       if (r.statut && r.statut.includes('RECUPERE')) return false;
-      return ['ARRIVEE','TERMINE'].includes(r.type);
+      return ['ARRIVEE','TERMINE','ATT_PIECES'].includes(r.type);
     });
 
     // Fusionner ETNA avec historique — ETNA a priorité pour la localisation
@@ -992,6 +997,7 @@ async function ouvrirModif(id) {
         + '<label style="display:block;font-size:11px;font-weight:700;color:#7a8494;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">📌 Statut</label>'
         + '<select id="modif-statut" style="width:100%;padding:10px 12px;border:1.5px solid #dde2ea;border-radius:9px;font-size:13px;font-family:IBM Plex Sans,sans-serif;outline:none;background:#fff">'
           + '<option value="ARRIVEE"' + (r.statut==='ARRIVEE'?' selected':'') + '>ARRIVEE</option>'
+          + '<option value="ATT_PIECES"' + (r.statut==='ATT_PIECES'?' selected':'') + '>⏳ ATT PIÈCES</option>'
           + '<option value="TERMINE"' + (r.statut==='TERMINE'?' selected':'') + '>TERMINE</option>'
           + '<option value="Retour demandeur"' + (r.statut==='Retour demandeur'?' selected':'') + '>Retour demandeur</option>'
           + '<option value="Retour magasin"' + (r.statut==='Retour magasin'?' selected':'') + '>Retour magasin</option>'
