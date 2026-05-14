@@ -679,10 +679,8 @@ async function loadData() {
       if (!existing && r.tag) existing = _data.find(function(x){ return x.tag === r.tag; });
 
       if (existing) {
-        // Mettre à jour la loc de l'enregistrement existant avec celle d'ETNA
+        // ETNA met à jour uniquement la localisation — ne jamais écraser type ni statut
         if (r.loc) existing.loc = r.loc;
-        // Ne pas écraser ATT_PIECES avec le statut ETNA
-        if (r.statut && existing.statut !== 'ATT_PIECES') existing.statut = r.statut;
         existing._etna = true;
       } else if (r.loc) {
         // Ajouter comme nouvel enregistrement ETNA
