@@ -499,6 +499,12 @@
 </header>
 
 <main>
+<div id="filtre-bar" style="display:flex;gap:8px;padding:8px 16px 0;flex-wrap:wrap">
+  <button onclick="filtrerParType(null)" id="filtre-btn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+  <button onclick="filtrerParType('ARRIVEE')" id="filtre-btn-ARRIVEE" style="background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🟣 Arrivée</button>
+  <button onclick="filtrerParType('ATT_PIECES')" id="filtre-btn-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
+  <button onclick="filtrerParType('TERMINE')" id="filtre-btn-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🟢 Terminé</button>
+</div>
   <!-- Stats -->
   <div class="stats-bar">
     <div class="stat-card">
@@ -520,6 +526,20 @@
       <div>
         <div class="stat-num" id="stat-libres">—</div>
         <div class="stat-lbl">Emplacements libres</div>
+      </div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onclick="filtrerParType('ARRIVEE')" title="Cliquer pour filtrer">
+      <div class="stat-icon">🟣</div>
+      <div>
+        <div class="stat-num" id="stat-arrivee" style="color:#7030A0">—</div>
+        <div class="stat-lbl">Arrivées</div>
+      </div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onclick="filtrerParType('ATT_PIECES')" title="Cliquer pour filtrer">
+      <div class="stat-icon">⏳</div>
+      <div>
+        <div class="stat-num" id="stat-att-pieces" style="color:#F57F17">—</div>
+        <div class="stat-lbl">Att. pièces</div>
       </div>
     </div>
     <div class="stat-card">
@@ -862,12 +882,41 @@ function effacerRecherche() {
   });
 }
 
+
+var _currentFilter = null;
+
+function filtrerParType(type) {
+  _currentFilter = type;
+  var btns = { 'all':'filtre-btn-all', 'ARRIVEE':'filtre-btn-ARRIVEE', 'ATT_PIECES':'filtre-btn-ATT_PIECES', 'TERMINE':'filtre-btn-TERMINE' };
+  Object.keys(btns).forEach(function(t) {
+    var btn = document.getElementById(btns[t]);
+    if (!btn) return;
+    var isActive = (type === null && t === 'all') || t === type;
+    btn.style.opacity = isActive ? '1' : '0.45';
+    btn.style.transform = isActive ? 'scale(1.05)' : 'scale(1)';
+  });
+  document.querySelectorAll('.plan-cell.occupe').forEach(function(cell) {
+    var loc = cell.getAttribute('data-loc');
+    var equips = _occupMap[loc] || [];
+    cell.style.opacity = (!type || equips.some(function(e){ return e.type === type; })) ? '1' : '0.15';
+  });
+  document.querySelectorAll('.zone-card.occupe').forEach(function(card) {
+    var loc = card.getAttribute('data-loc');
+    var equips = _occupMap[loc] || [];
+    card.style.opacity = (!type || equips.some(function(e){ return e.type === type; })) ? '1' : '0.15';
+  });
+}
+
 function updateStats() {
   document.getElementById('stat-total').textContent = _data.length;
   var occupies = Object.keys(_occupMap).length;
   var total = 7 * 5 * 2; // F + G
   document.getElementById('stat-places').textContent = occupies;
   document.getElementById('stat-libres').textContent = total - occupies;
+  var attPieces = _data.filter(function(r){ return r.type === 'ATT_PIECES'; }).length;
+  document.getElementById('stat-att-pieces').textContent = attPieces;
+  var arrivee = _data.filter(function(r){ return r.type === 'ARRIVEE'; }).length;
+  document.getElementById('stat-arrivee').textContent = arrivee;
 }
 
 function showDetail(loc, equips) {
