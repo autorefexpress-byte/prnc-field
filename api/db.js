@@ -15,9 +15,9 @@ async function deleteCloudinaryPhotos(photoUrls) {
     return m ? m[1] : null;
   }).filter(Boolean);
   if (!public_ids.length) return;
-  const timestamp    = Math.round(Date.now() / 1000);
-  const sortedIds    = public_ids.sort().join(',');
-  const signature    = crypto.createHash('sha256')
+  const timestamp = Math.round(Date.now() / 1000);
+  const sortedIds = public_ids.sort().join(',');
+  const signature = crypto.createHash('sha256')
     .update(`public_ids=${sortedIds}&timestamp=${timestamp}${API_SECRET}`)
     .digest('hex');
   const body = new URLSearchParams({ public_ids: sortedIds, timestamp, api_key: API_KEY, signature }).toString();
@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
         wo TEXT,
         wr TEXT,
         tag TEXT,
-        desc TEXT,
+        description_wo TEXT,
         ressource TEXT,
         commentaire TEXT,
         taches JSONB DEFAULT '[]',
@@ -68,18 +68,16 @@ module.exports = async function handler(req, res) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`;
       await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
+      await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
       if (method === 'GET') {
         let semaine = req.query?.semaine || null;
-        // Si pas de semaine, charger la semaine active
         if (!semaine) {
           try {
-            await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
             const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active'`;
             if (cfg.length) semaine = cfg[0].value;
           } catch(e) {}
         }
-        // Retourner aussi la liste des semaines disponibles
         const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
         const rows = semaine
           ? await sql`SELECT * FROM planning WHERE semaine=${semaine} ORDER BY wo ASC`
@@ -87,26 +85,20 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
       }
 
-      // POST bulk — sauvegarde le planning d'une semaine + marque comme active
       if (method === 'POST') {
         const d = req.body || {};
         if (d.bulk && Array.isArray(d.items) && d.semaine) {
-          // Supprimer l'ancien planning de CETTE semaine seulement
           await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
-          // Insérer tous les items
           for (const item of d.items) {
-            await sql`INSERT INTO planning (wo,wr,tag,desc,ressource,commentaire,taches,jours,statut,semaine)
+            await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
               VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                       ${item.ressource||null},${item.commentaire||null},
                       ${JSON.stringify(item.taches||[])}::jsonb,
                       ${JSON.stringify(item.jours||[])}::jsonb,
                       ${item.statut||'PLANIFIE'},${d.semaine})`;
           }
-          // Sauvegarder la semaine active
-          await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
           await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active',${d.semaine})
             ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
-          // Nettoyage : garder seulement les 4 dernières semaines
           const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
           if (semaines.length > 4) {
             const aSupprimer = semaines.slice(4).map(r => r.semaine);
@@ -119,7 +111,6 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Missing bulk/items/semaine' });
       }
 
-      // PATCH — mettre à jour le statut d'un WO
       if (method === 'PATCH') {
         const d = req.body || {};
         if (d.wo && d.semaine) {
@@ -142,22 +133,16 @@ module.exports = async function handler(req, res) {
         }
         return res.status(200).json({ ok: true });
       }
-
       return res.status(400).json({ error: 'Unknown planning request' });
     }
 
     // ── LOC_MOUVEMENTS ───────────────────────────────
     if (table === 'loc_mouvements') {
       await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
-        id SERIAL PRIMARY KEY,
-        tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
-        record_id TEXT, fait BOOLEAN DEFAULT false,
-        date_mouv TIMESTAMPTZ DEFAULT NOW()
+        id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
+        record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
       )`;
-      if (method === 'GET') {
-        const rows = await sql`SELECT * FROM loc_mouvements ORDER BY date_mouv DESC`;
-        return res.status(200).json(rows);
-      }
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM loc_mouvements ORDER BY date_mouv DESC`);
       if (method === 'POST') {
         const d = req.body || {};
         await sql`INSERT INTO loc_mouvements (tag,wg,ancien_loc,nouveau_loc,record_id,fait,date_mouv)
@@ -170,10 +155,7 @@ module.exports = async function handler(req, res) {
         await sql`UPDATE loc_mouvements SET fait=${d.fait} WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
-      if (method === 'DELETE' && id) {
-        await sql`DELETE FROM loc_mouvements WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
+      if (method === 'DELETE' && id) { await sql`DELETE FROM loc_mouvements WHERE id=${id}`; return res.status(200).json({ ok: true }); }
       return res.status(400).json({ error: 'Unknown loc_mouvements request' });
     }
 
@@ -189,10 +171,7 @@ module.exports = async function handler(req, res) {
       await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS sc TEXT`;
       await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS serie TEXT`;
       await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
-      if (method === 'GET') {
-        const rows = await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`;
-        return res.status(200).json(rows);
-      }
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`);
       if (method === 'POST') {
         const d = req.body || {};
         await sql`INSERT INTO transport (id,date,type,statut,ref,dest,notes,wo,tag,sc,serie,photos)
@@ -204,22 +183,20 @@ module.exports = async function handler(req, res) {
       }
       if (method === 'PATCH' && id) {
         const d = req.body || {};
-        await sql`UPDATE transport SET
-          statut=${d.statut||null},date=${d.date||null},type=${d.type||null},
-          ref=${d.ref||null},dest=${d.dest||null},notes=${d.notes||null},
-          wo=${d.wo||null},tag=${d.tag||null},sc=${d.sc||null},
-          serie=${d.serie||null},photos=${JSON.stringify(d.photos||[])}::jsonb WHERE id=${id}`;
+        await sql`UPDATE transport SET statut=${d.statut||null},date=${d.date||null},type=${d.type||null},
+          ref=${d.ref||null},dest=${d.dest||null},notes=${d.notes||null},wo=${d.wo||null},
+          tag=${d.tag||null},sc=${d.sc||null},serie=${d.serie||null},
+          photos=${JSON.stringify(d.photos||[])}::jsonb WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
         const trRows = await sql`SELECT photos,wo FROM transport WHERE id=${id}`;
         if (trRows.length) {
-          const photos = trRows[0].photos || [];
-          if (photos.length > 0) await deleteCloudinaryPhotos(photos);
+          if (trRows[0].photos?.length) await deleteCloudinaryPhotos(trRows[0].photos);
           if (trRows[0].wo) {
-            const histRows = await sql`SELECT photos FROM historique WHERE wo=${trRows[0].wo}`;
-            const histPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
-            if (histPhotos.length > 0) await deleteCloudinaryPhotos(histPhotos);
+            const h = await sql`SELECT photos FROM historique WHERE wo=${trRows[0].wo}`;
+            const hp = h.flatMap(r => r.photos||[]).filter(Boolean);
+            if (hp.length) await deleteCloudinaryPhotos(hp);
             await sql`DELETE FROM historique WHERE wo=${trRows[0].wo}`;
           }
         }
@@ -236,22 +213,17 @@ module.exports = async function handler(req, res) {
         remarques TEXT, photos JSONB DEFAULT '[]',
         statut TEXT DEFAULT 'Envoyé', date TEXT, created_at TIMESTAMP DEFAULT NOW()
       )`;
-      if (method === 'GET') {
-        const rows = await sql`SELECT * FROM callidus_prnc ORDER BY created_at DESC`;
-        return res.status(200).json(rows);
-      }
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM callidus_prnc ORDER BY created_at DESC`);
       if (method === 'POST') {
         const d = req.body || {};
         await sql`INSERT INTO callidus_prnc (id,wo,tag,serie,qty,remarques,photos,statut,date)
           VALUES (${d.id||null},${d.wo||null},${d.tag||null},${d.serie||null},${d.qty||null},
-                  ${d.remarques||null},${JSON.stringify(d.photos||[])}::jsonb,
-                  ${d.statut||'Envoyé'},${d.date||null})`;
+                  ${d.remarques||null},${JSON.stringify(d.photos||[])}::jsonb,${d.statut||'Envoyé'},${d.date||null})`;
         return res.status(201).json({ ok: true });
       }
       if (method === 'PATCH' && id) {
         const d = req.body || {};
-        await sql`UPDATE callidus_prnc SET
-          wo=${d.wo||null},tag=${d.tag||null},serie=${d.serie||null},
+        await sql`UPDATE callidus_prnc SET wo=${d.wo||null},tag=${d.tag||null},serie=${d.serie||null},
           qty=${d.qty||null},remarques=${d.remarques||null},
           photos=${JSON.stringify(d.photos||[])}::jsonb,statut=${d.statut||null} WHERE id=${id}`;
         return res.status(200).json({ ok: true });
@@ -259,12 +231,11 @@ module.exports = async function handler(req, res) {
       if (method === 'DELETE' && id) {
         const rows = await sql`SELECT photos,wo FROM callidus_prnc WHERE id=${id}`;
         if (rows.length) {
-          const photos = rows[0].photos || [];
-          if (photos.length > 0) await deleteCloudinaryPhotos(photos);
+          if (rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
           if (rows[0].wo) {
-            const histRows = await sql`SELECT photos FROM historique WHERE wo=${rows[0].wo}`;
-            const histPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
-            if (histPhotos.length > 0) await deleteCloudinaryPhotos(histPhotos);
+            const h = await sql`SELECT photos FROM historique WHERE wo=${rows[0].wo}`;
+            const hp = h.flatMap(r => r.photos||[]).filter(Boolean);
+            if (hp.length) await deleteCloudinaryPhotos(hp);
             await sql`DELETE FROM historique WHERE wo=${rows[0].wo}`;
           }
         }
@@ -276,10 +247,7 @@ module.exports = async function handler(req, res) {
 
     // ── PI SUIVI ─────────────────────────────────────
     if (table === 'pi_suivi') {
-      if (method === 'GET') {
-        const rows = await sql`SELECT * FROM pi_suivi ORDER BY created_at DESC`;
-        return res.status(200).json(rows);
-      }
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM pi_suivi ORDER BY created_at DESC`);
       if (method === 'POST') {
         const d = req.body || {};
         await sql`INSERT INTO pi_suivi (id,wo,wg,tag,loc,date,statut,pieces)
@@ -290,18 +258,16 @@ module.exports = async function handler(req, res) {
       if (method === 'PATCH' && id) {
         const d = req.body || {};
         await sql`UPDATE pi_suivi SET statut=${d.statut||'En cours'},
-          pieces=${JSON.stringify(d.pieces||[])}::jsonb,
-          loc=${d.loc||null},tag=${d.tag||null} WHERE id=${id}`;
+          pieces=${JSON.stringify(d.pieces||[])}::jsonb,loc=${d.loc||null},tag=${d.tag||null} WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
       if (method === 'DELETE' && id) {
         const piRows = await sql`SELECT wo FROM pi_suivi WHERE id=${id}`;
         if (piRows.length && piRows[0].wo) {
-          const wo = piRows[0].wo;
-          const histRows = await sql`SELECT photos FROM historique WHERE wo=${wo}`;
-          const allPhotos = histRows.flatMap(r => r.photos || []).filter(Boolean);
-          if (allPhotos.length > 0) await deleteCloudinaryPhotos(allPhotos);
-          await sql`DELETE FROM historique WHERE wo=${wo}`;
+          const h = await sql`SELECT photos FROM historique WHERE wo=${piRows[0].wo}`;
+          const ap = h.flatMap(r => r.photos||[]).filter(Boolean);
+          if (ap.length) await deleteCloudinaryPhotos(ap);
+          await sql`DELETE FROM historique WHERE wo=${piRows[0].wo}`;
         }
         await sql`DELETE FROM pi_suivi WHERE id=${id}`;
         return res.status(200).json({ ok: true });
@@ -373,9 +339,7 @@ module.exports = async function handler(req, res) {
     // ── HISTORIQUE DELETE ────────────────────────────
     if (method === 'DELETE' && id) {
       const rows = await sql`SELECT photos FROM historique WHERE id=${id}`;
-      if (rows.length && rows[0].photos && rows[0].photos.length) {
-        await deleteCloudinaryPhotos(rows[0].photos);
-      }
+      if (rows.length && rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
       await sql`DELETE FROM historique WHERE id=${id}`;
       return res.status(200).json({ ok: true });
     }
