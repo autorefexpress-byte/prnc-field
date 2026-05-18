@@ -414,11 +414,12 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Inventaire P50</div>
       <div class="card-sub">Tour de stock</div>
     </div>
-    <div class="action-card" style="border:1.5px solid #C55A11;position:relative">
+    <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
       <div class="card-lbl">Planning Atelier P17</div>
-      <div class="card-sub">Importer semaine</div>
-      <label style="position:absolute;inset:0;cursor:pointer;border-radius:14px">
+      <div class="card-sub" id="planning-card-sub">Voir les WO</div>
+      <label id="planning-import-label" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#C55A11;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
       </label>
     </div>
@@ -4382,15 +4383,7 @@ function activerModeAtelier() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
-  var iz = document.getElementById('planning-import-zone');
-  if (iz) iz.style.display = 'none';
-  var plist = document.getElementById('planning-list');
-  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
-  chargerPlanningNeon().then(function(){
-    var iz2 = document.getElementById('planning-import-zone');
-    if (iz2) iz2.style.display = 'none';
-    _renderPlanningList();
-  });
+  chargerPlanningNeon().then(function(){ renderPlanning(); });
 }
 
 function activerModeCallidus() {
@@ -9785,6 +9778,17 @@ var _TECH_COLORS = {
 
 var _planningSemanines = [];
 
+function ouvrirPlanningAccueil() {
+  show('s-planning');
+  var iz = document.getElementById('planning-import-zone');
+  var plist = document.getElementById('planning-list');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeon().then(function() {
+    if (iz) iz.style.display = _planningData.length ? 'none' : 'block';
+    _renderPlanningList();
+  });
+}
+
 async function sauvegarderPlanningNeon(data, semaine) {
   try {
     var resp = await fetch(DB_API + '?table=planning', {
@@ -9821,6 +9825,9 @@ async function chargerPlanningNeon(semaine) {
       _renderSemainesSelector();
       // Enrichir avec les photos depuis historique
       _enrichirPhotosPlanning();
+      // Mettre à jour le sous-titre de la carte accueil
+      var sub = document.getElementById('planning-card-sub');
+      if (sub) sub.textContent = _planningData.length + ' WO — ' + (semaineActive || '');
     }
     return rows;
   } catch(e) { console.warn('planning load err', e); return []; }
@@ -9940,15 +9947,6 @@ function changerSemainePlanning(semaine) {
 function _renderPlanningList() {
   var list = document.getElementById('planning-list');
   if (!list) return;
-  // Mettre à jour les compteurs
-  var _cnt = {PLANIFIE:0,EN_COURS:0,ATT_PIECES:0,TERMINE:0};
-  _planningData.forEach(function(i){ if(_cnt[i.statut]!==undefined) _cnt[i.statut]++; });
-  var _pcp=document.getElementById('pc-planifie'),_pce=document.getElementById('pc-encours'),_pca=document.getElementById('pc-att'),_pct=document.getElementById('pc-termine');
-  if(_pcp) _pcp.textContent=_cnt.PLANIFIE;
-  if(_pce) _pce.textContent=_cnt.EN_COURS;
-  if(_pca) _pca.textContent=_cnt.ATT_PIECES;
-  if(_pct) _pct.textContent=_cnt.TERMINE;
-
   var data = _planningFilter ? _planningData.filter(function(i){ return i.statut===_planningFilter; }) : _planningData;
   if (!data.length) {
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
@@ -9968,11 +9966,9 @@ function _renderPlanningList() {
           +'</div>'
           +'<div style="font-size:11px;color:#666;margin-bottom:3px">'+(item.desc||'—')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +(item.commentaire?'<div style="font-size:10px;color:#F57F17;margin-top:2px">💬 '+item.commentaire+'</div>':'')
         +'</div>'
-        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
-          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
-        +'</div>'
+        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -10128,12 +10124,8 @@ async function _enrichirPhotosPlanning() {
     var records = await dbLoad();
     _planningData.forEach(function(item) {
       var rec = records.find(function(r){ return r.wo && r.wo === item.wo; });
-      if (rec) {
-        if (rec.photos && rec.photos.length) item._photos = rec.photos;
-        if (rec.loc) item._loc = rec.loc;
-      }
+      if (rec && rec.photos && rec.photos.length) item._photos = rec.photos;
     });
-    _renderPlanningList();
   } catch(e) { console.warn('enrich photos err', e); }
 }
 
@@ -10156,15 +10148,6 @@ function changerStatutPlanning(wo, newStatut) {
   fermerPlanningModal();
   renderPlanning();
 }
-
-
-// Auto-refresh planning toutes les 5 minutes
-setInterval(function() {
-  if (document.getElementById('s-planning') &&
-      document.getElementById('s-planning').classList.contains('active')) {
-    chargerPlanningNeon().then(function(){ _renderPlanningList(); });
-  }
-}, 5 * 60 * 1000);
 
 document.addEventListener('DOMContentLoaded', function() {
   var pm = document.getElementById('planning-modal');
@@ -10227,12 +10210,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </label>
     </div>
     <select id="planning-semaine-sel" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-weight:700;font-family:inherit;color:#C55A11;margin-bottom:8px;background:#fff" onchange="changerSemainePlanning(this.value)"></select>
-    <div id="planning-compteurs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:10px 12px;background:rgba(255,255,255,.15);border-radius:10px">
-      <div style="flex:1;text-align:center"><div id="pc-planifie" style="font-size:18px;font-weight:800;color:#fff">—</div><div style="font-size:9px;color:rgba(255,255,255,.75);font-weight:700">PLANIFIÉS</div></div>
-      <div style="flex:1;text-align:center"><div id="pc-encours" style="font-size:18px;font-weight:800;color:#FCE4D6">—</div><div style="font-size:9px;color:rgba(255,255,255,.75);font-weight:700">EN COURS</div></div>
-      <div style="flex:1;text-align:center"><div id="pc-att" style="font-size:18px;font-weight:800;color:#FFF8E1">—</div><div style="font-size:9px;color:rgba(255,255,255,.75);font-weight:700">ATT. PIÈCES</div></div>
-      <div style="flex:1;text-align:center"><div id="pc-termine" style="font-size:18px;font-weight:800;color:#E2EFDA">—</div><div style="font-size:9px;color:rgba(255,255,255,.75);font-weight:700">TERMINÉS</div></div>
-    </div>
     <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
       <button onclick="filtrerPlanning('PLANIFIE')" id="pfbtn-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
