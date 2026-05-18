@@ -4382,7 +4382,7 @@ function activerModeAtelier() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
-  setTimeout(renderPlanning, 200);
+  chargerPlanningNeon().then(function(){ renderPlanning(); });
 }
 
 function activerModeCallidus() {
@@ -9774,6 +9774,65 @@ var _TECH_COLORS = {
   'J-LUC':{c:'#1F3864',bg:'#DEEAF1'},
 };
 
+
+var _planningSemanines = [];
+
+async function sauvegarderPlanningNeon(data, semaine) {
+  try {
+    var resp = await fetch(DB_API + '?table=planning', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bulk: true, semaine: semaine, items: data })
+    });
+    var result = await resp.json();
+    console.log('Planning sauvegardé:', result);
+  } catch(e) { console.warn('planning save err', e); }
+}
+
+async function chargerPlanningNeon(semaine) {
+  try {
+    var url = DB_API + '?table=planning' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    var resp = await fetch(url);
+    var data = await resp.json();
+    var rows = data.rows || data;
+    var semaineActive = data.semaine_active || (rows[0] && rows[0].semaine) || '';
+    _planningSemanines = data.semaines || [];
+    if (rows && rows.length) {
+      _planningData = rows.map(function(r) {
+        return {
+          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
+          desc: r.desc||'', ressource: r.ressource||'',
+          commentaire: r.commentaire||'',
+          taches: r.taches||[], jours: r.jours||[],
+          statut: r.statut||'PLANIFIE',
+          semaine: r.semaine||semaineActive,
+        };
+      });
+      var lbl = document.getElementById('planning-semaine-lbl');
+      if (lbl) lbl.textContent = semaineActive || 'Planning';
+      _renderSemainesSelector();
+    }
+    return rows;
+  } catch(e) { console.warn('planning load err', e); return []; }
+}
+
+function _renderSemainesSelector() {
+  var sel = document.getElementById('planning-semaine-sel');
+  if (!sel || !_planningSemanines.length) return;
+  var current = _planningData[0] && _planningData[0].semaine || '';
+  sel.innerHTML = _planningSemanines.map(function(s) {
+    return '<option value="'+s+'"'+(s===current?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  sel.style.display = _planningSemanines.length > 1 ? 'block' : 'none';
+}
+
+function changerSemainePlanning(semaine) {
+  _planningData = [];
+  var list = document.getElementById('planning-list');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  chargerPlanningNeon(semaine).then(function(){ _renderPlanningList(); });
+}
+
 function importPlanningExcel(input) {
   var file = input.files[0]; if (!file) return;
   var reader = new FileReader();
@@ -9830,16 +9889,14 @@ function importPlanningExcel(input) {
       }
 
       _planningData = Object.values(woDict).filter(function(w){ return w.wo; });
-      // Sauvegarder dans localStorage pour le plan P50
-      try { localStorage.setItem('planning-data', JSON.stringify(_planningData)); } catch(ex){}
+      // Sauvegarder dans Neon pour partage multi-appareils
+      sauvegarderPlanningNeon(_planningData, sheetName);
       var lbl = document.getElementById('planning-semaine-lbl');
       if (lbl) lbl.textContent = sheetName || 'Planning importé';
-      // Si on est sur l'accueil, aller vers s-planning
       var importZone = document.getElementById('planning-import-zone');
       if (importZone) importZone.style.display = 'none';
       show('s-planning');
       setTimeout(renderPlanning, 100);
-      // Toast confirmation
       var t=document.createElement('div');
       t.textContent='✅ Planning importé — '+_planningData.length+' WO';
       t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
@@ -9851,15 +9908,26 @@ function importPlanningExcel(input) {
 }
 
 function renderPlanning() {
-  // Recharger depuis localStorage si _planningData est vide
+  var list = document.getElementById('planning-list');
+  if (!list) return;
+  // Si pas de données, charger depuis Neon
   if (!_planningData.length) {
-    try { _planningData = JSON.parse(localStorage.getItem('planning-data') || '[]'); } catch(e) {}
-    // Restaurer les statuts sauvegardés
-    try {
-      var _saved = JSON.parse(localStorage.getItem('planning-statuts') || '{}');
-      _planningData.forEach(function(item){ if (_saved[item.wo]) item.statut = _saved[item.wo]; });
-    } catch(e) {}
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    chargerPlanningNeon().then(function(){ _renderPlanningList(); });
+    return;
   }
+  _renderPlanningList();
+}
+
+
+function changerSemainePlanning(semaine) {
+  _planningData = [];
+  var list = document.getElementById('planning-list');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  chargerPlanningNeon(semaine).then(function(){ _renderPlanningList(); });
+}
+
+function _renderPlanningList() {
   var list = document.getElementById('planning-list');
   if (!list) return;
   var data = _planningFilter ? _planningData.filter(function(i){ return i.statut===_planningFilter; }) : _planningData;
@@ -9971,11 +10039,13 @@ function changerStatutPlanning(wo, newStatut) {
   var item = _planningData.find(function(i){ return String(i.wo)===String(wo); });
   if (!item) return;
   item.statut = newStatut;
-  try {
-    var saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}');
-    saved[wo] = newStatut;
-    localStorage.setItem('planning-statuts', JSON.stringify(saved));
-  } catch(e){}
+  // Sauvegarder statut dans Neon
+  var _sem = item.semaine || '';
+  fetch(DB_API + '?table=planning', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wo: wo, semaine: _sem, statut: newStatut })
+  }).catch(function(e){ console.warn('statut sync err', e); });
   fermerPlanningModal();
   renderPlanning();
 }
@@ -10040,6 +10110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
       </label>
     </div>
+    <select id="planning-semaine-sel" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-weight:700;font-family:inherit;color:#C55A11;margin-bottom:8px;background:#fff" onchange="changerSemainePlanning(this.value)"></select>
     <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
       <button onclick="filtrerPlanning('PLANIFIE')" id="pfbtn-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
