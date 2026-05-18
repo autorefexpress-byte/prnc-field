@@ -9984,21 +9984,24 @@ function filtrerPlanning(type) {
   renderPlanning();
 }
 
+var _currentModalWO = '';
+
 function ouvrirPlanningModal(wo) {
   var currentWO = wo;
+  _currentModalWO = wo;
   var item = _planningData.find(function(i){ return i.wo === wo; });
   if (!item) return;
   var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
 
   var btns = '';
   if (item.statut === 'PLANIFIE') {
-    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
   } else if (item.statut === 'EN_COURS') {
-    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
-         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else if (item.statut === 'ATT_PIECES') {
-    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
-         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else {
     btns = '<div style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>';
   }
