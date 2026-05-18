@@ -252,6 +252,7 @@ function _initLocSel(selId, inpId, val) {
       <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
       <option value="etna"       style="background:#1F3864;color:#fff">&#127912; ETNA — Prestataire</option>
       <option value="callidus"   style="background:#1F3864;color:#fff">&#128295; Callidus — Prestataire</option>
+      <option value="atelier"    style="background:#1F3864;color:#fff">&#128295; Mcrepar — Atelier P17</option>
     </select>
   </div>
 
@@ -278,6 +279,11 @@ function _initLocSel(selId, inpId, val) {
     <div class="pin-key pin-key-ok" onclick="pinKey('ok')" style="background:var(--teal)">OK</div>
   </div>
   <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px" id="pin-setup-hint"></div>
+</div>
+
+<!-- Bandeau mode Atelier P17 -->
+<div id="atelier-banner" style="display:none;background:#C55A11;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+  &#128295; MODE ATELIER P17 — Mcrepar
 </div>
 
 <!-- Bandeau mode Callidus -->
@@ -1685,6 +1691,7 @@ function show(id) {
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
   if (_isConsult2Mode && !['s-home','s-etna-suivi','s-dashboard','s-relances','s-hist'].includes(id)) return;
   if (_isCallidusMode && !['s-callidus-prestataire','s-callidus-update','s-success'].includes(id)) return;
+  if (_isAtelierMode  && !['s-planning','s-success'].includes(id)) return;
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -4230,6 +4237,7 @@ const PIN_STT       = '0000';  // PIN mode STT
 const PIN_ETNA      = '1111';  // PIN mode ETNA prestataire
 const PIN_CONSULT2  = '2222';  // PIN mode consultation
 const PIN_CALLIDUS  = '3333';  // PIN mode Callidus prestataire
+const PIN_ATELIER   = '4444';  // PIN mode Mcrepar Atelier P17
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
@@ -4237,6 +4245,7 @@ var _isConsultMode  = false;   // true = mode lecture seule
 var _isEtnaMode     = false;   // true = mode prestataire ETNA
 var _isConsult2Mode = false;   // true = mode consultation lecture seule
 var _isCallidusMode = false;   // true = mode prestataire Callidus
+var _isAtelierMode  = false;   // true = mode Mcrepar Atelier P17
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
@@ -4260,6 +4269,9 @@ function selectPinMode(mode) {
   } else if (mode === 'callidus') {
     lbl.textContent = 'Entrez le code PIN Callidus (3333)';
     if (dd) dd.style.background = 'rgba(31,56,100,.8)';
+  } else if (mode === 'atelier') {
+    lbl.textContent = 'Entrez le code PIN Atelier P17 (4444)';
+    if (dd) dd.style.background = 'rgba(197,90,17,.6)';
   }
 }
 
@@ -4317,6 +4329,13 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    if (_pinModeSelect === 'atelier' && _pinBuffer === PIN_ATELIER) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeAtelier();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
@@ -4340,6 +4359,20 @@ async function validatePIN() {
     }
   }
   _pinBuffer = ''; updatePinDots();
+}
+
+function activerModeAtelier() {
+  _isAtelierMode  = true;
+  _isCallidusMode = false;
+  _isEtnaMode     = false;
+  _isConsultMode  = false;
+  var banner = document.getElementById('atelier-banner');
+  if (banner) banner.style.display = 'block';
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  show('s-planning');
+  setTimeout(renderPlanning, 200);
 }
 
 function activerModeCallidus() {
@@ -9714,6 +9747,216 @@ if('serviceWorker' in navigator){
     regs.forEach(function(r){ r.unregister(); });
   });
 }
+
+// ═══════════════ PLANNING ATELIER P17 ═══════════════
+var _planningData   = [];
+var _planningFilter = null;
+var _PSTAT = {
+  PLANIFIE:   {bg:'#DEEAF1',bd:'#1F3864',tx:'#1F3864',lb:'📅 Planifié'},
+  EN_COURS:   {bg:'#FCE4D6',bd:'#C55A11',tx:'#C55A11',lb:'▶️ En cours'},
+  ATT_PIECES: {bg:'#FFF8E1',bd:'#F57F17',tx:'#F57F17',lb:'⏳ Att. pièces'},
+  TERMINE:    {bg:'#E2EFDA',bd:'#375623',tx:'#375623',lb:'✅ Terminé'},
+};
+var _TECH_COLORS = {
+  TOPHER:{c:'#7030A0',bg:'#EDE7F6'},
+  SONNY: {c:'#C55A11',bg:'#FCE4D6'},
+  WILL:  {c:'#2d6a4f',bg:'#D8F3DC'},
+  'J-LUC':{c:'#1F3864',bg:'#DEEAF1'},
+};
+
+function importPlanningExcel(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+      if (rows.length < 3) return;
+
+      // Format MR04: row0=headers, row1=dates jours, row2+=données
+      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-16=Lun-Ven,17=Ressource
+      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
+      var jours = [];
+      for (var j = 12; j <= 16; j++) {
+        var dval = rows[1] && rows[1][j];
+        if (dval) {
+          var d = new Date(dval);
+          jours.push(!isNaN(d) ? joursNoms[j-12]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-12]);
+        } else { jours.push(joursNoms[j-12]); }
+      }
+
+      var woDict = {};
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}'); } catch(ex){}
+
+      for (var r = 2; r < rows.length; r++) {
+        var row = rows[r];
+        if (!row || !row[0]) continue;
+        var wo = row[0].toString().trim();
+        var tag = (row[8]||'').toString().trim();
+        var descTache = (row[9]||'').toString().trim();
+        var descWO = (row[10]||'').toString().trim();
+        var commentaire = (row[7]||'').toString().trim();
+        var ressource = (row[17]||'').toString().trim();
+        var wr = (row[1]||'').toString().trim();
+        var joursTache = [];
+        for (var jj = 0; jj < 5; jj++) {
+          var hval = row[12+jj];
+          if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
+        }
+        if (!woDict[wo]) {
+          woDict[wo] = {
+            wo:wo, wr:wr, tag:tag, desc:descWO,
+            ressource:ressource, commentaire:commentaire,
+            taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
+          };
+        }
+        if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
+        joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
+        if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
+        if (ressource && !woDict[wo].ressource) woDict[wo].ressource = ressource;
+      }
+
+      _planningData = Object.values(woDict).filter(function(w){ return w.wo; });
+      // Sauvegarder dans localStorage pour le plan P50
+      try { localStorage.setItem('planning-data', JSON.stringify(_planningData)); } catch(ex){}
+      var lbl = document.getElementById('planning-semaine-lbl');
+      if (lbl) lbl.textContent = sheetName || 'Planning importé';
+      document.getElementById('planning-import-zone').style.display = 'none';
+      renderPlanning();
+    } catch(err) { alert('Erreur Excel: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPlanning() {
+  var list = document.getElementById('planning-list');
+  if (!list) return;
+  var data = _planningFilter ? _planningData.filter(function(i){ return i.statut===_planningFilter; }) : _planningData;
+  if (!data.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
+    return;
+  }
+  list.innerHTML = data.map(function(item) {
+    var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+    var woSafe = item.wo.replace(/'/g, "\'");
+    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
+    return '<div data-wo="'+item.wo+'" onclick="ouvrirPlanningModal(this.dataset.wo)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="min-width:0;flex:1">'
+          +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
+            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
+            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:11px;color:#666;margin-bottom:3px">'+(item.desc||'—')+'</div>'
+          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +(item.commentaire?'<div style="font-size:10px;color:#F57F17;margin-top:2px">💬 '+item.commentaire+'</div>':'')
+        +'</div>'
+        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function filtrerPlanning(type) {
+  _planningFilter = type;
+  ['all','PLANIFIE','EN_COURS','ATT_PIECES','TERMINE'].forEach(function(t) {
+    var b = document.getElementById('pfbtn-'+t);
+    if (b) b.style.opacity = ((!type&&t==='all')||t===type)?'1':'0.4';
+  });
+  renderPlanning();
+}
+
+function ouvrirPlanningModal(wo) {
+  var currentWO = wo;
+  var item = _planningData.find(function(i){ return i.wo===wo; });
+  if (!item) return;
+  var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+  var btns = '';
+  if (item.statut==='PLANIFIE') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+  } else if (item.statut==='EN_COURS') {
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else if (item.statut==='ATT_PIECES') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else {
+    btns = '<div style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>';
+  }
+
+  // Tâches
+  var tachesHtml = '';
+  if (item.taches && item.taches.length) {
+    tachesHtml = '<div style="margin-bottom:12px">'
+      +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches ('+item.taches.length+')</div>'
+      + item.taches.map(function(t){
+          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">'
+            +'<span style="font-size:11px;color:#1F3864">'+t.desc+'</span>'
+            +(t.jours&&t.jours.length?'<span style="font-size:9px;color:#888;margin-left:6px;flex-shrink:0">'+t.jours.join(' ')+'</span>':'')
+          +'</div>';
+        }).join('')
+    +'</div>';
+  }
+
+  var content2 = document.getElementById('planning-modal-content');
+  if (!content2) return;
+  content2.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">'
+    +'<div>'
+      +'<span style="background:'+s.bg+';color:'+s.tx+';border:1.5px solid '+s.bd+';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">'+s.lb+'</span>'
+      +'<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">'+(item.tag||'—')+'</div>'
+      +'<div style="font-size:11px;color:#888">WO '+item.wo+(item.wr?' · WR '+item.wr:'')+(item.ressource?' · '+item.ressource:'')+'</div>'
+    +'</div>'
+    +'<button onclick="fermerPlanningModal()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
+    +'</div>'
+    +(item.desc?'<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">'+item.desc+'</div>':'')
+    +(item.jours&&item.jours.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
+      +item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 '+j+'</span>'; }).join('')
+    +'</div>':'')
+    +(item.commentaire?'<div style="background:#FFF8E1;border:1px solid #F57F17;border-radius:8px;padding:8px 10px;font-size:11px;color:#F57F17;margin-bottom:10px">💬 '+item.commentaire+'</div>':'')
+    + tachesHtml
+    +'<div style="display:flex;gap:8px">'+btns+'</div>';
+
+  var modal = document.getElementById('planning-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function btn(onclick, bg, color, border, label) {
+  return '<button onclick="'+onclick+'" style="flex:1;padding:12px;background:'+bg+';color:'+color+';border:'+border+';border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">'+label+'</button>';
+}
+
+function pChip(l,v) {
+  return '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:8px 10px">'
+    +'<div style="font-size:9px;color:#aaa;font-weight:600;text-transform:uppercase">'+l+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#1F3864;margin-top:2px">'+v+'</div></div>';
+}
+
+function fermerPlanningModal() {
+  var m = document.getElementById('planning-modal');
+  if (m) m.style.display = 'none';
+}
+
+function changerStatutPlanning(wo, newStatut) {
+  var item = _planningData.find(function(i){ return String(i.wo)===String(wo); });
+  if (!item) return;
+  item.statut = newStatut;
+  try {
+    var saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}');
+    saved[wo] = newStatut;
+    localStorage.setItem('planning-statuts', JSON.stringify(saved));
+  } catch(e){}
+  fermerPlanningModal();
+  renderPlanning();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var pm = document.getElementById('planning-modal');
+  if (pm) pm.addEventListener('click', function(e){ if(e.target===pm) fermerPlanningModal(); });
+});
+
 </script>
 
 <div class="screen" id="s-callidus-prnc">
@@ -9752,3 +9995,40 @@ if('serviceWorker' in navigator){
 </div>
 </body>
 </html>
+
+<!-- ═══════════════ PLANNING ATELIER P17 ═══════════════ -->
+<div class="screen" id="s-planning">
+  <div class="topbar" style="background:#C55A11">
+    <div class="topbar-title">📅 Planning Atelier P17</div>
+    <div class="topbar-user" id="planning-semaine-lbl">Semaine —</div>
+  </div>
+  <div style="padding:12px">
+    <div id="planning-import-zone" style="background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:24px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:#C55A11;margin-bottom:4px">Importer le planning Excel</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine P50</div>
+      <label style="background:#C55A11;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
+        📂 Choisir fichier
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
+      </label>
+    </div>
+    <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanning('PLANIFIE')" id="pfbtn-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanning('EN_COURS')" id="pfbtn-EN_COURS" style="background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
+      <button onclick="filtrerPlanning('ATT_PIECES')" id="pfbtn-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
+      <button onclick="filtrerPlanning('TERMINE')" id="pfbtn-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
+    </div>
+    <div id="planning-list">
+      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        Importez le planning Excel pour afficher les WO de la semaine
+      </div>
+    </div>
+  </div>
+  <div id="planning-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
+    <div id="planning-modal-inner" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto">
+      <div id="planning-modal-content"></div>
+    </div>
+  </div>
+</div>
