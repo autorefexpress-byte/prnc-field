@@ -4393,6 +4393,9 @@ function activerModeAtelier() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
+  // Cacher zone import — les techs ne peuvent pas importer
+  var iz = document.getElementById('planning-import-zone');
+  if (iz) iz.style.display = 'none';
   // Afficher loading
   var list = document.getElementById('planning-list');
   if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement du planning...</div>';
@@ -9944,32 +9947,76 @@ function changerSemainePlanning(semaine) {
 function _renderPlanningList() {
   var list = document.getElementById('planning-list');
   if (!list) return;
-  var data = _planningFilter ? _planningData.filter(function(i){ return i.statut===_planningFilter; }) : _planningData;
+  var data = _planningFilter
+    ? _planningData.filter(function(i){ return i.statut === _planningFilter; })
+    : _planningData;
+
   if (!data.length) {
-    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:32px;margin-bottom:8px">📋</div>'
+      + (_planningData.length ? 'Aucun WO pour ce filtre' : 'Aucun planning disponible') + '</div>';
     return;
   }
+
+  // Récupérer les photos depuis _dbCache si disponible
+  var photosMap = {};
+  if (typeof _dbCache !== 'undefined' && _dbCache) {
+    _dbCache.forEach(function(r) {
+      if (r.wo && r.photos && r.photos.length) photosMap[r.wo] = r.photos[0];
+    });
+  }
+
   list.innerHTML = data.map(function(item) {
-    var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
-    var woSafe = item.wo.replace(/'/g, "\'");
-    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
-    return '<div data-wo="'+item.wo+'" onclick="ouvrirPlanningModal(this.dataset.wo)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-        +'<div style="min-width:0;flex:1">'
-          +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
-            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
-            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
-            +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
-          +'</div>'
-          +'<div style="font-size:11px;color:#666;margin-bottom:3px">'+(item.desc||'—')+'</div>'
-          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-          +(item.commentaire?'<div style="font-size:10px;color:#F57F17;margin-top:2px">💬 '+item.commentaire+'</div>':'')
-        +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
-      +'</div>'
-    +'</div>';
+    var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
+    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '';
+    var photo = photosMap[item.wo] || '';
+    var photoHtml = photo
+      ? '<img src="' + photo + '" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0">'
+      : '<div style="width:52px;height:52px;border-radius:8px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;color:#ccc">📦</div>';
+
+    return '<div data-wo="' + item.wo + '" onclick="ouvrirPlanningModal(this.dataset.wo)"'
+      + ' style="background:#fff;border-radius:12px;border-left:4px solid ' + s.bd + ';'
+      + 'margin-bottom:8px;padding:10px 12px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;display:flex;align-items:center;gap:10px">'
+        + photoHtml
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
+            + '<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + (item.tag || '—') + '</span>'
+            + '<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO ' + item.wo + '</span>'
+            + (item.ressource ? '<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + item.ressource + '</span>' : '')
+          + '</div>'
+          + '<div style="font-size:11px;color:#555;margin-bottom:2px">' + (item.desc || '—') + '</div>'
+          + (joursStr ? '<div style="font-size:10px;color:#888">📅 ' + joursStr + '</div>' : '')
+          + (item.commentaire ? '<div style="font-size:10px;color:#F57F17;margin-top:1px">💬 ' + item.commentaire + '</div>' : '')
+        + '</div>'
+        + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1px solid ' + s.bd + ';'
+          + 'border-radius:6px;padding:3px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'
+          + s.lb + '</span>'
+      + '</div>';
   }).join('');
+
+  // Charger les photos depuis la DB si pas encore fait
+  if (!Object.keys(photosMap).length && typeof dbLoad === 'function') {
+    dbLoad().then(function(records) {
+      records.forEach(function(r) {
+        if (r.wo && r.photos && r.photos.length) photosMap[r.wo] = r.photos[0];
+      });
+      // Mettre à jour les photos dans les cartes existantes
+      data.forEach(function(item) {
+        var p = photosMap[item.wo];
+        if (!p) return;
+        var card = list.querySelector('[data-wo="' + item.wo + '"]');
+        if (!card) return;
+        var imgDiv = card.querySelector('div[style*="font-size:22px"]');
+        if (imgDiv) {
+          var img = document.createElement('img');
+          img.src = p;
+          img.style.cssText = 'width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0';
+          imgDiv.replaceWith(img);
+        }
+      });
+    }).catch(function(){});
+  }
 }
+
 
 function filtrerPlanning(type) {
   _planningFilter = type;
@@ -10115,7 +10162,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="topbar-user" id="planning-semaine-lbl">Semaine —</div>
   </div>
   <div style="padding:12px">
-    <div id="planning-import-zone" style="background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+    <div id="planning-import-zone" style="background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px" data-prepose-only="1">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#C55A11;margin-bottom:4px">Importer le planning Excel</div>
       <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine P50</div>
