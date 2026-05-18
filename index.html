@@ -9970,53 +9970,77 @@ function filtrerPlanning(type) {
 
 function ouvrirPlanningModal(wo) {
   var currentWO = wo;
-  var item = _planningData.find(function(i){ return i.wo===wo; });
+  var item = _planningData.find(function(i){ return i.wo === wo; });
   if (!item) return;
-  var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+  var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
+
   var btns = '';
-  if (item.statut==='PLANIFIE') {
+  if (item.statut === 'PLANIFIE') {
     btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
-  } else if (item.statut==='EN_COURS') {
+  } else if (item.statut === 'EN_COURS') {
     btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
          + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
-  } else if (item.statut==='ATT_PIECES') {
+  } else if (item.statut === 'ATT_PIECES') {
     btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
          + '<button data-statut="TERMINE" onclick="changerStatutPlanning(currentWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else {
     btns = '<div style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>';
   }
 
-  // Tâches
   var tachesHtml = '';
   if (item.taches && item.taches.length) {
     tachesHtml = '<div style="margin-bottom:12px">'
-      +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches ('+item.taches.length+')</div>'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
       + item.taches.map(function(t){
-          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">'
-            +'<span style="font-size:11px;color:#1F3864">'+t.desc+'</span>'
-            +(t.jours&&t.jours.length?'<span style="font-size:9px;color:#888;margin-left:6px;flex-shrink:0">'+t.jours.join(' ')+'</span>':'')
-          +'</div>';
+          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
+            + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+          + '</div>';
         }).join('')
-    +'</div>';
+    + '</div>';
   }
+
+  // Photos existantes depuis historique
+  var photos = item._photos || [];
+  var photosExistHtml = photos.length
+    ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+        + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+      + '</div>'
+    : '';
 
   var content2 = document.getElementById('planning-modal-content');
   if (!content2) return;
-  content2.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">'
-    +'<div>'
-      +'<span style="background:'+s.bg+';color:'+s.tx+';border:1.5px solid '+s.bd+';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">'+s.lb+'</span>'
-      +'<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">'+(item.tag||'—')+'</div>'
-      +'<div style="font-size:11px;color:#888">WO '+item.wo+(item.wr?' · WR '+item.wr:'')+(item.ressource?' · '+item.ressource:'')+'</div>'
-    +'</div>'
-    +'<button onclick="fermerPlanningModal()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
-    +'</div>'
-    +(item.desc?'<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">'+item.desc+'</div>':'')
-    +(item.jours&&item.jours.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
-      +item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 '+j+'</span>'; }).join('')
-    +'</div>':'')
-    +(item.commentaire?'<div style="background:#FFF8E1;border:1px solid #F57F17;border-radius:8px;padding:8px 10px;font-size:11px;color:#F57F17;margin-bottom:10px">💬 '+item.commentaire+'</div>':'')
+  content2.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      + '<div>'
+        + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
+        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+        + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+      + '</div>'
+      + '<button onclick="fermerPlanningModal()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
+    + '</div>'
+    + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
+    + (item.jours && item.jours.length
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+            + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+          + '</div>' : '')
+    + (item.commentaire ? '<div style="background:#FFF8E1;border:1px solid #F57F17;border-radius:8px;padding:8px 10px;font-size:11px;color:#F57F17;margin-bottom:10px">💬 ' + item.commentaire + '</div>' : '')
     + tachesHtml
-    +'<div style="display:flex;gap:8px">'+btns+'</div>';
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+      + photosExistHtml
+      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+        + '📷 Ajouter photo(s)'
+        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanning(\'' + wo + '\',this)" style="display:none">'
+      + '</label>'
+      + '<div id="planning-photos-preview-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+      + '<textarea id="planning-remarque-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
+      + '<button onclick="sauvegarderRemarquePlanning(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px">' + btns + '</div>';
 
   var modal = document.getElementById('planning-modal');
   if (modal) modal.style.display = 'flex';
@@ -10030,6 +10054,64 @@ function pChip(l,v) {
   return '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:8px 10px">'
     +'<div style="font-size:9px;color:#aaa;font-weight:600;text-transform:uppercase">'+l+'</div>'
     +'<div style="font-size:11px;font-weight:700;color:#1F3864;margin-top:2px">'+v+'</div></div>';
+}
+
+
+var _planningPhotosCache = {};
+
+function ajouterPhotoPlanning(wo, input) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var preview = document.getElementById('planning-photos-preview-' + wo);
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      if (preview) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer';
+        img.onclick = function(){ viewImg(this.src); };
+        preview.appendChild(img);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Upload Cloudinary
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', 'prnc_unsigned');
+    fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        if (d.secure_url) {
+          var item = _planningData.find(function(i){ return i.wo === wo; });
+          if (item) { if (!item._photos) item._photos = []; item._photos.push(d.secure_url); }
+          if (preview) {
+            var imgs = preview.querySelectorAll('img');
+            if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
+          }
+        }
+      }).catch(function(e){ console.warn('upload err', e); });
+  });
+}
+
+function sauvegarderRemarquePlanning(wo) {
+  var ta = document.getElementById('planning-remarque-' + wo);
+  if (!ta) return;
+  var item = _planningData.find(function(i){ return i.wo === wo; });
+  if (item) item._remarque = ta.value;
+  var btn = ta.nextElementSibling;
+  if (btn) { btn.textContent = '✅ Sauvegardé'; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+}
+
+async function _enrichirPhotosPlanning() {
+  if (!_planningData.length) return;
+  try {
+    var records = await dbLoad();
+    _planningData.forEach(function(item) {
+      var rec = records.find(function(r){ return r.wo && r.wo === item.wo; });
+      if (rec && rec.photos && rec.photos.length) item._photos = rec.photos;
+    });
+  } catch(e) { console.warn('enrich photos err', e); }
 }
 
 function fermerPlanningModal() {
