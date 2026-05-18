@@ -413,6 +413,14 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Inventaire P50</div>
       <div class="card-sub">Tour de stock</div>
     </div>
+    <div class="action-card" style="border:1.5px solid #C55A11;position:relative">
+      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
+      <div class="card-lbl">Planning Atelier P17</div>
+      <div class="card-sub">Importer semaine</div>
+      <label style="position:absolute;inset:0;cursor:pointer;border-radius:14px">
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
+      </label>
+    </div>
   </div></div>
 </div>
 
@@ -9826,6 +9834,12 @@ function importPlanningExcel(input) {
       if (lbl) lbl.textContent = sheetName || 'Planning importé';
       document.getElementById('planning-import-zone').style.display = 'none';
       renderPlanning();
+      // Toast confirmation
+      var t=document.createElement('div');
+      t.textContent='✅ Planning importé — '+_planningData.length+' WO';
+      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 3000);
     } catch(err) { alert('Erreur Excel: '+err.message); }
   };
   reader.readAsArrayBuffer(file);
@@ -9999,7 +10013,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ═══════════════ PLANNING ATELIER P17 ═══════════════ -->
 <div class="screen" id="s-planning">
   <div class="topbar" style="background:#C55A11">
-    <div class="topbar-title">📅 Planning Atelier P17</div>
+    <div class="topbar-title">📅 Planning Atelier P17 P17</div>
     <div class="topbar-user" id="planning-semaine-lbl">Semaine —</div>
   </div>
   <div style="padding:12px">
