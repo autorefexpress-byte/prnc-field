@@ -9784,6 +9784,7 @@ function ouvrirPlanningAccueil() {
   var plist = document.getElementById('planning-list');
   if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
   chargerPlanningNeon().then(function() {
+    // Préposé : montrer zone import si pas de données
     if (iz) iz.style.display = _planningData.length ? 'none' : 'block';
     _renderPlanningList();
   });
@@ -9966,7 +9967,7 @@ function _renderPlanningList() {
           +'</div>'
           +'<div style="font-size:11px;color:#666;margin-bottom:3px">'+(item.desc||'—')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-          +(item.commentaire?'<div style="font-size:10px;color:#F57F17;margin-top:2px">💬 '+item.commentaire+'</div>':'')
+          // commentaire masqué — G6-2 est la loc Excel, on utilise _loc depuis DB
         +'</div>'
         +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
@@ -10196,11 +10197,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ═══════════════ PLANNING ATELIER P17 ═══════════════ -->
 <div class="screen" id="s-planning">
   <div class="topbar" style="background:#C55A11">
-    <div class="topbar-title">📅 Planning Atelier P17 P17</div>
+    <div class="topbar-title">📅 Planning Atelier P17</div>
     <div class="topbar-user" id="planning-semaine-lbl">Semaine —</div>
   </div>
   <div style="padding:12px">
-    <div id="planning-import-zone" style="background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+    <div id="planning-import-zone" style="display:none;background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#C55A11;margin-bottom:4px">Importer le planning Excel</div>
       <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine P50</div>
