@@ -4382,7 +4382,15 @@ function activerModeAtelier() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
-  chargerPlanningNeon().then(function(){ renderPlanning(); });
+  var iz = document.getElementById('planning-import-zone');
+  if (iz) iz.style.display = 'none';
+  var plist = document.getElementById('planning-list');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeon().then(function(){
+    var iz2 = document.getElementById('planning-import-zone');
+    if (iz2) iz2.style.display = 'none';
+    _renderPlanningList();
+  });
 }
 
 function activerModeCallidus() {
@@ -9953,7 +9961,10 @@ function _renderPlanningList() {
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
           +(item.commentaire?'<div style="font-size:10px;color:#F57F17;margin-top:2px">💬 '+item.commentaire+'</div>':'')
         +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
+          +(item.loc ? '<span style="background:#f0f2f5;color:#555;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:600">📍 '+item.loc+'</span>' : '')
+        +'</div>'
       +'</div>'
     +'</div>';
   }).join('');
