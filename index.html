@@ -1707,6 +1707,17 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
+  if (id === 's-planning') {
+    if (!_planningData.length) {
+      var plist = document.getElementById('planning-list');
+      if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement...</div>';
+      chargerPlanningNeon().then(function(){
+        var iz = document.getElementById('planning-import-zone');
+        if (_planningData.length && iz) iz.style.display = 'none';
+        _renderPlanningList();
+      });
+    }
+  }
   if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
   if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
@@ -4382,7 +4393,10 @@ function activerModeAtelier() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
-  chargerPlanningNeon().then(function(){ renderPlanning(); });
+  // Afficher loading
+  var list = document.getElementById('planning-list');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement du planning...</div>';
+  chargerPlanningNeon().then(function(){ _renderPlanningList(); });
 }
 
 function activerModeCallidus() {
