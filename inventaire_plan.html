@@ -499,6 +499,36 @@
 </header>
 
 <main>
+<!-- Résumé avancement planning -->
+<div id="planning-resume" style="display:none;background:linear-gradient(135deg,#1F3864,#2E75B6);border-radius:12px;margin:8px 12px 0;padding:12px 14px;color:#fff">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.5px">📅 AVANCEMENT PLANNING</div>
+    <div id="planning-resume-semaine" style="font-size:10px;opacity:.75"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div id="pr-planifie" style="flex:1;background:rgba(255,255,255,.15);border-radius:8px;padding:8px;text-align:center;cursor:pointer" onclick="filtrerParPlanning('PLANIFIE')">
+      <div style="font-size:20px;font-weight:800">—</div>
+      <div style="font-size:9px;opacity:.8;margin-top:2px">📅 Planifiés</div>
+    </div>
+    <div id="pr-encours" style="flex:1;background:rgba(197,90,17,.4);border-radius:8px;padding:8px;text-align:center;cursor:pointer" onclick="filtrerParPlanning('EN_COURS')">
+      <div style="font-size:20px;font-weight:800">—</div>
+      <div style="font-size:9px;opacity:.8;margin-top:2px">▶️ En cours</div>
+    </div>
+    <div id="pr-att" style="flex:1;background:rgba(245,127,23,.4);border-radius:8px;padding:8px;text-align:center;cursor:pointer" onclick="filtrerParPlanning('ATT_PIECES')">
+      <div style="font-size:20px;font-weight:800">—</div>
+      <div style="font-size:9px;opacity:.8;margin-top:2px">⏳ Att. pièces</div>
+    </div>
+    <div id="pr-termine" style="flex:1;background:rgba(55,86,35,.5);border-radius:8px;padding:8px;text-align:center;cursor:pointer" onclick="filtrerParPlanning('TERMINE')">
+      <div style="font-size:20px;font-weight:800">—</div>
+      <div style="font-size:9px;opacity:.8;margin-top:2px">✅ Terminés</div>
+    </div>
+  </div>
+  <!-- Barre de progression -->
+  <div style="background:rgba(255,255,255,.2);border-radius:4px;height:6px;overflow:hidden">
+    <div id="pr-progress" style="height:100%;background:#E2EFDA;border-radius:4px;width:0%;transition:width .5s"></div>
+  </div>
+  <div id="pr-pct" style="font-size:10px;opacity:.7;margin-top:4px;text-align:right"></div>
+</div>
 <div id="filtre-bar" style="display:flex;gap:8px;padding:8px 16px 0;flex-wrap:wrap">
   <button onclick="filtrerParType(null)" id="filtre-btn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
   <button onclick="filtrerParType('ARRIVEE')" id="filtre-btn-ARRIVEE" style="background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🟣 Arrivée</button>
@@ -779,7 +809,7 @@ function renderGrids() {
         cell.style.position = 'relative';
         cell.innerHTML = '<span class="cell-row">' + row + '</span>'
           + (tag ? '<span class="cell-tag">' + tag + '</span>' : '')
-          + (_pst ? '<span style="position:absolute;top:2px;right:2px;font-size:8px;background:'+_pcol[_pst]+';color:#fff;border-radius:3px;padding:1px 3px;line-height:1">'+_pic[_pst]+'</span>' : '');
+          + (_pst ? '<span style="position:absolute;top:-5px;right:-5px;font-size:13px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))">'+_pic[_pst]+'</span>' : '');
         if (equips.length > 1) {
           var badge = document.createElement('div');
           badge.className = 'multi-badge';
@@ -926,17 +956,75 @@ function _getPlanningStatuts() {
   return _planningStatutsCache || {};
 }
 
+var _planningRows = [];
+
 async function _chargerPlanningStatuts() {
   try {
     var resp = await fetch(_API_URL_PLAN + '?table=planning');
     var data = await resp.json();
     var rows = data.rows || data;
+    _planningRows = rows || [];
     var map = {};
     if (rows && rows.length) {
       rows.forEach(function(r){ if (r.wo) map[r.wo] = r.statut || 'PLANIFIE'; });
     }
     _planningStatutsCache = map;
+    _mettreAJourResumePlanning(rows || [], data.semaine_active || '');
   } catch(e) { console.warn('planning statuts err', e); }
+}
+
+var _planningFiltreActif = null;
+
+function _mettreAJourResumePlanning(rows, semaine) {
+  if (!rows.length) return;
+  var resume = document.getElementById('planning-resume');
+  if (resume) resume.style.display = 'block';
+
+  var cnt = {PLANIFIE:0, EN_COURS:0, ATT_PIECES:0, TERMINE:0};
+  rows.forEach(function(r){ if (cnt[r.statut] !== undefined) cnt[r.statut]++; });
+
+  var el = function(id){ return document.getElementById(id); };
+  if (el('pr-planifie')) el('pr-planifie').querySelector('div').textContent = cnt.PLANIFIE;
+  if (el('pr-encours'))  el('pr-encours').querySelector('div').textContent  = cnt.EN_COURS;
+  if (el('pr-att'))      el('pr-att').querySelector('div').textContent      = cnt.ATT_PIECES;
+  if (el('pr-termine'))  el('pr-termine').querySelector('div').textContent  = cnt.TERMINE;
+
+  var total = rows.length;
+  var pct = total > 0 ? Math.round((cnt.TERMINE / total) * 100) : 0;
+  if (el('pr-progress')) el('pr-progress').style.width = pct + '%';
+  if (el('pr-pct')) el('pr-pct').textContent = pct + '% terminé (' + cnt.TERMINE + '/' + total + ')';
+  if (el('planning-resume-semaine')) el('planning-resume-semaine').textContent = semaine;
+}
+
+function filtrerParPlanning(statut) {
+  _planningFiltreActif = _planningFiltreActif === statut ? null : statut;
+  // Surligner les cellules concernées
+  document.querySelectorAll('.plan-cell').forEach(function(cell) {
+    var loc = cell.getAttribute('data-loc');
+    var equips = _occupMap[loc] || [];
+    if (!_planningFiltreActif) {
+      cell.style.opacity = '1';
+      return;
+    }
+    var match = equips.some(function(e) {
+      return e.wo && _planningStatutsCache[e.wo] === _planningFiltreActif;
+    });
+    cell.style.opacity = match ? '1' : '0.2';
+  });
+  document.querySelectorAll('.zone-card').forEach(function(card) {
+    var loc = card.getAttribute('data-loc');
+    var equips = _occupMap[loc] || [];
+    if (!_planningFiltreActif) { card.style.opacity = '1'; return; }
+    var match = equips.some(function(e) {
+      return e.wo && _planningStatutsCache[e.wo] === _planningFiltreActif;
+    });
+    card.style.opacity = match ? '1' : '0.2';
+  });
+  // Mettre en évidence le bouton actif
+  ['pr-planifie','pr-encours','pr-att','pr-termine'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.border = '2px solid ' + (id === 'pr-' + (_planningFiltreActif||'').toLowerCase().replace('_','') ? '#fff' : 'transparent');
+  });
 }
 
 function updateStats() {
@@ -1234,6 +1322,13 @@ function showLoading(txt) {
 function hideLoading() {
   document.getElementById('loading').classList.remove('show');
 }
+
+// Auto-refresh planning toutes les 5 minutes
+setInterval(function() {
+  _chargerPlanningStatuts().then(function() {
+    renderGrids();
+  });
+}, 5 * 60 * 1000);
 
 // Auto-refresh toutes les 5 minutes
 setInterval(loadData, 5 * 60 * 1000);
