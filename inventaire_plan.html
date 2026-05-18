@@ -769,8 +769,15 @@ function renderGrids() {
         cell.className = 'plan-cell ' + (equips.length ? 'occupe' : 'libre');
         cell.setAttribute('data-loc', locId);
         var tag = equips.length ? (equips[0].tag || '').slice(0,7) : '';
+        var _wo = equips.length ? (equips[0].wo || '') : '';
+        var _ps = _getPlanningStatuts();
+        var _pst = _wo && _ps[_wo] ? _ps[_wo] : null;
+        var _pic = { PLANIFIE:'📅', EN_COURS:'▶️', ATT_PIECES:'⏳', TERMINE:'✅' };
+        var _pcol = { PLANIFIE:'#1F3864', EN_COURS:'#C55A11', ATT_PIECES:'#F57F17', TERMINE:'#375623' };
+        cell.style.position = 'relative';
         cell.innerHTML = '<span class="cell-row">' + row + '</span>'
-          + (tag ? '<span class="cell-tag">' + tag + '</span>' : '');
+          + (tag ? '<span class="cell-tag">' + tag + '</span>' : '')
+          + (_pst ? '<span style="position:absolute;top:2px;right:2px;font-size:8px;background:'+_pcol[_pst]+';color:#fff;border-radius:3px;padding:1px 3px;line-height:1">'+_pic[_pst]+'</span>' : '');
         if (equips.length > 1) {
           var badge = document.createElement('div');
           badge.className = 'multi-badge';
@@ -792,12 +799,16 @@ function renderGrids() {
       var equips = _occupMap[z.id] || [];
       var isOccupe = equips.length > 0;
       var div = document.createElement('div');
+      var _zwo = equips.length ? (equips[0].wo || '') : '';
+      var _zps = _getPlanningStatuts();
+      var _zpst = _zwo && _zps[_zwo] ? _zps[_zwo] : null;
+      var _zpic = { PLANIFIE:'📅', EN_COURS:'▶️', ATT_PIECES:'⏳', TERMINE:'✅' };
       div.className = 'zone-card ' + (isOccupe ? 'occupe' : 'libre');
       div.setAttribute('data-loc', z.id);
       div.innerHTML = '<div style="display:flex;align-items:center;gap:8px">'
           + '<span style="font-size:18px">' + z.icon + '</span>'
           + '<div>'
-            + '<div class="zone-label">' + z.label + '</div>'
+            + '<div class="zone-label">' + z.label + (_zpst ? ' <span style="font-size:9px">' + _zpic[_zpst] + '</span>' : '') + '</div>'
             + '<div class="zone-count">' + (isOccupe ? equips.length + ' équipement(s)' : 'Libre') + '</div>'
           + '</div>'
         + '</div>'
@@ -905,6 +916,10 @@ function filtrerParType(type) {
     var equips = _occupMap[loc] || [];
     card.style.opacity = (!type || equips.some(function(e){ return e.type === type; })) ? '1' : '0.15';
   });
+}
+
+function _getPlanningStatuts() {
+  try { return JSON.parse(localStorage.getItem('planning-statuts') || '{}'); } catch(e) { return {}; }
 }
 
 function updateStats() {
