@@ -1701,6 +1701,7 @@ function show(id) {
   if (_isConsult2Mode && !['s-home','s-etna-suivi','s-dashboard','s-relances','s-hist'].includes(id)) return;
   if (_isCallidusMode && !['s-callidus-prestataire','s-callidus-update','s-success'].includes(id)) return;
   if (_isAtelierMode  && !['s-planning','s-success'].includes(id)) return;
+  // s-planning accessible aussi en mode Préposé
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
   window.scrollTo(0,0);
@@ -9833,8 +9834,11 @@ function importPlanningExcel(input) {
       try { localStorage.setItem('planning-data', JSON.stringify(_planningData)); } catch(ex){}
       var lbl = document.getElementById('planning-semaine-lbl');
       if (lbl) lbl.textContent = sheetName || 'Planning importé';
-      document.getElementById('planning-import-zone').style.display = 'none';
-      renderPlanning();
+      // Si on est sur l'accueil, aller vers s-planning
+      var importZone = document.getElementById('planning-import-zone');
+      if (importZone) importZone.style.display = 'none';
+      show('s-planning');
+      setTimeout(renderPlanning, 100);
       // Toast confirmation
       var t=document.createElement('div');
       t.textContent='✅ Planning importé — '+_planningData.length+' WO';
@@ -9847,6 +9851,15 @@ function importPlanningExcel(input) {
 }
 
 function renderPlanning() {
+  // Recharger depuis localStorage si _planningData est vide
+  if (!_planningData.length) {
+    try { _planningData = JSON.parse(localStorage.getItem('planning-data') || '[]'); } catch(e) {}
+    // Restaurer les statuts sauvegardés
+    try {
+      var _saved = JSON.parse(localStorage.getItem('planning-statuts') || '{}');
+      _planningData.forEach(function(item){ if (_saved[item.wo]) item.statut = _saved[item.wo]; });
+    } catch(e) {}
+  }
   var list = document.getElementById('planning-list');
   if (!list) return;
   var data = _planningFilter ? _planningData.filter(function(i){ return i.statut===_planningFilter; }) : _planningData;
