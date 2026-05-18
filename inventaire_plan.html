@@ -730,8 +730,10 @@ async function loadData() {
     });
 
     buildOccupMap();
-    renderGrids();
-    updateStats();
+    _chargerPlanningStatuts().then(function() {
+      renderGrids();
+      updateStats();
+    });
     setStatus('ok', 'Connecté · ' + _data.length + ' équipements');
     document.getElementById('stat-time').textContent = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
   } catch(e) {
@@ -918,8 +920,23 @@ function filtrerParType(type) {
   });
 }
 
+var _planningStatutsCache = null;
+
 function _getPlanningStatuts() {
-  try { return JSON.parse(localStorage.getItem('planning-statuts') || '{}'); } catch(e) { return {}; }
+  return _planningStatutsCache || {};
+}
+
+async function _chargerPlanningStatuts() {
+  try {
+    var resp = await fetch(_API_URL_PLAN + '?table=planning');
+    var data = await resp.json();
+    var rows = data.rows || data;
+    var map = {};
+    if (rows && rows.length) {
+      rows.forEach(function(r){ if (r.wo) map[r.wo] = r.statut || 'PLANIFIE'; });
+    }
+    _planningStatutsCache = map;
+  } catch(e) { console.warn('planning statuts err', e); }
 }
 
 function updateStats() {
