@@ -976,18 +976,18 @@ async function _chargerPlanningStatuts() {
 var _planningFiltreActif = null;
 
 function _mettreAJourResumePlanning(rows, semaine) {
-  if (!rows.length) return;
   var resume = document.getElementById('planning-resume');
   if (resume) resume.style.display = 'block';
+  if (!rows.length) { if (el('planning-resume-semaine')) el('planning-resume-semaine').textContent = 'Aucun planning'; return; }
 
   var cnt = {PLANIFIE:0, EN_COURS:0, ATT_PIECES:0, TERMINE:0};
   rows.forEach(function(r){ if (cnt[r.statut] !== undefined) cnt[r.statut]++; });
 
   var el = function(id){ return document.getElementById(id); };
-  if (el('pr-planifie')) el('pr-planifie').querySelector('div').textContent = cnt.PLANIFIE;
-  if (el('pr-encours'))  el('pr-encours').querySelector('div').textContent  = cnt.EN_COURS;
-  if (el('pr-att'))      el('pr-att').querySelector('div').textContent      = cnt.ATT_PIECES;
-  if (el('pr-termine'))  el('pr-termine').querySelector('div').textContent  = cnt.TERMINE;
+  if (el('pr-planifie')) el('pr-planifie').children[0].textContent = cnt.PLANIFIE;
+  if (el('pr-encours'))  el('pr-encours').children[0].textContent  = cnt.EN_COURS;
+  if (el('pr-att'))      el('pr-att').children[0].textContent      = cnt.ATT_PIECES;
+  if (el('pr-termine'))  el('pr-termine').children[0].textContent  = cnt.TERMINE;
 
   var total = rows.length;
   var pct = total > 0 ? Math.round((cnt.TERMINE / total) * 100) : 0;
