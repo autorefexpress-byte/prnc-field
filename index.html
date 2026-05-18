@@ -9814,7 +9814,7 @@ async function chargerPlanningNeon(semaine) {
       _planningData = rows.map(function(r) {
         return {
           wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
-          desc: r.desc||'', ressource: r.ressource||'',
+          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
           commentaire: r.commentaire||'',
           taches: r.taches||[], jours: r.jours||[],
           statut: r.statut||'PLANIFIE',
@@ -9965,9 +9965,9 @@ function _renderPlanningList() {
             +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
             +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
           +'</div>'
-          +'<div style="font-size:11px;color:#666;margin-bottom:3px">'+(item.desc||'—')+'</div>'
+          +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-          // commentaire masqué — G6-2 est la loc Excel, on utilise _loc depuis DB
+          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
         +'</div>'
         +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
@@ -10040,7 +10040,7 @@ function ouvrirPlanningModal(wo) {
         ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
             + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
           + '</div>' : '')
-    + (item.commentaire ? '<div style="background:#FFF8E1;border:1px solid #F57F17;border-radius:8px;padding:8px 10px;font-size:11px;color:#F57F17;margin-bottom:10px">💬 ' + item.commentaire + '</div>' : '')
+
     + tachesHtml
     + '<div style="margin-bottom:12px">'
       + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
