@@ -10142,15 +10142,95 @@ function changerStatutPlanning(wo, newStatut) {
   var item = _planningData.find(function(i){ return String(i.wo)===String(wo); });
   if (!item) return;
   item.statut = newStatut;
-  // Sauvegarder statut dans Neon
   var _sem = item.semaine || '';
+
+  // 1. Sauvegarder statut dans table planning
   fetch(DB_API + '?table=planning', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ wo: wo, semaine: _sem, statut: newStatut })
-  }).catch(function(e){ console.warn('statut sync err', e); });
+  }).catch(function(e){ console.warn('planning sync err', e); });
+
+  // 2. Si TERMINE → mettre à jour le type dans historique par WO
+  if (newStatut === 'TERMINE') {
+    _syncPlanningTermineHistorique(wo, item);
+  }
+  // 3. Si EN_COURS → mettre à jour remarque si saisie
+  var remarque = document.getElementById('planning-remarque-' + wo);
+  if (remarque && remarque.value.trim()) {
+    _sauvegarderRemarqueHistorique(wo, remarque.value.trim());
+  }
+
   fermerPlanningModal();
   renderPlanning();
+}
+
+async function _syncPlanningTermineHistorique(wo, item) {
+  try {
+    // Chercher l'enregistrement dans _dbCache par WO
+    var records = typeof _dbCache !== 'undefined' ? _dbCache : await dbLoad();
+    var rec = records.find(function(r){ return String(r.wo) === String(wo); });
+    if (!rec) {
+      // Pas de fiche existante → créer automatiquement une fiche TERMINE
+      var now = new Date();
+      var newId = 'PLN-' + wo + '-' + Date.now();
+      var newRec = {
+        id: newId,
+        type: 'TERMINE',
+        wo: wo,
+        tag: item.tag || '',
+        wr: item.wr || '',
+        wg: 'MCREPAR',
+        description: 'Créé automatiquement depuis le planning P17 — ' + (item.ressource || ''),
+        date: now.toLocaleDateString('fr-FR'),
+        heure: now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+        loc: item._loc || 'Atelier P17',
+        photos: [],
+        dest: [],
+      };
+      await fetch(DB_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRec)
+      });
+      if (typeof _dbCache !== 'undefined' && _dbCache) _dbCache.unshift(newRec);
+      var t = document.createElement('div');
+      t.textContent = '✅ WO ' + wo + ' — nouvelle fiche TERMINÉ créée dans les flux';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 4000);
+      return;
+    }
+    // Fiche existante → mettre à jour le type → TERMINE
+    await fetch(DB_API + '?id=' + rec.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'TERMINE' })
+    });
+    if (typeof _dbCache !== 'undefined' && _dbCache) {
+      var idx = _dbCache.findIndex(function(r){ return r.id === rec.id; });
+      if (idx >= 0) _dbCache[idx].type = 'TERMINE';
+    }
+    // Toast confirmation
+    var t = document.createElement('div');
+    t.textContent = '✅ WO ' + wo + ' marqué Terminé dans les flux';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3000);
+  } catch(e) { console.warn('sync historique err', e); }
+}
+
+async function _sauvegarderRemarqueHistorique(wo, remarque) {
+  try {
+    var records = typeof _dbCache !== 'undefined' ? _dbCache : await dbLoad();
+    var rec = records.find(function(r){ return String(r.wo) === String(wo); });
+    if (!rec) return;
+    await fetch(DB_API + '?id=' + rec.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: remarque })
+    });
+  } catch(e) { console.warn('remarque sync err', e); }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
