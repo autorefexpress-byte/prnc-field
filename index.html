@@ -555,7 +555,7 @@ function _initLocSel(selId, inpId, val) {
     <!-- Champs identité -->
     <div class="row2">
       <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="eq-wo" placeholder="Ex : 876230" onclick="ouvrirNumpad('eq-wo','N° WO')" style="cursor:pointer"></div>
-      <div class="field-grp"><div class="field-lbl">WO MTC</div><input class="fi" type="text" id="eq-wo-mtc" placeholder="Ex : 837500"></div>
+      <div class="field-grp"><div class="field-lbl">WO MTC</div><input class="fi" type="text" id="eq-wo-mtc" placeholder="Ex : 837500" onclick="ouvrirNumpad('eq-wo-mtc','WO MTC')" style="cursor:pointer"></div>
     </div>
     <div class="row2">
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="eq-wr" placeholder="Ex : 115518" onclick="ouvrirNumpad('eq-wr','N° WR')" style="cursor:pointer"></div>
@@ -759,10 +759,10 @@ function _initLocSel(selId, inpId, val) {
 
     <!-- Infos principales -->
     <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376" onclick="ouvrirNumpad('fs-wo','N° WO')" style="cursor:pointer"></div>
-      <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" onclick="ouvrirNumpad('fs-wr','N° WR')" style="cursor:pointer"></div>
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376" inputmode="numeric"></div>
+      <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" inputmode="numeric"></div>
     </div>
-    <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" onclick="ouvrirNumpad('fs-wo-usine','WO Usine')" style="cursor:pointer"></div>
+    <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" inputmode="numeric"></div>
     <div class="row2">
       <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
       <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="fs-sc" placeholder="Ex : 158659" onclick="ouvrirNumpad('fs-sc','Stock Code')" style="cursor:pointer"></div>
@@ -8210,7 +8210,7 @@ async function cpModifier(id) {
       + '<button onclick="fermerOverlayCP(this)" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cpe-wo" value="' + (r.wo||'') + '"></div>'
+      + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cpe-wo" value="' + (r.wo||'') + '" onclick="ouvrirNumpad(\'cpe-wo\',\'N° WO\')" style="cursor:pointer"></div>'
       + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cpe-tag" value="' + (r.tag||'') + '"></div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
@@ -10176,7 +10176,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="cp-pane" id="cp-nouveau" style="padding:14px;padding-bottom:40px">
       <div class="sec-lbl">📋 Informations équipement</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cp-wo" placeholder="Ex: 886483"></div>
+        <div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cp-wo" placeholder="Ex: 886483" onclick="ouvrirNumpad('cp-wo','N° WO')" style="cursor:pointer"></div>
         <div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cp-tag" placeholder="Ex: 220-VLS-030"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
