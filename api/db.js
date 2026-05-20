@@ -338,8 +338,17 @@ module.exports = async function handler(req, res) {
 
     // ── HISTORIQUE DELETE ────────────────────────────
     if (method === 'DELETE' && id) {
-      const rows = await sql`SELECT photos FROM historique WHERE id=${id}`;
-      if (rows.length && rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
+      const rows = await sql`SELECT photos, wo FROM historique WHERE id=${id}`;
+      if (rows.length) {
+        // Supprimer photos Cloudinary
+        if (rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
+        // Supprimer aussi le WO dans planning si existe
+        if (rows[0].wo) {
+          try {
+            await sql`DELETE FROM planning WHERE wo=${rows[0].wo}`;
+          } catch(e) { console.warn('planning delete err:', e); }
+        }
+      }
       await sql`DELETE FROM historique WHERE id=${id}`;
       return res.status(200).json({ ok: true });
     }
