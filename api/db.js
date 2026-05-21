@@ -55,23 +55,25 @@ module.exports = async function handler(req, res) {
       await sql`CREATE TABLE IF NOT EXISTS wo_en_g (
         id SERIAL PRIMARY KEY,
         wo TEXT UNIQUE,
+        wr TEXT,
         tag TEXT,
         description TEXT,
         wg TEXT,
         date_signalement TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`;
+      await sql`ALTER TABLE wo_en_g ADD COLUMN IF NOT EXISTS wr TEXT`;
 
       if (method === 'GET') {
         const q   = req.query?.q   || null;
         const all = req.query?.all || null;
         let rows;
         if (q) {
-          rows = await sql`SELECT wo,tag,description,wg FROM wo_en_g
+          rows = await sql`SELECT wo,wr,tag,description,wg FROM wo_en_g
             WHERE wo ILIKE ${'%'+q+'%'} OR tag ILIKE ${'%'+q+'%'} OR description ILIKE ${'%'+q+'%'}
             ORDER BY tag ASC LIMIT 30`;
         } else if (all) {
-          rows = await sql`SELECT wo,tag,description,wg FROM wo_en_g ORDER BY tag ASC`;
+          rows = await sql`SELECT wo,wr,tag,description,wg FROM wo_en_g ORDER BY tag ASC`;
         } else {
           rows = await sql`SELECT COUNT(*) as total FROM wo_en_g`;
         }
@@ -84,11 +86,11 @@ module.exports = async function handler(req, res) {
           // Vider la table seulement au premier lot
           if (d.first !== false) await sql`TRUNCATE wo_en_g`;
           for (const item of d.items) {
-            await sql`INSERT INTO wo_en_g (wo, tag, description, wg, date_signalement)
-              VALUES (${item.wo||null}, ${item.tag||null}, ${item.description||null},
+            await sql`INSERT INTO wo_en_g (wo, wr, tag, description, wg, date_signalement)
+              VALUES (${item.wo||null}, ${item.wr||null}, ${item.tag||null}, ${item.description||null},
                       ${item.wg||null}, ${item.date||null})
               ON CONFLICT (wo) DO UPDATE SET
-                tag=${item.tag||null}, description=${item.description||null},
+                wr=${item.wr||null}, tag=${item.tag||null}, description=${item.description||null},
                 wg=${item.wg||null}, date_signalement=${item.date||null}`;
           }
           return res.status(201).json({ ok: true, count: d.items.length });
