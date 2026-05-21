@@ -10117,8 +10117,8 @@ function ajouterPhotoPlanning(wo, input) {
     // Upload Cloudinary
     var fd = new FormData();
     fd.append('file', file);
-    fd.append('upload_preset', 'prnc_unsigned');
-    fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', { method:'POST', body:fd })
+    fd.append('upload_preset', CLOUDINARY_PRESET);
+    fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method:'POST', body:fd })
       .then(function(r){ return r.json(); })
       .then(function(d) {
         if (d.secure_url) {
