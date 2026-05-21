@@ -9837,6 +9837,8 @@ async function chargerPlanningNeon(semaine) {
           taches: r.taches||[], jours: r.jours||[],
           statut: r.statut||'PLANIFIE',
           semaine: r.semaine||semaineActive,
+          _photos: r.photos||[],
+          _remarque: r.remarque||'',
         };
       });
       var lbl = document.getElementById('planning-semaine-lbl');
@@ -10121,10 +10123,21 @@ function ajouterPhotoPlanning(wo, input) {
       .then(function(d) {
         if (d.secure_url) {
           var item = _planningData.find(function(i){ return i.wo === wo; });
-          if (item) { if (!item._photos) item._photos = []; item._photos.push(d.secure_url); }
-          if (preview) {
-            var imgs = preview.querySelectorAll('img');
-            if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
+          if (item) {
+            if (!item._photos) item._photos = [];
+            item._photos.push(d.secure_url);
+            // Remplacer le preview local par l'URL Cloudinary
+            if (preview) {
+              var imgs = preview.querySelectorAll('img');
+              if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
+            }
+            // Sauvegarder dans Neon
+            var sem = item.semaine || '';
+            fetch(DB_API + '?table=planning', {
+              method: 'PATCH',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({wo: wo, semaine: sem, photos: item._photos})
+            }).catch(function(e){ console.warn('photo save err', e); });
           }
         }
       }).catch(function(e){ console.warn('upload err', e); });
@@ -10137,7 +10150,18 @@ function sauvegarderRemarquePlanning(wo) {
   var item = _planningData.find(function(i){ return i.wo === wo; });
   if (item) item._remarque = ta.value;
   var btn = ta.nextElementSibling;
-  if (btn) { btn.textContent = '✅ Sauvegardé'; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+  if (btn) { btn.textContent = '⏳ Sauvegarde...'; btn.disabled = true; }
+  // Sauvegarder dans Neon
+  var sem = item ? (item.semaine || '') : '';
+  fetch(DB_API + '?table=planning', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({wo: wo, semaine: sem, remarque: ta.value})
+  }).then(function(){
+    if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+  }).catch(function(){
+    if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
+  });
 }
 
 async function _enrichirPhotosPlanning() {
