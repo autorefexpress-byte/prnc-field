@@ -10385,10 +10385,12 @@ function _filtrerWOGTag(val) {
   if (clear) clear.style.display = val ? 'block' : 'none';
   if (!val || val.length < 2) { list.style.display = 'none'; return; }
   if (_woEnGData.length) {
-    var q = val.toLowerCase();
+    var q = val.toLowerCase().replace('rp0','').replace('rp','');
     var filtered = _woEnGData.filter(function(w){
+      var woClean = (w.wo||'').toLowerCase().replace('rp0','').replace('rp','');
       return (w.tag||'').toLowerCase().includes(q)
-          || (w.wo||'').includes(q)
+          || woClean.includes(q)
+          || (w.wo||'').toLowerCase().includes(val.toLowerCase())
           || (w.desc||'').toLowerCase().includes(q);
     }).slice(0, 25);
     _afficherListeWOGTag(filtered, list);
