@@ -10126,18 +10126,23 @@ function ajouterPhotoPlanning(wo, input) {
           if (item) {
             if (!item._photos) item._photos = [];
             item._photos.push(d.secure_url);
-            // Remplacer le preview local par l'URL Cloudinary
+            // Mettre à jour preview avec URL Cloudinary définitive
             if (preview) {
               var imgs = preview.querySelectorAll('img');
               if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
             }
             // Sauvegarder dans Neon
-            var sem = item.semaine || '';
             fetch(DB_API + '?table=planning', {
               method: 'PATCH',
               headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({wo: wo, semaine: sem, photos: item._photos})
-            }).catch(function(e){ console.warn('photo save err', e); });
+              body: JSON.stringify({
+                wo: item.wo,
+                semaine: item.semaine || '',
+                photos: item._photos
+              })
+            }).then(function(r){ return r.json(); })
+              .then(function(res){ console.log('Photo saved in Neon:', res); })
+              .catch(function(e){ console.warn('photo save err', e); });
           }
         }
       }).catch(function(e){ console.warn('upload err', e); });
@@ -10150,13 +10155,15 @@ function sauvegarderRemarquePlanning(wo) {
   var item = _planningData.find(function(i){ return i.wo === wo; });
   if (item) item._remarque = ta.value;
   var btn = ta.nextElementSibling;
-  if (btn) { btn.textContent = '⏳ Sauvegarde...'; btn.disabled = true; }
-  // Sauvegarder dans Neon
-  var sem = item ? (item.semaine || '') : '';
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   fetch(DB_API + '?table=planning', {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wo: wo, semaine: sem, remarque: ta.value})
+    body: JSON.stringify({
+      wo: wo,
+      semaine: item ? (item.semaine || '') : '',
+      remarque: ta.value
+    })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
   }).catch(function(){
