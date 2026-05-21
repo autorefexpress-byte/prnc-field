@@ -10310,7 +10310,7 @@ var _woEnGData = [];
     .then(function(rows){
       if (Array.isArray(rows) && rows.length) {
         _woEnGData = rows.map(function(r){
-          return {wo: r.wo||'', tag: r.tag||'', desc: r.description||'', wg: r.wg||''};
+          return {wo: r.wo||'', wr: r.wr||'', tag: r.tag||'', desc: r.description||'', wg: r.wg||''};
         });
         console.log('WO en G chargés:', _woEnGData.length);
       }
@@ -10333,6 +10333,7 @@ async function _importerWOenG(input) {
           tag: String(r[2]||'').trim(),
           wg: String(r[3]||'').trim().toUpperCase(),
           date: String(r[5]||'').trim(),
+          wr: String(r[15]||'').trim(),
         };
       });
       var t = document.createElement('div');
@@ -10353,7 +10354,7 @@ async function _importerWOenG(input) {
         first = false;
       }
       t.remove();
-      _woEnGData = items.map(function(i){ return {wo:i.wo, tag:i.tag, desc:i.description, wg:i.wg}; });
+      _woEnGData = items.map(function(i){ return {wo:i.wo, wr:i.wr||'', tag:i.tag, desc:i.description, wg:i.wg}; });
       var t2 = document.createElement('div');
       t2.textContent = '✅ ' + items.length + ' WO en G disponibles sur tous les appareils';
       t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
@@ -10554,10 +10555,9 @@ function _filtrerWOGWR(val) {
   var filtered = [];
   if (_woEnGData.length) {
     filtered = _woEnGData.filter(function(w){
-      // Chercher par WR (col wr si existe, sinon dans wo RP...)
       return (w.wr||'').includes(q)
-          || (w.wo||'').toLowerCase().includes(q)
-          || (w.tag||'').toLowerCase().includes(q);
+          || (w.tag||'').toLowerCase().includes(q)
+          || (w.desc||'').toLowerCase().includes(q);
     }).slice(0, 25);
     _afficherListeWOGWR(filtered, list);
   } else {
@@ -10581,7 +10581,7 @@ function _afficherListeWOGWR(items, list) {
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
     var c = wgColors[w.wg] || '#555';
-    var displayWR = w.wr || w.wo || '';
+    var displayWR = w.wr || '';
     html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWR(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
@@ -10600,7 +10600,7 @@ function _selectionnerWOGWR(wo) {
   if (!w) return;
   // Remplir WR
   var arWr = document.getElementById('ar-wr');
-  if (arWr) arWr.value = w.wr || w.wo || '';
+  if (arWr) arWr.value = w.wr || '';
   // Remplir TAG si vide
   var arTag = document.getElementById('ar-tag');
   if (arTag && !arTag.value) arTag.value = w.tag || '';
