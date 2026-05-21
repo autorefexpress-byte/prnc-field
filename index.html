@@ -433,7 +433,10 @@ function _initLocSel(selId, inpId, val) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">←</div>
     <div class="form-title">Équipement arrivé</div>
-    <div class="form-badge badge-purple">Réception</div>
+    <label style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px" title="Importer WO en G">
+      📥 WO en G
+      <input type="file" accept=".xlsx,.xls" onchange="_importerWOenG(this)" style="display:none">
+    </label>
   </div>
   <div class="form-body">
     <!-- WORKGROUP EN PREMIER — les champs s'adaptent -->
@@ -759,7 +762,13 @@ function _initLocSel(selId, inpId, val) {
 
     <!-- Infos principales -->
     <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><input class="fi" type="text" id="fs-wo" placeholder="Ex : 855376" inputmode="numeric"></div>
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><div style="position:relative">
+  <input class="fi" type="text" id="fs-wo" placeholder="Tapez WO ou TAG..." autocomplete="off"
+    oninput="_filtrerWOG(this.value)" onfocus="_filtrerWOG(this.value)" inputmode="numeric"
+    style="padding-right:36px">
+  <span id="fs-wo-clear" onclick="_clearWOG()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">✕</span>
+  <div id="fs-wo-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+</div></div>
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" inputmode="numeric"></div>
     </div>
     <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" inputmode="numeric"></div>
@@ -10236,6 +10245,114 @@ async function _sauvegarderRemarqueHistorique(wo, remarque) {
 document.addEventListener('DOMContentLoaded', function() {
   var pm = document.getElementById('planning-modal');
   if (pm) pm.addEventListener('click', function(e){ if(e.target===pm) fermerPlanningModal(); });
+});
+
+
+// ═══════════════ WO EN G — IMPORT & AUTOCOMPLETE ═══════════════
+var _woEnGData = []; // [{wo, tag, desc, wg, date}]
+
+async function _importerWOenG(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if (rows.length < 2) return;
+      var items = rows.slice(1).filter(function(r){ return r[0]; }).map(function(r){
+        return {
+          wo: String(r[0]||'').trim(),
+          description: String(r[1]||'').trim(),
+          tag: String(r[2]||'').trim(),
+          wg: String(r[3]||'').trim().toUpperCase(),
+          date: String(r[5]||'').trim(),
+        };
+      });
+      var t = document.createElement('div');
+      t.textContent = '⏳ Envoi de ' + items.length + ' WO vers Neon...';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+      document.body.appendChild(t);
+      await fetch(DB_API + '?table=wo_en_g', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({bulk:true, items:items})
+      });
+      t.remove();
+      _woEnGData = items.map(function(i){ return {wo:i.wo, tag:i.tag, desc:i.description, wg:i.wg}; });
+      var t2 = document.createElement('div');
+      t2.textContent = '✅ ' + items.length + ' WO en G disponibles sur tous les appareils';
+      t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+      document.body.appendChild(t2);
+      setTimeout(function(){ t2.remove(); }, 3500);
+    } catch(err) { alert('Erreur: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+var _woGTimer = null;
+
+function _filtrerWOG(val) {
+  var list = document.getElementById('fs-wo-list');
+  var clear = document.getElementById('fs-wo-clear');
+  if (!list) return;
+  if (clear) clear.style.display = val ? 'block' : 'none';
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+  if (_woEnGData.length) {
+    var q = val.toLowerCase();
+    var filtered = _woEnGData.filter(function(w){
+      return w.wo.includes(q) || (w.tag||'').toLowerCase().includes(q) || (w.desc||'').toLowerCase().includes(q);
+    }).slice(0, 25);
+    _afficherListeWOG(filtered, list);
+  } else {
+    clearTimeout(_woGTimer);
+    _woGTimer = setTimeout(function(){
+      fetch(DB_API + '?table=wo_en_g&q=' + encodeURIComponent(val))
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          var mapped = rows.map(function(r){ return {wo:r.wo, tag:r.tag, desc:r.description, wg:r.wg}; });
+          _woEnGData = _woEnGData.concat(mapped);
+          _afficherListeWOG(mapped, list);
+        }).catch(function(){});
+    }, 300);
+  }
+}
+
+function _selectionnerWOG(wo) {
+  var w = _woEnGData.find(function(x){ return x.wo === wo; });
+  if (!w) return;
+  // Remplir WO
+  var fsWo = document.getElementById('fs-wo');
+  if (fsWo) fsWo.value = w.wo;
+  // Remplir TAG si champ existe et vide
+  var fsTag = document.getElementById('ar-tag') || document.getElementById('fs-tag');
+  if (fsTag && !fsTag.value) fsTag.value = w.tag;
+  // Sélectionner WG automatiquement
+  if (w.wg === 'MCCHAUD') setWG('ar','chaud');
+  else if (w.wg === 'MCREPAR') setWG('ar','repar');
+  else if (w.wg === 'STROB') setWG('ar','strob');
+  // Fermer la liste
+  var list = document.getElementById('fs-wo-list');
+  if (list) list.style.display = 'none';
+  var clear = document.getElementById('fs-wo-clear');
+  if (clear) clear.style.display = 'block';
+}
+
+function _clearWOG() {
+  var fsWo = document.getElementById('fs-wo');
+  if (fsWo) fsWo.value = '';
+  var list = document.getElementById('fs-wo-list');
+  if (list) list.style.display = 'none';
+  var clear = document.getElementById('fs-wo-clear');
+  if (clear) clear.style.display = 'none';
+}
+
+// Fermer la liste si clic dehors
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#fs-wo') && !e.target.closest('#fs-wo-list')) {
+    var list = document.getElementById('fs-wo-list');
+    if (list) list.style.display = 'none';
+  }
 });
 
 </script>
