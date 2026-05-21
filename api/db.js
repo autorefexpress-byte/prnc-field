@@ -63,10 +63,18 @@ module.exports = async function handler(req, res) {
       )`;
 
       if (method === 'GET') {
-        const q = req.query?.q || null;
-        const rows = q
-          ? await sql`SELECT * FROM wo_en_g WHERE wo ILIKE ${'%'+q+'%'} OR tag ILIKE ${'%'+q+'%'} OR description ILIKE ${'%'+q+'%'} ORDER BY wo ASC LIMIT 30`
-          : await sql`SELECT COUNT(*) as total FROM wo_en_g`;
+        const q   = req.query?.q   || null;
+        const all = req.query?.all || null;
+        let rows;
+        if (q) {
+          rows = await sql`SELECT wo,tag,description,wg FROM wo_en_g
+            WHERE wo ILIKE ${'%'+q+'%'} OR tag ILIKE ${'%'+q+'%'} OR description ILIKE ${'%'+q+'%'}
+            ORDER BY tag ASC LIMIT 30`;
+        } else if (all) {
+          rows = await sql`SELECT wo,tag,description,wg FROM wo_en_g ORDER BY tag ASC`;
+        } else {
+          rows = await sql`SELECT COUNT(*) as total FROM wo_en_g`;
+        }
         return res.status(200).json(rows);
       }
 
