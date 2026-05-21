@@ -72,9 +72,9 @@ module.exports = async function handler(req, res) {
 
       if (method === 'POST') {
         const d = req.body || {};
-        // Import bulk
         if (d.bulk && Array.isArray(d.items)) {
-          await sql`TRUNCATE wo_en_g`;
+          // Vider la table seulement au premier lot
+          if (d.first !== false) await sql`TRUNCATE wo_en_g`;
           for (const item of d.items) {
             await sql`INSERT INTO wo_en_g (wo, tag, description, wg, date_signalement)
               VALUES (${item.wo||null}, ${item.tag||null}, ${item.description||null},
