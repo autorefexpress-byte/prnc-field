@@ -50,6 +50,46 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ── WO EN G ──────────────────────────────────────
+    if (table === 'wo_en_g') {
+      await sql`CREATE TABLE IF NOT EXISTS wo_en_g (
+        id SERIAL PRIMARY KEY,
+        wo TEXT UNIQUE,
+        tag TEXT,
+        description TEXT,
+        wg TEXT,
+        date_signalement TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`;
+
+      if (method === 'GET') {
+        const q = req.query?.q || null;
+        const rows = q
+          ? await sql`SELECT * FROM wo_en_g WHERE wo ILIKE ${'%'+q+'%'} OR tag ILIKE ${'%'+q+'%'} OR description ILIKE ${'%'+q+'%'} ORDER BY wo ASC LIMIT 30`
+          : await sql`SELECT COUNT(*) as total FROM wo_en_g`;
+        return res.status(200).json(rows);
+      }
+
+      if (method === 'POST') {
+        const d = req.body || {};
+        // Import bulk
+        if (d.bulk && Array.isArray(d.items)) {
+          await sql`TRUNCATE wo_en_g`;
+          for (const item of d.items) {
+            await sql`INSERT INTO wo_en_g (wo, tag, description, wg, date_signalement)
+              VALUES (${item.wo||null}, ${item.tag||null}, ${item.description||null},
+                      ${item.wg||null}, ${item.date||null})
+              ON CONFLICT (wo) DO UPDATE SET
+                tag=${item.tag||null}, description=${item.description||null},
+                wg=${item.wg||null}, date_signalement=${item.date||null}`;
+          }
+          return res.status(201).json({ ok: true, count: d.items.length });
+        }
+        return res.status(400).json({ error: 'Missing bulk/items' });
+      }
+      return res.status(400).json({ error: 'Unknown wo_en_g request' });
+    }
+
     // ── PLANNING ATELIER P17 ─────────────────────────
     if (table === 'planning') {
       await sql`CREATE TABLE IF NOT EXISTS planning (
