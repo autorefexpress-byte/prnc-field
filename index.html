@@ -10023,7 +10023,10 @@ function ouvrirPlanningModal(wo) {
     btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
          + '<button data-statut="TERMINE" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else {
-    btns = '<div style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>';
+    btns = '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'
+         + '<div style="padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>'
+         + '<button data-statut="EN_COURS" onclick="changerStatutPlanning(_currentModalWO,this.dataset.statut)" style="padding:10px;background:rgba(197,90,17,.1);color:#C55A11;border:1.5px solid #C55A11;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
+         + '</div>';
   }
 
   var tachesHtml = '';
