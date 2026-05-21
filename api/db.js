@@ -112,9 +112,13 @@ module.exports = async function handler(req, res) {
         jours JSONB DEFAULT '[]',
         statut TEXT DEFAULT 'PLANIFIE',
         semaine TEXT,
+        photos JSONB DEFAULT '[]',
+        remarque TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`;
+      await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
+      await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`;
       await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
       await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
@@ -162,12 +166,27 @@ module.exports = async function handler(req, res) {
       if (method === 'PATCH') {
         const d = req.body || {};
         if (d.wo && d.semaine) {
-          await sql`UPDATE planning SET statut=${d.statut||'PLANIFIE'}, updated_at=NOW()
-            WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          // Mettre à jour statut
+          if (d.statut !== undefined) {
+            await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW()
+              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          }
+          // Mettre à jour photos
+          if (d.photos !== undefined) {
+            await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW()
+              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          }
+          // Mettre à jour remarque
+          if (d.remarque !== undefined) {
+            await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW()
+              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          }
           return res.status(200).json({ ok: true });
         }
         if (id) {
-          await sql`UPDATE planning SET statut=${d.statut||'PLANIFIE'}, updated_at=NOW() WHERE id=${id}`;
+          if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
+          if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
+          if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
           return res.status(200).json({ ok: true });
         }
         return res.status(400).json({ error: 'Missing wo+semaine or id' });
@@ -388,11 +407,15 @@ module.exports = async function handler(req, res) {
     if (method === 'DELETE' && id) {
       const rows = await sql`SELECT photos, wo FROM historique WHERE id=${id}`;
       if (rows.length) {
-        // Supprimer photos Cloudinary
+        // 1. Supprimer photos historique Cloudinary
         if (rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
-        // Supprimer aussi le WO dans planning si existe
+        // 2. Supprimer WO dans planning + ses photos Cloudinary
         if (rows[0].wo) {
           try {
+            const planRows = await sql`SELECT photos FROM planning WHERE wo=${rows[0].wo}`;
+            if (planRows.length && planRows[0].photos?.length) {
+              await deleteCloudinaryPhotos(planRows[0].photos);
+            }
             await sql`DELETE FROM planning WHERE wo=${rows[0].wo}`;
           } catch(e) { console.warn('planning delete err:', e); }
         }
