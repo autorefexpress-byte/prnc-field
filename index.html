@@ -10282,11 +10282,19 @@ async function _importerWOenG(input) {
       t.textContent = '⏳ Envoi de ' + items.length + ' WO vers Neon...';
       t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
       document.body.appendChild(t);
-      await fetch(DB_API + '?table=wo_en_g', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({bulk:true, items:items})
-      });
+      // Envoyer en lots de 50 pour éviter la limite Vercel
+      var batchSize = 50;
+      var first = true;
+      for (var b = 0; b < items.length; b += batchSize) {
+        var batch = items.slice(b, b + batchSize);
+        t.textContent = '⏳ Envoi ' + Math.min(b + batchSize, items.length) + '/' + items.length + '...';
+        await fetch(DB_API + '?table=wo_en_g', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({bulk:true, first:first, items:batch})
+        });
+        first = false;
+      }
       t.remove();
       _woEnGData = items.map(function(i){ return {wo:i.wo, tag:i.tag, desc:i.description, wg:i.wg}; });
       var t2 = document.createElement('div');
