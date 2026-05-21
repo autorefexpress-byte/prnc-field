@@ -10258,7 +10258,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ═══════════════ WO EN G — IMPORT & AUTOCOMPLETE ═══════════════
-var _woEnGData = []; // [{wo, tag, desc, wg, date}]
+var _woEnGData = [];
+
+// Pré-charger les WO en G depuis Neon au démarrage
+(function() {
+  fetch(DB_API + '?table=wo_en_g&all=1')
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      if (Array.isArray(rows) && rows.length) {
+        _woEnGData = rows.map(function(r){
+          return {wo: r.wo||'', tag: r.tag||'', desc: r.description||'', wg: r.wg||''};
+        });
+        console.log('WO en G chargés:', _woEnGData.length);
+      }
+    }).catch(function(){});
+})();
 
 async function _importerWOenG(input) {
   var file = input.files[0]; if (!file) return;
