@@ -10297,6 +10297,18 @@ async function _sauvegarderRemarqueHistorique(wo, remarque) {
 document.addEventListener('DOMContentLoaded', function() {
   var pm = document.getElementById('planning-modal');
   if (pm) pm.addEventListener('click', function(e){ if(e.target===pm) fermerPlanningModal(); });
+
+  // ── Connexion directe via URL ──
+  // ?mode=atelier → mode tech Mcrepar direct sans PIN
+  var urlParams = new URLSearchParams(window.location.search);
+  var modeParam = urlParams.get('mode');
+  if (modeParam === 'atelier') {
+    // Cacher l'overlay PIN
+    var overlay = document.getElementById('pin-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // Activer le mode atelier directement
+    setTimeout(function() { activerModeAtelier(); }, 300);
+  }
 });
 
 
