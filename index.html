@@ -10189,7 +10189,19 @@ async function _enrichirPhotosPlanning() {
     var records = await dbLoad();
     _planningData.forEach(function(item) {
       var rec = records.find(function(r){ return r.wo && r.wo === item.wo; });
-      if (rec && rec.photos && rec.photos.length) item._photos = rec.photos;
+      if (rec) {
+        // Loc depuis historique
+        if (rec.loc) item._loc = rec.loc;
+        // Fusionner photos historique + photos planning (sans doublons)
+        // Priorité aux photos du planning (déjà dans item._photos)
+        if (rec.photos && rec.photos.length) {
+          var existing = item._photos || [];
+          rec.photos.forEach(function(p) {
+            if (p && existing.indexOf(p) < 0) existing.push(p);
+          });
+          item._photos = existing;
+        }
+      }
     });
   } catch(e) { console.warn('enrich photos err', e); }
 }
