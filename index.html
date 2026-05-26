@@ -1554,17 +1554,23 @@ const WG_CONTACTS = {
     {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
   ]},
   repar: { label:'MCREPAR', contacts:[
-    {name:'Jean-François DELLAC', mail:'jean-francois.dellac@pronyresources.com',  self:false, cc:false},
-    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
+    {name:'Ernest DEMENE',        mail:'ernest.demene@pronyresources.com',         self:false, cc:false},
+    {name:'Joan SIHAZE',          mail:'joan.sihaze@pronyresources.com',           self:false, cc:false},
+    {name:'Benoit YEKAWENE',      mail:'benoit.yekawene@pronyresources.com',       self:false, cc:false},
     {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
     {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
+    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
+    {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
   ]},
   strob: { label:'STROB', contacts:[
-    {name:'Jean-François DELLAC', mail:'jean-francois.dellac@pronyresources.com',  self:false, cc:false},
+    {name:'Joan SIHAZE',          mail:'joan.sihaze@pronyresources.com',           self:false, cc:false},
+    {name:'Ernest DEMENE',        mail:'ernest.demene@pronyresources.com',         self:false, cc:false},
+    {name:'Benoit YEKAWENE',      mail:'benoit.yekawene@pronyresources.com',       self:false, cc:false},
+    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
     {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
     {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.EXT@pronyresources.com', self:false, cc:true},
-    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
     {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
+    {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
   ]},
 };
 
@@ -1577,17 +1583,23 @@ const AR_CONTACTS = {
     {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',       self:true,  cc:true},
   ]},
   repar: { label:'MCREPAR', contacts:[
-    {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',    self:false, cc:false},
-    {name:'Serge PRIGENT',        mail:'serge.prigent@pronyresources.com',       self:false, cc:false},
-    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',        self:false, cc:true},
-    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',       self:true,  cc:true},
+    {name:'Ernest DEMENE',        mail:'ernest.demene@pronyresources.com',         self:false, cc:false},
+    {name:'Joan SIHAZE',          mail:'joan.sihaze@pronyresources.com',           self:false, cc:false},
+    {name:'Benoit YEKAWENE',      mail:'benoit.yekawene@pronyresources.com',       self:false, cc:false},
+    {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
+    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
+    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
+    {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
   ]},
   strob: { label:'STROB', contacts:[
-    {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',    self:false, cc:false},
-    {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.EXT@pronyresources.com',self:false,cc:false},
-    {name:'Serge PRIGENT',        mail:'serge.prigent@pronyresources.com',       self:false, cc:false},
-    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',        self:false, cc:true},
-    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',       self:true,  cc:true},
+    {name:'Joan SIHAZE',          mail:'joan.sihaze@pronyresources.com',           self:false, cc:false},
+    {name:'Ernest DEMENE',        mail:'ernest.demene@pronyresources.com',         self:false, cc:false},
+    {name:'Benoit YEKAWENE',      mail:'benoit.yekawene@pronyresources.com',       self:false, cc:false},
+    {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
+    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
+    {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.EXT@pronyresources.com', self:false, cc:true},
+    {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
+    {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
   ]}
 };
 
@@ -3778,7 +3790,8 @@ async function renderHist() {
           : '<button onclick="editRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
             (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(this.dataset.rid)" data-rid="' + r.id + '" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
             '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
-            (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '')
+            (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '') +
+            ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
         }
       </div>
     </div>`;
@@ -4242,6 +4255,39 @@ async function genererRapportPDF() {
         style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
     </div>
     <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ MODAL P99 ZONE VANNE ═══════════════ -->
+<div id="p99-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#1F3864">📦 Expédier vers P99</div>
+        <div style="font-size:11px;color:#888;margin-top:2px" id="p99-subtitle"></div>
+      </div>
+      <button onclick="fermerP99()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>
+    </div>
+    <div style="background:#E3F2FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#1565C0">
+      📍 La localisation sera mise à jour vers <strong>P99 Zone Vanne</strong>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Email destinataire <span class="req">*</span></div>
+      <input class="fi" type="email" id="p99-email" placeholder="Ex : prenom.nom@pronyresources.com">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Contacts MCREPAR (CC automatique)</div>
+      <div id="p99-cc-list" style="background:#f5f7fa;border-radius:8px;padding:10px 12px;font-size:11px;color:#555">
+        jean-francois.dellac@pronyresources.com<br>
+        regis.eurimindia@pronyresources.com<br>
+        pascal.bafue@pronyresources.com<br>
+        emmanuel.rosa@pronyresources.com
+      </div>
+    </div>
+    <button onclick="envoyerP99()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px">
+      📧 Envoyer notification + Mettre à jour localisation
+    </button>
   </div>
 </div>
 
@@ -10654,6 +10700,82 @@ document.addEventListener('click', function(e) {
     var list = document.getElementById('ar-wr-list');
     if (list) list.style.display = 'none';
   }
+});
+
+
+// ═══════════════ P99 ZONE VANNE ═══════════════
+var _p99Current = null;
+
+function ouvrirP99(btn) {
+  var id   = btn.getAttribute('data-id');
+  var tag  = btn.getAttribute('data-tag');
+  var wo   = btn.getAttribute('data-wo');
+  var wg   = btn.getAttribute('data-wg') || 'MCREPAR';
+  var mail = btn.getAttribute('data-mail');
+  _p99Current = { id:id, tag:tag, wo:wo, wg:wg };
+  document.getElementById('p99-subtitle').textContent = tag + (wo ? ' · WO ' + wo : '') + ' · ' + wg;
+  document.getElementById('p99-email').value = mail || '';
+  // Adapter les CC selon le WG
+  var ccEl = document.getElementById('p99-cc-list');
+  if (ccEl) {
+    if (wg === 'STROB') {
+      ccEl.innerHTML = 'pascal.bafue@pronyresources.com<br>emmanuel.rosa@pronyresources.com<br>kendji.kasovimoin.EXT@pronyresources.com<br>regis.eurimindia@pronyresources.com<br>jacques.trimari@pronyresources.com';
+    } else {
+      ccEl.innerHTML = 'regis.eurimindia@pronyresources.com<br>pascal.bafue@pronyresources.com<br>emmanuel.rosa@pronyresources.com<br>jacques.trimari@pronyresources.com';
+    }
+  }
+  var ov = document.getElementById('p99-overlay');
+  if (ov) { ov.style.display = 'flex'; }
+}
+
+function fermerP99() {
+  var ov = document.getElementById('p99-overlay');
+  if (ov) ov.style.display = 'none';
+  _p99Current = null;
+}
+
+async function envoyerP99() {
+  if (!_p99Current) return;
+  var email = document.getElementById('p99-email').value.trim();
+  if (!email) { alert('Email destinataire obligatoire'); return; }
+
+  var tag = _p99Current.tag;
+  var wo  = _p99Current.wo;
+  var id  = _p99Current.id;
+
+  // 1. Mettre à jour la localisation dans Neon
+  try {
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ loc: 'P99 Zone Vanne' })
+    });
+  } catch(e) { console.warn('loc update err', e); }
+
+  // 2. Préparer email
+  var cc;
+  if (_p99Current.wg === 'STROB') {
+    cc = ['pascal.bafue@pronyresources.com','emmanuel.rosa@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','regis.eurimindia@pronyresources.com','jacques.trimari@pronyresources.com'].join(';');
+  } else {
+    cc = ['regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','emmanuel.rosa@pronyresources.com','jacques.trimari@pronyresources.com'].join(';');
+  }
+
+  var subject = 'Équipement disponible — ' + tag + (wo ? ' · WO ' + wo : '');
+  var body = 'Bonjour,\n\n' + 'Votre equipement est disponible et peut etre recupere.\n\n' + 'TAG : ' + tag + '\n' + (wo ? 'WO MTC : ' + wo + '\n' : '') + 'Localisation : P99 Zone Vanne\n' + 'Workgroup : MCREPAR\n\n' + 'Merci de nous contacter pour organiser la recuperation.\n\n' + 'Cordialement,\nMaintenance Centrale - PRNC';
+
+  fermerP99();
+
+  // Rafraîchir la liste
+  if (typeof renderHist === 'function') setTimeout(renderHist, 500);
+
+  // 3. Ouvrir le client mail
+  mailto(email, subject, body, cc);
+}
+
+// Fermer si clic dehors
+document.addEventListener('click', function(e) {
+  var ov = document.getElementById('p99-overlay');
+  if (ov && e.target === ov) fermerP99();
 });
 
 </script>
