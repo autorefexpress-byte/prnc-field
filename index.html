@@ -625,6 +625,10 @@ function _initLocSel(selId, inpId, val) {
       </select>
       <input class="fi" type="text" id="eq-zone" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
     </div>
+    <div class="field-grp">
+      <div class="field-lbl">Zone à déposer</div>
+      <input class="fi" type="text" id="eq-zone-depot" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
+    </div>
     <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
       <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
       <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
@@ -2866,7 +2870,7 @@ function sendEquip() {
   if (checkConsultMode()) return;
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
   const tag  = v('eq-tag'), desc = v('eq-desc'), serie = v('eq-serie');
-  const zone = v('eq-zone'), rem  = v('eq-rem');
+  const zone = v('eq-zone'), rem  = v('eq-rem'), zoneDepot = v('eq-zone-depot');
   const locP50 = v('eq-loc-p50');
   const manual = getEmails('eq-manual'), cc = getEmails('eq-cc');
 
@@ -2923,7 +2927,7 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
@@ -2932,7 +2936,7 @@ function sendEquip() {
     var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
     var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
     var s2=document.getElementById('eq-loc-p50-sel'); if(s2) s2.value='';
-    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-rem'], [], 'eq');
+    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-zone-depot','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
@@ -3780,9 +3784,10 @@ async function renderHist() {
           ${r.wo?`<span style="background:#EEF2FF;color:#3730A3;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700">WO ${r.wo}</span>`:''}
           ${r.sc?`<span style="background:#FFF7ED;color:#9A3412;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700">SC ${r.sc}</span>`:''}
         </div>
-        ${info?`<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>`:''}
+        ${(r.type==='TERMINE' && r.statut) ? `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:2px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;color:#375623">📍 ${r.statut}</div>` : (info ? `<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>` : '')}
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
-        ${r.loc?`<div style="font-size:10px;color:var(--muted)">${r.loc}</div>`:''}
+        ${r.loc?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${r.loc}</div>`:''}
+        ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
         ${_isConsultMode
@@ -3847,7 +3852,7 @@ async function dbSaveTermine(d) {
     wo:    d.woMtc || d.wo || '',   // WO MTC en priorité
     woUsine: d.wo  || '',            // WO Usine
     wr:d.wr, sc:d.sc,
-    wg:d.wg, statut:d.statut, loc:d.zone,
+    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'',
     desc: d.dest ? d.dest.join(', ') : '',
     emailDemandeur: d.emailDemandeur || null,
     photos: d.photos || [] });
