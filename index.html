@@ -2502,23 +2502,88 @@ function saveWOClotures(list) {
 }
 
 async function cloturerWO(wo, tag, wg, date, recordId) {
+  if (!confirm('✅ Clôturer le WO ' + wo + ' ?\n\nCela va supprimer :\n• Tous les enregistrements liés à ce WO\n• Toutes les photos associées (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.')) return;
+
+  // 1. Ajouter à la liste des clôturés
   var list = getWOClotures();
   if (!list.find(function(x){ return x.wo === wo; })) {
     list.unshift({ wo:wo, tag:tag, wg:wg, date:date, dateCloture: new Date().toLocaleDateString('fr-FR'), id: recordId });
     saveWOClotures(list);
   }
 
-  if (recordId) {
-    supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(recordId), 'DELETE').catch(function(){});
+  try {
+    var records = await dbLoad();
+    var allHist = records.filter(function(r){ return r.wo === wo; });
+
+    // 2. Supprimer les photos Cloudinary de chaque record
+    for (var h of allHist) {
+      var pics = (h.photos || []).filter(Boolean);
+      for (var p of pics) {
+        try {
+          await fetch(DB_API + '?action=delete_photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photo_url: p })
+          });
+        } catch(e) { console.warn('photo delete err', e); }
+      }
+      // 3. Supprimer chaque record de l'historique
+      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' }).catch(function(){});
+    }
+
+    // 4. Supprimer les photos du planning pour ce WO
     try {
-      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-      local = local.filter(function(r){ return r.id !== recordId; });
-      localStorage.setItem('prnc-historique', JSON.stringify(local));
+      var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
+      var planData = await planResp.json();
+      var planRows = planData.rows || planData;
+      if (Array.isArray(planRows)) {
+        for (var planRow of planRows) {
+          if (!planRow || planRow.wo !== wo) continue;
+          // Supprimer photos Cloudinary du planning
+          var planPics = (planRow.photos || []).filter(Boolean);
+          for (var pp of planPics) {
+            try {
+              await fetch(DB_API + '?action=delete_photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ photo_url: pp })
+              });
+            } catch(e) { console.warn('plan photo delete err', e); }
+          }
+          // Supprimer la ligne planning dans Neon
+          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method: 'DELETE' }).catch(function(){});
+        }
+      }
+    } catch(e) { console.warn('planning delete err', e); }
+
+    // 5. Supprimer dans PI Suivi
+    try {
+      var piRows = await fetch(DB_API + '?table=pi_suivi').then(function(r){ return r.json(); });
+      var piRow = Array.isArray(piRows) ? piRows.find(function(p){ return p.wo === wo; }) : null;
+      if (piRow) {
+        await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method: 'DELETE' });
+        _piCache = null;
+      }
+    } catch(e) { console.warn('pi_suivi delete err', e); }
+
+    // 6. Nettoyer le cache local
+    _dbCache = null;
+    _photosByWOCache = null;
+    if (typeof _planningData !== 'undefined') {
+      _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
+    }
+    try {
+      var local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(function(r){ return r.wo !== wo; })));
     } catch(e) {}
-    invalidateDbCache();
+
+  } catch(e) {
+    console.warn('cloturerWO err', e);
+    alert('Erreur lors de la clôture : ' + e.message);
   }
 
   renderHist();
+  if (typeof updateStats === 'function') updateStats();
 }
 
 function uncloturerWO(wo) {
@@ -6154,45 +6219,98 @@ async function deleteRecord(id) {
   const wo = rec ? (rec.wo || '') : '';
 
   var msg = wo
-    ? '⚠️ Supprimer tout ce qui est lié au WO ' + wo + ' ?\n\n• Tous les enregistrements historique de ce WO\n• Toutes les photos Cloudinary associées\n• Le WO dans PI Suivi\n\nCette action est irréversible.'
-    : '⚠️ Supprimer cet enregistrement ?\n\nCette action est irréversible.';
+    ? '🗑️ Supprimer tout ce qui est lié au WO ' + wo + ' ?\n\n• Tous les enregistrements historique\n• Toutes les photos Cloudinary (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.'
+    : '🗑️ Supprimer cet enregistrement ?\n\nCette action est irréversible.';
 
   if (!confirm(msg)) return;
 
   if (wo) {
+    const allHist = records.filter(r => r.wo === wo);
 
+    // 1. Supprimer les photos Cloudinary de chaque record historique
+    for (const h of allHist) {
+      const pics = (h.photos || []).filter(Boolean);
+      for (const p of pics) {
+        try {
+          await fetch(DB_API + '?action=delete_photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photo_url: p })
+          });
+        } catch(e) { console.warn('photo delete err', e); }
+      }
+      // 2. Supprimer le record de l'historique
+      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' }).catch(function(){});
+    }
+
+    // 3. Supprimer les photos du planning + la ligne planning
+    try {
+      var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
+      var planData = await planResp.json();
+      var planRows = planData.rows || planData;
+      if (Array.isArray(planRows)) {
+        for (const planRow of planRows) {
+          if (!planRow || planRow.wo !== wo) continue;
+          const planPics = (planRow.photos || []).filter(Boolean);
+          for (const pp of planPics) {
+            try {
+              await fetch(DB_API + '?action=delete_photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ photo_url: pp })
+              });
+            } catch(e) { console.warn('plan photo delete err', e); }
+          }
+          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method: 'DELETE' }).catch(function(){});
+        }
+      }
+    } catch(e) { console.warn('planning delete err', e); }
+
+    // 4. Supprimer dans PI Suivi
     try {
       const piRows = await fetch(DB_API + '?table=pi_suivi').then(r => r.json());
       const piRow = Array.isArray(piRows) ? piRows.find(p => p.wo === wo) : null;
       if (piRow) {
         await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method: 'DELETE' });
         _piCache = null;
-      } else {
-        const allHist = records.filter(r => r.wo === wo);
-        for (const h of allHist) {
-          await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' });
-        }
       }
-    } catch(e) { console.warn('Cascade delete err', e); }
+    } catch(e) { console.warn('pi_suivi delete err', e); }
 
+    // 5. Nettoyer les caches
     _dbCache = null;
+    _photosByWOCache = null;
+    if (typeof _planningData !== 'undefined') {
+      _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
+    }
     try {
       const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
       localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.wo !== wo)));
     } catch(e) {}
 
   } else {
-    try {
-      await fetch(DB_API + '?id=' + encodeURIComponent(id), { method: 'DELETE' });
-    } catch(e) { console.warn('DB delete err', e); }
+    // Pas de WO — supprimer seulement les photos + le record
+    const pics = (rec && rec.photos || []).filter(Boolean);
+    for (const p of pics) {
+      try {
+        await fetch(DB_API + '?action=delete_photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo_url: p })
+        });
+      } catch(e) { console.warn('photo delete err', e); }
+    }
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), { method: 'DELETE' }).catch(function(){});
 
     _dbCache = null;
+    _photosByWOCache = null;
     try {
       const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
       localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id)));
     } catch(e) {}
   }
 
+  // Fermer la modal si ouverte
+  document.querySelectorAll('.overlay-view').forEach(function(ov){ ov.remove(); });
   renderHist();
   updateStats();
 }
@@ -6761,17 +6879,28 @@ function viewRecord(id) {
     ).join('');
 
     var _wopView = getPhotosByWO(r.wo||'');
-    const photos = _wopView.length ? _wopView : (r.photos && r.photos.length ? r.photos.filter(Boolean) : []);
-    const photosHtml = `<div style="padding:10px 0 4px">
+    // Fusionner avec les photos du planning (même WO) — depuis mémoire ou Neon
+    var _planPhotos = [];
+    if (r.wo && typeof _planningData !== 'undefined' && _planningData.length) {
+      var _planItem = _planningData.find(function(i){ return i.wo === r.wo; });
+      if (_planItem && _planItem._photos && _planItem._photos.length) _planPhotos = _planItem._photos.filter(Boolean);
+    }
+    var _allPhotos = (r.photos || []).filter(Boolean);
+    _wopView.forEach(function(p){ if (_allPhotos.indexOf(p)<0) _allPhotos.push(p); });
+    _planPhotos.forEach(function(p){ if (_allPhotos.indexOf(p)<0) _allPhotos.push(p); });
+    const photos = _allPhotos;
+    // Si pas de photos planning en mémoire, aller chercher en live depuis Neon
+    var _needPlanFetch = r.wo && !_planPhotos.length;
+    const photosHtml = `<div data-photos-zone style="padding:10px 0 4px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">📷 Photos${photos.length ? ' (' + photos.length + ')' : ''}</div>
+        <div data-photos-lbl style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">📷 Photos${photos.length ? ' (' + photos.length + ')' : ''}</div>
         <label style="background:#1F3864;color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
           + Ajouter
           <input type="file" accept="image/*" multiple style="display:none" onchange="addPhotosToRecord('${r.id}',this)">
         </label>
       </div>
       ${photos.length > 0
-        ? `<div style="display:flex;flex-wrap:wrap;gap:8px">
+        ? `<div data-photo-wrap style="display:flex;flex-wrap:wrap;gap:8px">
              ${photos.map((p,i) => `
                <div style="position:relative">
                  <img src="${cloudThumb(p,200,200)}" loading="lazy" onclick="viewPhotoFull('${i}','${r.id}')"
@@ -6819,6 +6948,43 @@ function viewRecord(id) {
     overlay.classList.add('overlay-view');
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+
+    // Si pas de photos planning en mémoire, fetcher depuis Neon par WO
+    if (_needPlanFetch && r.wo) {
+      fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(r.wo))
+        .then(function(resp){ return resp.json(); })
+        .then(function(data) {
+          var rows = data.rows || data;
+          if (!Array.isArray(rows)) rows = [data];
+          var planRow = rows.find(function(row){ return row && row.wo === r.wo; });
+          var planPics = planRow && planRow.photos ? planRow.photos.filter(Boolean) : [];
+          if (!planPics.length) return;
+          // Ajouter les photos manquantes dans l'overlay existant
+          var photoDiv = overlay.querySelector('[data-photos-zone]');
+          if (!photoDiv) return;
+          var newUrls = planPics.filter(function(p){ return !photos.includes(p); });
+          if (!newUrls.length) return;
+          var wrap = photoDiv.querySelector('[data-photo-wrap]');
+          if (!wrap) {
+            // Zone vide — reconstruire
+            photoDiv.innerHTML = '<div data-photo-wrap style="display:flex;flex-wrap:wrap;gap:8px">' +
+              newUrls.map(function(p,i){ return '<div style="position:relative"><img src="' + p + '" loading="lazy" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer" onclick="viewImg(this.src)"></div>'; }).join('') +
+            '</div>';
+          } else {
+            newUrls.forEach(function(p){ 
+              var d=document.createElement('div'); d.style.position='relative';
+              var img=document.createElement('img'); img.src=p; img.loading='lazy';
+              img.style.cssText='width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer';
+              img.onclick=function(){ viewImg(this.src); };
+              d.appendChild(img); wrap.appendChild(d);
+            });
+          }
+          // Mettre à jour le compteur
+          var lbl = photoDiv.querySelector('[data-photos-lbl]');
+          if (lbl) { var tot = photos.length + newUrls.length; lbl.textContent = '📷 Photos (' + tot + ')'; }
+        })
+        .catch(function(e){ console.warn('plan photos fetch err', e); });
+    }
   });
 }
 
