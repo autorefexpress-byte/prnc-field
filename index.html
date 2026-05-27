@@ -3791,7 +3791,7 @@ async function renderHist() {
             (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(this.dataset.rid)" data-rid="' + r.id + '" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
             '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '') +
-            ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
+            ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wo-usine="' + (r.woUsine||'') + '" data-wr="' + (r.wr||'') + '" data-sc="' + (r.sc||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" data-desc="' + ((r.desc||'').replace(/"/g,"'")) + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
         }
       </div>
     </div>`;
@@ -10675,25 +10675,57 @@ document.addEventListener('click', function(e) {
 var _p99Current = null;
 
 function ouvrirP99(btn) {
-  var id   = btn.getAttribute('data-id');
-  var tag  = btn.getAttribute('data-tag');
-  var wo   = btn.getAttribute('data-wo');
-  var wg   = btn.getAttribute('data-wg') || 'MCREPAR';
-  var mail = btn.getAttribute('data-mail');
-  _p99Current = { id:id, tag:tag, wo:wo, wg:wg };
-  document.getElementById('p99-subtitle').textContent = tag + (wo ? ' · WO ' + wo : '') + ' · ' + wg;
-  document.getElementById('p99-email').value = mail || '';
-  // Adapter les CC selon le WG
-  var ccEl = document.getElementById('p99-cc-list');
-  if (ccEl) {
-    if (wg === 'STROB') {
-      ccEl.innerHTML = 'pascal.bafue@pronyresources.com<br>emmanuel.rosa@pronyresources.com<br>kendji.kasovimoin.EXT@pronyresources.com<br>regis.eurimindia@pronyresources.com<br>jacques.trimari@pronyresources.com';
-    } else {
-      ccEl.innerHTML = 'regis.eurimindia@pronyresources.com<br>pascal.bafue@pronyresources.com<br>emmanuel.rosa@pronyresources.com<br>jacques.trimari@pronyresources.com';
+  var id      = btn.getAttribute('data-id')      || '';
+  var tag     = btn.getAttribute('data-tag')     || '';
+  var wo      = btn.getAttribute('data-wo')      || '';
+  var woUsine = btn.getAttribute('data-wo-usine')|| '';
+  var wr      = btn.getAttribute('data-wr')      || '';
+  var sc      = btn.getAttribute('data-sc')      || '';
+  var wg      = btn.getAttribute('data-wg')      || 'MCREPAR';
+  var mail    = btn.getAttribute('data-mail')    || '';
+  var desc    = btn.getAttribute('data-desc')    || '';
+
+  // Naviguer vers l onglet Equipement termine et pre-remplir
+  show('s-equip');
+  setTimeout(function() {
+    // 1. Selectionner le bon workgroup
+    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === wg; }) || '';
+    if (wgKey) setWG('eq', wgKey);
+
+    // 2. Remplir les champs identite
+    var fill = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
+    fill('eq-tag',    tag);
+    fill('eq-wo',     woUsine);
+    fill('eq-wo-mtc', wo);
+    fill('eq-wr',     wr);
+    fill('eq-sc',     sc);
+    fill('eq-desc',   desc);
+
+    // 3. Selectionner statut P99 Zone vanne
+    setTimeout(function() { setEqStatut('p99vanne'); }, 150);
+
+    // 4. Pre-remplir email demandeur si disponible
+    if (mail) {
+      setTimeout(function() {
+        var manualList = document.getElementById('eq-manual');
+        if (manualList) {
+          var inputs = manualList.querySelectorAll('input');
+          var found = false;
+          inputs.forEach(function(i){ if(i.value === mail) found = true; });
+          if (!found) {
+            var div = document.createElement('div');
+            div.className = 'manual-item';
+            div.innerHTML = '<input class="fi" type="email" value="' + mail + '" style="background:#E8F5E9;color:#375623;font-weight:600">' +
+              '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
+            manualList.appendChild(div);
+          }
+        }
+      }, 300);
     }
-  }
-  var ov = document.getElementById('p99-overlay');
-  if (ov) { ov.style.display = 'flex'; }
+
+    // 5. Scroll en haut du formulaire
+    window.scrollTo(0, 0);
+  }, 200);
 }
 
 function fermerP99() {
