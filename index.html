@@ -10329,12 +10329,13 @@ function ajouterPhotoPlanning(wo, input) {
               if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
             }
             // Sauvegarder dans Neon
-            fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(item.wo), {
+            fetch(DB_API + '?table=planning', {
               method: 'PATCH',
               headers: {'Content-Type':'application/json'},
               body: JSON.stringify({
-                photos: item._photos,
-                semaine: item.semaine || ''
+                wo: item.wo,
+                semaine: item.semaine || '',
+                photos: item._photos
               })
             }).then(function(r){ return r.json(); })
               .then(function(res){ console.log('✅ Photos planning sauvegardées:', res); })
@@ -10352,12 +10353,13 @@ function sauvegarderRemarquePlanning(wo) {
   if (item) item._remarque = ta.value;
   var btn = ta.nextElementSibling;
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), {
+  fetch(DB_API + '?table=planning', {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      remarque: ta.value,
-      semaine: item ? (item.semaine || '') : ''
+      wo: wo,
+      semaine: item ? (item.semaine || '') : '',
+      remarque: ta.value
     })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
@@ -10401,10 +10403,10 @@ function changerStatutPlanning(wo, newStatut) {
   var _sem = item.semaine || '';
 
   // 1. Sauvegarder statut dans table planning
-  fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), {
+  fetch(DB_API + '?table=planning', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ statut: newStatut, semaine: _sem })
+    body: JSON.stringify({ wo: wo, semaine: _sem, statut: newStatut })
   }).catch(function(e){ console.warn('planning sync err', e); });
 
   // 2. Si TERMINE → mettre à jour le type dans historique par WO
