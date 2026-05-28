@@ -9973,6 +9973,7 @@ if('serviceWorker' in navigator){
 
 // ═══════════════ PLANNING ATELIER P17 ═══════════════
 var _planningData   = [];
+var _semaineActive  = '';
 var _planningFilter = null;
 var _PSTAT = {
   PLANIFIE:   {bg:'#DEEAF1',bd:'#1F3864',tx:'#1F3864',lb:'📅 Planifié'},
@@ -10021,6 +10022,7 @@ async function chargerPlanningNeon(semaine) {
     var data = await resp.json();
     var rows = data.rows || data;
     var semaineActive = data.semaine_active || (rows[0] && rows[0].semaine) || '';
+    _semaineActive = semaineActive;
     _planningSemanines = data.semaines || [];
     if (rows && rows.length) {
       _planningData = rows.map(function(r) {
@@ -10334,11 +10336,18 @@ function ajouterPhotoPlanning(wo, input) {
               headers: {'Content-Type':'application/json'},
               body: JSON.stringify({
                 wo: item.wo,
-                semaine: item.semaine || '',
+                semaine: item.semaine || _semaineActive || '',
                 photos: item._photos
               })
             }).then(function(r){ return r.json(); })
-              .then(function(res){ console.log('✅ Photos planning sauvegardées:', res); })
+              .then(function(res){
+                if (res && res.ok) {
+                  console.log('✅ Photo planning sauvegardée dans Neon');
+                } else {
+                  console.warn('❌ Neon reject:', res);
+                  alert('Erreur sauvegarde photo : semaine manquante ou WO introuvable.');
+                }
+              })
               .catch(function(e){ console.warn('photo save err', e); });
           }
         }
