@@ -10297,62 +10297,79 @@ function pChip(l,v) {
 
 var _planningPhotosCache = {};
 
-function ajouterPhotoPlanning(wo, input) {
+async function ajouterPhotoPlanning(wo, input) {
   var files = Array.from(input.files);
   if (!files.length) return;
   var preview = document.getElementById('planning-photos-preview-' + wo);
+  var item = _planningData.find(function(i){ return i.wo === wo; });
+  if (!item) return;
+  if (!item._photos) item._photos = [];
+
+  // Afficher un indicateur de chargement
+  var loadDiv = document.createElement('div');
+  loadDiv.style.cssText = 'font-size:11px;color:#888;padding:4px 0';
+  loadDiv.textContent = '⏳ Upload en cours...';
+  if (preview) preview.appendChild(loadDiv);
+
+  // Uploader toutes les photos en parallèle puis sauvegarder UNE SEULE FOIS
+  var placeholders = [];
   files.forEach(function(file) {
+    // Preview locale immédiate
     var reader = new FileReader();
-    reader.onload = function(e) {
-      if (preview) {
-        var img = document.createElement('img');
-        img.src = e.target.result;
-        img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer';
-        img.onclick = function(){ viewImg(this.src); };
-        preview.appendChild(img);
-      }
-    };
+    var img = document.createElement('img');
+    img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
+    if (preview) preview.insertBefore(img, loadDiv);
+    placeholders.push(img);
+    reader.onload = function(e){ img.src = e.target.result; };
     reader.readAsDataURL(file);
-    // Upload Cloudinary
-    var fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_PRESET);
-    fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method:'POST', body:fd })
-      .then(function(r){ return r.json(); })
-      .then(function(d) {
-        if (d.secure_url) {
-          var item = _planningData.find(function(i){ return i.wo === wo; });
-          if (item) {
-            if (!item._photos) item._photos = [];
-            item._photos.push(d.secure_url);
-            // Mettre à jour preview avec URL Cloudinary définitive
-            if (preview) {
-              var imgs = preview.querySelectorAll('img');
-              if (imgs.length) imgs[imgs.length-1].src = d.secure_url;
-            }
-            // Sauvegarder dans Neon
-            fetch(DB_API + '?table=planning', {
-              method: 'PATCH',
-              headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({
-                wo: item.wo,
-                semaine: item.semaine || _semaineActive || '',
-                photos: item._photos
-              })
-            }).then(function(r){ return r.json(); })
-              .then(function(res){
-                if (res && res.ok) {
-                  console.log('✅ Photo planning sauvegardée dans Neon');
-                } else {
-                  console.warn('❌ Neon reject:', res);
-                  alert('Erreur sauvegarde photo : semaine manquante ou WO introuvable.');
-                }
-              })
-              .catch(function(e){ console.warn('photo save err', e); });
-          }
-        }
-      }).catch(function(e){ console.warn('upload err', e); });
   });
+
+  try {
+    // Upload toutes les photos en parallèle
+    var uploadPromises = files.map(function(file) {
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method:'POST', body:fd })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ return d.secure_url || null; });
+    });
+
+    var urls = await Promise.all(uploadPromises);
+    var validUrls = urls.filter(Boolean);
+
+    // Mettre à jour les previews avec les vraies URLs
+    validUrls.forEach(function(url, i) {
+      if (placeholders[i]) { placeholders[i].src = url; placeholders[i].style.opacity = '1'; placeholders[i].onclick = function(){ viewImg(this.src); }; }
+      item._photos.push(url);
+    });
+
+    if (loadDiv) loadDiv.remove();
+
+    if (!validUrls.length) { alert('❌ Echec upload Cloudinary'); return; }
+
+    // Sauvegarder UNE SEULE FOIS dans Neon avec toutes les photos
+    var resp = await fetch(DB_API + '?table=planning', {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        wo: item.wo,
+        semaine: item.semaine || _semaineActive || '',
+        photos: item._photos
+      })
+    });
+    var res = await resp.json();
+    if (res && res.ok) {
+      console.log('✅ ' + validUrls.length + ' photo(s) sauvegardée(s) dans Neon');
+    } else {
+      console.warn('❌ Neon reject:', res);
+      alert('❌ Erreur sauvegarde : ' + JSON.stringify(res));
+    }
+  } catch(e) {
+    if (loadDiv) loadDiv.remove();
+    console.warn('ajouterPhotoPlanning err', e);
+    alert('❌ Erreur : ' + e.message);
+  }
 }
 
 function sauvegarderRemarquePlanning(wo) {
