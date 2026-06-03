@@ -10232,13 +10232,34 @@ function ouvrirPlanningModal(wo) {
     + '</div>';
   }
 
-  // Photos existantes depuis historique
-  var photos = item._photos || [];
-  var photosExistHtml = photos.length
-    ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-        + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
-      + '</div>'
-    : '';
+  // Photos existantes (depuis mémoire)
+  var photos = (item._photos || []).filter(Boolean);
+  var photosExistHtml = '<div id="planning-photos-exist-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + '</div>';
+  // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
+  setTimeout(function() {
+    fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo))
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var rows = data.rows || (Array.isArray(data) ? data : []);
+        var row = rows.find(function(r){ return r.wo === wo; });
+        if (!row) return;
+        var freshPhotos = (row.photos || []).filter(Boolean);
+        if (!freshPhotos.length) return;
+        // Mettre à jour _planningData en mémoire
+        item._photos = freshPhotos;
+        // Mettre à jour la zone photos dans la modal
+        var zone = document.getElementById('planning-photos-exist-' + wo);
+        if (!zone) return;
+        zone.innerHTML = freshPhotos.map(function(p){
+          return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">';
+        }).join('');
+        // Vider le preview (éviter doublons)
+        var prev = document.getElementById('planning-photos-preview-' + wo);
+        if (prev) prev.innerHTML = '';
+      }).catch(function(e){ console.warn('fetch photos live err', e); });
+  }, 100);
 
   var content2 = document.getElementById('planning-modal-content');
   if (!content2) return;
