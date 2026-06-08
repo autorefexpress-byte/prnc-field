@@ -489,7 +489,16 @@ function _initLocSel(selId, inpId, val) {
     </div>
 
     <!-- WO — affiché pour tous mais pas dans les champs fiche strob -->
-    <div class="field-grp"><div class="field-lbl">Work Order (WO)</div><input class="fi" type="text" id="ar-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('ar-wo','N° WO')" style="cursor:pointer"></div>
+    <div class="field-grp">
+  <div class="field-lbl">Work Order (WO)</div>
+  <div style="position:relative">
+    <input class="fi" type="text" id="ar-wo" placeholder="Ex : 837669 ou tapez pour chercher..."
+      autocomplete="off" inputmode="numeric" style="padding-right:36px"
+      oninput="_filtrerWOGWO(this.value)" onfocus="_filtrerWOGWO(this.value)">
+    <span id="ar-wo-clear" onclick="_clearWOGWO()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px;background:none;border:none;padding:0">✕</span>
+    <div id="ar-wo-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+  </div>
+</div>
 
     <div class="field-grp"><div class="field-lbl">Demandeur</div><input class="fi" type="text" id="ar-desc" placeholder="Ex : Jean Dupont"></div>
 
@@ -10902,6 +10911,98 @@ document.addEventListener('click', function(e) {
   }
 });
 
+
+// ═══════════════ AUTOCOMPLETE WO ARRIVÉE ═══════════════
+function _filtrerWOGWO(val) {
+  var list  = document.getElementById('ar-wo-list');
+  var clear = document.getElementById('ar-wo-clear');
+  if (!list) return;
+  if (clear) clear.style.display = val ? 'block' : 'none';
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+  var q = val.toLowerCase();
+  var filtered = [];
+  if (_woEnGData && _woEnGData.length) {
+    filtered = _woEnGData.filter(function(w){
+      return (w.wo||'').includes(q)
+          || (w.wr||'').includes(q)
+          || (w.tag||'').toLowerCase().includes(q)
+          || (w.desc||'').toLowerCase().includes(q);
+    }).slice(0, 25);
+    _afficherListeWOGWO(filtered, list);
+  } else {
+    clearTimeout(_woGTimer);
+    _woGTimer = setTimeout(function(){
+      fetch(DB_API + '?table=wo_en_g&q=' + encodeURIComponent(val))
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          var mapped = rows.map(function(r){ return {wo:r.wo, wr:r.wr||'', tag:r.tag, desc:r.description, wg:r.wg}; });
+          _afficherListeWOGWO(mapped, list);
+        }).catch(function(){});
+    }, 300);
+  }
+}
+
+function _afficherListeWOGWO(items, list) {
+  if (!items || !items.length) { list.style.display = 'none'; return; }
+  list.style.display = 'block';
+  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var w = items[i];
+    var c = wgColors[w.wg] || '#555';
+    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWO(this.dataset.wo)"'
+      + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
+        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + (w.wo||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.wr||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:11px;color:#555">' + (w.tag||'') + '</span>'
+        + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
+      + '</div>'
+      + '<div style="font-size:10px;color:#666">' + (w.desc||'').slice(0,55) + '</div>'
+      + '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function _selectionnerWOGWO(wo) {
+  var w = _woEnGData.find(function(x){ return x.wo === wo; });
+  if (!w) return;
+  // Remplir WO
+  var arWo = document.getElementById('ar-wo');
+  if (arWo) arWo.value = w.wo || '';
+  // Remplir WR si vide
+  var arWr = document.getElementById('ar-wr');
+  if (arWr && !arWr.value) arWr.value = w.wr || '';
+  // Remplir TAG si vide
+  var arTag = document.getElementById('ar-tag');
+  if (arTag && !arTag.value) arTag.value = w.tag || '';
+  // Sélectionner WG
+  if (w.wg === 'MCCHAUD') setWG('ar','chaud');
+  else if (w.wg === 'MCREPAR') setWG('ar','repar');
+  else if (w.wg === 'STROB') setWG('ar','strob');
+  // Fermer la liste
+  var list = document.getElementById('ar-wo-list');
+  if (list) list.style.display = 'none';
+  var clear = document.getElementById('ar-wo-clear');
+  if (clear) clear.style.display = 'block';
+}
+
+function _clearWOGWO() {
+  var arWo = document.getElementById('ar-wo');
+  if (arWo) arWo.value = '';
+  var list = document.getElementById('ar-wo-list');
+  if (list) list.style.display = 'none';
+  var clear = document.getElementById('ar-wo-clear');
+  if (clear) clear.style.display = 'none';
+}
+
+// Fermer liste WO si clic dehors
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#ar-wo') && !e.target.closest('#ar-wo-list')) {
+    var list = document.getElementById('ar-wo-list');
+    if (list) list.style.display = 'none';
+  }
+});
 
 // ═══════════════ P99 ZONE VANNE ═══════════════
 var _p99Current = null;
