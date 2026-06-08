@@ -10239,27 +10239,32 @@ function ouvrirPlanningModal(wo) {
     + '</div>';
   // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
   setTimeout(function() {
-    fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo))
+    // Le backend retourne toute la semaine — on filtre côté client
+    var semaine = item.semaine || _semaineActive || '';
+    var url = DB_API + '?table=planning' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    fetch(url)
       .then(function(r){ return r.json(); })
       .then(function(data) {
-        var rows = data.rows || (Array.isArray(data) ? data : []);
-        var row = rows.find(function(r){ return r.wo === wo; });
+        // Le backend renvoie { rows: [...] } ou directement un tableau
+        var rows = [];
+        if (data && Array.isArray(data.rows)) rows = data.rows;
+        else if (Array.isArray(data)) rows = data;
+        var row = rows.find(function(r){ return r && r.wo === wo; });
         if (!row) return;
         var freshPhotos = (row.photos || []).filter(Boolean);
-        if (!freshPhotos.length) return;
-        // Mettre à jour _planningData en mémoire
+        // Mettre à jour _planningData en mémoire même si vide
         item._photos = freshPhotos;
         // Mettre à jour la zone photos dans la modal
         var zone = document.getElementById('planning-photos-exist-' + wo);
         if (!zone) return;
         zone.innerHTML = freshPhotos.map(function(p){
-          return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">';
+          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
         }).join('');
-        // Vider le preview (éviter doublons)
+        // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-' + wo);
         if (prev) prev.innerHTML = '';
       }).catch(function(e){ console.warn('fetch photos live err', e); });
-  }, 100);
+  }, 200);
 
   var content2 = document.getElementById('planning-modal-content');
   if (!content2) return;
@@ -10364,21 +10369,36 @@ async function ajouterPhotoPlanning(wo, input) {
     if (!validUrls.length) { alert('❌ Echec upload Cloudinary'); return; }
 
     // Sauvegarder UNE SEULE FOIS dans Neon avec toutes les photos
+    var semaineSave = item.semaine || _semaineActive || '';
+    console.log('💾 PATCH planning wo=' + item.wo + ' semaine=' + semaineSave + ' photos=' + item._photos.length);
+    if (!semaineSave) {
+      alert('❌ Semaine introuvable — impossible de sauvegarder. Rechargez le planning.');
+      return;
+    }
     var resp = await fetch(DB_API + '?table=planning', {
       method: 'PATCH',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         wo: item.wo,
-        semaine: item.semaine || _semaineActive || '',
+        semaine: semaineSave,
         photos: item._photos
       })
     });
     var res = await resp.json();
     if (res && res.ok) {
       console.log('✅ ' + validUrls.length + ' photo(s) sauvegardée(s) dans Neon');
+      // Rafraîchir la zone photos existantes
+      var zone = document.getElementById('planning-photos-exist-' + wo);
+      if (zone) {
+        zone.innerHTML = item._photos.map(function(p){
+          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+        }).join('');
+        var prev = document.getElementById('planning-photos-preview-' + wo);
+        if (prev) prev.innerHTML = '';
+      }
     } else {
       console.warn('❌ Neon reject:', res);
-      alert('❌ Erreur sauvegarde : ' + JSON.stringify(res));
+      alert('❌ Erreur sauvegarde photo\nWO: ' + item.wo + '\nSemaine: ' + semaineSave + '\nRéponse: ' + JSON.stringify(res));
     }
   } catch(e) {
     if (loadDiv) loadDiv.remove();
