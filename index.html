@@ -4607,33 +4607,78 @@ async function _importerBordereauCallidus(input) {
     try {
       var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
       var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
 
-      var semaine = (rows[3] && rows[3][0]) ? String(rows[3][0]).trim() : '';
-      var dateT = '';
-      if (rows[18] && rows[18][2]) {
-        var dt = String(rows[18][2]).replace(/\n/g,'').trim().split(' ')[0];
-        if (/^\d{2}\/\d{2}\/\d{2}$/.test(dt)) dt = dt.slice(0,6) + '20' + dt.slice(6);
-        dateT = dt;
+      // Semaine : row 4 col A (index 3,0)
+      var semaine = '';
+      for (var ri = 0; ri < 10; ri++) {
+        if (rows[ri] && rows[ri][0] && /^S\d+$/i.test(String(rows[ri][0]).trim())) {
+          semaine = String(rows[ri][0]).trim(); break;
+        }
       }
 
+      // Date transport
+      var dateT = '';
+      if (rows[18] && rows[18][2]) {
+        var dt = rows[18][2];
+        if (dt instanceof Date) dateT = dt.toLocaleDateString('fr-FR');
+        else dateT = String(dt).replace(/\n/g,'').trim().split(' ')[0];
+        if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateT)) dateT = dateT.slice(0,6)+'20'+dateT.slice(6);
+      }
+
+      // Détecter la ligne d'en-tête (celle qui contient "S/C" ou "IR BDS")
+      var headerRow = -1;
+      var colSC=-1, colBDS=-1, colDESC=-1, colWO=-1, colTAG=-1, colLIEU=-1;
+      for (var ri2 = 15; ri2 < 30; ri2++) {
+        var row = rows[ri2]; if (!row) continue;
+        for (var ci = 0; ci < row.length; ci++) {
+          var val = row[ci] ? String(row[ci]).trim().toUpperCase() : '';
+          if (val === 'S/C')           { colSC   = ci; headerRow = ri2; }
+          if (val === 'IR BDS' || val === 'BDS') { colBDS  = ci; headerRow = ri2; }
+          if (val.includes('DESCRIPTION'))        { colDESC = ci; headerRow = ri2; }
+          if (val.includes('WO') && val.includes('WR')) { colWO = ci; headerRow = ri2; }
+          if (val === 'TAG')           { colTAG  = ci; headerRow = ri2; }
+          if (val.includes('LIVRAISON') || val.includes('LIEU')) { colLIEU = ci; headerRow = ri2; }
+        }
+        if (headerRow === ri2) break;
+      }
+
+      // Si colonnes non détectées, utiliser les indices connus du template
+      if (colSC  < 0) colSC   = 8;
+      if (colBDS < 0) colBDS  = 9;
+      if (colDESC< 0) colDESC = 10;
+      if (colWO  < 0) colWO   = 11;
+      if (colTAG < 0) colTAG  = 12;
+      if (colLIEU< 0) colLIEU = 14;
+
+      var startRow = headerRow >= 0 ? headerRow + 2 : 23;
+
       var items = [];
-      for (var r = 23; r <= 54; r++) {
+      for (var r = startRow; r < Math.min(startRow + 40, rows.length); r++) {
         var row = rows[r]; if (!row) continue;
-        var sc   = row[8]  ? String(row[8]).trim()  : '';
-        var bds  = row[9]  ? String(row[9]).trim()  : '';
-        var desc = row[10] ? String(row[10]).trim()  : '';
-        var wo   = row[11] ? String(row[11]).trim()  : '';
-        var tag  = row[12] ? String(row[12]).trim()  : '';
-        var lieu = row[14] ? String(row[14]).trim()  : '';
-        var wr = '';
-        if (wo.includes('/')) { var parts=wo.split('/'); wo=parts[0].trim(); wr=parts[1]?parts[1].trim():''; }
+        var sc   = row[colSC]   != null ? String(row[colSC]).trim()   : '';
+        var bds  = row[colBDS]  != null ? String(row[colBDS]).trim()  : '';
+        var desc = row[colDESC] != null ? String(row[colDESC]).trim() : '';
+        var wo   = row[colWO]   != null ? String(row[colWO]).trim()   : '';
+        var tag  = row[colTAG]  != null ? String(row[colTAG]).trim()  : '';
+        var lieu = row[colLIEU] != null ? String(row[colLIEU]).trim() : '';
+
+        // Ignorer formules non calculées
+        if (sc.startsWith('=') || wo.startsWith('=') || tag.startsWith('=')) continue;
         if (!sc && !tag && !wo) continue;
-        if (sc === 'S/C' || tag === 'TAG') continue;
+        if (sc === 'S/C' || tag === 'TAG' || wo === 'WO') continue;
+
+        // Séparer WO et WR
+        var wr = '';
+        if (wo.includes('/')) { var pts=wo.split('/'); wo=pts[0].trim(); wr=pts[1]?pts[1].trim():''; }
+
         items.push({sc, bds, desc, wo, wr, tag, lieu, semaine, date: dateT});
       }
 
-      if (!items.length) { alert('Aucun equipement trouve dans le bordereau.'); return; }
+      if (!items.length) {
+        alert('Aucun equipement trouve.\nSemaine detectee: "' + semaine + '"\nLigne header: ' + (headerRow+1) + '\nColonnes: SC=' + colSC + ' WO=' + colWO + ' TAG=' + colTAG);
+        return;
+      }
 
       var toast = document.createElement('div');
       toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
@@ -4642,27 +4687,11 @@ async function _importerBordereauCallidus(input) {
 
       for (var item of items) {
         var id = Date.now() + '-' + Math.random().toString(36).slice(2,6);
-        // Stocker les infos extra (semaine, wr, desc) dans remarques en JSON
-        var remarques = JSON.stringify({
-          semaine: item.semaine,
-          wr:      item.wr,
-          desc:    item.desc,
-          lieu:    item.lieu
-        });
+        var remarques = JSON.stringify({semaine:item.semaine, wr:item.wr, desc:item.desc, lieu:item.lieu});
         await fetch(DB_API + '?table=callidus_prnc', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            id:       id,
-            wo:       item.wo,
-            tag:      item.tag,
-            serie:    item.bds,       // BDS → serie
-            qty:      item.sc,        // S/C → qty (champ texte)
-            remarques: remarques,
-            statut:   'Envoye',
-            date:     item.date,
-            photos:   []
-          })
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({id, wo:item.wo, tag:item.tag, serie:item.bds,
+            qty:item.sc, remarques, statut:'Envoye', date:item.date, photos:[]})
         });
       }
 
@@ -4676,7 +4705,7 @@ async function _importerBordereauCallidus(input) {
       if (typeof cpShowTab === 'function') cpShowTab('liste');
       renderCallidusPrnc(true);
     } catch(err) {
-      alert('Erreur lecture bordereau : ' + err.message);
+      alert('Erreur : ' + err.message);
       console.error(err);
     }
   };
