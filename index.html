@@ -4685,16 +4685,17 @@ async function _importerBordereauCallidus(input) {
       toast.textContent = 'Semaine ' + semaine + ' — ' + items.length + ' vanne(s) en cours...';
       document.body.appendChild(toast);
 
-      for (var item of items) {
+      await Promise.all(items.map(function(item) {
         var id = Date.now() + '-' + Math.random().toString(36).slice(2,6);
         var remarques = JSON.stringify({semaine:item.semaine, wr:item.wr, desc:item.desc, lieu:item.lieu});
-        await fetch(DB_API + '?table=callidus_prnc', {
+        return fetch(DB_API + '?table=callidus_prnc', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({id, wo:item.wo, tag:item.tag, serie:item.bds,
             qty:item.sc, remarques, statut:'Envoye', date:item.date, photos:[]})
         });
-      }
+      }));
 
+      _cpCache = null; // invalider le cache après import
       toast.remove();
       var t2 = document.createElement('div');
       t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
@@ -8245,8 +8246,7 @@ async function cpEnregistrer() {
 }
 
 async function _recuCallidusPrnc(id) {
-  var all = await fetch(DB_API+'?table=callidus_prnc').then(r=>r.json());
-  var rec = Array.isArray(all) ? all.find(function(r){ return r.id===id; }) : null;
+  var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
   var tag  = rec ? (rec.tag||'') : '';
   var wo   = rec ? (rec.wo||'')  : '';
   var date = new Date().toLocaleDateString('fr-FR');
@@ -8265,7 +8265,7 @@ async function _ajouterPhotoCallidusPrnc(id, input) {
   var files = Array.from(input.files); if (!files.length) return;
   var toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-  toast.textContent = 'Upload photo(s)...'; document.body.appendChild(toast);
+  toast.textContent = 'Upload...'; document.body.appendChild(toast);
   try {
     var urls = (await Promise.all(files.map(function(file){
       var fd = new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
@@ -8273,14 +8273,15 @@ async function _ajouterPhotoCallidusPrnc(id, input) {
         .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
     }))).filter(Boolean);
     if (!urls.length) { toast.remove(); alert('Echec upload'); return; }
-    // Récupérer photos existantes depuis callidus_prnc
-    var existing = await fetch(DB_API+'?table=callidus_prnc').then(r=>r.json());
-    var rec = Array.isArray(existing) ? existing.find(function(r){ return r.id===id; }) : null;
-    var newPhotos = ((rec&&Array.isArray(rec.photos)?rec.photos:[])).concat(urls);
+    // Lire photos existantes depuis le cache
+    var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
+    var newPhotos = ((rec && Array.isArray(rec.photos) ? rec.photos : [])).concat(urls);
     await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{
       method:'PATCH', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({photos:newPhotos})
     });
+    // Mettre à jour le cache local
+    if (rec) rec.photos = newPhotos;
     toast.remove();
     var t2 = document.createElement('div');
     t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
@@ -8306,6 +8307,7 @@ async function _supprimerPhotoCallidusPrnc(id) {
 async function _supprimerCallidusPrnc(id) {
   if (!confirm('Supprimer cette vanne ?')) return;
   await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'});
+  if (_cpCache) _cpCache = _cpCache.filter(function(r){ return r.id!==id; });
   renderCallidusPrnc();
 }
 
@@ -8320,13 +8322,17 @@ async function renderCallidusPrnc(forceRefresh) {
   list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">Chargement...</div>';
   var search = (document.getElementById('cp-search')||{value:''}).value.toLowerCase();
 
-  var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
-  if (!resp || !resp.ok) {
-    list.innerHTML = '<div style="text-align:center;padding:30px;color:#C00;font-weight:700">Erreur connexion</div>';
-    return;
+  // Utiliser le cache sauf si forceRefresh
+  if (!_cpCache || forceRefresh) {
+    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
+    if (!resp || !resp.ok) {
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:#C00;font-weight:700">Erreur connexion</div>';
+      return;
+    }
+    _cpCache = await resp.json();
+    if (!Array.isArray(_cpCache)) _cpCache = [];
   }
-  var allRecs = await resp.json();
-  if (!Array.isArray(allRecs)) allRecs = [];
+  var allRecs = _cpCache;
 
   var recs = allRecs.filter(function(r){
     if (!search) return true;
