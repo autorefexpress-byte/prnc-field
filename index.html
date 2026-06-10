@@ -8587,13 +8587,17 @@ async function renderRelances() {
   list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">&#9203; Chargement...</div>';
   var now = new Date();
   try {
+    // Forcer rechargement frais depuis Neon (ignorer le cache)
+    _dbCache = null;
     var allRecords = await dbLoad();
     var records = allRecords.filter(function(r) {
-      var st = (r.statut || '').toLowerCase();
-      // Inclure uniquement "Retour demandeur" — exclure "Retour magasin" et "Récupéré"
-      var isRetourDemandeur = st.indexOf('demandeur') >= 0 || st === 'retour demandeur';
-      var isRetourMagasin   = st.indexOf('magasin') >= 0 || st.indexOf('magasin') >= 0;
-      var isRecupere        = st.indexOf('recupere') >= 0 || st.indexOf('récupéré') >= 0;
+      var st = (r.statut || '').toLowerCase()
+               .normalize('NFD').replace(/[̀-ͯ]/g, ''); // enlever accents
+      // Inclure tout ce qui contient "demandeur" (Retour demandeur, DÉPOSER -- Retour demandeur, etc.)
+      var isRetourDemandeur = st.indexOf('demandeur') >= 0;
+      // Exclure magasin et récupéré
+      var isRetourMagasin = st.indexOf('magasin') >= 0;
+      var isRecupere      = st.indexOf('recupere') >= 0 || st.indexOf('recupere') >= 0 || r.statut === 'RECUPERE';
       return isRetourDemandeur && !isRetourMagasin && !isRecupere;
     });
 
