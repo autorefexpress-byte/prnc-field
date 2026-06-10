@@ -9550,35 +9550,57 @@ async function sauvegarderPlanningNeon(data, semaine) {
       });
     }
 
-    // 3. Fusionner : photos du planning existant + photos arrivée depuis historique
-    // Pour chaque WO du planning, chercher les photos dans historique (arrivée)
-    var histRecords = await dbLoad();
-    _planningData.forEach(function(item) {
-      var wo = item.wo;
-      // Photos déjà sauvegardées dans le planning pour ce WO
-      var planPhotos = photoMap[wo] || [];
-      // Photos depuis historique pour ce WO (tous types)
-      var histPhotos = histRecords
-        .filter(function(r){ return r.wo === wo && r.photos && r.photos.length; })
-        .flatMap(function(r){ return r.photos.filter(Boolean); });
-      // Fusionner sans doublons
-      var merged = planPhotos.slice();
-      histPhotos.forEach(function(p){ if (!merged.includes(p)) merged.push(p); });
-      if (merged.length > 0) {
-        photoMap[wo] = merged;
-        item._photos = merged;
-      }
-    });
+    // 3. Fusionner : photos planning existant + photos arrivée depuis historique (fetch frais)
+    var toast2 = document.createElement('div');
+    toast2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+    toast2.textContent = 'Synchronisation des photos en cours...';
+    document.body.appendChild(toast2);
 
-    var wosAvecPhotos = Object.keys(photoMap);
-    if (wosAvecPhotos.length > 0) {
-      await Promise.all(wosAvecPhotos.map(function(wo) {
-        return fetch(DB_API + '?table=planning', {
-          method: 'PATCH', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({wo: wo, semaine: semaine, photos: photoMap[wo]})
-        }).catch(function(e){ console.warn('photo restore err for ' + wo, e); });
-      }));
-      console.log('Photos synchronisees pour ' + wosAvecPhotos.length + ' WO (planning + arrivee)');
+    try {
+      // Forcer rechargement frais depuis Neon
+      _dbCache = null;
+      var histRecords = await dbLoad();
+
+      _planningData.forEach(function(item) {
+        var wo = item.wo;
+        var planPhotos = photoMap[wo] || [];
+        // Chercher dans historique par WO (r.wo OU r.woUsine)
+        var histPhotos = [];
+        histRecords.forEach(function(r) {
+          var match = (r.wo && r.wo === wo) || (r.woUsine && r.woUsine === wo);
+          if (match && r.photos && r.photos.length) {
+            r.photos.forEach(function(p){ if (p && histPhotos.indexOf(p) < 0) histPhotos.push(p); });
+          }
+        });
+        // Fusionner sans doublons
+        var merged = planPhotos.slice();
+        histPhotos.forEach(function(p){ if (merged.indexOf(p) < 0) merged.push(p); });
+        if (merged.length > 0) {
+          photoMap[wo] = merged;
+          item._photos = merged;
+        }
+      });
+
+      var wosAvecPhotos = Object.keys(photoMap);
+      if (wosAvecPhotos.length > 0) {
+        await Promise.all(wosAvecPhotos.map(function(wo) {
+          return fetch(DB_API + '?table=planning', {
+            method: 'PATCH', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({wo: wo, semaine: semaine, photos: photoMap[wo]})
+          }).catch(function(e){ console.warn('photo restore err for ' + wo, e); });
+        }));
+        toast2.remove();
+        var t3 = document.createElement('div');
+        t3.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+        t3.textContent = wosAvecPhotos.length + ' WO synchronise(s) avec photos';
+        document.body.appendChild(t3);
+        setTimeout(function(){ t3.remove(); }, 3000);
+      } else {
+        toast2.remove();
+      }
+    } catch(e) {
+      toast2.remove();
+      console.warn('sync photos err', e);
     }
   } catch(e) { console.warn('planning save err', e); }
 }
