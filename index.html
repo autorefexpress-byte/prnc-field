@@ -9342,13 +9342,18 @@ function ouvrirPlanningAccueil() {
 
 async function sauvegarderPlanningNeon(data, semaine) {
   try {
-    var resp = await fetch(DB_API + '?table=planning', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bulk: true, semaine: semaine, items: data })
-    });
-    var result = await resp.json();
-    console.log('Planning sauvegardé:', result);
+    var batchSize = 20;
+    for (var b = 0; b < data.length; b += batchSize) {
+      var batch = data.slice(b, b + batchSize);
+      var isFirst = (b === 0);
+      var resp = await fetch(DB_API + '?table=planning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulk: true, first: isFirst, semaine: semaine, items: batch })
+      });
+      var result = await resp.json();
+      console.log('Planning lot ' + (b/batchSize+1) + ' sauvegardé:', result);
+    }
   } catch(e) { console.warn('planning save err', e); }
 }
 
@@ -9988,6 +9993,54 @@ function _clearWOGWO() {
   if (list) list.style.display = 'none';
   var clear = document.getElementById('ar-wo-clear');
   if (clear) clear.style.display = 'none';
+}
+
+async function _importerWOenG(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if (rows.length < 2) return;
+      var items = rows.slice(1).filter(function(r){ return r[0]; }).map(function(r){
+        return {
+          wo: String(r[0]||'').trim(),
+          description: String(r[1]||'').trim(),
+          tag: String(r[2]||'').trim(),
+          wg: String(r[3]||'').trim().toUpperCase(),
+          date: String(r[5]||'').trim(),
+          wr: String(r[15]||'').trim(),
+        };
+      });
+      var t = document.createElement('div');
+      t.textContent = '⏳ Envoi de ' + items.length + ' WO vers Neon...';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+      document.body.appendChild(t);
+      // Envoyer en lots de 50 pour éviter la limite Vercel
+      var batchSize = 50;
+      var first = true;
+      for (var b = 0; b < items.length; b += batchSize) {
+        var batch = items.slice(b, b + batchSize);
+        t.textContent = '⏳ Envoi ' + Math.min(b + batchSize, items.length) + '/' + items.length + '...';
+        await fetch(DB_API + '?table=wo_en_g', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({bulk:true, first:first, items:batch})
+        });
+        first = false;
+      }
+      t.remove();
+      _woEnGData = items.map(function(i){ return {wo:i.wo, wr:i.wr||'', tag:i.tag, desc:i.description, wg:i.wg}; });
+      var t2 = document.createElement('div');
+      t2.textContent = '✅ ' + items.length + ' WO en G disponibles sur tous les appareils';
+      t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+      document.body.appendChild(t2);
+      setTimeout(function(){ t2.remove(); }, 3500);
+    } catch(err) { alert('Erreur: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // ═══════════════ P99 ZONE VANNE ═══════════════
