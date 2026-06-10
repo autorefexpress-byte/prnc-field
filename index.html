@@ -9528,11 +9528,59 @@ function ouvrirPlanningAccueil() {
 
 async function sauvegarderPlanningNeon(data, semaine) {
   try {
-    for (var b=0; b<data.length; b+=20) {
-      await fetch(DB_API+'?table=planning',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
+    // 1. Récupérer les photos existantes pour cette semaine AVANT de supprimer
+    var photoMap = {};
+    try {
+      var existing = await fetch(DB_API + '?table=planning&semaine=' + encodeURIComponent(semaine)).then(function(r){ return r.json(); });
+      var existingRows = existing.rows || (Array.isArray(existing) ? existing : []);
+      existingRows.forEach(function(row) {
+        if (row.wo && row.photos && row.photos.length) {
+          photoMap[row.wo] = row.photos.filter(Boolean);
+        }
+      });
+      var nbPhotos = Object.keys(photoMap).length;
+      if (nbPhotos > 0) console.log('Photos sauvegardees pour ' + nbPhotos + ' WO avant import');
+    } catch(e) { console.warn('photo backup err', e); }
+
+    // 2. Importer le planning (DELETE + INSERT par lots de 20)
+    for (var b = 0; b < data.length; b += 20) {
+      await fetch(DB_API + '?table=planning', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({bulk:true, first:(b===0), semaine:semaine, items:data.slice(b,b+20)})
+      });
     }
-  } catch(e){ console.warn('planning save err',e); }
+
+    // 3. Fusionner : photos du planning existant + photos arrivée depuis historique
+    // Pour chaque WO du planning, chercher les photos dans historique (arrivée)
+    var histRecords = await dbLoad();
+    _planningData.forEach(function(item) {
+      var wo = item.wo;
+      // Photos déjà sauvegardées dans le planning pour ce WO
+      var planPhotos = photoMap[wo] || [];
+      // Photos depuis historique pour ce WO (tous types)
+      var histPhotos = histRecords
+        .filter(function(r){ return r.wo === wo && r.photos && r.photos.length; })
+        .flatMap(function(r){ return r.photos.filter(Boolean); });
+      // Fusionner sans doublons
+      var merged = planPhotos.slice();
+      histPhotos.forEach(function(p){ if (!merged.includes(p)) merged.push(p); });
+      if (merged.length > 0) {
+        photoMap[wo] = merged;
+        item._photos = merged;
+      }
+    });
+
+    var wosAvecPhotos = Object.keys(photoMap);
+    if (wosAvecPhotos.length > 0) {
+      await Promise.all(wosAvecPhotos.map(function(wo) {
+        return fetch(DB_API + '?table=planning', {
+          method: 'PATCH', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({wo: wo, semaine: semaine, photos: photoMap[wo]})
+        }).catch(function(e){ console.warn('photo restore err for ' + wo, e); });
+      }));
+      console.log('Photos synchronisees pour ' + wosAvecPhotos.length + ' WO (planning + arrivee)');
+    }
+  } catch(e) { console.warn('planning save err', e); }
 }
 
 async function chargerPlanningNeon(semaine) {
