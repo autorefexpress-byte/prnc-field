@@ -404,16 +404,6 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">PI</div>
       <div class="card-sub">Suivi pièces par WO</div>
     </div>
-    <div class="action-card" onclick="show('s-workshop');renderWorkshop()">
-      <div class="card-icon" style="background:#E2EFDA;color:#375623">🏭</div>
-      <div class="card-lbl">Workshop</div>
-      <div class="card-sub">Retours magasin</div>
-    </div>
-    <div class="action-card" onclick="show('s-inventaire')">
-      <div class="card-icon">📋</div>
-      <div class="card-lbl">Inventaire P50</div>
-      <div class="card-sub">Tour de stock</div>
-    </div>
     <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
       <div class="card-lbl">Planning Atelier P17</div>
@@ -1288,39 +1278,6 @@ function _initLocSel(selId, inpId, val) {
 </div>
 
 <!-- ═══════════════ INVENTAIRE P50 ═══════════════ -->
-<div class="screen" id="s-inventaire">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
-    <div class="form-title">Inventaire P50</div>
-    <div class="form-badge" style="background:#E2EFDA;color:#375623">&#128203;</div>
-  </div>
-
-  <!-- Barre de recherche + filtre -->
-  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
-    <input class="fi" type="text" id="inv-search"
-      placeholder="Rechercher TAG, WO, localisation..."
-      oninput="renderInventaire()"
-      style="flex:1;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
-    <select id="inv-wg-filter" onchange="renderInventaire()"
-      style="padding:10px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-family:inherit;background:#fff">
-      <option value="">Tous</option>
-      <option value="MCCHAUD">MCCHAUD</option>
-      <option value="MCREPAR">MCREPAR</option>
-      <option value="STROB">STROB</option>
-    </select>
-  </div>
-
-  <!-- Stats rapides -->
-  <div id="inv-stats" style="padding:10px 14px;display:flex;gap:8px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border)"></div>
-
-  <!-- Compteur -->
-  <div style="padding:8px 14px;font-size:11px;color:var(--muted)" id="inv-count">Chargement...</div>
-
-  <!-- Liste équipements -->
-  <div id="inv-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
-</div>
-
-<!-- ═══════════════ FICHE QR CODE ═══════════════ -->
 <div class="screen" id="s-qr-fiche">
   <div class="form-header">
     <div class="back-btn" onclick="history.back()">&#8592;</div>
@@ -1740,7 +1697,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-workshop','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-inventaire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning'];
+const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -1755,7 +1712,6 @@ function show(id) {
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
   if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
-  if (id === 's-workshop') { setTimeout(renderWorkshop, 50); }
   if (id === 's-hist') {
     var searchEl = document.getElementById('hist-search');
     if (searchEl) { searchEl.value = ''; searchEl.blur(); }
@@ -1776,7 +1732,6 @@ function show(id) {
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
-  if (id === 's-inventaire')      renderInventaire();
   if (id === 's-callidus-prnc') { cpShowTab('liste'); }
   if (id === 's-transport') renderTransport();
   if (id !== 's-scanner') { arreterCamera(); }
@@ -2506,35 +2461,19 @@ function saveWOClotures(list) {
 
 async function cloturerWO(wo, tag, wg, date, recordId) {
   if (!confirm('✅ Clôturer le WO ' + wo + ' ?\n\nCela va supprimer :\n• Tous les enregistrements liés à ce WO\n• Toutes les photos associées (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.')) return;
-
-  // 1. Ajouter à la liste des clôturés
   var list = getWOClotures();
   if (!list.find(function(x){ return x.wo === wo; })) {
     list.unshift({ wo:wo, tag:tag, wg:wg, date:date, dateCloture: new Date().toLocaleDateString('fr-FR'), id: recordId });
     saveWOClotures(list);
   }
-
   try {
     var records = await dbLoad();
     var allHist = records.filter(function(r){ return r.wo === wo; });
-
-    // 2. Supprimer les photos Cloudinary de chaque record
     for (var h of allHist) {
       var pics = (h.photos || []).filter(Boolean);
-      for (var p of pics) {
-        try {
-          await fetch(DB_API + '?action=delete_photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photo_url: p })
-          });
-        } catch(e) { console.warn('photo delete err', e); }
-      }
-      // 3. Supprimer chaque record de l'historique
-      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' }).catch(function(){});
+      for (var p of pics) { try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {} }
+      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method:'DELETE' }).catch(function(){});
     }
-
-    // 4. Supprimer les photos du planning pour ce WO
     try {
       var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
       var planData = await planResp.json();
@@ -2542,49 +2481,21 @@ async function cloturerWO(wo, tag, wg, date, recordId) {
       if (Array.isArray(planRows)) {
         for (var planRow of planRows) {
           if (!planRow || planRow.wo !== wo) continue;
-          // Supprimer photos Cloudinary du planning
           var planPics = (planRow.photos || []).filter(Boolean);
-          for (var pp of planPics) {
-            try {
-              await fetch(DB_API + '?action=delete_photo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ photo_url: pp })
-              });
-            } catch(e) { console.warn('plan photo delete err', e); }
-          }
-          // Supprimer la ligne planning dans Neon
-          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method: 'DELETE' }).catch(function(){});
+          for (var pp of planPics) { try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:pp}) }); } catch(e) {} }
+          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method:'DELETE' }).catch(function(){});
         }
       }
     } catch(e) { console.warn('planning delete err', e); }
-
-    // 5. Supprimer dans PI Suivi
     try {
       var piRows = await fetch(DB_API + '?table=pi_suivi').then(function(r){ return r.json(); });
       var piRow = Array.isArray(piRows) ? piRows.find(function(p){ return p.wo === wo; }) : null;
-      if (piRow) {
-        await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method: 'DELETE' });
-        _piCache = null;
-      }
-    } catch(e) { console.warn('pi_suivi delete err', e); }
-
-    // 6. Nettoyer le cache local
-    _dbCache = null;
-    _photosByWOCache = null;
-    if (typeof _planningData !== 'undefined') {
-      _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
-    }
-    try {
-      var local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(function(r){ return r.wo !== wo; })));
+      if (piRow) { await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method:'DELETE' }); _piCache = null; }
     } catch(e) {}
-
-  } catch(e) {
-    console.warn('cloturerWO err', e);
-    alert('Erreur lors de la clôture : ' + e.message);
-  }
-
+    _dbCache = null; _photosByWOCache = null;
+    if (typeof _planningData !== 'undefined') _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
+    try { var local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(function(r){ return r.wo !== wo; }))); } catch(e) {}
+  } catch(e) { console.warn('cloturerWO err', e); alert('Erreur lors de la clôture : ' + e.message); }
   renderHist();
   if (typeof updateStats === 'function') updateStats();
 }
@@ -2995,7 +2906,7 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
@@ -3856,6 +3767,7 @@ async function renderHist() {
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
         ${r.loc?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${r.loc}</div>`:''}
         ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
+        ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
         ${_isConsultMode
@@ -3920,7 +3832,7 @@ async function dbSaveTermine(d) {
     wo:    d.woMtc || d.wo || '',   // WO MTC en priorité
     woUsine: d.wo  || '',            // WO Usine
     wr:d.wr, sc:d.sc,
-    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'',
+    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'', zone:d.zoneDepot||'',
     desc: d.dest ? d.dest.join(', ') : '',
     emailDemandeur: d.emailDemandeur || null,
     photos: d.photos || [] });
@@ -6216,37 +6128,22 @@ async function confirmEnvoi(titre, lignes, callback) {
 
 async function deleteRecord(id) {
   if (checkConsultMode()) return;
-
   const records = await dbLoad();
   const rec = records.find(r => r.id === id);
   const wo = rec ? (rec.wo || '') : '';
-
   var msg = wo
     ? '🗑️ Supprimer tout ce qui est lié au WO ' + wo + ' ?\n\n• Tous les enregistrements historique\n• Toutes les photos Cloudinary (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.'
     : '🗑️ Supprimer cet enregistrement ?\n\nCette action est irréversible.';
-
   if (!confirm(msg)) return;
-
   if (wo) {
     const allHist = records.filter(r => r.wo === wo);
-
-    // 1. Supprimer les photos Cloudinary de chaque record historique
     for (const h of allHist) {
       const pics = (h.photos || []).filter(Boolean);
       for (const p of pics) {
-        try {
-          await fetch(DB_API + '?action=delete_photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photo_url: p })
-          });
-        } catch(e) { console.warn('photo delete err', e); }
+        try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {}
       }
-      // 2. Supprimer le record de l'historique
-      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method: 'DELETE' }).catch(function(){});
+      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method:'DELETE' }).catch(function(){});
     }
-
-    // 3. Supprimer les photos du planning + la ligne planning
     try {
       var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
       var planData = await planResp.json();
@@ -6256,66 +6153,31 @@ async function deleteRecord(id) {
           if (!planRow || planRow.wo !== wo) continue;
           const planPics = (planRow.photos || []).filter(Boolean);
           for (const pp of planPics) {
-            try {
-              await fetch(DB_API + '?action=delete_photo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ photo_url: pp })
-              });
-            } catch(e) { console.warn('plan photo delete err', e); }
+            try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:pp}) }); } catch(e) {}
           }
-          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method: 'DELETE' }).catch(function(){});
+          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method:'DELETE' }).catch(function(){});
         }
       }
     } catch(e) { console.warn('planning delete err', e); }
-
-    // 4. Supprimer dans PI Suivi
     try {
       const piRows = await fetch(DB_API + '?table=pi_suivi').then(r => r.json());
       const piRow = Array.isArray(piRows) ? piRows.find(p => p.wo === wo) : null;
-      if (piRow) {
-        await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method: 'DELETE' });
-        _piCache = null;
-      }
-    } catch(e) { console.warn('pi_suivi delete err', e); }
-
-    // 5. Nettoyer les caches
-    _dbCache = null;
-    _photosByWOCache = null;
-    if (typeof _planningData !== 'undefined') {
-      _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
-    }
-    try {
-      const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.wo !== wo)));
+      if (piRow) { await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method:'DELETE' }); _piCache = null; }
     } catch(e) {}
-
+    _dbCache = null; _photosByWOCache = null;
+    if (typeof _planningData !== 'undefined') _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
+    try { const local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.wo !== wo))); } catch(e) {}
   } else {
-    // Pas de WO — supprimer seulement les photos + le record
     const pics = (rec && rec.photos || []).filter(Boolean);
     for (const p of pics) {
-      try {
-        await fetch(DB_API + '?action=delete_photo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photo_url: p })
-        });
-      } catch(e) { console.warn('photo delete err', e); }
+      try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {}
     }
-    await fetch(DB_API + '?id=' + encodeURIComponent(id), { method: 'DELETE' }).catch(function(){});
-
-    _dbCache = null;
-    _photosByWOCache = null;
-    try {
-      const local = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-      localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id)));
-    } catch(e) {}
+    await fetch(DB_API + '?id=' + encodeURIComponent(id), { method:'DELETE' }).catch(function(){});
+    _dbCache = null; _photosByWOCache = null;
+    try { const local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id))); } catch(e) {}
   }
-
-  // Fermer la modal si ouverte
   document.querySelectorAll('.overlay-view').forEach(function(ov){ ov.remove(); });
-  renderHist();
-  updateStats();
+  renderHist(); updateStats();
 }
 
 function viewPhotoFull(idx, recordId) {
@@ -8589,6 +8451,7 @@ async function renderRelances() {
   try {
     // Forcer rechargement frais depuis Neon (ignorer le cache)
     _dbCache = null;
+    _dbCache = null;
     var allRecords = await dbLoad();
     var records = allRecords.filter(function(r) {
       var st = (r.statut || '').toLowerCase()
@@ -9413,250 +9276,19 @@ function wsSaveRetournes(data) {
   try { localStorage.setItem('prnc-workshop-retournes', JSON.stringify(data)); } catch(e) {}
 }
 
-async function renderWorkshop() {
-  var list = document.getElementById('ws-list');
-  if (!list) return;
-  var search = (document.getElementById('ws-search')||{value:''}).value.toLowerCase().trim();
 
-  list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">⏳ Chargement...</div>';
 
-  var records = await dbLoad();
-  _wsRetournes = wsLoadRetournes();
 
-  var wsRecs = records.filter(function(r) {
-    var st = (r.statut||'').toLowerCase();
-    return r.type === 'TERMINE' && (
-      st.includes('magasin') || st.includes('retour mag')
-    );
-  });
 
-  if (search) {
-    wsRecs = wsRecs.filter(function(r) {
-      return (r.tag||'').toLowerCase().includes(search) ||
-             (r.wo||'').toLowerCase().includes(search) ||
-             (r.wr||'').toLowerCase().includes(search) ||
-             (r.wg||'').toLowerCase().includes(search);
-    });
-  }
 
-  wsRecs.sort(function(a, b) {
-    var aDone = _wsRetournes[a.id] ? 1 : 0;
-    var bDone = _wsRetournes[b.id] ? 1 : 0;
-    if (aDone !== bDone) return aDone - bDone;
-    return (b.created_at||'') > (a.created_at||'') ? 1 : -1;
-  });
 
-  var totalAll = wsRecs.length;
-  var doneCount = wsRecs.filter(function(r){ return _wsRetournes[r.id]; }).length;
-  var pendingCount = totalAll - doneCount;
-  var t = document.getElementById('ws-cnt-total'); if(t) t.textContent = totalAll;
-  var d = document.getElementById('ws-cnt-done'); if(d) d.textContent = doneCount;
-  var p = document.getElementById('ws-cnt-pending'); if(p) p.textContent = pendingCount;
 
-  if (!wsRecs.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px">🏭</div><br>Aucun équipement en attente</div>';
-    return;
-  }
 
-  var wgColors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',STCHAUD:'#1F3864'};
-  var wgBgs    = {MCCHAUD:'#EDE7F6',MCREPAR:'#FCE4D6',STROB:'#E1F5EE',STCHAUD:'#DEEAF1'};
 
-  var html = '';
-  wsRecs.forEach(function(r) {
-    var done = !!_wsRetournes[r.id];
-    var wgColor = wgColors[r.wg] || '#555';
-    var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
-    var _wop=getPhotosByWO(r.wo||''); var photos  = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
 
-    html += '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + (done ? '#375623' : '#C55A11') + ';' + (done ? 'opacity:.7' : '') + '">';
-    
-    if (photos.length > 0) {
-      html += '<img src="' + cloudThumb(photos[0],600,200) + '" loading="lazy" style="width:100%;height:100px;object-fit:cover;display:block">';
-    }
 
-    html += '<div style="padding:12px 14px">';
 
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-    html += '<div style="font-size:15px;font-weight:800;color:#1F3864">' + (r.tag||'--') + '</div>';
-    html += '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700">' + (r.wg||'--') + '</span>';
-    html += '</div>';
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#f8f9fa;border-radius:8px;padding:8px;margin-bottom:6px">';
-    html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + (r.wo||'--') + '</div></div>';
-    html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:12px;font-weight:700;color:#C55A11">' + (r.wr||'--') + '</div></div>';
-    html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE</div><div style="font-size:11px;font-weight:600">' + (r.date||'--') + '</div></div>';
-    html += '</div>';
-    if (r.sc || r.tag) {
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">';
-      html += '<div style="background:#EEF2FF;border-radius:8px;padding:6px 8px"><div style="font-size:9px;color:#999;font-weight:700">STOCK CODE</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + (r.sc||'--') + '</div></div>';
-      html += '<div style="background:#FFF8E1;border-radius:8px;padding:6px 8px"><div style="font-size:9px;color:#999;font-weight:700">TAG</div><div style="font-size:12px;font-weight:700;color:#E65100;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.tag||'--') + '</div></div>';
-      html += '</div>';
-    }
-
-    html += '<div style="font-size:11px;color:#555;margin-bottom:8px">📌 ' + (r.statut||'--') + '</div>';
-
-    html += '<button onclick="wsToggleRetourne(this.dataset.id)" data-id="' + r.id + '" ' +
-      'style="width:100%;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;' +
-      (done ? 'background:#E2EFDA;color:#375623' : 'background:#FFF3E0;color:#E65100') + '">' +
-      (done ? '✅ Retourné au magasin' : '⏳ Marquer comme retourné') +
-    '</button>';
-
-    html += '</div></div>';
-  });
-
-  list.innerHTML = html;
-}
-
-function wsToggleRetourne(id) {
-  _wsRetournes = wsLoadRetournes();
-  if (_wsRetournes[id]) {
-    delete _wsRetournes[id];
-  } else {
-    _wsRetournes[id] = true;
-  }
-  wsSaveRetournes(_wsRetournes);
-  renderWorkshop();
-}
-
-async function supprimerInventaire(id) {
-  if (!confirm('Supprimer cet équipement de l\'inventaire ?')) return;
-  try {
-    await fetch('/api/db?id=' + encodeURIComponent(id), { method: 'DELETE' });
-    invalidateDbCache();
-    renderInventaire();
-  } catch(e) { alert('Erreur : ' + e.message); }
-}
-
-function ouvrirEditionInventaire(id) {
-  dbLoad().then(function(records) {
-    var r = records.find(function(x){ return x.id === id; });
-    if (!r) return;
-
-    var existingPhotos = (r.photos || []).filter(Boolean);
-
-    var ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end;overflow-y:auto';
-
-    var photosHtml = existingPhotos.map(function(url, idx) {
-      return '<div style="position:relative;display:inline-block">' +
-        '<img src="' + url + '" onclick="viewImg(this.src)" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer">' +
-        '<button onclick="invSupprimerPhoto(' + idx + ',this)" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C00;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;font-weight:700">×</button>' +
-      '</div>';
-    }).join('');
-
-    ov.innerHTML = '<div style="background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 30px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">' +
-      '<div style="font-weight:800;font-size:16px;margin-bottom:16px">✏️ Modifier — ' + (r.tag||'') + '</div>' +
-
-      '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">REMARQUES</div>' +
-      '<textarea id="inv-edit-desc" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;height:80px">' + (r.desc||r.description||'') + '</textarea></div>' +
-
-      '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">LOCALISATION</div>' +
-      '<select id="inv-edit-loc-sel" onchange="_locChange(\'inv-edit-loc-sel\',\'inv-edit-loc\')" style="width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box"></select><input id="inv-edit-loc" style="display:none;width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:6px" value="' + (r.loc||'') + '"></div>' +
-
-      '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PHOTOS</div>' +
-
-      (existingPhotos.length ? '<div id="inv-photos-existing" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' + photosHtml + '</div>' : '<div id="inv-photos-existing" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>') +
-
-      '<div id="inv-photos-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>' +
-
-      '<label style="display:flex;align-items:center;gap:8px;padding:10px;background:#F0F4FF;border:1.5px dashed #2E75B6;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#1F3864">' +
-      '📷 Ajouter une photo' +
-      '<input type="file" id="inv-photo-input" accept="image/*" multiple onchange="invAperçuPhotos(this)" style="display:none">' +
-      '</label></div>' +
-
-      '<div style="display:flex;gap:8px">' +
-      '<button onclick="fermerOverlay(this)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>' +
-      '<button id="inv-save-btn" onclick="sauvegarderEditionInventaire(\'' + id + '\',this)" style="flex:2;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer</button>' +
-      '</div></div>';
-
-    ov._existingPhotos = existingPhotos.slice();
-    document.body.appendChild(ov);
-    ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-    setTimeout(function(){ _initLocSel('inv-edit-loc-sel','inv-edit-loc', r.loc||''); }, 0);
-  });
-}
-
-function invAperçuPhotos(input) {
-  var prev = document.getElementById('inv-photos-preview');
-  if (!prev) return;
-  Array.from(input.files).forEach(function(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = document.createElement('img');
-      img.src = e.target.result;
-      img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px';
-      prev.appendChild(img);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function invSupprimerPhoto(idx, btn) {
-  var ov = btn.closest('[style*="rgba"]');
-  if (!ov || !ov._existingPhotos) return;
-  ov._existingPhotos.splice(idx, 1);
-  var existingDiv = document.getElementById('inv-photos-existing');
-  if (!existingDiv) return;
-  existingDiv.innerHTML = ov._existingPhotos.map(function(url, i) {
-    return '<div style="position:relative;display:inline-block">' +
-      '<img src="' + url + '" onclick="viewImg(this.src)" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer">' +
-      '<button onclick="invSupprimerPhoto(' + i + ',this)" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#C00;color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;font-weight:700">×</button>' +
-    '</div>';
-  }).join('');
-}
-
-async function sauvegarderEditionInventaire(id, btn) {
-  var desc = document.getElementById('inv-edit-desc').value.trim();
-  var loc  = document.getElementById('inv-edit-loc').value.trim();
-  var ov   = btn.closest('[style*="rgba"]');
-  btn.textContent = '⏳ Enregistrement...';
-  btn.disabled = true;
-
-  // Capturer ancienne loc
-  var _invRecords = await dbLoad();
-  var _invRec = _invRecords.find(function(x){ return x.id === id; });
-  var _invAncienLoc = _invRec ? (_invRec.loc || '') : '';
-  var _invTag = _invRec ? (_invRec.tag || '') : '';
-  var _invWg  = _invRec ? (_invRec.wg  || '') : '';
-
-  try {
-    var existingPhotos = (ov && ov._existingPhotos) ? ov._existingPhotos.slice() : [];
-
-    var fileInput = document.getElementById('inv-photo-input');
-    var newPhotos = [];
-    if (fileInput && fileInput.files.length) {
-      newPhotos = await uploadPhotosParallel(fileInput.files, 'inventaire');
-    }
-
-    var allPhotos = existingPhotos.concat(newPhotos);
-
-    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ loc: loc, description: desc, photos: allPhotos })
-    });
-
-    // Mettre à jour le cache local directement (évite un rechargement réseau)
-    if (_dbCache) {
-      var rec = _dbCache.find(function(x){ return x.id === id; });
-      if (rec) {
-        rec.loc = loc;
-        rec.description = desc;
-        rec.photos = allPhotos;
-      }
-    }
-    _photosByWOCache = null;
-    // Enregistrer mouvement si loc a changé
-    var _invWo = _invRec ? (_invRec.wo || '') : '';
-    await enregistrerMouvement(_invTag, _invWg, _invAncienLoc, loc, id, _invWo);
-    if (ov) ov.remove();
-    renderInventaire();
-  } catch(e) {
-    alert('Erreur : ' + e.message);
-    btn.textContent = '💾 Enregistrer';
-    btn.disabled = false;
-  }
-}
 
 function fermerOverlay(btn) { var ov = btn.closest('[style*="rgba"]'); if(ov) ov.remove(); }
 
@@ -9673,310 +9305,8 @@ function injectFieldValue(xml, label, value) {
     xml.slice(idx + emptyPattern.length);
 }
 
-function escapeXmlVal(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-</script>
-
-<!-- POPUP CONTACT PICKER -->
-<div id="contact-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="if(event.target===this)hideContactPicker()">
-  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
-    <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:#1F3864">Choisir un destinataire</div>
-      <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
-    </div>
-    <div style="padding:10px 14px 6px">
-      <input id="contact-picker-search" type="text" placeholder="Rechercher..." oninput="filterContactPicker()"
-        style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
-    </div>
-    <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
-  </div>
-</div>
 
 
-<!-- ═══════════════ NUMPAD ═══════════════ -->
-<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
-  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
-    <div class="numpad-label" id="numpad-label">SAISIE</div>
-    <div class="numpad-display" id="numpad-display">_</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
-      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
-      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
-      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
-      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
-      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
-      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
-      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
-      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
-      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
-      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
-      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
-      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
-      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ BONS DE SORTIE P50 ═══════════════ -->
-<div class="screen" id="s-bons-sortie">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">🗂️ PI</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Planification Intégrée — Suivi pièces</div>
-    </div>
-  </div>
-  <div class="form-body" style="padding:0">
-    <!-- Stats -->
-    <div id="bs-stats" style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#1F4E79,#2E75B6)">
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;backdrop-filter:blur(4px)">
-        <div id="bs-count-complet" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">✅ Complets</div>
-      </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bs-count-encours" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">⏳ En cours</div>
-      </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bs-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total WO</div>
-      </div>
-    </div>
-
-
-
-    <!-- Recherche + bouton -->
-    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
-      <input class="fi" type="text" id="bs-search" placeholder="🔍 Rechercher WO, WG, TAG..."
-        oninput="renderBonsSortie()" style="flex:1;margin:0">
-      <button onclick="show('s-bs-nouveau')" style="background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
-        ➕ Nouveau
-      </button>
-    </div>
-
-    <!-- Liste WO -->
-    <div id="bs-list" style="padding:10px 14px"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ NOUVEAU WO BS ═══════════════ -->
-<div class="screen" id="s-bs-nouveau">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
-    <div class="form-title">Nouveau WO</div>
-    <div class="form-badge" style="background:#E3F2FD;color:#1565C0">📋 Créer</div>
-  </div>
-  <div class="form-body">
-    <!-- WO -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> N° WO</div>
-      <input class="fi" type="text" id="bsn-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('bsn-wo','N° WO')" style="cursor:pointer">
-    </div>
-
-    <!-- Workgroup -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
-      <div class="wg-grp">
-        <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
-        <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
-        <div class="wg-btn" id="bsn-wg-strob" onclick="setBsnWG('strob')">STROB</div>
-        <div class="wg-btn" id="bsn-wg-stchaud" onclick="setBsnWG('stchaud')">STCHAUD</div>
-      </div>
-    </div>
-
-    <!-- TAG équipement -->
-    <div class="field-grp">
-      <div class="field-lbl">TAG Équipement</div>
-      <input class="fi" type="text" id="bsn-tag" placeholder="Ex : 220-X-00315">
-    </div>
-
-    <!-- Localisation pièces -->
-    <div class="field-grp">
-      <div class="field-lbl">Localisation des pièces</div>
-      <input class="fi" type="text" id="bsn-loc" placeholder="Ex : Rack A3 / Benne 12 / Étagère B2...">
-    </div>
-
-    <!-- Coller depuis Excel -->
-    <div class="field-grp">
-      <div class="field-lbl">Liste pièces — Coller depuis Ellipse <span style="font-size:11px;color:#888">(optionnel)</span></div>
-      <textarea class="fi" id="bsn-paste" rows="8"
-        placeholder="Copier depuis Ellipse (Révision demande) et coller ici :&#10;&#10;F37712/0001&#9;GASKET SET SEAT TI&#9;1,00&#10;F37712/0002&#9;GASKET SET BONNET&#9;1,00&#10;..."
-        style="font-family:monospace;font-size:12px;resize:vertical"
-        oninput="previewBsnPieces()"></textarea>
-    </div>
-
-    <!-- Aperçu -->
-    <div id="bsn-preview" style="display:none;margin-bottom:12px">
-      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:6px">APERÇU — <span id="bsn-preview-count">0</span> pièce(s) détectée(s)</div>
-      <div id="bsn-preview-list" style="background:#f8f8f8;border-radius:10px;padding:10px;font-size:12px;font-family:monospace;max-height:150px;overflow-y:auto"></div>
-    </div>
-
-    <button onclick="saveBonsSortieWO()" class="send-btn" style="background:#375623">
-      💾 Enregistrer le WO
-    </button>
-  </div>
-</div>
-
-<!-- ═══════════════ DETAIL WO BS ═══════════════ -->
-<div class="screen" id="s-bs-detail">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
-    <div class="form-title" id="bs-detail-title">Détail WO</div>
-    <div class="form-badge" id="bs-detail-badge" style="background:#E2EFDA;color:#375623">✅</div>
-  </div>
-  <div class="form-body" style="padding:0">
-    <!-- Infos WO -->
-    <div id="bs-detail-info" style="padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)"></div>
-
-    <!-- Actions -->
-    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
-      <button id="bs-planning-btn" onclick="passerEnPlanning()" 
-        style="flex:1;background:#375623;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📋 Passer en planning
-      </button>
-      <button onclick="envoyerRecapBS()" 
-        style="background:#DEEAF1;color:#1F4E79;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📧
-      </button>
-      <button onclick="supprimerWO()" 
-        style="background:#FCE4D6;color:#C55A11;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        🗑
-      </button>
-    </div>
-
-    <!-- Bouton Enregistrer -->
-    <div style="padding:10px 14px;background:#f7f8fa;border-bottom:1px solid var(--border)">
-      <button id="bs-save-btn" onclick="enregistrerModifWO()"
-        style="width:100%;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-        💾 Enregistrer les modifications
-      </button>
-    </div>
-
-    <!-- Liste pièces -->
-    <div style="padding:10px 14px">
-      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:8px">PIÈCES — <span id="bs-detail-count"></span></div>
-      <div id="bs-detail-list"></div>
-    </div>
-  </div>
-</div>
-
-
-
-
-<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
-<div class="screen" id="s-templates">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div>
-      <div class="form-title">Mes Templates Word</div>
-      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
-    </div>
-  </div>
-
-  <div style="padding:16px">
-
-    <!-- MCREPAR -->
-    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
-          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
-        </div>
-      </div>
-      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
-        ⬆️ Importer mon fichier MCREPAR (.docx)
-        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
-      </label>
-      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-        🗑️ Supprimer mon template MCREPAR
-      </button>
-    </div>
-
-    <!-- MCCHAUD -->
-    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
-          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
-        </div>
-      </div>
-      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
-        ⬆️ Importer mon fichier MCCHAUD (.docx)
-        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
-      </label>
-      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-        🗑️ Supprimer mon template MCCHAUD
-      </button>
-    </div>
-
-    <!-- INFO -->
-    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
-      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
-      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
-      <div>2. Ton template est sauvegardé sur ton PC</div>
-      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
-      <div>4. Le fichier généré utilisera ton propre modèle</div>
-      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- ═══════════════ WORKSHOP ═══════════════ -->
-<div class="screen" id="s-workshop">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">🏭 Workshop</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Retours magasin en attente</div>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
-    <div style="background:#f8f9fa;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#C55A11" id="ws-cnt-total">0</div>
-      <div style="font-size:10px;color:#888;font-weight:600">Total</div>
-    </div>
-    <div style="background:#E2EFDA;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#375623" id="ws-cnt-done">0</div>
-      <div style="font-size:10px;color:#375623;font-weight:600">Retournés</div>
-    </div>
-    <div style="background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#E65100" id="ws-cnt-pending">0</div>
-      <div style="font-size:10px;color:#E65100;font-weight:600">En attente</div>
-    </div>
-  </div>
-
-  <!-- Search -->
-  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
-    <input type="text" id="ws-search" placeholder="🔍 Rechercher WO, TAG, WR..."
-      oninput="renderWorkshop()"
-      style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border);box-sizing:border-box;font-family:inherit">
-  </div>
-
-  <div id="ws-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
-</div>
-
-
-<script>
-if('serviceWorker' in navigator){
-  // Désinscrire tous les SW pour forcer le chargement de la dernière version
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
-  });
-}
 
 // ═══════════════ PLANNING ATELIER P17 ═══════════════
 var _planningData   = [];
@@ -10337,17 +9667,12 @@ async function ajouterPhotoPlanning(wo, input) {
   var item = _planningData.find(function(i){ return i.wo === wo; });
   if (!item) return;
   if (!item._photos) item._photos = [];
-
-  // Afficher un indicateur de chargement
   var loadDiv = document.createElement('div');
   loadDiv.style.cssText = 'font-size:11px;color:#888;padding:4px 0';
   loadDiv.textContent = '⏳ Upload en cours...';
   if (preview) preview.appendChild(loadDiv);
-
-  // Uploader toutes les photos en parallèle puis sauvegarder UNE SEULE FOIS
   var placeholders = [];
   files.forEach(function(file) {
-    // Preview locale immédiate
     var reader = new FileReader();
     var img = document.createElement('img');
     img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
@@ -10356,66 +9681,43 @@ async function ajouterPhotoPlanning(wo, input) {
     reader.onload = function(e){ img.src = e.target.result; };
     reader.readAsDataURL(file);
   });
-
   try {
-    // Upload toutes les photos en parallèle
     var uploadPromises = files.map(function(file) {
       var fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
-      return fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method:'POST', body:fd })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ return d.secure_url || null; });
+      return fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url || null; });
     });
-
     var urls = await Promise.all(uploadPromises);
     var validUrls = urls.filter(Boolean);
-
-    // Mettre à jour les previews avec les vraies URLs
     validUrls.forEach(function(url, i) {
-      if (placeholders[i]) { placeholders[i].src = url; placeholders[i].style.opacity = '1'; placeholders[i].onclick = function(){ viewImg(this.src); }; }
+      if (placeholders[i]) { placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
       item._photos.push(url);
     });
-
     if (loadDiv) loadDiv.remove();
-
     if (!validUrls.length) { alert('❌ Echec upload Cloudinary'); return; }
-
-    // Sauvegarder UNE SEULE FOIS dans Neon avec toutes les photos
     var semaineSave = item.semaine || _semaineActive || '';
-    console.log('💾 PATCH planning wo=' + item.wo + ' semaine=' + semaineSave + ' photos=' + item._photos.length);
-    if (!semaineSave) {
-      alert('❌ Semaine introuvable — impossible de sauvegarder. Rechargez le planning.');
-      return;
-    }
+    if (!semaineSave) { alert('❌ Semaine introuvable — rechargez le planning.'); return; }
     var resp = await fetch(DB_API + '?table=planning', {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        wo: item.wo,
-        semaine: semaineSave,
-        photos: item._photos
-      })
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ wo:item.wo, semaine:semaineSave, photos:item._photos })
     });
     var res = await resp.json();
     if (res && res.ok) {
-      console.log('✅ ' + validUrls.length + ' photo(s) sauvegardée(s) dans Neon');
-      // Rafraîchir la zone photos existantes
       var zone = document.getElementById('planning-photos-exist-' + wo);
       if (zone) {
         zone.innerHTML = item._photos.map(function(p){
-          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+          return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
         }).join('');
-        var prev = document.getElementById('planning-photos-preview-' + wo);
-        if (prev) prev.innerHTML = '';
+        var prev2 = document.getElementById('planning-photos-preview-' + wo);
+        if (prev2) prev2.innerHTML = '';
       }
     } else {
-      console.warn('❌ Neon reject:', res);
-      alert('❌ Erreur sauvegarde photo\nWO: ' + item.wo + '\nSemaine: ' + semaineSave + '\nRéponse: ' + JSON.stringify(res));
+      alert('❌ Erreur sauvegarde\nWO:'+item.wo+'\nSemaine:'+semaineSave+'\n'+JSON.stringify(res));
     }
   } catch(e) {
     if (loadDiv) loadDiv.remove();
-    console.warn('ajouterPhotoPlanning err', e);
     alert('❌ Erreur : ' + e.message);
   }
 }
@@ -10442,241 +9744,7 @@ function sauvegarderRemarquePlanning(wo) {
   });
 }
 
-async function _enrichirPhotosPlanning() {
-  if (!_planningData.length) return;
-  try {
-    var records = await dbLoad();
-    _planningData.forEach(function(item) {
-      var rec = records.find(function(r){ return r.wo && r.wo === item.wo; });
-      if (rec) {
-        // Loc depuis historique
-        if (rec.loc) item._loc = rec.loc;
-        // Fusionner photos historique + photos planning (sans doublons)
-        // Priorité aux photos du planning (déjà dans item._photos)
-        if (rec.photos && rec.photos.length) {
-          var existing = item._photos || [];
-          rec.photos.forEach(function(p) {
-            if (p && existing.indexOf(p) < 0) existing.push(p);
-          });
-          item._photos = existing;
-        }
-      }
-    });
-  } catch(e) { console.warn('enrich photos err', e); }
-}
-
-function fermerPlanningModal() {
-  var m = document.getElementById('planning-modal');
-  if (m) m.style.display = 'none';
-}
-
-function changerStatutPlanning(wo, newStatut) {
-  var item = _planningData.find(function(i){ return String(i.wo)===String(wo); });
-  if (!item) return;
-  item.statut = newStatut;
-  var _sem = item.semaine || '';
-
-  // 1. Sauvegarder statut dans table planning
-  fetch(DB_API + '?table=planning', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ wo: wo, semaine: _sem, statut: newStatut })
-  }).catch(function(e){ console.warn('planning sync err', e); });
-
-  // 2. Si TERMINE → mettre à jour le type dans historique par WO
-  if (newStatut === 'TERMINE') {
-    _syncPlanningTermineHistorique(wo, item);
-  }
-  // 3. Si EN_COURS → mettre à jour remarque si saisie
-  var remarque = document.getElementById('planning-remarque-' + wo);
-  if (remarque && remarque.value.trim()) {
-    _sauvegarderRemarqueHistorique(wo, remarque.value.trim());
-  }
-
-  fermerPlanningModal();
-  renderPlanning();
-}
-
-async function _syncPlanningTermineHistorique(wo, item) {
-  try {
-    // Chercher l'enregistrement dans _dbCache par WO
-    var records = typeof _dbCache !== 'undefined' ? _dbCache : await dbLoad();
-    var rec = records.find(function(r){ return String(r.wo) === String(wo); });
-    if (!rec) {
-      // Pas de fiche existante → créer automatiquement une fiche TERMINE
-      var now = new Date();
-      var newId = 'PLN-' + wo + '-' + Date.now();
-      var newRec = {
-        id: newId,
-        type: 'TERMINE',
-        wo: wo,
-        tag: item.tag || '',
-        wr: item.wr || '',
-        wg: 'MCREPAR',
-        description: 'Créé automatiquement depuis le planning P17 — ' + (item.ressource || ''),
-        date: now.toLocaleDateString('fr-FR'),
-        heure: now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
-        loc: item._loc || 'Atelier P17',
-        photos: [],
-        dest: [],
-      };
-      await fetch(DB_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newRec)
-      });
-      if (typeof _dbCache !== 'undefined' && _dbCache) _dbCache.unshift(newRec);
-      var t = document.createElement('div');
-      t.textContent = '✅ WO ' + wo + ' — nouvelle fiche TERMINÉ créée dans les flux';
-      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap';
-      document.body.appendChild(t);
-      setTimeout(function(){ t.remove(); }, 4000);
-      return;
-    }
-    // Fiche existante → mettre à jour le type → TERMINE
-    await fetch(DB_API + '?id=' + rec.id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'TERMINE' })
-    });
-    if (typeof _dbCache !== 'undefined' && _dbCache) {
-      var idx = _dbCache.findIndex(function(r){ return r.id === rec.id; });
-      if (idx >= 0) _dbCache[idx].type = 'TERMINE';
-    }
-    // Toast confirmation
-    var t = document.createElement('div');
-    t.textContent = '✅ WO ' + wo + ' marqué Terminé dans les flux';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap';
-    document.body.appendChild(t);
-    setTimeout(function(){ t.remove(); }, 3000);
-  } catch(e) { console.warn('sync historique err', e); }
-}
-
-async function _sauvegarderRemarqueHistorique(wo, remarque) {
-  try {
-    var records = typeof _dbCache !== 'undefined' ? _dbCache : await dbLoad();
-    var rec = records.find(function(r){ return String(r.wo) === String(wo); });
-    if (!rec) return;
-    await fetch(DB_API + '?id=' + rec.id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: remarque })
-    });
-  } catch(e) { console.warn('remarque sync err', e); }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var pm = document.getElementById('planning-modal');
-  if (pm) pm.addEventListener('click', function(e){ if(e.target===pm) fermerPlanningModal(); });
-
-  // ── Connexion directe via URL ──
-  // ?mode=atelier → mode tech Mcrepar direct sans PIN
-  var urlParams = new URLSearchParams(window.location.search);
-  var modeParam = urlParams.get('mode');
-  if (modeParam === 'atelier') {
-    // Cacher l'overlay PIN
-    var overlay = document.getElementById('pin-overlay');
-    if (overlay) overlay.style.display = 'none';
-    // Activer le mode atelier directement
-    setTimeout(function() { activerModeAtelier(); }, 300);
-  }
-});
-
-
-// ═══════════════ WO EN G — IMPORT & AUTOCOMPLETE ═══════════════
-var _woEnGData = [];
-
-// Pré-charger les WO en G depuis Neon au démarrage
-(function() {
-  fetch(DB_API + '?table=wo_en_g&all=1')
-    .then(function(r){ return r.json(); })
-    .then(function(rows){
-      if (Array.isArray(rows) && rows.length) {
-        _woEnGData = rows.map(function(r){
-          return {wo: r.wo||'', wr: r.wr||'', tag: r.tag||'', desc: r.description||'', wg: r.wg||''};
-        });
-        console.log('WO en G chargés:', _woEnGData.length);
-      }
-    }).catch(function(){});
-})();
-
-async function _importerWOenG(input) {
-  var file = input.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      var wb = XLSX.read(e.target.result, {type:'array'});
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      if (rows.length < 2) return;
-      var items = rows.slice(1).filter(function(r){ return r[0]; }).map(function(r){
-        return {
-          wo: String(r[0]||'').trim(),
-          description: String(r[1]||'').trim(),
-          tag: String(r[2]||'').trim(),
-          wg: String(r[3]||'').trim().toUpperCase(),
-          date: String(r[5]||'').trim(),
-          wr: String(r[15]||'').trim(),
-        };
-      });
-      var t = document.createElement('div');
-      t.textContent = '⏳ Envoi de ' + items.length + ' WO vers Neon...';
-      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-      document.body.appendChild(t);
-      // Envoyer en lots de 50 pour éviter la limite Vercel
-      var batchSize = 50;
-      var first = true;
-      for (var b = 0; b < items.length; b += batchSize) {
-        var batch = items.slice(b, b + batchSize);
-        t.textContent = '⏳ Envoi ' + Math.min(b + batchSize, items.length) + '/' + items.length + '...';
-        await fetch(DB_API + '?table=wo_en_g', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({bulk:true, first:first, items:batch})
-        });
-        first = false;
-      }
-      t.remove();
-      _woEnGData = items.map(function(i){ return {wo:i.wo, wr:i.wr||'', tag:i.tag, desc:i.description, wg:i.wg}; });
-      var t2 = document.createElement('div');
-      t2.textContent = '✅ ' + items.length + ' WO en G disponibles sur tous les appareils';
-      t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      document.body.appendChild(t2);
-      setTimeout(function(){ t2.remove(); }, 3500);
-    } catch(err) { alert('Erreur: ' + err.message); }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-var _woGTimer = null;
-
-function _filtrerWOG(val) {
-  var list = document.getElementById('fs-wo-list');
-  var clear = document.getElementById('fs-wo-clear');
-  if (!list) return;
-  if (clear) clear.style.display = val ? 'block' : 'none';
-  if (!val || val.length < 2) { list.style.display = 'none'; return; }
-  if (_woEnGData.length) {
-    var q = val.toLowerCase();
-    var filtered = _woEnGData.filter(function(w){
-      return w.wo.includes(q) || (w.tag||'').toLowerCase().includes(q) || (w.desc||'').toLowerCase().includes(q);
-    }).slice(0, 25);
-    _afficherListeWOG(filtered, list);
-  } else {
-    clearTimeout(_woGTimer);
-    _woGTimer = setTimeout(function(){
-      fetch(DB_API + '?table=wo_en_g&q=' + encodeURIComponent(val))
-        .then(function(r){ return r.json(); })
-        .then(function(rows){
-          var mapped = rows.map(function(r){ return {wo:r.wo, tag:r.tag, desc:r.description, wg:r.wg}; });
-          _woEnGData = _woEnGData.concat(mapped);
-          _afficherListeWOG(mapped, list);
-        }).catch(function(){});
-    }, 300);
-  }
-}
-
-function _afficherListeWOG(items, list) {
+function _afficherListeWOGWR(items, list) {
   if (!items || !items.length) { list.style.display = 'none'; return; }
   list.style.display = 'block';
   var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
@@ -10684,77 +9752,38 @@ function _afficherListeWOG(items, list) {
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
     var c = wgColors[w.wg] || '#555';
-    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOG(this.dataset.wo)"'
+    var displayWR = w.wr || '';
+    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWR(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        + '<span style="font-family:monospace;font-size:13px;font-weight:800;color:#1F3864">' + (w.wo||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + displayWR + '</span>'
         + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
-      + '<div style="font-size:11px;color:#666">' + (w.desc||'') + '</div>'
+      + '<div style="font-size:10px;color:#666">' + (w.desc||'').slice(0,50) + '</div>'
       + '</div>';
   }
   list.innerHTML = html;
 }
 
-function _selectionnerWOG(wo) {
+function _selectionnerWOGWR(wo) {
   var w = _woEnGData.find(function(x){ return x.wo === wo; });
   if (!w) return;
-  // Remplir WO
-  var fsWo = document.getElementById('fs-wo');
-  if (fsWo) fsWo.value = w.wo;
-  // Remplir TAG si champ existe et vide
-  var fsTag = document.getElementById('ar-tag') || document.getElementById('fs-tag');
-  if (fsTag && !fsTag.value) fsTag.value = w.tag;
-  // Sélectionner WG automatiquement
+  // Remplir WR
+  var arWr = document.getElementById('ar-wr');
+  if (arWr) arWr.value = w.wr || '';
+  // Remplir TAG si vide
+  var arTag = document.getElementById('ar-tag');
+  if (arTag && !arTag.value) arTag.value = w.tag || '';
+  // Sélectionner WG
   if (w.wg === 'MCCHAUD') setWG('ar','chaud');
   else if (w.wg === 'MCREPAR') setWG('ar','repar');
   else if (w.wg === 'STROB') setWG('ar','strob');
-  // Fermer la liste
-  var list = document.getElementById('fs-wo-list');
+  // Fermer
+  var list = document.getElementById('ar-wr-list');
   if (list) list.style.display = 'none';
-  var clear = document.getElementById('fs-wo-clear');
+  var clear = document.getElementById('ar-wr-clear');
   if (clear) clear.style.display = 'block';
-}
-
-function _clearWOG() {
-  var fsWo = document.getElementById('fs-wo');
-  if (fsWo) fsWo.value = '';
-  var list = document.getElementById('fs-wo-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('fs-wo-clear');
-  if (clear) clear.style.display = 'none';
-}
-
-
-function _filtrerWOGTag(val) {
-  var list = document.getElementById('ar-tag-list');
-  var clear = document.getElementById('ar-tag-clear');
-  if (!list) return;
-  if (clear) clear.style.display = val ? 'block' : 'none';
-  if (!val || val.length < 2) { list.style.display = 'none'; return; }
-  if (_woEnGData.length) {
-    var q = val.toLowerCase().replace('rp0','').replace('rp','');
-    var filtered = _woEnGData.filter(function(w){
-      var woClean = (w.wo||'').toLowerCase().replace('rp0','').replace('rp','');
-      return (w.tag||'').toLowerCase().includes(q)
-          || woClean.includes(q)
-          || (w.wo||'').toLowerCase().includes(val.toLowerCase())
-          || (w.desc||'').toLowerCase().includes(q);
-    }).slice(0, 25);
-    _afficherListeWOGTag(filtered, list);
-  } else {
-    clearTimeout(_woGTimer);
-    _woGTimer = setTimeout(function(){
-      fetch(DB_API + '?table=wo_en_g&q=' + encodeURIComponent(val))
-        .then(function(r){ return r.json(); })
-        .then(function(rows){
-          var mapped = rows.map(function(r){ return {wo:r.wo, tag:r.tag, desc:r.description, wg:r.wg}; });
-          _woEnGData = _woEnGData.concat(mapped);
-          _afficherListeWOGTag(mapped, list);
-        }).catch(function(){});
-    }, 300);
-  }
 }
 
 function _afficherListeWOGTag(items, list) {
@@ -10802,32 +9831,6 @@ function _selectionnerWOGTag(wo) {
   if (clear) clear.style.display = 'block';
 }
 
-function _clearWOGTag() {
-  var arTag = document.getElementById('ar-tag');
-  if (arTag) arTag.value = '';
-  var list = document.getElementById('ar-tag-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('ar-tag-clear');
-  if (clear) clear.style.display = 'none';
-}
-
-// Fermer liste TAG si clic dehors
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#ar-tag') && !e.target.closest('#ar-tag-list')) {
-    var list = document.getElementById('ar-tag-list');
-    if (list) list.style.display = 'none';
-  }
-});
-
-// Fermer la liste si clic dehors
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#fs-wo') && !e.target.closest('#fs-wo-list')) {
-    var list = document.getElementById('fs-wo-list');
-    if (list) list.style.display = 'none';
-  }
-});
-
-
 function _filtrerWOGWR(val) {
   var list = document.getElementById('ar-wr-list');
   var clear = document.getElementById('ar-wr-clear');
@@ -10856,48 +9859,6 @@ function _filtrerWOGWR(val) {
   }
 }
 
-function _afficherListeWOGWR(items, list) {
-  if (!items || !items.length) { list.style.display = 'none'; return; }
-  list.style.display = 'block';
-  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
-  var html = '';
-  for (var i = 0; i < items.length; i++) {
-    var w = items[i];
-    var c = wgColors[w.wg] || '#555';
-    var displayWR = w.wr || '';
-    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWR(this.dataset.wo)"'
-      + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + displayWR + '</span>'
-        + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.tag||'') + '</span>'
-        + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
-      + '</div>'
-      + '<div style="font-size:10px;color:#666">' + (w.desc||'').slice(0,50) + '</div>'
-      + '</div>';
-  }
-  list.innerHTML = html;
-}
-
-function _selectionnerWOGWR(wo) {
-  var w = _woEnGData.find(function(x){ return x.wo === wo; });
-  if (!w) return;
-  // Remplir WR
-  var arWr = document.getElementById('ar-wr');
-  if (arWr) arWr.value = w.wr || '';
-  // Remplir TAG si vide
-  var arTag = document.getElementById('ar-tag');
-  if (arTag && !arTag.value) arTag.value = w.tag || '';
-  // Sélectionner WG
-  if (w.wg === 'MCCHAUD') setWG('ar','chaud');
-  else if (w.wg === 'MCREPAR') setWG('ar','repar');
-  else if (w.wg === 'STROB') setWG('ar','strob');
-  // Fermer
-  var list = document.getElementById('ar-wr-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('ar-wr-clear');
-  if (clear) clear.style.display = 'block';
-}
-
 function _clearWOGWR() {
   var arWr = document.getElementById('ar-wr');
   if (arWr) arWr.value = '';
@@ -10907,16 +9868,45 @@ function _clearWOGWR() {
   if (clear) clear.style.display = 'none';
 }
 
-// Fermer liste WR si clic dehors
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#ar-wr') && !e.target.closest('#ar-wr-list')) {
-    var list = document.getElementById('ar-wr-list');
-    if (list) list.style.display = 'none';
+function _filtrerWOGTag(val) {
+  var list = document.getElementById('ar-tag-list');
+  var clear = document.getElementById('ar-tag-clear');
+  if (!list) return;
+  if (clear) clear.style.display = val ? 'block' : 'none';
+  if (!val || val.length < 2) { list.style.display = 'none'; return; }
+  if (_woEnGData.length) {
+    var q = val.toLowerCase().replace('rp0','').replace('rp','');
+    var filtered = _woEnGData.filter(function(w){
+      var woClean = (w.wo||'').toLowerCase().replace('rp0','').replace('rp','');
+      return (w.tag||'').toLowerCase().includes(q)
+          || woClean.includes(q)
+          || (w.wo||'').toLowerCase().includes(val.toLowerCase())
+          || (w.desc||'').toLowerCase().includes(q);
+    }).slice(0, 25);
+    _afficherListeWOGTag(filtered, list);
+  } else {
+    clearTimeout(_woGTimer);
+    _woGTimer = setTimeout(function(){
+      fetch(DB_API + '?table=wo_en_g&q=' + encodeURIComponent(val))
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          var mapped = rows.map(function(r){ return {wo:r.wo, tag:r.tag, desc:r.description, wg:r.wg}; });
+          _woEnGData = _woEnGData.concat(mapped);
+          _afficherListeWOGTag(mapped, list);
+        }).catch(function(){});
+    }, 300);
   }
-});
+}
 
+function _clearWOGTag() {
+  var arTag = document.getElementById('ar-tag');
+  if (arTag) arTag.value = '';
+  var list = document.getElementById('ar-tag-list');
+  if (list) list.style.display = 'none';
+  var clear = document.getElementById('ar-tag-clear');
+  if (clear) clear.style.display = 'none';
+}
 
-// ═══════════════ AUTOCOMPLETE WO ARRIVÉE ═══════════════
 function _filtrerWOGWO(val) {
   var list  = document.getElementById('ar-wo-list');
   var clear = document.getElementById('ar-wo-clear');
@@ -11000,14 +9990,6 @@ function _clearWOGWO() {
   if (clear) clear.style.display = 'none';
 }
 
-// Fermer liste WO si clic dehors
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#ar-wo') && !e.target.closest('#ar-wo-list')) {
-    var list = document.getElementById('ar-wo-list');
-    if (list) list.style.display = 'none';
-  }
-});
-
 // ═══════════════ P99 ZONE VANNE ═══════════════
 var _p99Current = null;
 
@@ -11021,47 +10003,30 @@ function ouvrirP99(btn) {
   var wg      = btn.getAttribute('data-wg')      || 'MCREPAR';
   var mail    = btn.getAttribute('data-mail')    || '';
   var desc    = btn.getAttribute('data-desc')    || '';
-
-  // Naviguer vers l onglet Equipement termine et pre-remplir
   show('s-equip');
   setTimeout(function() {
-    // 1. Selectionner le bon workgroup
     var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === wg; }) || '';
     if (wgKey) setWG('eq', wgKey);
-
-    // 2. Remplir les champs identite
-    var fill = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
-    fill('eq-tag',    tag);
-    fill('eq-wo',     woUsine);
-    fill('eq-wo-mtc', wo);
-    fill('eq-wr',     wr);
-    fill('eq-sc',     sc);
-    fill('eq-desc',   desc);
-
-    // 3. Selectionner statut P99 Zone vanne
+    var fill = function(fid, val) { var el = document.getElementById(fid); if (el && val) el.value = val; };
+    fill('eq-tag', tag); fill('eq-wo', woUsine); fill('eq-wo-mtc', wo);
+    fill('eq-wr', wr); fill('eq-sc', sc); fill('eq-desc', desc);
     setTimeout(function() { setEqStatut('p99vanne'); }, 150);
-
-    // 4. Pre-remplir email demandeur si disponible
     if (mail) {
       setTimeout(function() {
-        var manualList = document.getElementById('eq-manual');
-        if (manualList) {
-          var inputs = manualList.querySelectorAll('input');
+        var ml = document.getElementById('eq-manual');
+        if (ml) {
           var found = false;
-          inputs.forEach(function(i){ if(i.value === mail) found = true; });
+          ml.querySelectorAll('input').forEach(function(i){ if(i.value===mail) found=true; });
           if (!found) {
-            var div = document.createElement('div');
-            div.className = 'manual-item';
-            div.innerHTML = '<input class="fi" type="email" value="' + mail + '" style="background:#E8F5E9;color:#375623;font-weight:600">' +
+            var d = document.createElement('div'); d.className='manual-item';
+            d.innerHTML = '<input class="fi" type="email" value="'+mail+'" style="background:#E8F5E9;color:#375623;font-weight:600">'+
               '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
-            manualList.appendChild(div);
+            ml.appendChild(d);
           }
         }
       }, 300);
     }
-
-    // 5. Scroll en haut du formulaire
-    window.scrollTo(0, 0);
+    window.scrollTo(0,0);
   }, 200);
 }
 
@@ -11109,14 +10074,267 @@ async function envoyerP99() {
   mailto(email, subject, body, cc);
 }
 
-// Fermer si clic dehors
-document.addEventListener('click', function(e) {
-  var ov = document.getElementById('p99-overlay');
-  if (ov && e.target === ov) fermerP99();
-});
-
+function escapeXmlVal(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 </script>
 
+<!-- POPUP CONTACT PICKER -->
+<div id="contact-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="if(event.target===this)hideContactPicker()">
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:14px;font-weight:700;color:#1F3864">Choisir un destinataire</div>
+      <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
+    </div>
+    <div style="padding:10px 14px 6px">
+      <input id="contact-picker-search" type="text" placeholder="Rechercher..." oninput="filterContactPicker()"
+        style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
+    </div>
+    <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ NUMPAD ═══════════════ -->
+<div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
+  <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
+    <div class="numpad-label" id="numpad-label">SAISIE</div>
+    <div class="numpad-display" id="numpad-display">_</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+      <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+      <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+      <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+      <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+      <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+      <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+      <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+      <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+      <button class="numpad-btn" onclick="numpadKey('/')">/ </button>
+      <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+      <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BONS DE SORTIE P50 ═══════════════ -->
+<div class="screen" id="s-bons-sortie">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">🗂️ PI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Planification Intégrée — Suivi pièces</div>
+    </div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Stats -->
+    <div id="bs-stats" style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#1F4E79,#2E75B6)">
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;backdrop-filter:blur(4px)">
+        <div id="bs-count-complet" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">✅ Complets</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bs-count-encours" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">⏳ En cours</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bs-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total WO</div>
+      </div>
+    </div>
+
+
+
+    <!-- Recherche + bouton -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <input class="fi" type="text" id="bs-search" placeholder="🔍 Rechercher WO, WG, TAG..."
+        oninput="renderBonsSortie()" style="flex:1;margin:0">
+      <button onclick="show('s-bs-nouveau')" style="background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+        ➕ Nouveau
+      </button>
+    </div>
+
+    <!-- Liste WO -->
+    <div id="bs-list" style="padding:10px 14px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NOUVEAU WO BS ═══════════════ -->
+<div class="screen" id="s-bs-nouveau">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
+    <div class="form-title">Nouveau WO</div>
+    <div class="form-badge" style="background:#E3F2FD;color:#1565C0">📋 Créer</div>
+  </div>
+  <div class="form-body">
+    <!-- WO -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> N° WO</div>
+      <input class="fi" type="text" id="bsn-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('bsn-wo','N° WO')" style="cursor:pointer">
+    </div>
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div class="wg-grp">
+        <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
+        <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
+        <div class="wg-btn" id="bsn-wg-strob" onclick="setBsnWG('strob')">STROB</div>
+        <div class="wg-btn" id="bsn-wg-stchaud" onclick="setBsnWG('stchaud')">STCHAUD</div>
+      </div>
+    </div>
+
+    <!-- TAG équipement -->
+    <div class="field-grp">
+      <div class="field-lbl">TAG Équipement</div>
+      <input class="fi" type="text" id="bsn-tag" placeholder="Ex : 220-X-00315">
+    </div>
+
+    <!-- Localisation pièces -->
+    <div class="field-grp">
+      <div class="field-lbl">Localisation des pièces</div>
+      <input class="fi" type="text" id="bsn-loc" placeholder="Ex : Rack A3 / Benne 12 / Étagère B2...">
+    </div>
+
+    <!-- Coller depuis Excel -->
+    <div class="field-grp">
+      <div class="field-lbl">Liste pièces — Coller depuis Ellipse <span style="font-size:11px;color:#888">(optionnel)</span></div>
+      <textarea class="fi" id="bsn-paste" rows="8"
+        placeholder="Copier depuis Ellipse (Révision demande) et coller ici :&#10;&#10;F37712/0001&#9;GASKET SET SEAT TI&#9;1,00&#10;F37712/0002&#9;GASKET SET BONNET&#9;1,00&#10;..."
+        style="font-family:monospace;font-size:12px;resize:vertical"
+        oninput="previewBsnPieces()"></textarea>
+    </div>
+
+    <!-- Aperçu -->
+    <div id="bsn-preview" style="display:none;margin-bottom:12px">
+      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:6px">APERÇU — <span id="bsn-preview-count">0</span> pièce(s) détectée(s)</div>
+      <div id="bsn-preview-list" style="background:#f8f8f8;border-radius:10px;padding:10px;font-size:12px;font-family:monospace;max-height:150px;overflow-y:auto"></div>
+    </div>
+
+    <button onclick="saveBonsSortieWO()" class="send-btn" style="background:#375623">
+      💾 Enregistrer le WO
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ DETAIL WO BS ═══════════════ -->
+<div class="screen" id="s-bs-detail">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
+    <div class="form-title" id="bs-detail-title">Détail WO</div>
+    <div class="form-badge" id="bs-detail-badge" style="background:#E2EFDA;color:#375623">✅</div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Infos WO -->
+    <div id="bs-detail-info" style="padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)"></div>
+
+    <!-- Actions -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <button id="bs-planning-btn" onclick="passerEnPlanning()" 
+        style="flex:1;background:#375623;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📋 Passer en planning
+      </button>
+      <button onclick="envoyerRecapBS()" 
+        style="background:#DEEAF1;color:#1F4E79;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📧
+      </button>
+      <button onclick="supprimerWO()" 
+        style="background:#FCE4D6;color:#C55A11;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑
+      </button>
+    </div>
+
+    <!-- Bouton Enregistrer -->
+    <div style="padding:10px 14px;background:#f7f8fa;border-bottom:1px solid var(--border)">
+      <button id="bs-save-btn" onclick="enregistrerModifWO()"
+        style="width:100%;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        💾 Enregistrer les modifications
+      </button>
+    </div>
+
+    <!-- Liste pièces -->
+    <div style="padding:10px 14px">
+      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:8px">PIÈCES — <span id="bs-detail-count"></span></div>
+      <div id="bs-detail-list"></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
+<div class="screen" id="s-templates">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div>
+      <div class="form-title">Mes Templates Word</div>
+      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
+    </div>
+  </div>
+
+  <div style="padding:16px">
+
+    <!-- MCREPAR -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
+          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCREPAR (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
+      </label>
+      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCREPAR
+      </button>
+    </div>
+
+    <!-- MCCHAUD -->
+    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
+          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
+        </div>
+      </div>
+      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
+        ⬆️ Importer mon fichier MCCHAUD (.docx)
+        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
+      </label>
+      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
+        🗑️ Supprimer mon template MCCHAUD
+      </button>
+    </div>
+
+    <!-- INFO -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
+      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
+      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
+      <div>2. Ton template est sauvegardé sur ton PC</div>
+      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
+      <div>4. Le fichier généré utilisera ton propre modèle</div>
+      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════ WORKSHOP ═══════════════ -->
 <div class="screen" id="s-callidus-prnc">
   <div class="hdr" style="display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10">
     <div class="back-btn" onclick="show('s-home')">←</div>
