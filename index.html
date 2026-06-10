@@ -389,10 +389,14 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Planning Transport</div>
       <div class="card-sub" id="transport-badge-home">Camions & expéditions</div>
     </div>
-    <div class="action-card" onclick="show('s-callidus-prnc')">
+    <div class="action-card" style="position:relative" onclick="show('s-callidus-prnc')">
       <div class="card-icon" style="background:#EDE7F6;color:#7030A0">🔧</div>
       <div class="card-lbl">Callidus</div>
       <div class="card-sub">Vannes chez Callidus</div>
+      <label onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Bordereau
+        <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
+      </label>
     </div>
     <div class="action-card" onclick="show('s-etna-suivi')">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">&#127912;</div>
@@ -1215,7 +1219,9 @@ function _initLocSel(selId, inpId, val) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">&#8592;</div>
     <div class="form-title">Travaux Callidus</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">Suivi</div>
+    <label style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px">Import
+      <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
+    </label>
   </div>
   <div style="padding:10px 14px;background:var(--white);border-bottom:1px solid var(--border)">
     <input class="fi" type="text" id="cal-suivi-search" placeholder="Rechercher par TAG ou WO..." oninput="renderCallidusSuivi()" style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
@@ -2460,44 +2466,37 @@ function saveWOClotures(list) {
 }
 
 async function cloturerWO(wo, tag, wg, date, recordId) {
-  if (!confirm('✅ Clôturer le WO ' + wo + ' ?\n\nCela va supprimer :\n• Tous les enregistrements liés à ce WO\n• Toutes les photos associées (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.')) return;
-  var list = getWOClotures();
-  if (!list.find(function(x){ return x.wo === wo; })) {
-    list.unshift({ wo:wo, tag:tag, wg:wg, date:date, dateCloture: new Date().toLocaleDateString('fr-FR'), id: recordId });
-    saveWOClotures(list);
-  }
+  if (!confirm('Cloturer le WO ' + wo + ' ? Cette action supprimera tous les enregistrements et photos associes.')) return;
+  var list=getWOClotures();
+  if (!list.find(function(x){ return x.wo===wo; }))
+    list.unshift({wo,tag,wg,date,dateCloture:new Date().toLocaleDateString('fr-FR'),id:recordId});
+  saveWOClotures(list);
   try {
-    var records = await dbLoad();
-    var allHist = records.filter(function(r){ return r.wo === wo; });
-    for (var h of allHist) {
-      var pics = (h.photos || []).filter(Boolean);
-      for (var p of pics) { try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {} }
-      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method:'DELETE' }).catch(function(){});
+    var records=await dbLoad();
+    for (var h of records.filter(r=>r.wo===wo)) {
+      for (var p of (h.photos||[]).filter(Boolean))
+        try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:p})}); } catch(e){}
+      await fetch(DB_API+'?id='+encodeURIComponent(h.id),{method:'DELETE'}).catch(()=>{});
     }
     try {
-      var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
-      var planData = await planResp.json();
-      var planRows = planData.rows || planData;
-      if (Array.isArray(planRows)) {
-        for (var planRow of planRows) {
-          if (!planRow || planRow.wo !== wo) continue;
-          var planPics = (planRow.photos || []).filter(Boolean);
-          for (var pp of planPics) { try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:pp}) }); } catch(e) {} }
-          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method:'DELETE' }).catch(function(){});
-        }
+      var pr=await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo)).then(r=>r.json());
+      for (var row of (pr.rows||pr||[])) {
+        if(!row||row.wo!==wo) continue;
+        for (var pp of (row.photos||[]).filter(Boolean))
+          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
+        await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
       }
-    } catch(e) { console.warn('planning delete err', e); }
+    } catch(e){}
     try {
-      var piRows = await fetch(DB_API + '?table=pi_suivi').then(function(r){ return r.json(); });
-      var piRow = Array.isArray(piRows) ? piRows.find(function(p){ return p.wo === wo; }) : null;
-      if (piRow) { await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method:'DELETE' }); _piCache = null; }
-    } catch(e) {}
-    _dbCache = null; _photosByWOCache = null;
-    if (typeof _planningData !== 'undefined') _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
-    try { var local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(function(r){ return r.wo !== wo; }))); } catch(e) {}
-  } catch(e) { console.warn('cloturerWO err', e); alert('Erreur lors de la clôture : ' + e.message); }
-  renderHist();
-  if (typeof updateStats === 'function') updateStats();
+      var pi=await fetch(DB_API+'?table=pi_suivi').then(r=>r.json());
+      var piRow=Array.isArray(pi)?pi.find(p=>p.wo===wo):null;
+      if(piRow){ await fetch(DB_API+'?table=pi_suivi&id='+encodeURIComponent(piRow.id),{method:'DELETE'}); _piCache=null; }
+    } catch(e){}
+    _dbCache=null; _photosByWOCache=null;
+    if(typeof _planningData!=='undefined') _planningData=_planningData.filter(i=>i.wo!==wo);
+    try{ var l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY,JSON.stringify(l.filter(r=>r.wo!==wo))); }catch(e){}
+  } catch(e){ alert('Erreur cloture : '+e.message); }
+  renderHist(); if(typeof updateStats==='function') updateStats();
 }
 
 function uncloturerWO(wo) {
@@ -2906,7 +2905,7 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot, zoneDepot,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
@@ -3766,6 +3765,7 @@ async function renderHist() {
         ${(r.type==='TERMINE' && r.statut) ? `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:2px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;color:#375623">📍 ${r.statut}</div>` : (info ? `<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>` : '')}
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
         ${r.loc?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${r.loc}</div>`:''}
+        ${(r.type==='TERMINE'&&r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">Zone depot : ${r.zone}</div>`:''}
         ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
         ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
       </div>
@@ -3832,7 +3832,7 @@ async function dbSaveTermine(d) {
     wo:    d.woMtc || d.wo || '',   // WO MTC en priorité
     woUsine: d.wo  || '',            // WO Usine
     wr:d.wr, sc:d.sc,
-    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'', zone:d.zoneDepot||'',
+    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'', zone:d.zoneDepot||'', zone:d.zoneDepot||'',
     desc: d.dest ? d.dest.join(', ') : '',
     emailDemandeur: d.emailDemandeur || null,
     photos: d.photos || [] });
@@ -4599,52 +4599,146 @@ async function sendEnvoiCallidus() {
   if (state.cal) state.cal.wg = '';
 }
 
+async function _importerBordereauCallidus(input) {
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    try {
+      var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      var ref=(rows[3]&&rows[3][0])?String(rows[3][0]).trim():'';
+      var dateT='';
+      if(rows[18]&&rows[18][2]){ var dt=rows[18][2]; dateT=(dt instanceof Date)?dt.toLocaleDateString('fr-FR'):String(dt).replace(/\n/g,'').trim(); }
+      var items=[];
+      for(var r=23;r<=27;r++){
+        var row=rows[r]; if(!row) continue;
+        var sc=row[8]?String(row[8]).trim():'', wo=row[11]?String(row[11]).trim():'';
+        var tag=row[12]?String(row[12]).trim():'', lieu=row[14]?String(row[14]).trim():'';
+        var bds=row[9]?String(row[9]).trim():'';
+        if(!sc&&!wo&&!tag) continue;
+        items.push({sc,wo,tag,serie:bds,lieu,ref,date:dateT});
+      }
+      for(var r2=30;r2<=32;r2++){
+        var row2=rows[r2]; if(!row2) continue;
+        var sc2=row2[10]?String(row2[10]).trim():'', wo2=row2[11]?String(row2[11]).trim():'';
+        var tag2=row2[12]?String(row2[12]).trim():'', lieu2=row2[14]?String(row2[14]).trim():'';
+        var bds2=row2[9]?String(row2[9]).trim():'';
+        if(!sc2&&!wo2&&!tag2) continue;
+        items.push({sc:sc2,wo:wo2,tag:tag2,serie:bds2,lieu:lieu2,ref,date:dateT});
+      }
+      if(!items.length){ alert('Aucun equipement trouve dans le bordereau.'); return; }
+      var toast=document.createElement('div');
+      toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+      toast.textContent='Enregistrement de '+items.length+' equipement(s)...';
+      document.body.appendChild(toast);
+      for(var item of items){
+        await dbAdd({type:'CALLIDUS',tag:item.tag||'',wo:item.wo||'',sc:item.sc||'',
+          serie:item.serie||'',wg:'MCREPAR',date:item.date||new Date().toLocaleDateString('fr-FR'),
+          remarques:item.lieu||'',photos:[],callidusStatut:'Envoye Callidus'});
+      }
+      _dbCache=null; toast.remove();
+      var t2=document.createElement('div');
+      t2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+      t2.textContent=items.length+' equipement(s) importes - Ref. '+(ref||'N/A');
+      document.body.appendChild(t2); setTimeout(function(){ t2.remove(); },4000);
+      renderCallidusSuivi();
+    } catch(err){ alert('Erreur lecture bordereau : '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function _ajouterPhotoCallidus(id, input) {
+  var files=Array.from(input.files); if(!files.length) return;
+  var toast=document.createElement('div');
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+  toast.textContent='Upload photo(s)...'; document.body.appendChild(toast);
+  try {
+    var urls=(await Promise.all(files.map(function(file){
+      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
+    }))).filter(Boolean);
+    if(!urls.length){ toast.remove(); alert('Echec upload'); return; }
+    var records=await dbLoad(), rec=records.find(function(r){ return r.id===id; });
+    var newPhotos=((rec&&rec.photos)||[]).concat(urls);
+    await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})});
+    _dbCache=null; toast.remove();
+    var t2=document.createElement('div');
+    t2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+    t2.textContent=urls.length+' photo(s) sauvegardee(s)'; document.body.appendChild(t2);
+    setTimeout(function(){ t2.remove(); },2500); renderCallidusSuivi();
+  } catch(err){ toast.remove(); alert('Erreur : '+err.message); }
+}
+
+async function supprimerCallidus(id) {
+  if(!confirm('Supprimer cet enregistrement ?')) return;
+  var records=await dbLoad(), rec=records.find(function(r){ return r.id===id; });
+  if(rec&&rec.photos&&rec.photos.length)
+    for(var p of rec.photos)
+      try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:p})}); } catch(e){}
+  await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'DELETE'});
+  _dbCache=null; renderCallidusSuivi();
+}
+
 async function renderCallidusSuivi() {
-  var list = document.getElementById('cal-suivi-list');
-  var countEl = document.getElementById('cal-suivi-count');
-  if (!list) return;
-  var search = (document.getElementById('cal-suivi-search')||{value:''}).value.toLowerCase();
-  var records = await dbLoad();
-  var calRecs = records.filter(function(r) {
-    if (r.type !== 'CALLIDUS') return false;
-    if (!search) return true;
-    return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search);
+  var list=document.getElementById('cal-suivi-list');
+  var countEl=document.getElementById('cal-suivi-count');
+  if(!list) return;
+  var search=(document.getElementById('cal-suivi-search')||{value:''}).value.toLowerCase();
+  var records=await dbLoad();
+  var calRecs=records.filter(function(r){
+    if(r.type!=='CALLIDUS') return false;
+    if(!search) return true;
+    return (r.tag||'').toLowerCase().includes(search)||(r.wo||'').toLowerCase().includes(search)
+        ||(r.sc||'').toLowerCase().includes(search)||(r.serie||'').toLowerCase().includes(search);
   });
-  countEl.textContent = calRecs.length + ' équipement' + (calRecs.length!==1?'s':'') + ' chez Callidus';
-  if (!calRecs.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun équipement chez Callidus</div></div>'; return; }
-  list.innerHTML = calRecs.map(function(r) {
-    var done = r.callidusStatut && (r.callidusStatut.includes('Livré') || r.callidusStatut.includes('Terminé'));
-    var statut = r.callidusStatut || 'En attente';
-    var statColor = done ? '#375623' : (r.callidusStatut ? '#1F3864' : '#888');
-    var statBg    = done ? '#E2EFDA' : (r.callidusStatut ? '#DEEAF1' : '#f0f0f0');
-    var _wop=getPhotosByWO(r.wo||''); var photos = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
-    var _cpid = 'cp_' + r.id;
-    window._etnaPhotosMap = window._etnaPhotosMap || {};
-    window._etnaPhotosMap[_cpid] = photos;
-    var photoHtml = photos.length > 0
-      ? '<img src="' + cloudThumb(photos[0],600,280) + '" loading="lazy" onclick="viewPhotoByKey(' + _cpid + ',0)" style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
-      : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
-    return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">' +
-      photoHtml +
-      '<div style="padding:12px 14px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-          '<div style="display:flex;align-items:center;gap:6px">' +
-            '<span style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</span>' +
-            (r.fromFiche ? '<span style="background:#1F3864;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">FS</span>' : '') +
-          '</div>' +
-          '<span style="background:' + statBg + ';color:' + statColor + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + statut + '</span>' +
-        '</div>' +
-        '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
-          (r.wo ? '<div><span style="color:#888;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
-          (r.wr ? '<div><span style="color:#888;font-weight:700">WR</span> <strong>' + r.wr + '</strong></div>' : '') +
-          (r.desc ? '<div><span style="color:#888;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
-          '<div><span style="color:#888;font-weight:700">Envoyé le</span> ' + (r.date||'--') + '</div>' +
-        '</div>' +
-        (r.callidusDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.callidusDateRetour + '</div>' : '') +
-        (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #1F3864;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
-        '<button onclick="openCallidusUpdate(' + r.id + ')" style="width:100%;padding:10px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">&#9998; Mettre à jour</button>' +
-      '</div>' +
-    '</div>';
+  if(countEl) countEl.textContent=calRecs.length+' equipement'+(calRecs.length!==1?'s':'')+' chez Callidus';
+  if(!calRecs.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128295;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun equipement chez Callidus</div></div>';
+    return;
+  }
+  list.innerHTML=calRecs.map(function(r){
+    var done=r.callidusStatut&&(r.callidusStatut.includes('Livr')||r.callidusStatut.includes('Termin'));
+    var statut=r.callidusStatut||'En attente';
+    var statColor=done?'#375623':(r.callidusStatut?'#1F3864':'#888');
+    var statBg=done?'#E2EFDA':(r.callidusStatut?'#DEEAF1':'#f0f0f0');
+    var photos=(r.photos||[]).filter(Boolean);
+    var pid='cp_'+r.id;
+    window._etnaPhotosMap=window._etnaPhotosMap||{};
+    window._etnaPhotosMap[pid]=photos;
+    var thumb=photos.length>0
+      ?('<div style="position:relative">'
+        +'<img src="'+cloudThumb(photos[0],600,280)+'" loading="lazy"'
+        +' onclick="viewPhotoByKey(\''+pid+'\',0)"'
+        +' style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+        +'<span style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.55);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700">'+photos.length+' photo(s)</span></div>')
+      :'<div style="width:100%;height:60px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:24px">&#128295;</div>';
+    return '<div style="background:#fff;border-radius:12px;border:2px solid '+(done?'#375623':'#1F3864')+';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">'
+      +thumb
+      +'<div style="padding:12px 14px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +'<span style="font-size:15px;font-weight:700;color:#1F3864">'+(r.tag||'--')+'</span>'
+          +'<span style="background:'+statBg+';color:'+statColor+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">'+statut+'</span>'
+        +'</div>'
+        +'<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">'
+          +(r.wo?'<div><span style="color:#888;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')
+          +(r.serie?'<div><span style="color:#888;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')
+          +(r.sc?'<div><span style="color:#888;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.sc+'</strong></div>':'')
+          +(r.date?'<div><span style="color:#888;font-weight:700">Date&nbsp;</span>'+r.date+'</div>':'')
+          +(r.remarques?'<div><span style="color:#888;font-weight:700">Lieu&nbsp;&nbsp;</span>'+r.remarques+'</div>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+          +'<label style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;padding:9px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">'
+            +'&#128247; Photo'
+            +'<input type="file" accept="image/*" multiple style="display:none" onchange="_ajouterPhotoCallidus(\''+r.id+'\',this)">'
+          +'</label>'
+          +'<button onclick="openCallidusUpdate(\''+r.id+'\')" style="flex:2;background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:10px;padding:9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#9881; Mettre a jour</button>'
+          +'<button onclick="supprimerCallidus(\''+r.id+'\')" style="background:#fff;color:#C00;border:1.5px solid #C00;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;cursor:pointer">&#128465;</button>'
+        +'</div>'
+        +(r.callidusCommentaire?'<div style="font-size:10px;color:#555;background:#fffde7;border-radius:6px;padding:6px 8px;border-left:3px solid #FFC107">'+r.callidusCommentaire+'</div>':'')
+      +'</div>'
+    +'</div>';
   }).join('');
 }
 
@@ -5190,111 +5284,7 @@ function cloudThumb(url, w, h) {
   return url.replace('/upload/', '/upload/w_' + (w||400) + ',h_' + (h||300) + ',c_fill,q_auto,f_auto/');
 }
 
-async function renderInventaire() {
-  var list    = document.getElementById('inv-list');
-  var countEl = document.getElementById('inv-count');
-  var statsEl = document.getElementById('inv-stats');
-  if (!list) return;
 
-  var search = (document.getElementById('inv-search')||{value:''}).value.toLowerCase();
-  var wgFilter = (document.getElementById('inv-wg-filter')||{value:''}).value;
-
-  var records = await dbLoad();
-
-  var present = records.filter(function(r) {
-    if (['RECUPERE','CALLIDUS','PEINTURE'].includes(r.type)) return false;
-    if (r.statut && r.statut.includes('RECUPERE')) return false;
-    if (r.type === 'ARRIVEE' || r.type === 'TERMINE' || r.type === 'FICHE' || r.type === 'ATT_PIECES') {
-      if (wgFilter && r.wg !== wgFilter) return false;
-      if (search) {
-        return (r.tag||'').toLowerCase().includes(search) ||
-               (r.wo||'').toLowerCase().includes(search) ||
-               (r.loc||'').toLowerCase().includes(search) ||
-               (r.wg||'').toLowerCase().includes(search);
-      }
-      return true;
-    }
-    return false;
-  });
-
-  var wgCounts = {};
-  present.forEach(function(r) { wgCounts[r.wg||'?'] = (wgCounts[r.wg||'?']||0) + 1; });
-  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
-  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
-  if (statsEl) {
-    statsEl.innerHTML = '<div style="background:#DEEAF1;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#1F3864;white-space:nowrap">&#128203; Total : ' + present.length + '</div>' +
-      Object.keys(wgCounts).map(function(wg) {
-        return '<div style="background:' + (wgBgs[wg]||'#f0f0f0') + ';border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:' + (wgColors[wg]||'#333') + ';white-space:nowrap">' + wg + ' : ' + wgCounts[wg] + '</div>';
-      }).join('');
-  }
-
-  countEl.textContent = present.length + ' équipement' + (present.length!==1?'s':'') + ' en P50';
-
-  if (!present.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">&#128203;</div><div style="font-size:14px;font-weight:600;margin-top:8px">Aucun équipement trouvé</div></div>';
-    return;
-  }
-
-  var byLoc = {};
-  present.forEach(function(r) {
-    var loc = r.loc || 'Sans localisation';
-    if (!byLoc[loc]) byLoc[loc] = [];
-    byLoc[loc].push(r);
-  });
-
-  var html = '';
-  Object.keys(byLoc).sort().forEach(function(loc) {
-    var items = byLoc[loc];
-    html += '<div style="background:#f8f9fa;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-top:8px;margin-bottom:2px">&#128205; ' + loc + ' — ' + items.length + ' éq.</div>';
-    items.forEach(function(r) {
-      var wgColor = wgColors[r.wg] || '#333';
-      var wgBg    = wgBgs[r.wg]    || '#f0f0f0';
-      var _wop=getPhotosByWO(r.wo||''); var photos  = _wop.length ? _wop : (r.photos||[]).filter(Boolean);
-      var desc    = r.motif || r.desc || r.description || '';
-
-      html += '<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1.5px solid var(--border)">';
-
-      if (photos.length > 0) {
-        html += '<img src="' + cloudThumb(photos[0],600,220) + '" loading="lazy" style="width:100%;height:110px;object-fit:cover;display:block;cursor:pointer" onclick="viewImg(this.src)">';
-      }
-
-      html += '<div style="padding:10px 12px">';
-
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
-        '<div style="font-size:14px;font-weight:800;color:var(--navy)">' + (r.tag||'--') + '</div>' +
-        '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700">' + (r.wg||'--') + '</span>' +
-      '</div>';
-
-      html += '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' +
-        (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.wr ? 'WR ' + r.wr + ' · ' : '') + (r.date||'') +
-      '</div>';
-
-      html += '<div style="font-size:11px;color:#555;margin-bottom:6px">📌 ' + (r.statut||r.type||'--') + '</div>';
-
-      var remarque = r.motif || r.desc || r.description || '';
-      if (remarque) {
-        html += '<div style="background:#FFF8E1;border-left:3px solid #FFC107;border-radius:0 8px 8px 0;padding:6px 8px;font-size:11px;color:#555;margin-bottom:8px">💬 ' + remarque + '</div>';
-      }
-
-      if (photos.length > 1) {
-        html += '<div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:8px">';
-        photos.slice(1).forEach(function(url) {
-          html += '<img src="' + cloudThumb(url,120,120) + '" loading="lazy" onclick="viewImg(this.src)" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
-        });
-        html += '</div>';
-      }
-
-      html += '<div style="display:flex;gap:6px">' +
-        '<button onclick="genererQRCode(' + r.id + ')" style="flex:1;background:#E2EFDA;color:#375623;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">📷 QR</button>' +
-        '<button onclick="ouvrirEditionInventaire(this.dataset.id)" data-id="' + r.id + '" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✏️ Modifier</button>' +
-        '<button onclick="supprimerInventaire(this.dataset.id)" data-id="' + r.id + '" style="background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer">🗑</button>' +
-      '</div>';
-
-      html += '</div></div>';
-    });
-  });
-  list.innerHTML = html;
-}
 
 async function genererQRCode(id) {
   var records = await dbLoad();
@@ -6131,52 +6121,38 @@ async function deleteRecord(id) {
   const records = await dbLoad();
   const rec = records.find(r => r.id === id);
   const wo = rec ? (rec.wo || '') : '';
-  var msg = wo
-    ? '🗑️ Supprimer tout ce qui est lié au WO ' + wo + ' ?\n\n• Tous les enregistrements historique\n• Toutes les photos Cloudinary (historique + planning)\n• Le WO dans PI Suivi\n\nCette action est irréversible.'
-    : '🗑️ Supprimer cet enregistrement ?\n\nCette action est irréversible.';
-  if (!confirm(msg)) return;
+  if (!confirm(wo ? 'Supprimer tout ce qui est lie au WO ' + wo + ' ?' : 'Supprimer cet enregistrement ?')) return;
   if (wo) {
-    const allHist = records.filter(r => r.wo === wo);
-    for (const h of allHist) {
-      const pics = (h.photos || []).filter(Boolean);
-      for (const p of pics) {
-        try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {}
-      }
-      await fetch(DB_API + '?id=' + encodeURIComponent(h.id), { method:'DELETE' }).catch(function(){});
+    for (const h of records.filter(r => r.wo === wo)) {
+      for (const p of (h.photos||[]).filter(Boolean))
+        try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:p})}); } catch(e){}
+      await fetch(DB_API+'?id='+encodeURIComponent(h.id),{method:'DELETE'}).catch(()=>{});
     }
     try {
-      var planResp = await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo));
-      var planData = await planResp.json();
-      var planRows = planData.rows || planData;
-      if (Array.isArray(planRows)) {
-        for (const planRow of planRows) {
-          if (!planRow || planRow.wo !== wo) continue;
-          const planPics = (planRow.photos || []).filter(Boolean);
-          for (const pp of planPics) {
-            try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:pp}) }); } catch(e) {}
-          }
-          await fetch(DB_API + '?table=planning&wo=' + encodeURIComponent(wo), { method:'DELETE' }).catch(function(){});
-        }
+      var pr=await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo)).then(r=>r.json());
+      for (const row of (pr.rows||pr||[])) {
+        if(!row||row.wo!==wo) continue;
+        for (const pp of (row.photos||[]).filter(Boolean))
+          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
+        await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
       }
-    } catch(e) { console.warn('planning delete err', e); }
+    } catch(e){}
     try {
-      const piRows = await fetch(DB_API + '?table=pi_suivi').then(r => r.json());
-      const piRow = Array.isArray(piRows) ? piRows.find(p => p.wo === wo) : null;
-      if (piRow) { await fetch(DB_API + '?table=pi_suivi&id=' + encodeURIComponent(piRow.id), { method:'DELETE' }); _piCache = null; }
-    } catch(e) {}
-    _dbCache = null; _photosByWOCache = null;
-    if (typeof _planningData !== 'undefined') _planningData = _planningData.filter(function(i){ return i.wo !== wo; });
-    try { const local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.wo !== wo))); } catch(e) {}
+      const pi=await fetch(DB_API+'?table=pi_suivi').then(r=>r.json());
+      const piRow=Array.isArray(pi)?pi.find(p=>p.wo===wo):null;
+      if(piRow){ await fetch(DB_API+'?table=pi_suivi&id='+encodeURIComponent(piRow.id),{method:'DELETE'}); _piCache=null; }
+    } catch(e){}
+    _dbCache=null; _photosByWOCache=null;
+    if(typeof _planningData!=='undefined') _planningData=_planningData.filter(i=>i.wo!==wo);
+    try{ const l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY,JSON.stringify(l.filter(r=>r.wo!==wo))); }catch(e){}
   } else {
-    const pics = (rec && rec.photos || []).filter(Boolean);
-    for (const p of pics) {
-      try { await fetch(DB_API + '?action=delete_photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo_url:p}) }); } catch(e) {}
-    }
-    await fetch(DB_API + '?id=' + encodeURIComponent(id), { method:'DELETE' }).catch(function(){});
-    _dbCache = null; _photosByWOCache = null;
-    try { const local = JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY, JSON.stringify(local.filter(r => r.id !== id))); } catch(e) {}
+    for (const p of ((rec&&rec.photos)||[]).filter(Boolean))
+      try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:p})}); } catch(e){}
+    await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'DELETE'}).catch(()=>{});
+    _dbCache=null; _photosByWOCache=null;
+    try{ const l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY,JSON.stringify(l.filter(r=>r.id!==id))); }catch(e){}
   }
-  document.querySelectorAll('.overlay-view').forEach(function(ov){ ov.remove(); });
+  document.querySelectorAll('.overlay-view').forEach(ov=>ov.remove());
   renderHist(); updateStats();
 }
 
@@ -9342,19 +9318,11 @@ function ouvrirPlanningAccueil() {
 
 async function sauvegarderPlanningNeon(data, semaine) {
   try {
-    var batchSize = 20;
-    for (var b = 0; b < data.length; b += batchSize) {
-      var batch = data.slice(b, b + batchSize);
-      var isFirst = (b === 0);
-      var resp = await fetch(DB_API + '?table=planning', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bulk: true, first: isFirst, semaine: semaine, items: batch })
-      });
-      var result = await resp.json();
-      console.log('Planning lot ' + (b/batchSize+1) + ' sauvegardé:', result);
+    for (var b=0; b<data.length; b+=20) {
+      await fetch(DB_API+'?table=planning',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
     }
-  } catch(e) { console.warn('planning save err', e); }
+  } catch(e){ console.warn('planning save err',e); }
 }
 
 async function chargerPlanningNeon(semaine) {
@@ -9544,6 +9512,12 @@ function filtrerPlanning(type) {
 
 var _currentModalWO = '';
 
+function fermerPlanningModal() {
+  var modal = document.getElementById('planning-modal');
+  if (modal) { modal.style.display = 'none'; }
+  _currentModalWO = null;
+}
+
 function ouvrirPlanningModal(wo) {
   var currentWO = wo;
   _currentModalWO = wo;
@@ -9666,65 +9640,49 @@ function pChip(l,v) {
 var _planningPhotosCache = {};
 
 async function ajouterPhotoPlanning(wo, input) {
-  var files = Array.from(input.files);
-  if (!files.length) return;
-  var preview = document.getElementById('planning-photos-preview-' + wo);
-  var item = _planningData.find(function(i){ return i.wo === wo; });
-  if (!item) return;
-  if (!item._photos) item._photos = [];
-  var loadDiv = document.createElement('div');
-  loadDiv.style.cssText = 'font-size:11px;color:#888;padding:4px 0';
-  loadDiv.textContent = '⏳ Upload en cours...';
-  if (preview) preview.appendChild(loadDiv);
-  var placeholders = [];
-  files.forEach(function(file) {
-    var reader = new FileReader();
-    var img = document.createElement('img');
-    img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
-    if (preview) preview.insertBefore(img, loadDiv);
+  var files=Array.from(input.files); if(!files.length) return;
+  var preview=document.getElementById('planning-photos-preview-'+wo);
+  var item=_planningData.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  if(!item._photos) item._photos=[];
+  var loadDiv=document.createElement('div');
+  loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+  loadDiv.textContent='Upload en cours...';
+  if(preview) preview.appendChild(loadDiv);
+  var placeholders=[];
+  files.forEach(function(file){
+    var reader=new FileReader(), img=document.createElement('img');
+    img.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
+    if(preview) preview.insertBefore(img,loadDiv);
     placeholders.push(img);
-    reader.onload = function(e){ img.src = e.target.result; };
+    reader.onload=function(e){ img.src=e.target.result; };
     reader.readAsDataURL(file);
   });
   try {
-    var uploadPromises = files.map(function(file) {
-      var fd = new FormData();
-      fd.append('file', file);
-      fd.append('upload_preset', CLOUDINARY_PRESET);
-      return fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {method:'POST',body:fd})
-        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url || null; });
-    });
-    var urls = await Promise.all(uploadPromises);
-    var validUrls = urls.filter(Boolean);
-    validUrls.forEach(function(url, i) {
-      if (placeholders[i]) { placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
+    var urls=(await Promise.all(files.map(function(file){
+      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
+    }))).filter(Boolean);
+    urls.forEach(function(url,i){
+      if(placeholders[i]){ placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
       item._photos.push(url);
     });
-    if (loadDiv) loadDiv.remove();
-    if (!validUrls.length) { alert('❌ Echec upload Cloudinary'); return; }
-    var semaineSave = item.semaine || _semaineActive || '';
-    if (!semaineSave) { alert('❌ Semaine introuvable — rechargez le planning.'); return; }
-    var resp = await fetch(DB_API + '?table=planning', {
-      method:'PATCH', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ wo:item.wo, semaine:semaineSave, photos:item._photos })
-    });
-    var res = await resp.json();
-    if (res && res.ok) {
-      var zone = document.getElementById('planning-photos-exist-' + wo);
-      if (zone) {
-        zone.innerHTML = item._photos.map(function(p){
-          return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-        }).join('');
-        var prev2 = document.getElementById('planning-photos-preview-' + wo);
-        if (prev2) prev2.innerHTML = '';
-      }
-    } else {
-      alert('❌ Erreur sauvegarde\nWO:'+item.wo+'\nSemaine:'+semaineSave+'\n'+JSON.stringify(res));
-    }
-  } catch(e) {
-    if (loadDiv) loadDiv.remove();
-    alert('❌ Erreur : ' + e.message);
-  }
+    if(loadDiv) loadDiv.remove();
+    if(!urls.length){ alert('Echec upload Cloudinary'); return; }
+    var semaineSave=item.semaine||_semaineActive||'';
+    if(!semaineSave){ alert('Semaine introuvable. Rechargez le planning.'); return; }
+    var res=await fetch(DB_API+'?table=planning',{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
+    if(res&&res.ok){
+      var zone=document.getElementById('planning-photos-exist-'+wo);
+      if(zone) zone.innerHTML=item._photos.map(function(p){
+        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+      }).join('');
+      var prev2=document.getElementById('planning-photos-preview-'+wo);
+      if(prev2) prev2.innerHTML='';
+    } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
+  } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
 
 function sauvegarderRemarquePlanning(wo) {
@@ -9835,6 +9793,62 @@ function _selectionnerWOGTag(wo) {
   var clear = document.getElementById('ar-tag-clear');
   if (clear) clear.style.display = 'block';
 }
+
+function _filtrerWOGWO(val) {
+  var list=document.getElementById('ar-wo-list'),clear=document.getElementById('ar-wo-clear');
+  if(!list) return;
+  if(clear) clear.style.display=val?'block':'none';
+  if(!val||val.length<2){ list.style.display='none'; return; }
+  var q=val.toLowerCase();
+  if(_woEnGData&&_woEnGData.length){
+    var f=_woEnGData.filter(function(w){ return (w.wo||'').includes(q)||(w.wr||'').includes(q)||(w.tag||'').toLowerCase().includes(q)||(w.desc||'').toLowerCase().includes(q); }).slice(0,25);
+    _afficherListeWOGWO(f,list);
+  } else {
+    clearTimeout(_woGTimer);
+    _woGTimer=setTimeout(function(){
+      fetch(DB_API+'?table=wo_en_g&q='+encodeURIComponent(val)).then(function(r){ return r.json(); })
+        .then(function(rows){ _afficherListeWOGWO(rows.map(function(r){ return {wo:r.wo,wr:r.wr||'',tag:r.tag,desc:r.description,wg:r.wg}; }),list); }).catch(function(){});
+    },300);
+  }
+}
+function _afficherListeWOGWO(items,list){
+  if(!items||!items.length){ list.style.display='none'; return; }
+  list.style.display='block';
+  var wgColors={MCCHAUD:'#C55A11',MCREPAR:'#7030A0',STROB:'#2E75B6'};
+  list.innerHTML=items.map(function(w){
+    var c=wgColors[w.wg]||'#555';
+    return '<div data-wo="'+(w.wo||'')+'" onclick="_selectionnerWOGWO(this.dataset.wo)" style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
+        +'<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">'+(w.wo||'')+'</span>'
+        +'<span style="font-family:monospace;font-size:11px;color:#888">'+(w.wr||'')+'</span>'
+        +'<span style="font-family:monospace;font-size:11px;color:#555">'+(w.tag||'')+'</span>'
+        +'<span style="background:'+c+'33;color:'+c+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+(w.wg||'')+'</span>'
+      +'</div>'
+      +'<div style="font-size:10px;color:#666">'+(w.desc||'').slice(0,55)+'</div>'
+      +'</div>';
+  }).join('');
+}
+function _selectionnerWOGWO(wo){
+  var w=_woEnGData.find(function(x){ return x.wo===wo; }); if(!w) return;
+  var el; el=document.getElementById('ar-wo'); if(el) el.value=w.wo||'';
+  el=document.getElementById('ar-wr'); if(el&&!el.value) el.value=w.wr||'';
+  el=document.getElementById('ar-tag'); if(el&&!el.value) el.value=w.tag||'';
+  if(w.wg==='MCCHAUD') setWG('ar','chaud');
+  else if(w.wg==='MCREPAR') setWG('ar','repar');
+  else if(w.wg==='STROB') setWG('ar','strob');
+  var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
+  var clear=document.getElementById('ar-wo-clear'); if(clear) clear.style.display='block';
+}
+function _clearWOGWO(){
+  var el=document.getElementById('ar-wo'); if(el) el.value='';
+  var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
+  var clear=document.getElementById('ar-wo-clear'); if(clear) clear.style.display='none';
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#ar-wo')&&!e.target.closest('#ar-wo-list')){
+    var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
+  }
+});
 
 function _filtrerWOGWR(val) {
   var list = document.getElementById('ar-wr-list');
@@ -10047,40 +10061,28 @@ async function _importerWOenG(input) {
 var _p99Current = null;
 
 function ouvrirP99(btn) {
-  var id      = btn.getAttribute('data-id')      || '';
-  var tag     = btn.getAttribute('data-tag')     || '';
-  var wo      = btn.getAttribute('data-wo')      || '';
-  var woUsine = btn.getAttribute('data-wo-usine')|| '';
-  var wr      = btn.getAttribute('data-wr')      || '';
-  var sc      = btn.getAttribute('data-sc')      || '';
-  var wg      = btn.getAttribute('data-wg')      || 'MCREPAR';
-  var mail    = btn.getAttribute('data-mail')    || '';
-  var desc    = btn.getAttribute('data-desc')    || '';
+  var id=btn.getAttribute('data-id')||'', tag=btn.getAttribute('data-tag')||'';
+  var wo=btn.getAttribute('data-wo')||'', woUsine=btn.getAttribute('data-wo-usine')||'';
+  var wr=btn.getAttribute('data-wr')||'', sc=btn.getAttribute('data-sc')||'';
+  var wg=btn.getAttribute('data-wg')||'MCREPAR', mail=btn.getAttribute('data-mail')||'';
+  var desc=btn.getAttribute('data-desc')||'';
   show('s-equip');
   setTimeout(function() {
-    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === wg; }) || '';
-    if (wgKey) setWG('eq', wgKey);
-    var fill = function(fid, val) { var el = document.getElementById(fid); if (el && val) el.value = val; };
-    fill('eq-tag', tag); fill('eq-wo', woUsine); fill('eq-wo-mtc', wo);
-    fill('eq-wr', wr); fill('eq-sc', sc); fill('eq-desc', desc);
-    setTimeout(function() { setEqStatut('p99vanne'); }, 150);
-    if (mail) {
-      setTimeout(function() {
-        var ml = document.getElementById('eq-manual');
-        if (ml) {
-          var found = false;
-          ml.querySelectorAll('input').forEach(function(i){ if(i.value===mail) found=true; });
-          if (!found) {
-            var d = document.createElement('div'); d.className='manual-item';
-            d.innerHTML = '<input class="fi" type="email" value="'+mail+'" style="background:#E8F5E9;color:#375623;font-weight:600">'+
-              '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
-            ml.appendChild(d);
-          }
-        }
-      }, 300);
-    }
+    var wgKey=Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; })||'';
+    if(wgKey) setWG('eq',wgKey);
+    var fill=function(fid,val){ var el=document.getElementById(fid); if(el&&val) el.value=val; };
+    fill('eq-tag',tag); fill('eq-wo',woUsine); fill('eq-wo-mtc',wo);
+    fill('eq-wr',wr); fill('eq-sc',sc); fill('eq-desc',desc);
+    setTimeout(function(){ setEqStatut('p99vanne'); },150);
+    if(mail){ setTimeout(function(){
+      var ml=document.getElementById('eq-manual');
+      if(ml){ var found=false; ml.querySelectorAll('input').forEach(function(i){ if(i.value===mail) found=true; });
+        if(!found){ var d=document.createElement('div'); d.className='manual-item';
+          d.innerHTML='<input class="fi" type="email" value="'+mail+'" style="background:#E8F5E9;color:#375623;font-weight:600">'+
+            '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>'; ml.appendChild(d); } }
+    },300); }
     window.scrollTo(0,0);
-  }, 200);
+  },200);
 }
 
 function fermerP99() {
