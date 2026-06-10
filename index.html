@@ -4609,35 +4609,26 @@ async function _importerBordereauCallidus(input) {
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
 
-      // Semaine : row 4 col A (index 3,0)
       var semaine = (rows[3] && rows[3][0]) ? String(rows[3][0]).trim() : '';
-
-      // Date transport : row 19 col C (index 18,2)
       var dateT = '';
       if (rows[18] && rows[18][2]) {
-        var dt = rows[18][2];
-        dateT = String(dt).replace(/\n/g,'').trim().split(' ')[0];
-        // Convertir format si nécessaire (ex: 13/04/26 → 13/04/2026)
-        if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateT)) dateT = dateT.slice(0,6) + '20' + dateT.slice(6);
+        var dt = String(rows[18][2]).replace(/\n/g,'').trim().split(' ')[0];
+        if (/^\d{2}\/\d{2}\/\d{2}$/.test(dt)) dt = dt.slice(0,6) + '20' + dt.slice(6);
+        dateT = dt;
       }
 
       var items = [];
-      // Lire toutes les lignes de données (lignes 24 à 55, index 23 à 54)
       for (var r = 23; r <= 54; r++) {
         var row = rows[r]; if (!row) continue;
-        // Colonnes: I=8(SC), J=9(BDS), K=10(DESC), L=11(WO), M=12(TAG), O=14(LIEU)
         var sc   = row[8]  ? String(row[8]).trim()  : '';
         var bds  = row[9]  ? String(row[9]).trim()  : '';
         var desc = row[10] ? String(row[10]).trim()  : '';
         var wo   = row[11] ? String(row[11]).trim()  : '';
         var tag  = row[12] ? String(row[12]).trim()  : '';
         var lieu = row[14] ? String(row[14]).trim()  : '';
-        // Séparer WO et WR si format "WO / WR"
         var wr = '';
         if (wo.includes('/')) { var parts=wo.split('/'); wo=parts[0].trim(); wr=parts[1]?parts[1].trim():''; }
-        // Ignorer lignes sans données essentielles
         if (!sc && !tag && !wo) continue;
-        // Ignorer les lignes d'en-tête
         if (sc === 'S/C' || tag === 'TAG') continue;
         items.push({sc, bds, desc, wo, wr, tag, lieu, semaine, date: dateT});
       }
@@ -4650,23 +4641,31 @@ async function _importerBordereauCallidus(input) {
       document.body.appendChild(toast);
 
       for (var item of items) {
-        await dbAdd({
-          type:    'CALLIDUS_PRNC',
-          tag:     item.tag,
-          wo:      item.wo,
-          wr:      item.wr,
-          sc:      item.sc,
-          bds:     item.bds,
-          desc:    item.desc,
+        var id = Date.now() + '-' + Math.random().toString(36).slice(2,6);
+        // Stocker les infos extra (semaine, wr, desc) dans remarques en JSON
+        var remarques = JSON.stringify({
           semaine: item.semaine,
-          date:    item.date,
-          lieu:    item.lieu,
-          photos:  [],
-          statut:  'Envoye'
+          wr:      item.wr,
+          desc:    item.desc,
+          lieu:    item.lieu
+        });
+        await fetch(DB_API + '?table=callidus_prnc', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            id:       id,
+            wo:       item.wo,
+            tag:      item.tag,
+            serie:    item.bds,       // BDS → serie
+            qty:      item.sc,        // S/C → qty (champ texte)
+            remarques: remarques,
+            statut:   'Envoye',
+            date:     item.date,
+            photos:   []
+          })
         });
       }
 
-      _dbCache = null;
       toast.remove();
       var t2 = document.createElement('div');
       t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
@@ -4674,7 +4673,6 @@ async function _importerBordereauCallidus(input) {
       document.body.appendChild(t2);
       setTimeout(function(){ t2.remove(); }, 4000);
 
-      // Naviguer vers l'onglet liste et rafraîchir
       if (typeof cpShowTab === 'function') cpShowTab('liste');
       renderCallidusPrnc(true);
     } catch(err) {
@@ -8218,17 +8216,16 @@ async function cpEnregistrer() {
 }
 
 async function _recuCallidusPrnc(id) {
-  var records = await dbLoad();
-  var rec = records.find(function(r){ return r.id === id; });
-  var tag  = rec ? (rec.tag ||'') : '';
-  var wo   = rec ? (rec.wo  ||'') : '';
+  var all = await fetch(DB_API+'?table=callidus_prnc').then(r=>r.json());
+  var rec = Array.isArray(all) ? all.find(function(r){ return r.id===id; }) : null;
+  var tag  = rec ? (rec.tag||'') : '';
+  var wo   = rec ? (rec.wo||'')  : '';
   var date = new Date().toLocaleDateString('fr-FR');
   var subj = encodeURIComponent('Reception Callidus - ' + tag + ' / WO ' + wo);
   var body = encodeURIComponent(
-    'Bonjour,\n\n' +
-    'L equipement suivant a ete recu de Callidus :\n\n' +
+    'Bonjour,\n\nL equipement suivant a ete recu de Callidus :\n\n' +
     '  TAG  : ' + tag + '\n' +
-    '  WO   : ' + wo + '\n' +
+    '  WO   : ' + wo  + '\n' +
     '  Date : ' + date + '\n\n' +
     'Cordialement,\nEmmanuel ROSA ASIK'
   );
@@ -8242,20 +8239,24 @@ async function _ajouterPhotoCallidusPrnc(id, input) {
   toast.textContent = 'Upload photo(s)...'; document.body.appendChild(toast);
   try {
     var urls = (await Promise.all(files.map(function(file){
-      var fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUDINARY_PRESET);
+      var fd = new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
       return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
         .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
     }))).filter(Boolean);
     if (!urls.length) { toast.remove(); alert('Echec upload'); return; }
-    var records = await dbLoad();
-    var rec = records.find(function(r){ return r.id===id; });
-    var newPhotos = ((rec&&rec.photos)||[]).concat(urls);
-    await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})});
-    _dbCache = null; toast.remove();
+    // Récupérer photos existantes depuis callidus_prnc
+    var existing = await fetch(DB_API+'?table=callidus_prnc').then(r=>r.json());
+    var rec = Array.isArray(existing) ? existing.find(function(r){ return r.id===id; }) : null;
+    var newPhotos = ((rec&&Array.isArray(rec.photos)?rec.photos:[])).concat(urls);
+    await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({photos:newPhotos})
+    });
+    toast.remove();
     var t2 = document.createElement('div');
     t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-    t2.textContent = urls.length + ' photo(s) ajoutee(s)'; document.body.appendChild(t2);
-    setTimeout(function(){ t2.remove(); }, 2500);
+    t2.textContent = urls.length+' photo(s) ajoutee(s)'; document.body.appendChild(t2);
+    setTimeout(function(){ t2.remove(); },2500);
     renderCallidusPrnc();
   } catch(err) { toast.remove(); alert('Erreur : '+err.message); }
 }
@@ -8275,32 +8276,41 @@ async function _supprimerPhotoCallidusPrnc(id) {
 
 async function _supprimerCallidusPrnc(id) {
   if (!confirm('Supprimer cette vanne ?')) return;
-  var records = await dbLoad();
-  var rec = records.find(function(r){ return r.id===id; });
-  if (rec && rec.photos && rec.photos.length)
-    for (var p of rec.photos)
-      try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:p})}); } catch(e){}
-  await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'DELETE'});
-  _dbCache = null; renderCallidusPrnc();
+  await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'});
+  renderCallidusPrnc();
+}
+
+function _parseMeta(remarques) {
+  if (!remarques) return {};
+  try { return JSON.parse(remarques); } catch(e) { return {lieu: remarques}; }
 }
 
 async function renderCallidusPrnc(forceRefresh) {
-  if (forceRefresh) _dbCache = null;
   var list = document.getElementById('cp-list');
   if (!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">Chargement...</div>';
   var search = (document.getElementById('cp-search')||{value:''}).value.toLowerCase();
-  var records = await dbLoad();
-  var recs = records.filter(function(r){
-    if (r.type !== 'CALLIDUS_PRNC') return false;
+
+  var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
+  if (!resp || !resp.ok) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#C00;font-weight:700">Erreur connexion</div>';
+    return;
+  }
+  var allRecs = await resp.json();
+  if (!Array.isArray(allRecs)) allRecs = [];
+
+  var recs = allRecs.filter(function(r){
     if (!search) return true;
+    var meta = _parseMeta(r.remarques);
     return (r.tag||'').toLowerCase().includes(search) || (r.wo||'').toLowerCase().includes(search)
-        || (r.sc||'').toLowerCase().includes(search) || (r.bds||'').toLowerCase().includes(search)
-        || (r.desc||'').toLowerCase().includes(search);
+        || (r.serie||'').toLowerCase().includes(search) || (r.qty||'').toLowerCase().includes(search)
+        || (meta.semaine||'').toLowerCase().includes(search);
   });
-  // Grouper par semaine
+
   var semaines = {};
   recs.forEach(function(r){
-    var s = r.semaine || 'Sans semaine';
+    var meta = _parseMeta(r.remarques);
+    var s = meta.semaine || 'Sans semaine';
     if (!semaines[s]) semaines[s] = [];
     semaines[s].push(r);
   });
@@ -8314,7 +8324,8 @@ async function renderCallidusPrnc(forceRefresh) {
   list.innerHTML = semSorted.map(function(sem) {
     var items = semaines[sem];
     var cards = items.map(function(r) {
-      var photos = (r.photos||[]).filter(Boolean);
+      var meta = _parseMeta(r.remarques);
+      var photos = Array.isArray(r.photos) ? r.photos.filter(Boolean) : [];
       var pid = 'cprnc_' + r.id;
       window._etnaPhotosMap = window._etnaPhotosMap || {};
       window._etnaPhotosMap[pid] = photos;
@@ -8326,7 +8337,7 @@ async function renderCallidusPrnc(forceRefresh) {
           + '<span style="position:absolute;bottom:5px;right:7px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">' + photos.length + ' &#128247;</span></div>')
         : '<div style="width:100%;height:40px;background:linear-gradient(135deg,#EDE7F6,#D1C4E9);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:20px">&#128295;</div>';
 
-      return '<div style="background:#fff;border-radius:12px;border:1.5px solid #7030A0;overflow:hidden;box-shadow:0 2px 8px rgba(112,48,160,.1)">'
+      return '<div style="background:#fff;border-radius:12px;border:1.5px solid #CE93D8;overflow:hidden;box-shadow:0 2px 8px rgba(112,48,160,.1)">'
         + thumb
         + '<div style="padding:10px 12px">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
@@ -8334,11 +8345,11 @@ async function renderCallidusPrnc(forceRefresh) {
             + '<span style="font-size:10px;color:#888">' + (r.date||'') + '</span>'
           + '</div>'
           + '<div style="background:#F3E5F5;border-radius:7px;padding:7px 9px;font-size:10px;line-height:1.9;margin-bottom:8px">'
-            + (r.wo ? '<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>' + r.wo + '</strong></div>' : '')
-            + (r.wr ? '<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>' + r.wr + '</strong></div>' : '')
-            + (r.sc ? '<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>' + r.sc + '</strong></div>' : '')
-            + (r.bds ? '<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;</span><strong>' + r.bds + '</strong></div>' : '')
-            + (r.desc ? '<div style="color:#555;font-size:9px;margin-top:2px">' + r.desc.slice(0,60) + '</div>' : '')
+            + (r.wo   ? '<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>' + r.wo + '</strong></div>' : '')
+            + (meta.wr? '<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>' + meta.wr + '</strong></div>' : '')
+            + (r.qty  ? '<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>' + r.qty + '</strong></div>' : '')
+            + (r.serie? '<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>' + r.serie + '</strong></div>' : '')
+            + (meta.desc ? '<div style="color:#666;font-size:9px;margin-top:2px">' + meta.desc.slice(0,60) + '</div>' : '')
           + '</div>'
           + '<div style="display:flex;gap:5px;margin-bottom:5px">'
             + '<button onclick="_recuCallidusPrnc(\'' + r.id + '\')" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:8px;padding:7px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Recu</button>'
@@ -8348,8 +8359,7 @@ async function renderCallidusPrnc(forceRefresh) {
               + '&#128247; Photo'
               + '<input type="file" accept="image/*" multiple style="display:none" onchange="_ajouterPhotoCallidusPrnc(\'' + r.id + '\',this)">'
             + '</label>'
-            + '<button onclick="_supprimerPhotoCallidusPrnc(\'' + r.id + '\')" style="background:#FFF3E0;color:#E65100;border:1.5px solid #FFCC02;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer" title="Supprimer derniere photo">&#128247;&#10006;</button>'
-            + '<button onclick="_supprimerCallidusPrnc(\'' + r.id + '\')" style="background:#fff;color:#C00;border:1.5px solid #C00;border-radius:8px;padding:7px 9px;font-size:12px;font-family:inherit;cursor:pointer">&#128465;</button>'
+            + '<button onclick="_supprimerCallidusPrnc(\'' + r.id + '\')" style="background:#fff;color:#C00;border:1.5px solid #C00;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;cursor:pointer">&#128465;</button>'
           + '</div>'
         + '</div>'
       + '</div>';
