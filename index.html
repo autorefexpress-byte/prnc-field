@@ -3661,7 +3661,8 @@ const TYPE_COLORS = {
   TRANSPORT : {bg:'#DEEAF1',fg:'#1F3864',icon:'TRP'},
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
   FICHE      : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'},
-  ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'}
+  ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'},
+  PLANNING   : {bg:'#FFF3E0',fg:'#C55A11',icon:'P17'}
 };
 
 function clearHistSearch() {
@@ -9881,7 +9882,7 @@ async function changerStatutPlanning(wo, newStatut) {
   // Mettre à jour en mémoire
   item.statut = newStatut;
 
-  // Sauvegarder dans Neon
+  // Sauvegarder dans Neon (table planning)
   var semaine = item.semaine || _semaineActive || '';
   fetch(DB_API + '?table=planning', {
     method: 'PATCH',
@@ -9889,16 +9890,42 @@ async function changerStatutPlanning(wo, newStatut) {
     body: JSON.stringify({wo: wo, semaine: semaine, statut: newStatut})
   }).catch(function(e){ console.warn('statut save err', e); });
 
-  // Sauvegarder en local aussi
+  // Sauvegarder en local
   try {
     var saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}');
     saved[wo] = newStatut;
     localStorage.setItem('planning-statuts', JSON.stringify(saved));
   } catch(e){}
 
-  // Rafraîchir la modal avec le nouveau statut
+  // Si TERMINE → créer une entrée dans l'historique
+  if (newStatut === 'TERMINE') {
+    var now = new Date();
+    var dateStr  = now.toLocaleDateString('fr-FR');
+    var heureStr = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    await dbAdd({
+      type:    'PLANNING',
+      tag:     item.tag  || '',
+      wo:      item.wo   || '',
+      wr:      item.wr   || '',
+      wg:      'MCREPAR',
+      statut:  'TERMINE — Atelier P17 (' + semaine + ')',
+      loc:     item.ressource || '',
+      desc:    item.desc || '',
+      date:    dateStr,
+      heure:   heureStr,
+      photos:  (item._photos || []).filter(Boolean)
+    });
+    _dbCache = null;
+    // Toast confirmation
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+    t.textContent = 'WO ' + wo + ' marque Termine dans la Gestion des flux';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3000);
+  }
+
+  // Rafraîchir la modal et la liste
   ouvrirPlanningModal(wo);
-  // Rafraîchir la liste
   renderPlanning();
 }
 
