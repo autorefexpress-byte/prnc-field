@@ -9777,12 +9777,14 @@ function _renderPlanningList() {
     var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
     var woSafe = item.wo.replace(/'/g, "\'");
     var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
-    return '<div data-wo="'+item.wo+'" onclick="ouvrirPlanningModal(this.dataset.wo)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+    var searchActive = !!(document.getElementById('planning-search')||{value:''}).value;
+    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModal(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
             +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
@@ -9900,10 +9902,14 @@ async function changerStatutPlanning(wo, newStatut) {
   renderPlanning();
 }
 
-function ouvrirPlanningModal(wo) {
+function ouvrirPlanningModal(wo, semaine) {
   var currentWO = wo;
   _currentModalWO = wo;
+  // Chercher dans _planningData d'abord, puis dans _allPlanningCache si recherche globale
   var item = _planningData.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCache) {
+    item = _allPlanningCache.find(function(i){ return i.wo === wo && (!semaine || i.semaine === semaine); });
+  }
   if (!item) return;
   var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
 
