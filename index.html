@@ -9496,6 +9496,7 @@ function injectFieldValue(xml, label, value) {
 
 // ═══════════════ PLANNING ATELIER P17 ═══════════════
 var _planningData   = [];
+var _allPlanningCache = null;
 var _semaineActive  = '';
 var _planningFilter = null;
 var _PSTAT = {
@@ -9713,6 +9714,7 @@ function importPlanningExcel(input) {
       }
 
       _planningData = Object.values(woDict).filter(function(w){ return w.wo; });
+    _allPlanningCache = null; // invalider cache recherche globale
       // Sauvegarder dans Neon pour partage multi-appareils
       sauvegarderPlanningNeon(_planningData, sheetName);
       var lbl = document.getElementById('planning-semaine-lbl');
@@ -9755,14 +9757,17 @@ function _renderPlanningList() {
   var list = document.getElementById('planning-list');
   if (!list) return;
   var searchVal = (document.getElementById('planning-search')||{value:''}).value.toLowerCase();
-  var data = _planningData.filter(function(i){
+  // Si recherche active : chercher dans tous les plannings (toutes semaines)
+  var sourceData = (searchVal && _allPlanningCache) ? _allPlanningCache : _planningData;
+  var data = sourceData.filter(function(i){
     if (_planningFilter && i.statut !== _planningFilter) return false;
     if (!searchVal) return true;
     return (i.wo||'').toLowerCase().includes(searchVal)
         || (i.wr||'').toLowerCase().includes(searchVal)
         || (i.tag||'').toLowerCase().includes(searchVal)
         || (i.desc||'').toLowerCase().includes(searchVal)
-        || (i.ressource||'').toLowerCase().includes(searchVal);
+        || (i.ressource||'').toLowerCase().includes(searchVal)
+        || (i.semaine||'').toLowerCase().includes(searchVal);
   });
   if (!data.length) {
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
@@ -9805,6 +9810,34 @@ function fermerPlanningModal() {
   var modal = document.getElementById('planning-modal');
   if (modal) { modal.style.display = 'none'; }
   _currentModalWO = null;
+}
+
+async function _onPlanningSearch(val) {
+  // Si recherche non vide et cache absent : charger tous les plannings
+  if (val && val.length >= 2 && !_allPlanningCache) {
+    var inp = document.getElementById('planning-search');
+    if (inp) inp.placeholder = 'Chargement de tous les plannings...';
+    try {
+      var resp = await fetch(DB_API + '?table=planning');
+      var data = await resp.json();
+      var rows = data.rows || (Array.isArray(data) ? data : []);
+      _allPlanningCache = rows.map(function(r) {
+        return {
+          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
+          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
+          taches: r.taches||[], jours: r.jours||[],
+          statut: r.statut||'PLANIFIE',
+          semaine: r.semaine||'',
+          _photos: r.photos||[]
+        };
+      });
+      if (inp) inp.placeholder = 'Rechercher dans tous les plannings...';
+    } catch(e) {
+      console.warn('allPlanning load err', e);
+      if (inp) inp.placeholder = 'Rechercher dans tous les plannings...';
+    }
+  }
+  renderPlanning();
 }
 
 async function changerStatutPlanning(wo, newStatut) {
@@ -10797,8 +10830,8 @@ function escapeXmlVal(str) {
     </div>
     <select id="planning-semaine-sel" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-weight:700;font-family:inherit;color:#C55A11;margin-bottom:8px;background:#fff" onchange="changerSemainePlanning(this.value)"></select>
     <div style="position:relative;margin-bottom:8px">
-      <input type="text" id="planning-search" placeholder="&#128269; Rechercher TAG, WO, WR..." autocomplete="off"
-        oninput="renderPlanning()"
+      <input type="text" id="planning-search" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
+        oninput="_onPlanningSearch(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-family:inherit;outline:none">
       <span onclick="document.getElementById('planning-search').value='';renderPlanning()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
