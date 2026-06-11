@@ -9798,6 +9798,35 @@ function fermerPlanningModal() {
   _currentModalWO = null;
 }
 
+async function changerStatutPlanning(wo, newStatut) {
+  if (!wo) return;
+  var item = _planningData.find(function(i){ return i.wo === wo; });
+  if (!item) return;
+
+  // Mettre à jour en mémoire
+  item.statut = newStatut;
+
+  // Sauvegarder dans Neon
+  var semaine = item.semaine || _semaineActive || '';
+  fetch(DB_API + '?table=planning', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({wo: wo, semaine: semaine, statut: newStatut})
+  }).catch(function(e){ console.warn('statut save err', e); });
+
+  // Sauvegarder en local aussi
+  try {
+    var saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}');
+    saved[wo] = newStatut;
+    localStorage.setItem('planning-statuts', JSON.stringify(saved));
+  } catch(e){}
+
+  // Rafraîchir la modal avec le nouveau statut
+  ouvrirPlanningModal(wo);
+  // Rafraîchir la liste
+  renderPlanning();
+}
+
 function ouvrirPlanningModal(wo) {
   var currentWO = wo;
   _currentModalWO = wo;
