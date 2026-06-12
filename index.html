@@ -448,10 +448,10 @@ function _initLocSel(selId, inpId, val) {
   <div class="field-lbl"><span class="req">*</span> WR</div>
   <div style="position:relative">
     <input class="fi" type="text" id="ar-wr" placeholder="Ex : 118466 ou tapez pour chercher..."
-      autocomplete="off" oninput="_filtrerWOGWR(this.value)" onfocus="_filtrerWOGWR(this.value)"
+      autocomplete="off" oninput="_filtrerWOGWR(this.value)"
       inputmode="numeric" style="padding-right:36px">
     <span id="ar-wr-clear" onclick="_clearWOGWR()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px;background:none;border:none;padding:0">✕</span>
-    <div id="ar-wr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+    <div id="ar-wr-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25);-webkit-overflow-scrolling:touch"></div>
   </div>
 </div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Date réception</div><input class="fi" type="date" id="ar-date"></div>
@@ -459,10 +459,10 @@ function _initLocSel(selId, inpId, val) {
   <div class="field-lbl"><span class="req">*</span> TAG Équipement</div>
   <div style="position:relative">
     <input class="fi" type="text" id="ar-tag" placeholder="Ex : 220-X-00315 ou tapez pour chercher..."
-      autocomplete="off" oninput="_filtrerWOGTag(this.value)" onfocus="_filtrerWOGTag(this.value)"
+      autocomplete="off" oninput="_filtrerWOGTag(this.value)"
       style="padding-right:36px">
     <span id="ar-tag-clear" onclick="_clearWOGTag()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px;background:none;border:none;padding:0">✕</span>
-    <div id="ar-tag-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+    <div id="ar-tag-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25);-webkit-overflow-scrolling:touch"></div>
   </div>
 </div>
 
@@ -488,9 +488,9 @@ function _initLocSel(selId, inpId, val) {
   <div style="position:relative">
     <input class="fi" type="text" id="ar-wo" placeholder="Ex : 837669 ou tapez pour chercher..."
       autocomplete="off" inputmode="numeric" style="padding-right:36px"
-      oninput="_filtrerWOGWO(this.value)" onfocus="_filtrerWOGWO(this.value)">
+      oninput="_filtrerWOGWO(this.value)">
     <span id="ar-wo-clear" onclick="_clearWOGWO()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px;background:none;border:none;padding:0">✕</span>
-    <div id="ar-wo-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:240px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+    <div id="ar-wo-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25);-webkit-overflow-scrolling:touch"></div>
   </div>
 </div>
 
@@ -10131,7 +10131,7 @@ function _afficherListeWOGWR(items, list) {
     var w = items[i];
     var c = wgColors[w.wg] || '#555';
     var displayWR = w.wr || '';
-    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWR(this.dataset.wo)"'
+    html += '<div data-wo="' + (w.wo||'') + '" onmousedown="_selectionnerWOGWR(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWR(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + displayWR + '</span>'
@@ -10147,17 +10147,13 @@ function _afficherListeWOGWR(items, list) {
 function _selectionnerWOGWR(wo) {
   var w = _woEnGData.find(function(x){ return x.wo === wo; });
   if (!w) return;
-  // Remplir WR
-  var arWr = document.getElementById('ar-wr');
-  if (arWr) arWr.value = w.wr || '';
-  // Remplir TAG si vide
-  var arTag = document.getElementById('ar-tag');
-  if (arTag && !arTag.value) arTag.value = w.tag || '';
-  // Sélectionner WG
+  var fill = function(id, val) { var el=document.getElementById(id); if(el && val) el.value=val; };
+  fill('ar-wr',  w.wr  || '');
+  fill('ar-wo',  w.wo  || '');
+  fill('ar-tag', w.tag || '');
   if (w.wg === 'MCCHAUD') setWG('ar','chaud');
   else if (w.wg === 'MCREPAR') setWG('ar','repar');
   else if (w.wg === 'STROB') setWG('ar','strob');
-  // Fermer
   var list = document.getElementById('ar-wr-list');
   if (list) list.style.display = 'none';
   var clear = document.getElementById('ar-wr-clear');
@@ -10172,7 +10168,7 @@ function _afficherListeWOGTag(items, list) {
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
     var c = wgColors[w.wg] || '#555';
-    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGTag(this.dataset.wo)"'
+    html += '<div data-wo="' + (w.wo||'') + '" onmousedown="_selectionnerWOGTag(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGTag(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + (w.tag||'') + '</span>'
@@ -10191,18 +10187,13 @@ function _afficherListeWOGTag(items, list) {
 function _selectionnerWOGTag(wo) {
   var w = _woEnGData.find(function(x){ return x.wo === wo; });
   if (!w) return;
-  // Remplir TAG
-  var arTag = document.getElementById('ar-tag');
-  if (arTag) arTag.value = w.tag;
-  // Remplir WO si champ ar-wo existe
-  var arWo = document.getElementById('ar-wo');
-  if (arWo && !arWo.value) arWo.value = w.wo;
-  // Remplir SC si champ ar-sc existe
-  // Sélectionner WG automatiquement
+  var fill = function(id, val) { var el=document.getElementById(id); if(el && val) el.value=val; };
+  fill('ar-tag', w.tag || '');
+  fill('ar-wo',  w.wo  || '');
+  fill('ar-wr',  w.wr  || '');
   if (w.wg === 'MCCHAUD') setWG('ar','chaud');
   else if (w.wg === 'MCREPAR') setWG('ar','repar');
   else if (w.wg === 'STROB') setWG('ar','strob');
-  // Fermer la liste
   var list = document.getElementById('ar-tag-list');
   if (list) list.style.display = 'none';
   var clear = document.getElementById('ar-tag-clear');
@@ -10232,7 +10223,7 @@ function _afficherListeWOGWO(items,list){
   var wgColors={MCCHAUD:'#C55A11',MCREPAR:'#7030A0',STROB:'#2E75B6'};
   list.innerHTML=items.map(function(w){
     var c=wgColors[w.wg]||'#555';
-    return '<div data-wo="'+(w.wo||'')+'" onclick="_selectionnerWOGWO(this.dataset.wo)" style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
+    return '<div data-wo="'+(w.wo||'')+'" onmousedown="_selectionnerWOGWO(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWO(this.dataset.wo)" style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         +'<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">'+(w.wo||'')+'</span>'
         +'<span style="font-family:monospace;font-size:11px;color:#888">'+(w.wr||'')+'</span>'
@@ -10261,7 +10252,7 @@ function _clearWOGWO(){
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('#ar-wo')&&!e.target.closest('#ar-wo-list')){
-    var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
+    setTimeout(function(){ var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none'; },150);
   }
 });
 
@@ -10378,7 +10369,7 @@ function _afficherListeWOGWO(items, list) {
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
     var c = wgColors[w.wg] || '#555';
-    html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWO(this.dataset.wo)"'
+    html += '<div data-wo="' + (w.wo||'') + '" onmousedown="_selectionnerWOGWO(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWO(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + (w.wo||'') + '</span>'
