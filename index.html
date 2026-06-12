@@ -9488,6 +9488,23 @@ function injectFieldValue(xml, label, value) {
 
 // ═══════════════ PLANNING ATELIER P17 ═══════════════
 var _planningData   = [];
+var _woEnGData  = [];
+var _woGTimer   = null;
+// Pré-charger les WO en G depuis Neon au démarrage
+(function _prechargerWOenG() {
+  fetch(DB_API + '?table=wo_en_g&all=1')
+    .then(function(r){ return r.json(); })
+    .then(function(rows) {
+      if (Array.isArray(rows) && rows.length) {
+        _woEnGData = rows.map(function(r){
+          return {wo:r.wo||'', wr:r.wr||'', tag:r.tag||'', desc:r.description||'', wg:r.wg||''};
+        });
+        console.log('WO en G chargés:', _woEnGData.length);
+      }
+    })
+    .catch(function(e){ console.warn('WO en G preload err:', e); });
+})();
+
 var _allPlanningCache = null;
 var _semaineActive  = '';
 var _planningFilter = null;
@@ -10194,8 +10211,12 @@ function _filtrerWOGWO(val) {
     clearTimeout(_woGTimer);
     _woGTimer=setTimeout(function(){
       fetch(DB_API+'?table=wo_en_g&q='+encodeURIComponent(val)).then(function(r){ return r.json(); })
-        .then(function(rows){ _afficherListeWOGWO(rows.map(function(r){ return {wo:r.wo,wr:r.wr||'',tag:r.tag,desc:r.description,wg:r.wg}; }),list); }).catch(function(){});
-    },300);
+        .then(function(rows){
+          var mapped=rows.map(function(r){ return {wo:r.wo,wr:r.wr||'',tag:r.tag,desc:r.description,wg:r.wg}; });
+          if(mapped.length) _woEnGData=_woEnGData.concat(mapped.filter(function(m){ return !_woEnGData.find(function(e){ return e.wo===m.wo; }); }));
+          _afficherListeWOGWO(mapped,list);
+        }).catch(function(){});
+    },150);
   }
 }
 function _afficherListeWOGWO(items,list){
