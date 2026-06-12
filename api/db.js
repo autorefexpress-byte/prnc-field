@@ -8,6 +8,61 @@ const CLOUD_NAME = 'dns5b6fix';
 const API_KEY    = '847395583118243';
 const API_SECRET = 'nBuyEerlJYeOfbD7RcHPzD2vkHU';
 
+// ── INIT TABLES (une seule fois au démarrage) ──────────
+let _tablesReady = false;
+async function ensureTables() {
+  if (_tablesReady) return;
+  try {
+    await sql`CREATE TABLE IF NOT EXISTS wo_en_g (
+      id SERIAL PRIMARY KEY, wo TEXT UNIQUE, wr TEXT, tag TEXT,
+      description TEXT, wg TEXT, date_signalement TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`ALTER TABLE wo_en_g ADD COLUMN IF NOT EXISTS wr TEXT`;
+
+    await sql`CREATE TABLE IF NOT EXISTS planning (
+      id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
+      ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
+      jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
+      photos JSONB DEFAULT '[]', remarque TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
+    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
+    await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
+
+    await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
+      id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
+      record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
+    )`;
+
+    await sql`CREATE TABLE IF NOT EXISTS transport (
+      id TEXT PRIMARY KEY, date TEXT, type TEXT, statut TEXT, ref TEXT,
+      dest TEXT, notes TEXT, wo TEXT, tag TEXT, sc TEXT, serie TEXT,
+      photos JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW()
+    )`;
+    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS wo TEXT`;
+    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS tag TEXT`;
+    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS sc TEXT`;
+    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS serie TEXT`;
+    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
+
+    await sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
+      id TEXT PRIMARY KEY, wo TEXT, tag TEXT, serie TEXT, qty TEXT,
+      remarques TEXT, photos JSONB DEFAULT '[]',
+      statut TEXT DEFAULT 'Envoyé', date TEXT, created_at TIMESTAMP DEFAULT NOW()
+    )`;
+
+    _tablesReady = true;
+  } catch(e) {
+    console.error('ensureTables err:', e);
+  }
+}
+
+// Lancer l'init immédiatement au chargement du module
+ensureTables();
+
 async function deleteCloudinaryPhotos(photoUrls) {
   if (!photoUrls || !photoUrls.length) return;
   const public_ids = photoUrls.filter(Boolean).map(url => {
@@ -39,6 +94,9 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // S'assurer que les tables sont créées (sans bloquer si déjà fait)
+  if (!_tablesReady) await ensureTables();
+
   try {
     const method = req.method;
     const id    = req.query?.id    || null;
@@ -52,18 +110,6 @@ module.exports = async function handler(req, res) {
 
     // ── WO EN G ──────────────────────────────────────
     if (table === 'wo_en_g') {
-      await sql`CREATE TABLE IF NOT EXISTS wo_en_g (
-        id SERIAL PRIMARY KEY,
-        wo TEXT UNIQUE,
-        wr TEXT,
-        tag TEXT,
-        description TEXT,
-        wg TEXT,
-        date_signalement TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )`;
-      await sql`ALTER TABLE wo_en_g ADD COLUMN IF NOT EXISTS wr TEXT`;
-
       if (method === 'GET') {
         const q   = req.query?.q   || null;
         const all = req.query?.all || null;
@@ -79,11 +125,9 @@ module.exports = async function handler(req, res) {
         }
         return res.status(200).json(rows);
       }
-
       if (method === 'POST') {
         const d = req.body || {};
         if (d.bulk && Array.isArray(d.items)) {
-          // Vider la table seulement au premier lot
           if (d.first !== false) await sql`TRUNCATE wo_en_g`;
           for (const item of d.items) {
             await sql`INSERT INTO wo_en_g (wo, wr, tag, description, wg, date_signalement)
@@ -102,28 +146,6 @@ module.exports = async function handler(req, res) {
 
     // ── PLANNING ATELIER P17 ─────────────────────────
     if (table === 'planning') {
-      await sql`CREATE TABLE IF NOT EXISTS planning (
-        id SERIAL PRIMARY KEY,
-        wo TEXT,
-        wr TEXT,
-        tag TEXT,
-        description_wo TEXT,
-        ressource TEXT,
-        commentaire TEXT,
-        taches JSONB DEFAULT '[]',
-        jours JSONB DEFAULT '[]',
-        statut TEXT DEFAULT 'PLANIFIE',
-        semaine TEXT,
-        photos JSONB DEFAULT '[]',
-        remarque TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )`;
-      await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
-      await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`;
-      await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
-      await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
-
       if (method === 'GET') {
         let semaine = req.query?.semaine || null;
         if (!semaine) {
@@ -138,11 +160,10 @@ module.exports = async function handler(req, res) {
           : await sql`SELECT * FROM planning ORDER BY updated_at DESC LIMIT 200`;
         return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
       }
-
       if (method === 'POST') {
         const d = req.body || {};
         if (d.bulk && Array.isArray(d.items) && d.semaine) {
-          await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
+          if (d.first !== false) await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
           for (const item of d.items) {
             await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
               VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
@@ -156,33 +177,18 @@ module.exports = async function handler(req, res) {
           const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
           if (semaines.length > 4) {
             const aSupprimer = semaines.slice(4).map(r => r.semaine);
-            for (const s of aSupprimer) {
-              await sql`DELETE FROM planning WHERE semaine=${s}`;
-            }
+            for (const s of aSupprimer) await sql`DELETE FROM planning WHERE semaine=${s}`;
           }
           return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
         }
         return res.status(400).json({ error: 'Missing bulk/items/semaine' });
       }
-
       if (method === 'PATCH') {
         const d = req.body || {};
         if (d.wo && d.semaine) {
-          // Mettre à jour statut
-          if (d.statut !== undefined) {
-            await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW()
-              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          }
-          // Mettre à jour photos
-          if (d.photos !== undefined) {
-            await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW()
-              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          }
-          // Mettre à jour remarque
-          if (d.remarque !== undefined) {
-            await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW()
-              WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          }
+          if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+          if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
           return res.status(200).json({ ok: true });
         }
         if (id) {
@@ -193,13 +199,9 @@ module.exports = async function handler(req, res) {
         }
         return res.status(400).json({ error: 'Missing wo+semaine or id' });
       }
-
       if (method === 'DELETE') {
-        if (req.query?.semaine) {
-          await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
-        } else if (id) {
-          await sql`DELETE FROM planning WHERE id=${id}`;
-        }
+        if (req.query?.semaine) await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
+        else if (id) await sql`DELETE FROM planning WHERE id=${id}`;
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown planning request' });
@@ -207,10 +209,6 @@ module.exports = async function handler(req, res) {
 
     // ── LOC_MOUVEMENTS ───────────────────────────────
     if (table === 'loc_mouvements') {
-      await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
-        id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
-        record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
-      )`;
       if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM loc_mouvements ORDER BY date_mouv DESC`);
       if (method === 'POST') {
         const d = req.body || {};
@@ -230,16 +228,6 @@ module.exports = async function handler(req, res) {
 
     // ── TRANSPORT ────────────────────────────────────
     if (table === 'transport') {
-      await sql`CREATE TABLE IF NOT EXISTS transport (
-        id TEXT PRIMARY KEY, date TEXT, type TEXT, statut TEXT, ref TEXT,
-        dest TEXT, notes TEXT, wo TEXT, tag TEXT, sc TEXT, serie TEXT,
-        photos JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW()
-      )`;
-      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS wo TEXT`;
-      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS tag TEXT`;
-      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS sc TEXT`;
-      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS serie TEXT`;
-      await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
       if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`);
       if (method === 'POST') {
         const d = req.body || {};
@@ -277,11 +265,6 @@ module.exports = async function handler(req, res) {
 
     // ── CALLIDUS PRNC ────────────────────────────────
     if (table === 'callidus_prnc') {
-      await sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
-        id TEXT PRIMARY KEY, wo TEXT, tag TEXT, serie TEXT, qty TEXT,
-        remarques TEXT, photos JSONB DEFAULT '[]',
-        statut TEXT DEFAULT 'Envoyé', date TEXT, created_at TIMESTAMP DEFAULT NOW()
-      )`;
       if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM callidus_prnc ORDER BY created_at DESC`);
       if (method === 'POST') {
         const d = req.body || {};
@@ -409,15 +392,11 @@ module.exports = async function handler(req, res) {
     if (method === 'DELETE' && id) {
       const rows = await sql`SELECT photos, wo FROM historique WHERE id=${id}`;
       if (rows.length) {
-        // 1. Supprimer photos historique Cloudinary
         if (rows[0].photos?.length) await deleteCloudinaryPhotos(rows[0].photos);
-        // 2. Supprimer WO dans planning + ses photos Cloudinary
         if (rows[0].wo) {
           try {
             const planRows = await sql`SELECT photos FROM planning WHERE wo=${rows[0].wo}`;
-            if (planRows.length && planRows[0].photos?.length) {
-              await deleteCloudinaryPhotos(planRows[0].photos);
-            }
+            if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
             await sql`DELETE FROM planning WHERE wo=${rows[0].wo}`;
           } catch(e) { console.warn('planning delete err:', e); }
         }
