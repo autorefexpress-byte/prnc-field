@@ -3580,6 +3580,7 @@ async function dbLoad() {
           id: r.id, type: r.type, tag: r.tag,
           wo: r.wo || '',           // WO MTC
           woUsine: r.wo_usine || r.woUsine || '',  // WO Usine
+          wso: r.wso || '',  // Numero de WSO
           woMtc: r.wo_mtc || r.woMtc || '',
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
           emailDemandeur   : r.email_demandeur   || null,
@@ -7132,13 +7133,20 @@ function editRecord(id) {
             <input class="fi" id="edit-loc" value="${r.loc||''}" style="width:100%;box-sizing:border-box;margin-top:6px;display:${r.loc && _LOC_LIST.indexOf(r.loc)===-1?'block':'none'}" placeholder="Saisir...">
           </div>
 
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
+              <input class="fi" id="edit-wo-usine" value="${r.woUsine||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : 876230">
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Numéro de WSO</div>
+              <input class="fi" id="edit-wso" value="${r.wso||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : WSO-2026-1234">
+            </div>
+          </div>
+
           <div id="edit-zone-grp" style="display:${r.type==='TERMINE'?'block':'none'}">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Zone à déposer</div>
             <input class="fi" id="edit-zone" value="${r.zone||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-          </div>
-          <div id="edit-wo-usine-grp" style="display:${r.type==='TERMINE'?'block':'none'}">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
-            <input class="fi" id="edit-wo-usine" value="${r.woUsine||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : 876230">
           </div>
 
         </div>
@@ -7196,6 +7204,7 @@ async function saveEdit(id) {
   const zone    = document.getElementById('edit-zone') ? document.getElementById('edit-zone').value.trim() : '';
   const newType = document.getElementById('edit-type') ? document.getElementById('edit-type').value : null;
   const woUsine = document.getElementById('edit-wo-usine') ? document.getElementById('edit-wo-usine').value.trim() : '';
+  const wso     = document.getElementById('edit-wso') ? document.getElementById('edit-wso').value.trim() : '';
 
   // Capturer ancienne loc avant modification
   const _records = await dbLoad();
@@ -7217,9 +7226,29 @@ async function saveEdit(id) {
         serie    : serie   || null,
         zone     : zone    || null,
         ...(newType  ? { type     : newType  } : {}),
-        ...(woUsine  ? { wo_usine : woUsine  } : {})
+        ...(woUsine  ? { wo_usine : woUsine  } : {}),
+        ...(wso      ? { wso      : wso      } : {})
       })
     });
+
+    // Synchroniser WO Usine / WSO sur la carte planning P17 correspondante
+    if (wo && (woUsine || wso)) {
+      try {
+        await fetch(DB_API + '?table=planning', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wo: wo,
+            ...(woUsine ? { wo_usine: woUsine } : {}),
+            ...(wso     ? { wso: wso } : {})
+          })
+        });
+        if (typeof _planningData !== 'undefined') {
+          var _pItem = _planningData.find(function(i){ return i.wo === wo; });
+          if (_pItem) { if (woUsine) _pItem.wo_usine = woUsine; if (wso) _pItem.wso = wso; }
+        }
+      } catch(e) { console.warn('sync planning wo_usine/wso err', e); }
+    }
 
     _dbCache = null;
     try {
@@ -7232,6 +7261,7 @@ async function saveEdit(id) {
         if (zone) local[idx].zone = zone;
         if (newType) local[idx].type = newType;
         if (woUsine) local[idx].woUsine = woUsine;
+        if (wso) local[idx].wso = wso;
         localStorage.setItem(DB_KEY, JSON.stringify(local));
       }
     } catch(e) {}
@@ -9681,6 +9711,7 @@ async function chargerPlanningNeon(semaine) {
           semaine: r.semaine||semaineActive,
           _photos: r.photos||[],
           _remarque: r.remarque||'',
+          woUsine: r.wo_usine||'', wso: r.wso||'',
         };
       });
       var lbl = document.getElementById('planning-semaine-lbl');
@@ -9837,6 +9868,11 @@ function _renderPlanningList() {
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
           +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
+              +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
+              +(item.woUsine&&item.wso?' · ':'')
+              +(item.wso?'🔖 WSO '+item.wso:'')
+            +'</div>' : '')
         +'</div>'
         +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
@@ -9989,6 +10025,11 @@ function ouvrirPlanningModal(wo, semaine) {
         + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
         + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
         + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+        + ((item.woUsine||item.wso) ? '<div style="font-size:11px;color:#7030A0;font-weight:700;margin-top:2px">'
+            + (item.woUsine?'🏭 WO Usine '+item.woUsine:'')
+            + (item.woUsine&&item.wso?' · ':'')
+            + (item.wso?'🔖 WSO '+item.wso:'')
+          + '</div>' : '')
       + '</div>'
       + '<button onclick="fermerPlanningModal()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
     + '</div>'
@@ -10573,6 +10614,7 @@ async function chargerPlanningNeonMC(semaine) {
           semaine: r.semaine||semaineActive,
           _photos: r.photos||[],
           _remarque: r.remarque||'',
+          woUsine: r.wo_usine||'', wso: r.wso||'',
         };
       });
       var lbl = document.getElementById('planning-semaine-lbl-mc');
@@ -10728,6 +10770,11 @@ function _renderPlanningListMC() {
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
           +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
+              +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
+              +(item.woUsine&&item.wso?' · ':'')
+              +(item.wso?'🔖 WSO '+item.wso:'')
+            +'</div>' : '')
         +'</div>'
         +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
