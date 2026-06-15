@@ -2483,13 +2483,11 @@ async function cloturerWO(wo, tag, wg, date, recordId) {
       await fetch(DB_API+'?id='+encodeURIComponent(h.id),{method:'DELETE'}).catch(()=>{});
     }
     try {
-      var pr=await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo)).then(r=>r.json());
-      for (var row of (pr.rows||pr||[])) {
-        if(!row||row.wo!==wo) continue;
-        for (var pp of (row.photos||[]).filter(Boolean))
-          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
-        await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
-      }
+      await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
+    } catch(e){}
+    try {
+      await fetch(DB_API+'?table=planning_mcchaud&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
+      if(typeof _planningDataMC!=='undefined') _planningDataMC=_planningDataMC.filter(i=>i.wo!==wo);
     } catch(e){}
     try {
       var pi=await fetch(DB_API+'?table=pi_suivi').then(r=>r.json());
@@ -10869,7 +10867,7 @@ function ouvrirPlanningModalMC(wo, semaine) {
       }).catch(function(e){ console.warn('fetch photos live err', e); });
   }, 200);
 
-  var content2 = document.getElementById('planning-modal-content-mc-mc');
+  var content2 = document.getElementById('planning-modal-content-mc');
   if (!content2) return;
   content2.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
