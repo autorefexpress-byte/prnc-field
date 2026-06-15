@@ -417,6 +417,15 @@ function _initLocSel(selId, inpId, val) {
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
       </label>
     </div>
+    <div class="action-card" style="border:1.5px solid #7030A0;position:relative" onclick="ouvrirPlanningAccueilMC()">
+      <div class="card-icon" style="background:#EDE7F6;color:#7030A0">📅</div>
+      <div class="card-lbl">Planning Atelier MCCHAUD</div>
+      <div class="card-sub" id="planning-card-sub-mc">Voir les WO</div>
+      <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
+      </label>
+    </div>
   </div></div>
 </div>
 
@@ -1018,6 +1027,7 @@ function _initLocSel(selId, inpId, val) {
       <option value="TRANSPORT">Transports</option>
       <option value="PEINTURE">Peintures</option>
       <option value="PLANNING">Planning</option>
+      <option value="PLANNING_MCCHAUD">Planning MCCHAUD</option>
     </select>
     <button onclick="exportExcel()" style="background:var(--green);color:#fff;border:none;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">Excel</button>
     <button onclick="if(confirm('Effacer tout ?')) clearHist()" style="background:var(--lred);color:var(--red);border:1px solid var(--red);padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>
@@ -1697,7 +1707,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning'];
+const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -3656,7 +3666,8 @@ const TYPE_COLORS = {
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
   FICHE      : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'},
   ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'},
-  PLANNING   : {bg:'#FFF3E0',fg:'#C55A11',icon:'P17'}
+  PLANNING   : {bg:'#FFF3E0',fg:'#C55A11',icon:'P17'},
+  PLANNING_MCCHAUD : {bg:'#EDE7F6',fg:'#7030A0',icon:'MCC'}
 };
 
 function clearHistSearch() {
@@ -9603,6 +9614,13 @@ var _TECH_COLORS = {
 
 var _planningSemanines = [];
 
+var _planningDataMC = [];
+var _allPlanningCacheMC = null;
+var _semaineActiveMC  = '';
+var _planningFilterMC = null;
+var _planningSemainesMC = [];
+var _currentModalWOMC = '';
+
 function ouvrirPlanningAccueil() {
   show('s-planning');
   var iz = document.getElementById('planning-import-zone');
@@ -9670,8 +9688,6 @@ async function chargerPlanningNeon(semaine) {
       var lbl = document.getElementById('planning-semaine-lbl');
       if (lbl) lbl.textContent = semaineActive || 'Planning';
       _renderSemainesSelector();
-      // Enrichir avec les photos depuis historique
-      _enrichirPhotosPlanning();
       // Mettre à jour le sous-titre de la carte accueil
       var sub = document.getElementById('planning-card-sub');
       if (sub) sub.textContent = _planningData.length + ' WO — ' + (semaineActive || '');
@@ -9690,12 +9706,6 @@ function _renderSemainesSelector() {
   sel.style.display = _planningSemanines.length > 1 ? 'block' : 'none';
 }
 
-function changerSemainePlanning(semaine) {
-  _planningData = [];
-  var list = document.getElementById('planning-list');
-  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
-  chargerPlanningNeon(semaine).then(function(){ _renderPlanningList(); });
-}
 
 function importPlanningExcel(input) {
   var file = input.files[0]; if (!file) return;
@@ -9847,125 +9857,8 @@ function filtrerPlanning(type) {
 
 var _currentModalWO = '';
 
-function fermerPlanningModal() {
-  var modal = document.getElementById('planning-modal');
-  if (modal) { modal.style.display = 'none'; }
-  _currentModalWO = null;
-}
 
-async function _onPlanningSearch(val) {
-  var inp = document.getElementById('planning-search');
 
-  // Vider → retour au planning de la semaine active
-  if (!val) {
-    _renderPlanningList();
-    return;
-  }
-
-  // Charger tous les plannings si cache absent
-  if (!_allPlanningCache) {
-    if (inp) inp.style.borderColor = '#F57F17';
-    var list = document.getElementById('planning-list');
-    if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">&#9203; Chargement de tous les plannings...</div>';
-    try {
-      // Charger chaque semaine disponible
-      var resp = await fetch(DB_API + '?table=planning');
-      var data = await resp.json();
-      // Le backend retourne { rows, semaines } — charger aussi les semaines manquantes si > 200 items
-      var rows = data.rows || (Array.isArray(data) ? data : []);
-      var semaines = data.semaines || [];
-
-      // Si plusieurs semaines, charger chacune pour avoir tout
-      if (semaines.length > 1) {
-        var allRows = [];
-        await Promise.all(semaines.map(function(sem) {
-          return fetch(DB_API + '?table=planning&semaine=' + encodeURIComponent(sem))
-            .then(function(r){ return r.json(); })
-            .then(function(d){
-              var r2 = d.rows || (Array.isArray(d) ? d : []);
-              r2.forEach(function(row){ allRows.push(row); });
-            }).catch(function(){});
-        }));
-        rows = allRows;
-      }
-
-      _allPlanningCache = rows.map(function(r) {
-        return {
-          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
-          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
-          taches: r.taches||[], jours: r.jours||[],
-          statut: r.statut||'PLANIFIE',
-          semaine: r.semaine||'',
-          _photos: r.photos||[]
-        };
-      });
-      if (inp) inp.style.borderColor = '#C55A11';
-    } catch(e) {
-      console.warn('allPlanning load err', e);
-      if (inp) inp.style.borderColor = '#C00';
-      _renderPlanningList();
-      return;
-    }
-  }
-
-  // Appeler directement _renderPlanningList (bypass renderPlanning)
-  _renderPlanningList();
-}
-
-async function changerStatutPlanning(wo, newStatut) {
-  if (!wo) return;
-  var item = _planningData.find(function(i){ return i.wo === wo; });
-  if (!item) return;
-
-  // Mettre à jour en mémoire
-  item.statut = newStatut;
-
-  // Sauvegarder dans Neon (table planning)
-  var semaine = item.semaine || _semaineActive || '';
-  fetch(DB_API + '?table=planning', {
-    method: 'PATCH',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({wo: wo, semaine: semaine, statut: newStatut})
-  }).catch(function(e){ console.warn('statut save err', e); });
-
-  // Sauvegarder en local
-  try {
-    var saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}');
-    saved[wo] = newStatut;
-    localStorage.setItem('planning-statuts', JSON.stringify(saved));
-  } catch(e){}
-
-  // Si TERMINE → créer une entrée dans l'historique
-  if (newStatut === 'TERMINE') {
-    var now = new Date();
-    var dateStr  = now.toLocaleDateString('fr-FR');
-    var heureStr = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    await dbAdd({
-      type:    'PLANNING',
-      tag:     item.tag  || '',
-      wo:      item.wo   || '',
-      wr:      item.wr   || '',
-      wg:      'MCREPAR',
-      statut:  'TERMINE — Atelier P17 (' + semaine + ')',
-      loc:     '',
-      desc:    item.desc || '',
-      date:    dateStr,
-      heure:   heureStr,
-      photos:  (item._photos || []).filter(Boolean)
-    });
-    _dbCache = null;
-    // Toast confirmation
-    var t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-    t.textContent = 'WO ' + wo + ' marque Termine dans la Gestion des flux';
-    document.body.appendChild(t);
-    setTimeout(function(){ t.remove(); }, 3000);
-  }
-
-  // Rafraîchir la modal et la liste
-  ouvrirPlanningModal(wo);
-  renderPlanning();
-}
 
 async function _onPlanningSearch(val) {
   if (!val) { _renderPlanningList(); return; }
@@ -10618,6 +10511,469 @@ function escapeXmlVal(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 }
+
+// ═══════════════ PLANNING ATELIER MCCHAUD ═══════════════
+function ouvrirPlanningAccueilMC() {
+  show('s-planning-mcchaud');
+  var iz = document.getElementById('planning-import-zone-mc');
+  var plist = document.getElementById('planning-list-mc');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMC().then(function() {
+    // Préposé : montrer zone import si pas de données
+    if (iz) iz.style.display = _planningDataMC.length ? 'none' : 'block';
+    _renderPlanningListMC();
+  });
+}
+
+async function sauvegarderPlanningNeonMC(data, semaine) {
+  try {
+    var photoMap={};
+    try {
+      var existing=await fetch(DB_API+'?table=planning_mcchaud&semaine='+encodeURIComponent(semaine)).then(function(r){ return r.json(); });
+      var existingRows=existing.rows||(Array.isArray(existing)?existing:[]);
+      existingRows.forEach(function(row){ if(row.wo&&row.photos&&row.photos.length) photoMap[row.wo]=row.photos.filter(Boolean); });
+    } catch(e){}
+    for(var b=0;b<data.length;b+=20){
+      await fetch(DB_API+'?table=planning_mcchaud',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
+    }
+    _dbCache=null;
+    var histRecords=await dbLoad();
+    _planningDataMC.forEach(function(item){
+      var wo=item.wo, planPhotos=photoMap[wo]||[], histPhotos=[];
+      histRecords.forEach(function(r){ var match=(r.wo&&r.wo===wo)||(r.woUsine&&r.woUsine===wo); if(match&&r.photos&&r.photos.length) r.photos.forEach(function(p){ if(p&&histPhotos.indexOf(p)<0) histPhotos.push(p); }); });
+      var merged=planPhotos.slice(); histPhotos.forEach(function(p){ if(merged.indexOf(p)<0) merged.push(p); });
+      if(merged.length>0){ photoMap[wo]=merged; item._photos=merged; }
+    });
+    var wosAvecPhotos=Object.keys(photoMap);
+    if(wosAvecPhotos.length>0){
+      await Promise.all(wosAvecPhotos.map(function(wo){
+        return fetch(DB_API+'?table=planning_mcchaud',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,photos:photoMap[wo]})}).catch(function(e){ console.warn('photo restore err',e); });
+      }));
+    }
+    _allPlanningCacheMC=null;
+  } catch(e){ console.warn('planning save err',e); }
+}
+
+async function chargerPlanningNeonMC(semaine) {
+  try {
+    var url = DB_API + '?table=planning_mcchaud' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    var resp = await fetch(url);
+    var data = await resp.json();
+    var rows = data.rows || data;
+    var semaineActive = data.semaine_active || (rows[0] && rows[0].semaine) || '';
+    _semaineActiveMC = semaineActive;
+    _planningSemainesMC = data.semaines || [];
+    if (rows && rows.length) {
+      _planningDataMC = rows.map(function(r) {
+        return {
+          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
+          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
+          commentaire: r.commentaire||'',
+          taches: r.taches||[], jours: r.jours||[],
+          statut: r.statut||'PLANIFIE',
+          semaine: r.semaine||semaineActive,
+          _photos: r.photos||[],
+          _remarque: r.remarque||'',
+        };
+      });
+      var lbl = document.getElementById('planning-semaine-lbl-mc');
+      if (lbl) lbl.textContent = semaineActive || 'Planning';
+      _renderSemainesSelectorMC();
+      // Mettre à jour le sous-titre de la carte accueil
+      var sub = document.getElementById('planning-card-sub-mc');
+      if (sub) sub.textContent = _planningDataMC.length + ' WO — ' + (semaineActive || '');
+    }
+    return rows;
+  } catch(e) { console.warn('planning load err', e); return []; }
+}
+
+function _renderSemainesSelectorMC() {
+  var sel = document.getElementById('planning-semaine-sel-mc');
+  if (!sel || !_planningSemainesMC.length) return;
+  var current = _planningDataMC[0] && _planningDataMC[0].semaine || '';
+  sel.innerHTML = _planningSemainesMC.map(function(s) {
+    return '<option value="'+s+'"'+(s===current?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  sel.style.display = _planningSemainesMC.length > 1 ? 'block' : 'none';
+}
+
+function changerSemainePlanningMC(semaine) {
+  _planningDataMC = [];
+  var list = document.getElementById('planning-list-mc');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  chargerPlanningNeonMC(semaine).then(function(){ _renderPlanningListMC(); });
+}
+
+function importPlanningExcelMC(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+      if (rows.length < 3) return;
+
+      // Format MR04: row0=headers, row1=dates jours, row2+=données
+      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-16=Lun-Ven,17=Ressource
+      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
+      var jours = [];
+      for (var j = 12; j <= 16; j++) {
+        var dval = rows[1] && rows[1][j];
+        if (dval) {
+          var d = new Date(dval);
+          jours.push(!isNaN(d) ? joursNoms[j-12]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-12]);
+        } else { jours.push(joursNoms[j-12]); }
+      }
+
+      var woDict = {};
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem('planning-statuts-mcchaud')||'{}'); } catch(ex){}
+
+      for (var r = 2; r < rows.length; r++) {
+        var row = rows[r];
+        if (!row || !row[0]) continue;
+        var wo = row[0].toString().trim();
+        var tag = (row[8]||'').toString().trim();
+        var descTache = (row[9]||'').toString().trim();
+        var descWO = (row[10]||'').toString().trim();
+        var commentaire = (row[7]||'').toString().trim();
+        var ressource = (row[17]||'').toString().trim();
+        var wr = (row[1]||'').toString().trim();
+        var joursTache = [];
+        for (var jj = 0; jj < 5; jj++) {
+          var hval = row[12+jj];
+          if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
+        }
+        if (!woDict[wo]) {
+          woDict[wo] = {
+            wo:wo, wr:wr, tag:tag, desc:descWO,
+            ressource:ressource, commentaire:commentaire,
+            taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
+          };
+        }
+        if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
+        joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
+        if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
+        if (ressource && !woDict[wo].ressource) woDict[wo].ressource = ressource;
+      }
+
+      _planningDataMC = Object.values(woDict).filter(function(w){ return w.wo; });
+    _allPlanningCacheMC = null; // invalider cache recherche globale
+      // Sauvegarder dans Neon pour partage multi-appareils
+      sauvegarderPlanningNeonMC(_planningDataMC, sheetName);
+      var lbl = document.getElementById('planning-semaine-lbl-mc');
+      if (lbl) lbl.textContent = sheetName || 'Planning importé';
+      var importZone = document.getElementById('planning-import-zone-mc');
+      if (importZone) importZone.style.display = 'none';
+      show('s-planning-mcchaud');
+      setTimeout(renderPlanningMC, 100);
+      var t=document.createElement('div');
+      t.textContent='✅ Planning importé — '+_planningDataMC.length+' WO';
+      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 3000);
+    } catch(err) { alert('Erreur Excel: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPlanningMC() {
+  var list = document.getElementById('planning-list-mc');
+  if (!list) return;
+  // Si pas de données, charger depuis Neon
+  if (!_planningDataMC.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    chargerPlanningNeonMC().then(function(){ _renderPlanningListMC(); });
+    return;
+  }
+  _renderPlanningListMC();
+}
+
+function _renderPlanningListMC() {
+  var list = document.getElementById('planning-list-mc');
+  if (!list) return;
+  var searchVal = (document.getElementById('planning-search-mc')||{value:''}).value.toLowerCase();
+  // Si recherche active : chercher dans tous les plannings (toutes semaines)
+  var sourceData = (searchVal && _allPlanningCacheMC) ? _allPlanningCacheMC : _planningDataMC;
+  var data = sourceData.filter(function(i){
+    if (_planningFilterMC && i.statut !== _planningFilterMC) return false;
+    if (!searchVal) return true;
+    return (i.wo||'').toLowerCase().includes(searchVal)
+        || (i.wr||'').toLowerCase().includes(searchVal)
+        || (i.tag||'').toLowerCase().includes(searchVal)
+        || (i.desc||'').toLowerCase().includes(searchVal)
+        || (i.ressource||'').toLowerCase().includes(searchVal)
+        || (i.semaine||'').toLowerCase().includes(searchVal);
+  });
+  if (!data.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilterMC?' pour ce statut':'')+'</div>';
+    return;
+  }
+  list.innerHTML = data.map(function(item) {
+    var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+    var woSafe = item.wo.replace(/'/g, "\'");
+    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
+    var searchActive = !!(document.getElementById('planning-search-mc')||{value:''}).value;
+    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModalMC(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="min-width:0;flex:1">'
+          +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
+            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
+            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
+            +(item.ressource?'<span style="background:#EDE7F6;color:#7030A0;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
+          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+        +'</div>'
+        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function filtrerPlanningMC(type) {
+  _planningFilterMC = type;
+  ['all','PLANIFIE','EN_COURS','ATT_PIECES','TERMINE'].forEach(function(t) {
+    var b = document.getElementById('pfbtn-mc-'+t);
+    if (b) b.style.opacity = ((!type&&t==='all')||t===type)?'1':'0.4';
+  });
+  renderPlanningMC();
+}
+
+function fermerPlanningModalMC() {
+  var modal=document.getElementById('planning-modal-mc');
+  if(modal) modal.style.display='none';
+  _currentModalWOMC=null;
+}
+
+async function _onPlanningSearchMC(val) {
+  if (!val) { _renderPlanningListMC(); return; }
+  if (!_allPlanningCacheMC) {
+    var list=document.getElementById('planning-list-mc');
+    if(list) list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px">Chargement...</div>';
+    try {
+      var resp=await fetch(DB_API+'?table=planning_mcchaud');
+      var data=await resp.json();
+      var rows=data.rows||(Array.isArray(data)?data:[]);
+      var semaines=data.semaines||[];
+      if(semaines.length>1){
+        var allRows=[];
+        await Promise.all(semaines.map(function(sem){
+          return fetch(DB_API+'?table=planning_mcchaud&semaine='+encodeURIComponent(sem))
+            .then(function(r){ return r.json(); })
+            .then(function(d){ var r2=d.rows||(Array.isArray(d)?d:[]); r2.forEach(function(row){ allRows.push(row); }); }).catch(function(){});
+        }));
+        rows=allRows;
+      }
+      _allPlanningCacheMC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+    } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMC(); return; }
+  }
+  _renderPlanningListMC();
+}
+
+async function changerStatutPlanningMC(wo, newStatut) {
+  if(!wo) return;
+  var item=_planningDataMC.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  item.statut=newStatut;
+  var semaine=item.semaine||_semaineActiveMC||'';
+  fetch(DB_API+'?table=planning_mcchaud',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,statut:newStatut})}).catch(function(e){ console.warn('statut save err',e); });
+  try{ var saved=JSON.parse(localStorage.getItem('planning-statuts-mcchaud')||'{}'); saved[wo]=newStatut; localStorage.setItem('planning-statuts-mcchaud',JSON.stringify(saved)); }catch(e){}
+  if(newStatut==='TERMINE'){
+    var now=new Date(), dateStr=now.toLocaleDateString('fr-FR'), heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    await dbAdd({type:'PLANNING_MCCHAUD',tag:item.tag||'',wo:item.wo||'',wr:item.wr||'',wg:'MCCHAUD',statut:'TERMINE — Atelier MCCHAUD ('+(semaine||'?')+')',loc:'',desc:item.desc||'',date:dateStr,heure:heureStr,photos:(item._photos||[]).filter(Boolean)});
+    _dbCache=null;
+    var t=document.createElement('div'); t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+    t.textContent='WO '+wo+' marque Termine dans la Gestion des flux'; document.body.appendChild(t); setTimeout(function(){ t.remove(); },3000);
+  }
+  ouvrirPlanningModalMC(wo); renderPlanningMC();
+}
+
+function ouvrirPlanningModalMC(wo, semaine) {
+  var currentWO = wo;
+  _currentModalWOMC = wo;
+  // Chercher dans _planningDataMC d'abord, puis dans _allPlanningCacheMC si recherche globale
+  var item = _planningDataMC.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMC) {
+    item = _allPlanningCacheMC.find(function(i){ return i.wo === wo && (!semaine || i.semaine === semaine); });
+  }
+  if (!item) return;
+  var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
+
+  var btns = '';
+  if (item.statut === 'PLANIFIE') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="flex:1;padding:12px;background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+  } else if (item.statut === 'EN_COURS') {
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else if (item.statut === 'ATT_PIECES') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="flex:1;padding:12px;background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else {
+    btns = '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'
+         + '<div style="padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>'
+         + '<button data-statut="EN_COURS" onclick="changerStatutPlanningMC(_currentModalWOMC,this.dataset.statut)" style="padding:10px;background:rgba(197,90,17,.1);color:#7030A0;border:1.5px solid #7030A0;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
+         + '</div>';
+  }
+
+  var tachesHtml = '';
+  if (item.taches && item.taches.length) {
+    tachesHtml = '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
+      + item.taches.map(function(t){
+          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
+            + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+
+  // Photos existantes (depuis mémoire)
+  var photos = (item._photos || []).filter(Boolean);
+  var photosExistHtml = '<div id="planning-photos-exist-mc-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + '</div>';
+  // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
+  setTimeout(function() {
+    // Le backend retourne toute la semaine — on filtre côté client
+    var semaine = item.semaine || _semaineActiveMC || '';
+    var url = DB_API + '?table=planning_mcchaud' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        // Le backend renvoie { rows: [...] } ou directement un tableau
+        var rows = [];
+        if (data && Array.isArray(data.rows)) rows = data.rows;
+        else if (Array.isArray(data)) rows = data;
+        var row = rows.find(function(r){ return r && r.wo === wo; });
+        if (!row) return;
+        var freshPhotos = (row.photos || []).filter(Boolean);
+        // Mettre à jour _planningDataMC en mémoire même si vide
+        item._photos = freshPhotos;
+        // Mettre à jour la zone photos dans la modal
+        var zone = document.getElementById('planning-photos-exist-mc-' + wo);
+        if (!zone) return;
+        zone.innerHTML = freshPhotos.map(function(p){
+          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+        }).join('');
+        // Vider le preview temporaire (éviter doublons)
+        var prev = document.getElementById('planning-photos-preview-mc-' + wo);
+        if (prev) prev.innerHTML = '';
+      }).catch(function(e){ console.warn('fetch photos live err', e); });
+  }, 200);
+
+  var content2 = document.getElementById('planning-modal-content-mc-mc');
+  if (!content2) return;
+  content2.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      + '<div>'
+        + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
+        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+        + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+      + '</div>'
+      + '<button onclick="fermerPlanningModalMC()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
+    + '</div>'
+    + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
+    + (item.jours && item.jours.length
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+            + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+          + '</div>' : '')
+
+    + tachesHtml
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+      + photosExistHtml
+      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+        + '📷 Ajouter photo(s)'
+        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanningMC(\'' + wo + '\',this)" style="display:none">'
+      + '</label>'
+      + '<div id="planning-photos-preview-mc-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+      + '<textarea id="planning-remarque-mc-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
+      + '<button onclick="sauvegarderRemarquePlanningMC(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px">' + btns + '</div>';
+
+  var modal = document.getElementById('planning-modal-mc');
+  if (modal) modal.style.display = 'flex';
+}
+
+async function ajouterPhotoPlanningMC(wo, input) {
+  var files=Array.from(input.files); if(!files.length) return;
+  var preview=document.getElementById('planning-photos-preview-mc-'+wo);
+  var item=_planningDataMC.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  if(!item._photos) item._photos=[];
+  var loadDiv=document.createElement('div');
+  loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+  loadDiv.textContent='Upload en cours...';
+  if(preview) preview.appendChild(loadDiv);
+  var placeholders=[];
+  files.forEach(function(file){
+    var reader=new FileReader(), img=document.createElement('img');
+    img.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
+    if(preview) preview.insertBefore(img,loadDiv);
+    placeholders.push(img);
+    reader.onload=function(e){ img.src=e.target.result; };
+    reader.readAsDataURL(file);
+  });
+  try {
+    var urls=(await Promise.all(files.map(function(file){
+      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
+    }))).filter(Boolean);
+    urls.forEach(function(url,i){
+      if(placeholders[i]){ placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
+      item._photos.push(url);
+    });
+    if(loadDiv) loadDiv.remove();
+    if(!urls.length){ alert('Echec upload Cloudinary'); return; }
+    var semaineSave=item.semaine||_semaineActiveMC||'';
+    if(!semaineSave){ alert('Semaine introuvable. Rechargez le planning.'); return; }
+    var res=await fetch(DB_API+'?table=planning_mcchaud',{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
+    if(res&&res.ok){
+      var zone=document.getElementById('planning-photos-exist-mc-'+wo);
+      if(zone) zone.innerHTML=item._photos.map(function(p){
+        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+      }).join('');
+      var prev2=document.getElementById('planning-photos-preview-mc-'+wo);
+      if(prev2) prev2.innerHTML='';
+    } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
+  } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
+}
+
+function sauvegarderRemarquePlanningMC(wo) {
+  var ta = document.getElementById('planning-remarque-mc-' + wo);
+  if (!ta) return;
+  var item = _planningDataMC.find(function(i){ return i.wo === wo; });
+  if (item) item._remarque = ta.value;
+  var btn = ta.nextElementSibling;
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  fetch(DB_API + '?table=planning_mcchaud', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      wo: wo,
+      semaine: item ? (item.semaine || '') : '',
+      remarque: ta.value
+    })
+  }).then(function(){
+    if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+  }).catch(function(){
+    if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
+  });
+}
+
 </script>
 
 <!-- POPUP CONTACT PICKER -->
@@ -10963,12 +11319,6 @@ function escapeXmlVal(str) {
       <input type="text" id="planning-search" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
         oninput="_onPlanningSearch(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('planning-search').value='';renderPlanning()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
-    </div>
-    <div style="position:relative;margin-bottom:8px">
-      <input type="text" id="planning-search" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
-        oninput="_onPlanningSearch(this.value)"
-        style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-family:inherit;outline:none">
       <span onclick="document.getElementById('planning-search').value='';_onPlanningSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
@@ -10991,3 +11341,48 @@ function escapeXmlVal(str) {
     </div>
   </div>
 </div>
+
+<!-- ═══════════════ PLANNING MCCHAUD ═══════════════ -->
+<div class="screen" id="s-planning-mcchaud">
+  <div class="topbar" style="background:#7030A0">
+    <div class="topbar-title">📅 Planning Atelier MCCHAUD</div>
+    <div class="topbar-user" id="planning-semaine-lbl-mc">Semaine —</div>
+  </div>
+  <div style="padding:12px">
+    <div id="planning-import-zone-mc" style="display:none;background:#fff;border:2px dashed #7030A0;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:24px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:#7030A0;margin-bottom:4px">Importer le planning Excel</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCCHAUD</div>
+      <label style="background:#7030A0;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
+        📂 Choisir fichier
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
+      </label>
+    </div>
+    <select id="planning-semaine-sel-mc" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-weight:700;font-family:inherit;color:#7030A0;margin-bottom:8px;background:#fff" onchange="changerSemainePlanningMC(this.value)"></select>
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" id="planning-search-mc" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
+        oninput="_onPlanningSearchMC(this.value)"
+        style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-family:inherit;outline:none">
+      <span onclick="document.getElementById('planning-search-mc').value='';_onPlanningSearchMC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+    </div>
+    <div id="planning-filtres-mc" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="filtrerPlanningMC(null)" id="pfbtn-mc-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMC('PLANIFIE')" id="pfbtn-mc-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMC('EN_COURS')" id="pfbtn-mc-EN_COURS" style="background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
+      <button onclick="filtrerPlanningMC('ATT_PIECES')" id="pfbtn-mc-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
+      <button onclick="filtrerPlanningMC('TERMINE')" id="pfbtn-mc-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
+    </div>
+    <div id="planning-list-mc">
+      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        Importez le planning Excel pour afficher les WO de la semaine
+      </div>
+    </div>
+  </div>
+  <div id="planning-modal-mc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
+    <div id="planning-modal-inner-mc" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto">
+      <div id="planning-modal-content-mc"></div>
+    </div>
+  </div>
+</div>
+
