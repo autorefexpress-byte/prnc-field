@@ -10616,16 +10616,16 @@ function importPlanningExcelMC(input) {
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
       if (rows.length < 3) return;
 
-      // Format MR04: row0=headers, row1=dates jours, row2+=données
-      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-16=Lun-Ven,17=Ressource
+      // Format MCCHAUD: row0=headers, row1=dates jours, row2+=données
+      // Colonnes: 0=WO,2=WR,6=Task,9=ACTIONS/INFOS(commentaire),10=Tag,11=desc tache,12=desc WO,14-18=Lun-Ven,21=Ressources
       var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
       var jours = [];
-      for (var j = 12; j <= 16; j++) {
+      for (var j = 14; j <= 18; j++) {
         var dval = rows[1] && rows[1][j];
         if (dval) {
           var d = new Date(dval);
-          jours.push(!isNaN(d) ? joursNoms[j-12]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-12]);
-        } else { jours.push(joursNoms[j-12]); }
+          jours.push(!isNaN(d) ? joursNoms[j-14]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-14]);
+        } else { jours.push(joursNoms[j-14]); }
       }
 
       var woDict = {};
@@ -10636,15 +10636,16 @@ function importPlanningExcelMC(input) {
         var row = rows[r];
         if (!row || !row[0]) continue;
         var wo = row[0].toString().trim();
-        var tag = (row[8]||'').toString().trim();
-        var descTache = (row[9]||'').toString().trim();
-        var descWO = (row[10]||'').toString().trim();
-        var commentaire = (row[7]||'').toString().trim();
-        var ressource = (row[17]||'').toString().trim();
-        var wr = (row[1]||'').toString().trim();
+        var tag = (row[10]||'').toString().trim();
+        var descTache = (row[11]||'').toString().trim();
+        var descWO = (row[12]||'').toString().trim();
+        var commentaire = (row[9]||'').toString().trim();
+        var ressource = (row[21]||'').toString().trim();
+        var wr = (row[2]||'').toString().trim();
+        if (wr.toUpperCase() === 'N/A') wr = '';
         var joursTache = [];
         for (var jj = 0; jj < 5; jj++) {
-          var hval = row[12+jj];
+          var hval = row[14+jj];
           if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
         }
         if (!woDict[wo]) {
