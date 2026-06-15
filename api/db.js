@@ -32,6 +32,16 @@ async function ensureTables() {
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
     await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
+    // ── Planning Atelier MCCHAUD (table séparée, même schéma) ──
+    await sql`CREATE TABLE IF NOT EXISTS planning_mcchaud (
+      id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
+      ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
+      jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
+      photos JSONB DEFAULT '[]', remarque TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcchaud_wo_semaine_idx ON planning_mcchaud(wo, semaine)`;
+
     await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
       id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
       record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
@@ -88,13 +98,138 @@ async function deleteCloudinaryPhotos(photoUrls) {
   });
 }
 
+// ── Logique pour la table planning (P17) ──
+async function handlePlanningP17(req, res, id, method) {
+  if (method === 'GET') {
+    let semaine = req.query?.semaine || null;
+    if (!semaine) {
+      try {
+        const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active'`;
+        if (cfg.length) semaine = cfg[0].value;
+      } catch(e) {}
+    }
+    const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
+    const rows = semaine
+      ? await sql`SELECT * FROM planning WHERE semaine=${semaine} ORDER BY wo ASC`
+      : await sql`SELECT * FROM planning ORDER BY updated_at DESC LIMIT 200`;
+    return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
+  }
+  if (method === 'POST') {
+    const d = req.body || {};
+    if (d.bulk && Array.isArray(d.items) && d.semaine) {
+      if (d.first !== false) await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
+      for (const item of d.items) {
+        await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+          VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
+                  ${item.ressource||null},${item.commentaire||null},
+                  ${JSON.stringify(item.taches||[])}::jsonb,
+                  ${JSON.stringify(item.jours||[])}::jsonb,
+                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+      }
+      await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active',${d.semaine})
+        ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
+      const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
+      if (semaines.length > 4) {
+        const aSupprimer = semaines.slice(4).map(r => r.semaine);
+        for (const s of aSupprimer) await sql`DELETE FROM planning WHERE semaine=${s}`;
+      }
+      return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
+    }
+    return res.status(400).json({ error: 'Missing bulk/items/semaine' });
+  }
+  if (method === 'PATCH') {
+    const d = req.body || {};
+    if (d.wo && d.semaine) {
+      if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      return res.status(200).json({ ok: true });
+    }
+    if (id) {
+      if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
+      if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
+      return res.status(200).json({ ok: true });
+    }
+    return res.status(400).json({ error: 'Missing wo+semaine or id' });
+  }
+  if (method === 'DELETE') {
+    if (req.query?.semaine) await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
+    else if (id) await sql`DELETE FROM planning WHERE id=${id}`;
+    return res.status(200).json({ ok: true });
+  }
+  return res.status(400).json({ error: 'Unknown planning request' });
+}
+
+// ── Logique pour la table planning_mcchaud (même schéma, table séparée) ──
+async function handlePlanningMCCHAUD(req, res, id, method) {
+  if (method === 'GET') {
+    let semaine = req.query?.semaine || null;
+    if (!semaine) {
+      try {
+        const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active_mcchaud'`;
+        if (cfg.length) semaine = cfg[0].value;
+      } catch(e) {}
+    }
+    const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcchaud ORDER BY semaine DESC`;
+    const rows = semaine
+      ? await sql`SELECT * FROM planning_mcchaud WHERE semaine=${semaine} ORDER BY wo ASC`
+      : await sql`SELECT * FROM planning_mcchaud ORDER BY updated_at DESC LIMIT 200`;
+    return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
+  }
+  if (method === 'POST') {
+    const d = req.body || {};
+    if (d.bulk && Array.isArray(d.items) && d.semaine) {
+      if (d.first !== false) await sql`DELETE FROM planning_mcchaud WHERE semaine=${d.semaine}`;
+      for (const item of d.items) {
+        await sql`INSERT INTO planning_mcchaud (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+          VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
+                  ${item.ressource||null},${item.commentaire||null},
+                  ${JSON.stringify(item.taches||[])}::jsonb,
+                  ${JSON.stringify(item.jours||[])}::jsonb,
+                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+      }
+      await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcchaud',${d.semaine})
+        ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
+      const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcchaud ORDER BY semaine DESC`;
+      if (semaines.length > 4) {
+        const aSupprimer = semaines.slice(4).map(r => r.semaine);
+        for (const s of aSupprimer) await sql`DELETE FROM planning_mcchaud WHERE semaine=${s}`;
+      }
+      return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
+    }
+    return res.status(400).json({ error: 'Missing bulk/items/semaine' });
+  }
+  if (method === 'PATCH') {
+    const d = req.body || {};
+    if (d.wo && d.semaine) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcchaud SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcchaud SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcchaud SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      return res.status(200).json({ ok: true });
+    }
+    if (id) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcchaud SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcchaud SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcchaud SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
+      return res.status(200).json({ ok: true });
+    }
+    return res.status(400).json({ error: 'Missing wo+semaine or id' });
+  }
+  if (method === 'DELETE') {
+    if (req.query?.semaine) await sql`DELETE FROM planning_mcchaud WHERE semaine=${req.query.semaine}`;
+    else if (id) await sql`DELETE FROM planning_mcchaud WHERE id=${id}`;
+    return res.status(200).json({ ok: true });
+  }
+  return res.status(400).json({ error: 'Unknown planning_mcchaud request' });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // S'assurer que les tables sont créées (sans bloquer si déjà fait)
   if (!_tablesReady) await ensureTables();
 
   try {
@@ -146,65 +281,12 @@ module.exports = async function handler(req, res) {
 
     // ── PLANNING ATELIER P17 ─────────────────────────
     if (table === 'planning') {
-      if (method === 'GET') {
-        let semaine = req.query?.semaine || null;
-        if (!semaine) {
-          try {
-            const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active'`;
-            if (cfg.length) semaine = cfg[0].value;
-          } catch(e) {}
-        }
-        const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
-        const rows = semaine
-          ? await sql`SELECT * FROM planning WHERE semaine=${semaine} ORDER BY wo ASC`
-          : await sql`SELECT * FROM planning ORDER BY updated_at DESC LIMIT 200`;
-        return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
-      }
-      if (method === 'POST') {
-        const d = req.body || {};
-        if (d.bulk && Array.isArray(d.items) && d.semaine) {
-          if (d.first !== false) await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
-          for (const item of d.items) {
-            await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
-              VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
-                      ${item.ressource||null},${item.commentaire||null},
-                      ${JSON.stringify(item.taches||[])}::jsonb,
-                      ${JSON.stringify(item.jours||[])}::jsonb,
-                      ${item.statut||'PLANIFIE'},${d.semaine})`;
-          }
-          await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active',${d.semaine})
-            ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
-          const semaines = await sql`SELECT DISTINCT semaine FROM planning ORDER BY semaine DESC`;
-          if (semaines.length > 4) {
-            const aSupprimer = semaines.slice(4).map(r => r.semaine);
-            for (const s of aSupprimer) await sql`DELETE FROM planning WHERE semaine=${s}`;
-          }
-          return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
-        }
-        return res.status(400).json({ error: 'Missing bulk/items/semaine' });
-      }
-      if (method === 'PATCH') {
-        const d = req.body || {};
-        if (d.wo && d.semaine) {
-          if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-          return res.status(200).json({ ok: true });
-        }
-        if (id) {
-          if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
-          if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
-          if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
-          return res.status(200).json({ ok: true });
-        }
-        return res.status(400).json({ error: 'Missing wo+semaine or id' });
-      }
-      if (method === 'DELETE') {
-        if (req.query?.semaine) await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
-        else if (id) await sql`DELETE FROM planning WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
-      return res.status(400).json({ error: 'Unknown planning request' });
+      return handlePlanningP17(req, res, id, method);
+    }
+
+    // ── PLANNING ATELIER MCCHAUD ──────────────────────
+    if (table === 'planning_mcchaud') {
+      return handlePlanningMCCHAUD(req, res, id, method);
     }
 
     // ── LOC_MOUVEMENTS ───────────────────────────────
