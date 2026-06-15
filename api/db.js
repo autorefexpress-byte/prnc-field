@@ -154,7 +154,12 @@ async function handlePlanningP17(req, res, id, method) {
     return res.status(400).json({ error: 'Missing wo+semaine or id' });
   }
   if (method === 'DELETE') {
-    if (req.query?.semaine) await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
+    if (req.query?.wo) {
+      const planRows = await sql`SELECT photos FROM planning WHERE wo=${req.query.wo}`;
+      if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
+      await sql`DELETE FROM planning WHERE wo=${req.query.wo}`;
+    }
+    else if (req.query?.semaine) await sql`DELETE FROM planning WHERE semaine=${req.query.semaine}`;
     else if (id) await sql`DELETE FROM planning WHERE id=${id}`;
     return res.status(200).json({ ok: true });
   }
@@ -217,7 +222,12 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
     return res.status(400).json({ error: 'Missing wo+semaine or id' });
   }
   if (method === 'DELETE') {
-    if (req.query?.semaine) await sql`DELETE FROM planning_mcchaud WHERE semaine=${req.query.semaine}`;
+    if (req.query?.wo) {
+      const planRows = await sql`SELECT photos FROM planning_mcchaud WHERE wo=${req.query.wo}`;
+      if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
+      await sql`DELETE FROM planning_mcchaud WHERE wo=${req.query.wo}`;
+    }
+    else if (req.query?.semaine) await sql`DELETE FROM planning_mcchaud WHERE semaine=${req.query.semaine}`;
     else if (id) await sql`DELETE FROM planning_mcchaud WHERE id=${id}`;
     return res.status(200).json({ ok: true });
   }
@@ -481,6 +491,11 @@ module.exports = async function handler(req, res) {
             if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
             await sql`DELETE FROM planning WHERE wo=${rows[0].wo}`;
           } catch(e) { console.warn('planning delete err:', e); }
+          try {
+            const planRowsMC = await sql`SELECT photos FROM planning_mcchaud WHERE wo=${rows[0].wo}`;
+            if (planRowsMC.length && planRowsMC[0].photos?.length) await deleteCloudinaryPhotos(planRowsMC[0].photos);
+            await sql`DELETE FROM planning_mcchaud WHERE wo=${rows[0].wo}`;
+          } catch(e) { console.warn('planning_mcchaud delete err:', e); }
         }
       }
       await sql`DELETE FROM historique WHERE id=${id}`;
