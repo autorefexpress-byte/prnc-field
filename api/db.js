@@ -29,6 +29,9 @@ async function ensureTables() {
     )`;
     await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
     await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`;
+    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wo_usine TEXT`;
+    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wso TEXT`;
+    await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
     await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
@@ -139,6 +142,11 @@ async function handlePlanningP17(req, res, id, method) {
   }
   if (method === 'PATCH') {
     const d = req.body || {};
+    if ((d.wo_usine !== undefined || d.wso !== undefined) && d.wo) {
+      if (d.wo_usine !== undefined) await sql`UPDATE planning SET wo_usine=${d.wo_usine||null}, updated_at=NOW() WHERE wo=${d.wo}`;
+      if (d.wso !== undefined) await sql`UPDATE planning SET wso=${d.wso||null}, updated_at=NOW() WHERE wo=${d.wo}`;
+      return res.status(200).json({ ok: true });
+    }
     if (d.wo && d.semaine) {
       if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
       if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
@@ -422,7 +430,7 @@ module.exports = async function handler(req, res) {
     // ── HISTORIQUE GET ───────────────────────────────
     if (method === 'GET') {
       const rows = await sql`
-        SELECT id,type,tag,wo,wo_usine,wr,wg,sc,loc,statut,date,heure,description,
+        SELECT id,type,tag,wo,wo_usine,wso,wr,wg,sc,loc,statut,date,heure,description,
                serie,type_eqt,qty,shutdown,motif,zone,from_fiche,email_demandeur,
                etna_statut,etna_date_retour,etna_commentaire,
                callidus_statut,callidus_date_retour,callidus_commentaire,
@@ -435,11 +443,11 @@ module.exports = async function handler(req, res) {
     if (method === 'POST') {
       const d = req.body || {};
       await sql`
-        INSERT INTO historique (id,type,tag,wo,wo_usine,wr,wg,sc,loc,statut,date,heure,
+        INSERT INTO historique (id,type,tag,wo,wo_usine,wso,wr,wg,sc,loc,statut,date,heure,
           description,serie,type_eqt,qty,shutdown,motif,zone,from_fiche,email_demandeur,
           etna_statut,etna_date_retour,etna_commentaire,callidus_statut,callidus_date_retour,
           callidus_commentaire,dest,photos)
-        VALUES (${d.id||null},${d.type||null},${d.tag||null},${d.wo||null},${d.wo_usine||null},
+        VALUES (${d.id||null},${d.type||null},${d.tag||null},${d.wo||null},${d.wo_usine||null},${d.wso||null},
           ${d.wr||null},${d.wg||null},${d.sc||null},${d.loc||null},${d.statut||null},
           ${d.date||null},${d.heure||null},${d.designation||null},${d.serie||null},
           ${d.type_eqt||null},${d.qty||null},${d.shutdown||null},${d.motif||null},
@@ -473,6 +481,7 @@ module.exports = async function handler(req, res) {
         else if (k === 'zone')                 { await sql`UPDATE historique SET zone=${v||null} WHERE id=${id}`; }
         else if (k === 'type')                 { await sql`UPDATE historique SET type=${v||null} WHERE id=${id}`; }
         else if (k === 'wo_usine')             { await sql`UPDATE historique SET wo_usine=${v||null} WHERE id=${id}`; }
+        else if (k === 'wso')                  { await sql`UPDATE historique SET wso=${v||null} WHERE id=${id}`; }
         else if (k === 'description')          { await sql`UPDATE historique SET description=${v||null} WHERE id=${id}`; }
         else if (k === 'recovered_at')         { await sql`UPDATE historique SET recovered_at=${v||null} WHERE id=${id}`; }
         else { console.warn('Unknown field:', k); }
