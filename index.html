@@ -7213,10 +7213,7 @@ async function saveEdit(id) {
   const _wg = _recOld ? (_recOld.wg || '') : '';
 
   try {
-    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    var _patchBody = {
         statut   : s       || null,
         loc      : loc     || null,
         wo       : wo      || null,
@@ -7228,13 +7225,24 @@ async function saveEdit(id) {
         ...(newType  ? { type     : newType  } : {}),
         ...(woUsine  ? { wo_usine : woUsine  } : {}),
         ...(wso      ? { wso      : wso      } : {})
-      })
+    };
+    var _patchResp = await fetch(DB_API + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_patchBody)
     });
+    if (!_patchResp.ok) {
+      var _patchErrTxt = '';
+      try { _patchErrTxt = await _patchResp.text(); } catch(e2) {}
+      console.error('PATCH historique echec', _patchResp.status, _patchErrTxt, _patchBody);
+      throw new Error('Enregistrement refuse par le serveur (HTTP ' + _patchResp.status + '). ' + _patchErrTxt);
+    }
+    console.log('PATCH historique OK', _patchBody);
 
     // Synchroniser WO Usine / WSO sur la carte planning P17 correspondante
     if (wo && (woUsine || wso)) {
       try {
-        await fetch(DB_API + '?table=planning', {
+        var _planPatchResp = await fetch(DB_API + '?table=planning', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -7243,9 +7251,24 @@ async function saveEdit(id) {
             ...(wso     ? { wso: wso } : {})
           })
         });
-        if (typeof _planningData !== 'undefined') {
+        if (!_planPatchResp.ok) {
+          var _planErrTxt = '';
+          try { _planErrTxt = await _planPatchResp.text(); } catch(e3) {}
+          console.warn('PATCH planning (wo_usine/wso) echec', _planPatchResp.status, _planErrTxt, wo);
+        } else {
+          console.log('PATCH planning (wo_usine/wso) OK pour wo=', wo);
+        }
+        if (typeof _planningData !== 'undefined' && _planningData) {
           var _pItem = _planningData.find(function(i){ return i.wo === wo; });
-          if (_pItem) { if (woUsine) _pItem.wo_usine = woUsine; if (wso) _pItem.wso = wso; }
+          if (_pItem) {
+            if (woUsine) _pItem.woUsine = woUsine;
+            if (wso)     _pItem.wso     = wso;
+          }
+        }
+        // Recharger le planning depuis Neon pour refléter les nouvelles valeurs sur les cartes
+        if (typeof chargerPlanningNeon === 'function') {
+          await chargerPlanningNeon(_semaineActive || (_pItem && _pItem.semaine) || undefined);
+          if (typeof _renderPlanningList === 'function') _renderPlanningList();
         }
       } catch(e) { console.warn('sync planning wo_usine/wso err', e); }
     }
@@ -9852,16 +9875,17 @@ function _renderPlanningList() {
     return;
   }
   list.innerHTML = data.map(function(item) {
+    try {
     var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
-    var woSafe = item.wo.replace(/'/g, "\'");
+    var woVal = item.wo||'';
     var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
     var searchActive = !!(document.getElementById('planning-search')||{value:''}).value;
-    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModal(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+    return '<div data-wo="'+woVal+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModal(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
-            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+woVal+'</span>'
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
           +'</div>'
@@ -9877,6 +9901,7 @@ function _renderPlanningList() {
         +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
       +'</div>'
     +'</div>';
+    } catch(e) { console.warn('render planning item err', e, item); return ''; }
   }).join('');
 }
 
@@ -10972,7 +10997,13 @@ async function ajouterPhotoPlanningMC(wo, input) {
     reader.readAsDataURL(file);
   });
   try {
-    var urls=(await Promise.all(files.map(function(file){
+    // Compression avant upload pour accélérer le transfert
+    var compressedFiles = await Promise.all(files.map(function(file){
+      return new Promise(function(resolve){
+        compressImage(file, 1200, 0.75, function(blob){ resolve(blob||file); });
+      });
+    }));
+    var urls=(await Promise.all(compressedFiles.map(function(file){
       var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
       return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
         .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
