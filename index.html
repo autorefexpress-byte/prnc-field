@@ -1582,7 +1582,7 @@ async function cpFicheAjouterPhotos(input) {
   try {
     var files = Array.from(input.files);
     var compressed = await Promise.all(files.map(function(f){
-      return new Promise(function(resolve){ compressImage(f,1200,0.75,function(b){ resolve(b||f); }); });
+      return compressImage(f, 1200, 0.75).then(function(b){ return b||f; }).catch(function(){ return f; });
     }));
     var urls = (await Promise.all(compressed.map(function(f){
       var fd=new FormData(); fd.append('file',f); fd.append('upload_preset',CLOUDINARY_PRESET);
@@ -11164,9 +11164,7 @@ async function ajouterPhotoPlanningMC(wo, input) {
   try {
     // Compression avant upload pour accélérer le transfert
     var compressedFiles = await Promise.all(files.map(function(file){
-      return new Promise(function(resolve){
-        compressImage(file, 1200, 0.75, function(blob){ resolve(blob||file); });
-      });
+      return compressImage(file, 1200, 0.75).then(function(b){ return b||file; }).catch(function(){ return file; });
     }));
     var urls=(await Promise.all(compressedFiles.map(function(file){
       var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
