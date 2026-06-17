@@ -1524,6 +1524,7 @@ function _initLocSel(selId, inpId, val) {
 <script>
 // ─── FICHE DÉTAIL CALLIDUS PRNC ───────────────────────────────────────────
 var _cpFicheId = null;
+function _parseMeta(r){ if(!r) return {}; try{ return JSON.parse(r); }catch(e){ return {lieu:r}; } }
 
 function ouvrirFicheCallidus(id) {
   var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
