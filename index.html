@@ -8308,7 +8308,8 @@ function fermerFicheCallidus() {
 async function cpFicheAjouterPhotos(input) {
   if (!_cpFicheId || !input.files.length) return;
   var label = input.closest('label');
-  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
+  var oldHtml = label ? label.innerHTML : '';
+  if (label) { label.innerHTML = '<span style="pointer-events:none">⏳ Upload en cours...</span>'; label.style.pointerEvents = 'none'; }
   try {
     var urls = await uploadPhotosParallel(input.files, 'callidus');
     var rec  = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
@@ -8318,9 +8319,10 @@ async function cpFicheAjouterPhotos(input) {
       body: JSON.stringify({ photos: newPhotos })
     });
     if (rec) rec.photos = newPhotos;
-    ouvrirFicheCallidus(_cpFicheId);
+    // Mettre à jour uniquement le bloc photos sans reconstruire toute la fiche
+    _cpRefreshPhotos(newPhotos);
   } catch(e) { alert('Erreur upload : ' + e.message); }
-  if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; }
+  if (label) { label.innerHTML = oldHtml; label.style.pointerEvents = ''; }
 }
 
 async function cpFicheSupprimerPhoto(idx) {
@@ -8340,7 +8342,22 @@ async function cpFicheSupprimerPhoto(idx) {
     body: JSON.stringify({ photos: photos })
   });
   if (rec) rec.photos = photos;
-  ouvrirFicheCallidus(_cpFicheId);
+  // Mettre à jour uniquement le bloc photos
+  _cpRefreshPhotos(photos);
+}
+
+function _cpRefreshPhotos(photos) {
+  var pid = 'cprnc_' + _cpFicheId;
+  window._etnaPhotosMap = window._etnaPhotosMap || {};
+  window._etnaPhotosMap[pid] = photos;
+  var container = document.getElementById('cp-fiche-photos');
+  if (!container) return;
+  container.innerHTML = photos.map(function(p, i) {
+    return '<div style="position:relative">'
+      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewPhotoByKey(\'' + pid + '\',' + i + ')" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+      + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
+      + '</div>';
+  }).join('');
 }
 
 async function cpFicheRecu() {
