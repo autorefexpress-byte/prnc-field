@@ -389,12 +389,12 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Planning Transport</div>
       <div class="card-sub" id="transport-badge-home">Camions & expéditions</div>
     </div>
-    <div class="action-card" style="position:relative" onclick="show('s-callidus-prnc')">
+    <div class="action-card" style="position:relative" onclick="ouvrirCallidusPrnc()">
       <div class="card-icon" style="background:#EDE7F6;color:#7030A0">🔧</div>
-      <div class="card-lbl">Callidus</div>
-      <div class="card-sub">Vannes chez Callidus</div>
+      <div class="card-lbl">Callidus PRNC</div>
+      <div class="card-sub" id="cp-card-sub">Vannes chez Callidus</div>
       <label onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
-        ↑ Bordereau
+        ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
       </label>
     </div>
@@ -1743,7 +1743,7 @@ function show(id) {
   if (id === 's-etna-suivi')       renderEtnaSuivi();
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
-  if (id === 's-callidus-prnc') { cpShowTab('liste'); }
+  if (id === 's-callidus-prnc') { renderCallidusPrnc(); }
   if (id === 's-transport') renderTransport();
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
@@ -8247,582 +8247,364 @@ function validerNumpad() {
 
 
 // ══ CALLIDUS PRNC ══
-var _cpPhotos = [];
-var _cpCache  = null;
-function _parseMeta(r){ if(!r) return {}; try{ return JSON.parse(r); }catch(e){ return {lieu:r}; } }
-
-// ─── FICHE DÉTAIL CALLIDUS PRNC ───────────────────────────────────────────
+var _cpCache   = null;
 var _cpFicheId = null;
 
+function _parseMeta(r) {
+  if (!r) return {};
+  try { return JSON.parse(r); } catch(e) { return { lieu: r }; }
+}
+
+function ouvrirCallidusPrnc() {
+  show('s-callidus-prnc');
+  renderCallidusPrnc();
+}
+
+// ── Fiche détail ──────────────────────────────────────────────
 function ouvrirFicheCallidus(id) {
-  var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
+  var rec = _cpCache ? _cpCache.find(function(r) { return r.id === id; }) : null;
   if (!rec) return;
   _cpFicheId = id;
-  var meta = _parseMeta(rec.remarques);
+  var meta   = _parseMeta(rec.remarques);
   var photos = Array.isArray(rec.photos) ? rec.photos.filter(Boolean) : [];
+
   document.getElementById('cp-fiche-titre').textContent = '🔧 ' + (rec.tag || '--');
-  var infosHtml = '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;font-size:12px;line-height:2">'
-    + (rec.tag   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">TAG</span><strong>'+rec.tag+'</strong></div>' : '')
-    + (rec.wo    ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WO</span><strong>'+rec.wo+'</strong></div>' : '')
-    + (meta.wr   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WR</span><strong>'+meta.wr+'</strong></div>' : '')
-    + (rec.qty   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">S/C</span><strong>'+rec.qty+'</strong></div>' : '')
-    + (rec.serie ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">BDS</span><strong>'+rec.serie+'</strong></div>' : '')
-    + (meta.lieu ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Lieu</span><span>'+meta.lieu+'</span></div>' : '')
-    + (meta.semaine ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Semaine</span><span>'+meta.semaine+'</span></div>' : '')
-    + (rec.date  ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Date</span><span>'+rec.date+'</span></div>' : '')
-    + (meta.desc ? '<div style="margin-top:4px;color:#666;font-size:11px;border-top:1px solid #E1BEE7;padding-top:6px">'+meta.desc+'</div>' : '')
+  document.getElementById('cp-fiche-infos').innerHTML =
+    '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;font-size:12px;line-height:2">'
+    + (rec.tag     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">TAG</span><strong>' + rec.tag  + '</strong></div>' : '')
+    + (rec.wo      ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WO</span><strong>'  + rec.wo   + '</strong></div>' : '')
+    + (meta.wr     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WR</span><strong>'  + meta.wr  + '</strong></div>' : '')
+    + (rec.qty     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">S/C</span><strong>' + rec.qty  + '</strong></div>' : '')
+    + (rec.serie   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">BDS</span><strong>' + rec.serie + '</strong></div>' : '')
+    + (meta.semaine? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Sem.</span><span>'  + meta.semaine + '</span></div>' : '')
+    + (rec.date    ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Date</span><span>' + rec.date  + '</span></div>' : '')
     + '</div>';
-  document.getElementById('cp-fiche-infos').innerHTML = infosHtml;
-  _cpFicheRefreshPhotos(photos);
-  var ov = document.getElementById('cp-fiche-overlay');
-  ov.style.display = 'flex';
-  setTimeout(function(){ document.getElementById('cp-fiche-inner').scrollTop = 0; }, 50);
-}
 
-function fermerFicheCallidus() {
-  document.getElementById('cp-fiche-overlay').style.display = 'none';
-  _cpFicheId = null;
-}
-
-function _cpFicheRefreshPhotos(photos) {
-  var pid = 'cprnc_' + _cpFicheId;
+  var pid = 'cprnc_' + id;
   window._etnaPhotosMap = window._etnaPhotosMap || {};
   window._etnaPhotosMap[pid] = photos;
   var container = document.getElementById('cp-fiche-photos');
-  if (!container) return;
-  if (!photos.length) {
-    container.innerHTML = '<div style="color:#aaa;font-size:12px;padding:6px 0">Aucune photo</div>';
-    return;
-  }
-  var html = '';
-  photos.forEach(function(p, i) {
-    html += '<div style="position:relative">'
-      + '<img src="' + cloudThumb(p,200,200) + '" loading="lazy" onclick="viewPhotoByKey(' + JSON.stringify(pid) + ',' + i + ')" style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:2px solid #CE93D8;cursor:pointer">'
-      + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">&#x2715;</button>'
+  if (container) container.innerHTML = photos.map(function(p, i) {
+    return '<div style="position:relative">'
+      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewPhotoByKey(\'' + pid + '\',' + i + ')" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+      + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
       + '</div>';
-  });
-  container.innerHTML = html;
+  }).join('');
+
+  var ov = document.getElementById('cp-fiche-overlay');
+  if (ov) { ov.style.display = 'flex'; }
+  setTimeout(function() {
+    var inner = document.getElementById('cp-fiche-inner');
+    if (inner) inner.scrollTop = 0;
+  }, 50);
+}
+
+function fermerFicheCallidus() {
+  var ov = document.getElementById('cp-fiche-overlay');
+  if (ov) ov.style.display = 'none';
+  _cpFicheId = null;
 }
 
 async function cpFicheAjouterPhotos(input) {
   if (!_cpFicheId || !input.files.length) return;
-  var btn = document.getElementById('cp-fiche-add-photo-btn');
-  if (btn) { btn.style.opacity='0.6'; btn.style.pointerEvents='none'; }
+  var label = input.closest('label');
+  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
   try {
-    var files = Array.from(input.files);
-    var compressed = await Promise.all(files.map(function(f){
-      return compressImage(f, 1200, 0.75).then(function(b){ return b||f; }).catch(function(){ return f; });
-    }));
-    var urls = (await Promise.all(compressed.map(function(f){
-      var fd=new FormData(); fd.append('file',f); fd.append('upload_preset',CLOUDINARY_PRESET);
-      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
-        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
-    }))).filter(Boolean);
-    if (!urls.length) { alert('Echec upload'); return; }
-    var rec = _cpCache ? _cpCache.find(function(r){ return r.id===_cpFicheId; }) : null;
-    var newPhotos = (rec&&Array.isArray(rec.photos)?rec.photos.filter(Boolean):[]).concat(urls);
-    await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(_cpFicheId),{
-      method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})
+    var urls = await uploadPhotosParallel(input.files, 'callidus');
+    var rec  = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
+    var newPhotos = (rec && Array.isArray(rec.photos) ? rec.photos : []).concat(urls);
+    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: newPhotos })
     });
     if (rec) rec.photos = newPhotos;
-    _cpFicheRefreshPhotos(newPhotos);
-    renderCallidusPrnc();
-  } catch(err) { alert('Erreur : '+err.message); }
-  finally { if(btn){btn.style.opacity='';btn.style.pointerEvents='';} input.value=''; }
+    ouvrirFicheCallidus(_cpFicheId);
+  } catch(e) { alert('Erreur upload : ' + e.message); }
+  if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; }
 }
 
 async function cpFicheSupprimerPhoto(idx) {
   if (!_cpFicheId) return;
+  var rec    = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
+  var photos = rec && Array.isArray(rec.photos) ? rec.photos.slice() : [];
   if (!confirm('Supprimer cette photo ?')) return;
-  var rec = _cpCache ? _cpCache.find(function(r){ return r.id===_cpFicheId; }) : null;
-  var photos = (rec&&Array.isArray(rec.photos)) ? rec.photos.filter(Boolean) : [];
-  var removed = photos[idx];
-  try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:removed})}); } catch(e){}
-  var newPhotos = photos.filter(function(_,i){ return i!==idx; });
-  await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(_cpFicheId),{
-    method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})
+  var removed = photos.splice(idx, 1)[0];
+  try {
+    await fetch(DB_API + '?action=delete_photo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_url: removed })
+    });
+  } catch(e) {}
+  await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photos: photos })
   });
-  if (rec) rec.photos = newPhotos;
-  _cpFicheRefreshPhotos(newPhotos);
-  renderCallidusPrnc();
+  if (rec) rec.photos = photos;
+  ouvrirFicheCallidus(_cpFicheId);
 }
 
 async function cpFicheRecu() {
   if (!_cpFicheId) return;
-  await _recuCallidusPrnc(_cpFicheId);
+  var rec  = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
+  var tag  = rec ? (rec.tag || '') : '';
+  var wo   = rec ? (rec.wo  || '') : '';
+  var date = new Date().toLocaleDateString('fr-FR');
+  var subj = encodeURIComponent('Reception Callidus - ' + tag + ' / WO ' + wo);
+  var body = encodeURIComponent('Bonjour,\n\nL equipement suivant a ete recu de Callidus :\n\n  TAG  : ' + tag + '\n  WO   : ' + wo + '\n  Date : ' + date + '\n\nCordialement');
+  window.location.href = 'mailto:emmanuel.rosa@pronyresources.com?subject=' + subj + '&body=' + body;
 }
 
 async function cpFicheSupprimer() {
   if (!_cpFicheId) return;
   if (!confirm('Supprimer cette vanne ?')) return;
-  await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(_cpFicheId),{method:'DELETE'});
-  if (_cpCache) _cpCache = _cpCache.filter(function(r){ return r.id!==_cpFicheId; });
-  fermerFicheCallidus();
-  renderCallidusPrnc();
+  try {
+    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), { method: 'DELETE' });
+    if (_cpCache) _cpCache = _cpCache.filter(function(r) { return r.id !== _cpFicheId; });
+    fermerFicheCallidus();
+    renderCallidusPrnc(true);
+  } catch(e) { alert('Erreur : ' + e.message); }
 }
 
+// ── Suppression par semaine ────────────────────────────────────
 async function cpSupprimerSemaine(semaine) {
+  // Recharger si cache vide
   if (!_cpCache) {
-    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
-    if (resp && resp.ok) { _cpCache = await resp.json(); if (!Array.isArray(_cpCache)) _cpCache = []; }
-    else { alert('Erreur connexion'); return; }
+    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function() { return null; });
+    if (resp && resp.ok) {
+      _cpCache = await resp.json();
+      if (!Array.isArray(_cpCache)) _cpCache = [];
+    } else { alert('Erreur connexion'); return; }
   }
-  var nb = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).length;
-  if (!confirm('Supprimer toutes les vannes de la semaine ' + semaine + ' (' + nb + ' vanne' + (nb>1?'s':'') + ') ?')) return;
-  var ids = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).map(function(r){ return r.id; });
+  var ids = _cpCache
+    .filter(function(r) { return (_parseMeta(r.remarques).semaine || 'Sans semaine') === semaine; })
+    .map(function(r) { return r.id; });
+  if (!confirm('Supprimer ' + ids.length + ' vanne' + (ids.length > 1 ? 's' : '') + ' de la semaine ' + semaine + ' ?')) return;
   var toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-  toast.textContent = 'Suppression ' + semaine + '...';
+  toast.textContent = 'Suppression en cours...';
   document.body.appendChild(toast);
-  await Promise.all(ids.map(function(id){
-    return fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+  await Promise.all(ids.map(function(id) {
+    return fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), { method: 'DELETE' }).catch(function() {});
   }));
-  if (_cpCache) _cpCache = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')!==semaine; });
+  _cpCache = _cpCache.filter(function(r) { return (_parseMeta(r.remarques).semaine || 'Sans semaine') !== semaine; });
   toast.remove();
   var t2 = document.createElement('div');
   t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-  t2.textContent = '✅ Semaine ' + semaine + ' supprimée';
+  t2.textContent = '✅ ' + semaine + ' supprimée';
   document.body.appendChild(t2);
-  setTimeout(function(){ t2.remove(); }, 3000);
-  renderCallidusPrnc();
+  setTimeout(function() { t2.remove(); }, 3000);
+  renderCallidusPrnc(true);
 }
 
-
-function fermerOverlayCP(btn) {
-  var ov = btn.closest('[data-cp-edit="1"]') || btn.closest('[style*="rgba"]');
-  if (ov) ov.remove();
-}
-
-function cpShowTab(t) {
-  document.querySelectorAll('.cp-pane').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.cp-tab').forEach(function(b){ b.classList.remove('active'); });
-  var p = document.getElementById('cp-' + t); if(p) p.classList.add('active');
-  var b = document.getElementById('cp-tab-' + t); if(b) b.classList.add('active');
-  if (t === 'liste') renderCallidusPrnc();
-}
-
-function cpRefreshPrev(containerId, photos) {
-  var el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = photos.map(function(p, i) {
-    return '<div style="position:relative">'
-      + '<img src="' + cloudThumb(p,200,200) + '" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)">'
-      + '<button onclick="cpDelPhoto(' + i + ',&quot;' + containerId + '&quot;)" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
-      + '</div>';
-  }).join('');
-}
-
-function cpDelPhoto(idx, containerId) {
-  if (containerId === 'cp-photos-prev') {
-    _cpPhotos.splice(idx, 1);
-    cpRefreshPrev('cp-photos-prev', _cpPhotos);
-  } else {
-    var ov = document.querySelector('[data-cp-edit="1"]');
-    if (ov && ov._photos) { ov._photos.splice(idx, 1); cpRefreshPrev('cpe-photos-prev', ov._photos); }
-  }
-}
-
-async function cpAjouterPhotos(input) {
-  if (!input.files.length) return;
-  var label = input.closest('label');
-  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
-  try {
-    var urls = await uploadPhotosParallel(input.files, 'callidus');
-    _cpPhotos = _cpPhotos.concat(urls);
-    cpRefreshPrev('cp-photos-prev', _cpPhotos);
-  } catch(e) { alert('Erreur upload : ' + e.message); }
-  if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; }
-}
-
-async function cpEnregistrer() {
-  var wo = document.getElementById('cp-wo').value.trim();
-  var tag = document.getElementById('cp-tag').value.trim();
-  var serie = document.getElementById('cp-serie').value.trim();
-  var qty = document.getElementById('cp-qty').value || '1';
-  var rem = document.getElementById('cp-rem').value.trim();
-  if (!tag && !wo) { alert('Renseigne au moins le TAG ou le WO.'); return; }
-  var btn = document.querySelector('#cp-nouveau button[onclick="cpEnregistrer()"]');
-  if (btn) { btn.textContent = '⏳...'; btn.disabled = true; }
-  try {
-    await fetch(DB_API + '?table=callidus_prnc', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ id: Date.now().toString(), wo: wo, tag: tag, serie: serie, qty: qty, remarques: JSON.stringify({semaine: document.getElementById('cp-semaine').value.trim(), wr: document.getElementById('cp-wr').value.trim(), desc: rem, lieu: ''}), photos: _cpPhotos, date: new Date().toLocaleDateString('fr-FR'), statut: 'Envoyé' })
-    });
-    ['cp-wo','cp-tag','cp-serie','cp-rem','cp-semaine','cp-wr'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
-    document.getElementById('cp-qty').value = '1';
-    _cpPhotos = [];
-    cpRefreshPrev('cp-photos-prev', []);
-    _cpCache = null;
-    cpShowTab('liste');
-  } catch(e) { alert('Erreur : ' + e.message); }
-  if (btn) { btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
-}
-
-async function _recuCallidusPrnc(id) {
-  var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
-  var tag  = rec ? (rec.tag||'') : '';
-  var wo   = rec ? (rec.wo||'')  : '';
-  var date = new Date().toLocaleDateString('fr-FR');
-  var subj = encodeURIComponent('Reception Callidus - ' + tag + ' / WO ' + wo);
-  var body = encodeURIComponent(
-    'Bonjour,\n\nL equipement suivant a ete recu de Callidus :\n\n' +
-    '  TAG  : ' + tag + '\n' +
-    '  WO   : ' + wo  + '\n' +
-    '  Date : ' + date + '\n\n' +
-    'Cordialement,\nEmmanuel ROSA ASIK'
-  );
-  window.location.href = 'mailto:emmanuel.rosa@pronyresources.com?subject=' + subj + '&body=' + body;
-}
-
-async function _ajouterPhotoCallidusPrnc(id, input) {
-  var files = Array.from(input.files); if (!files.length) return;
-  var toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-  toast.textContent = 'Upload...'; document.body.appendChild(toast);
-  try {
-    var urls = (await Promise.all(files.map(function(file){
-      var fd = new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
-      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
-        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
-    }))).filter(Boolean);
-    if (!urls.length) { toast.remove(); alert('Echec upload'); return; }
-    // Lire photos existantes depuis le cache
-    var rec = _cpCache ? _cpCache.find(function(r){ return r.id===id; }) : null;
-    var newPhotos = ((rec && Array.isArray(rec.photos) ? rec.photos : [])).concat(urls);
-    await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{
-      method:'PATCH', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({photos:newPhotos})
-    });
-    // Mettre à jour le cache local
-    if (rec) rec.photos = newPhotos;
-    toast.remove();
-    var t2 = document.createElement('div');
-    t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-    t2.textContent = urls.length+' photo(s) ajoutee(s)'; document.body.appendChild(t2);
-    setTimeout(function(){ t2.remove(); },2500);
-    renderCallidusPrnc();
-  } catch(err) { toast.remove(); alert('Erreur : '+err.message); }
-}
-
-async function _supprimerPhotoCallidusPrnc(id) {
-  var records = await dbLoad();
-  var rec = records.find(function(r){ return r.id===id; });
-  var photos = (rec&&rec.photos)||[];
-  if (!photos.length) { alert('Aucune photo sur cette carte.'); return; }
-  if (!confirm('Supprimer la derniere photo ?')) return;
-  var removed = photos[photos.length-1];
-  try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:removed})}); } catch(e){}
-  var newPhotos = photos.slice(0,-1);
-  await fetch(DB_API+'?id='+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})});
-  _dbCache = null; renderCallidusPrnc();
-}
-
-async function _supprimerCallidusPrnc(id) {
-  if (!confirm('Supprimer cette vanne ?')) return;
-  await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'});
-  if (_cpCache) _cpCache = _cpCache.filter(function(r){ return r.id!==id; });
-  renderCallidusPrnc();
-}
-
-function _parseMeta(remarques) {
-  if (!remarques) return {};
-  try { return JSON.parse(remarques); } catch(e) { return {lieu: remarques}; }
-}
-
-var _cpCache = null;
-
-function _parseMeta(remarques) {
-  if (!remarques) return {};
-  try { return JSON.parse(remarques); } catch(e) { return {lieu:remarques}; }
-}
-
+// ── Import bordereau Excel ─────────────────────────────────────
 async function _importerBordereauCallidus(input) {
-  var file=input.files[0]; if(!file) return; input.value='';
-  var reader=new FileReader();
-  reader.onload=async function(e){
+  var file = input.files[0]; if (!file) return; input.value = '';
+  var reader = new FileReader();
+  reader.onload = async function(e) {
     try {
-      var wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-      var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-      var semaine='';
-      for(var ri=0;ri<15;ri++){ if(!rows[ri]) continue; for(var ci2=0;ci2<rows[ri].length;ci2++){ if(rows[ri][ci2]&&/^S\d+$/i.test(String(rows[ri][ci2]).trim())){ semaine=String(rows[ri][ci2]).trim(); break; } } if(semaine) break; }
-      if(!semaine){ semaine=(prompt('Numéro de semaine non détecté.\nEntrez la semaine (ex: S25) :')||'').trim(); if(!semaine){ alert('Import annulé : semaine requise.'); return; } if(!/^S\d+$/i.test(semaine)) semaine='S'+semaine.replace(/\D/g,''); }
-      var dateT=new Date().toLocaleDateString('fr-FR');
-      for(var ri3=0;ri3<Math.min(25,rows.length);ri3++){ if(!rows[ri3]) continue; for(var ci3=0;ci3<rows[ri3].length;ci3++){ var cv=rows[ri3][ci3]; if(cv instanceof Date){ dateT=cv.toLocaleDateString('fr-FR'); break; } if(typeof cv==='string'&&/\d{2}\/\d{2}\/\d{4}/.test(cv)){ dateT=cv.trim().slice(0,10); break; } } }
-      var headerRow=-1,colSC=-1,colBDS=-1,colDESC=-1,colWO=-1,colTAG=-1,colLIEU=-1;
-      for(var ri2=0;ri2<Math.min(30,rows.length);ri2++){
-        var row=rows[ri2]; if(!row) continue;
-        var foundInRow=false;
-        for(var ci=0;ci<row.length;ci++){
-          var val=row[ci]?String(row[ci]).replace(/\n/g,' ').trim().toUpperCase():'';
-          if(val==='S/C'){ colSC=ci; foundInRow=true; }
-          if(val.includes('BDS')){ colBDS=ci; foundInRow=true; }
-          if(val.includes('DESCRIPTION')){ colDESC=ci; foundInRow=true; }
-          if(val.includes('WO')&&val.includes('WR')){ colWO=ci; foundInRow=true; }
-          if(val==='TAG'){ colTAG=ci; foundInRow=true; }
-          if(val.includes('LIVRAISON')||val==='LIEU DE LIVRAISON'){ colLIEU=ci; foundInRow=true; }
+      var wb   = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      var ws   = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+      var semaine = '', headerRow = -1;
+      var colSC = -1, colBDS = -1, colWO = -1, colTAG = -1, colLIEU = -1, colDESC = -1;
+      for (var i = 0; i < Math.min(rows.length, 20); i++) {
+        var r = rows[i]; if (!r) continue;
+        for (var j = 0; j < r.length; j++) {
+          var v = String(r[j] || '').trim().toUpperCase();
+          if (v === 'SEMAINE' || /^S\d{2}$/.test(v)) semaine = String(r[j] || '').trim();
+          if (v === 'TAG' || v.includes('TAG'))       { colTAG = j; headerRow = i; }
+          if (v === 'S/C' || v === 'SC')               colSC  = j;
+          if (v === 'BDS')                              colBDS = j;
+          if (v.includes('WO') || v.includes('W.O'))  colWO  = j;
+          if (v.includes('LIEU') || v.includes('LIVR')) colLIEU = j;
+          if (v.includes('DESC') || v.includes('LIBEL')) colDESC = j;
         }
-        if(foundInRow){ headerRow=ri2; break; }
+        if (headerRow >= 0) break;
       }
-      if(colSC<0) colSC=8; if(colBDS<0) colBDS=9; if(colDESC<0) colDESC=10;
-      if(colWO<0) colWO=11; if(colTAG<0) colTAG=12; if(colLIEU<0) colLIEU=14;
-      var startRow=headerRow>=0?headerRow+1:23;
-      var items=[];
-      for(var r=startRow;r<Math.min(startRow+80,rows.length);r++){
-        var row=rows[r]; if(!row) continue;
-        var sc=row[colSC]!=null?String(row[colSC]).trim():'';
-        var bds=row[colBDS]!=null?String(row[colBDS]).trim():'';
-        var desc=row[colDESC]!=null?String(row[colDESC]).trim():'';
-        var wo=row[colWO]!=null?String(row[colWO]).trim():'';
-        var tag=row[colTAG]!=null?String(row[colTAG]).trim():'';
-        var lieu=row[colLIEU]!=null?String(row[colLIEU]).trim():'';
-        if(sc.startsWith('=')||wo.startsWith('=')||tag.startsWith('=')) continue;
-        if(!sc&&!tag&&!wo) continue;
-        var scUp=sc.toUpperCase(),tagUp=tag.toUpperCase(),woUp=wo.toUpperCase();
-        if(scUp==='S/C'||tagUp==='TAG'||woUp==='WO'||woUp==='WO / WR'||woUp==='WO/WR') continue;
-        var wr=''; if(wo.includes('/')){ var pts=wo.split('/'); wo=pts[0].trim(); wr=pts[1]?pts[1].trim():''; }
-        items.push({sc,bds,desc,wo,wr,tag,lieu,semaine,date:dateT});
+      if (headerRow < 0) { alert('Entête non trouvée dans le fichier'); return; }
+      var dateT = new Date().toLocaleDateString('fr-FR');
+      var items = [];
+      for (var i = headerRow + 1; i < rows.length; i++) {
+        var r = rows[i]; if (!r || r.every(function(x) { return !x; })) continue;
+        var sc   = colSC   >= 0 ? String(r[colSC]   || '').trim() : '';
+        var bds  = colBDS  >= 0 ? String(r[colBDS]  || '').trim() : '';
+        var wo   = colWO   >= 0 ? String(r[colWO]   || '').trim() : '';
+        var tag  = colTAG  >= 0 ? String(r[colTAG]  || '').trim() : '';
+        var lieu = colLIEU >= 0 ? String(r[colLIEU] || '').trim() : '';
+        var desc = colDESC >= 0 ? String(r[colDESC] || '').trim() : '';
+        if (!tag && !wo) continue;
+        var scU = sc.toUpperCase(), tagU = tag.toUpperCase(), woU = wo.toUpperCase();
+        if (scU === 'S/C' || tagU === 'TAG' || woU === 'WO' || woU === 'WO / WR' || woU === 'WO/WR') continue;
+        var wr = '';
+        if (wo.includes('/')) { var pts = wo.split('/'); wo = pts[0].trim(); wr = pts[1] ? pts[1].trim() : ''; }
+        items.push({ sc, bds, desc, wo, wr, tag, lieu, semaine, date: dateT });
       }
-      if(!items.length){ alert('Aucun équipement trouvé.\nSemaine: "'+semaine+'" Ligne header: '+(headerRow+1)+'\nColonnes SC='+colSC+' BDS='+colBDS+' WO='+colWO+' TAG='+colTAG); return; }
-      var toast=document.createElement('div');
-      toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      toast.textContent=semaine+' — '+items.length+' vanne(s) en cours d\'import...';
+      if (!items.length) { alert('Aucun équipement trouvé dans le fichier'); return; }
+      // Toast chargement
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+      toast.textContent = (semaine || 'Import') + ' — ' + items.length + ' vanne(s) en cours...';
       document.body.appendChild(toast);
-      _cpCache=null;
-      await Promise.all(items.map(function(item){
-        var id=Date.now()+'-'+Math.random().toString(36).slice(2,6);
-        var remarques=JSON.stringify({semaine:item.semaine,wr:item.wr,desc:item.desc,lieu:item.lieu});
-        return fetch(DB_API+'?table=callidus_prnc',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({id,wo:item.wo,tag:item.tag,serie:item.bds,qty:item.sc,remarques,statut:'Envoye',date:item.date,photos:[]})});
+      _cpCache = null;
+      await Promise.all(items.map(function(item) {
+        var id = Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+        return fetch(DB_API + '?table=callidus_prnc', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: id, wo: item.wo, tag: item.tag, serie: item.bds, qty: item.sc,
+            remarques: JSON.stringify({ semaine: item.semaine, wr: item.wr, desc: item.desc, lieu: item.lieu }),
+            statut: 'Envoye', date: item.date, photos: []
+          })
+        });
       }));
-      _cpCache=null; toast.remove();
-      var t2=document.createElement('div');
-      t2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      t2.textContent='✅ '+semaine+' — '+items.length+' vanne(s) importée(s)';
-      document.body.appendChild(t2); setTimeout(function(){ t2.remove(); },4000);
-      if(typeof cpShowTab==='function') cpShowTab('liste');
+      _cpCache = null;
+      toast.remove();
+      var t2 = document.createElement('div');
+      t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+      t2.textContent = '✅ ' + (semaine || '') + ' — ' + items.length + ' vanne(s) importée(s)';
+      document.body.appendChild(t2);
+      setTimeout(function() { t2.remove(); }, 4000);
+      show('s-callidus-prnc');
       renderCallidusPrnc(true);
-    } catch(err){ alert('Erreur import : '+err.message); console.error(err); }
+    } catch(err) { alert('Erreur import : ' + err.message); }
   };
   reader.readAsArrayBuffer(file);
 }
 
-async function _ajouterPhotoCallidusPrnc(id, input) {
-  var files=Array.from(input.files); if(!files.length) return;
-  var toast=document.createElement('div');
-  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-  toast.textContent='Upload...'; document.body.appendChild(toast);
-  try {
-    var urls=(await Promise.all(files.map(function(file){
-      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
-      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
-        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
-    }))).filter(Boolean);
-    if(!urls.length){ toast.remove(); alert('Echec upload'); return; }
-    var rec=_cpCache?_cpCache.find(function(r){ return r.id===id; }):null;
-    var newPhotos=((rec&&Array.isArray(rec.photos)?rec.photos:[])).concat(urls);
-    await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({photos:newPhotos})});
-    if(rec) rec.photos=newPhotos;
-    toast.remove();
-    var t2=document.createElement('div');
-    t2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
-    t2.textContent=urls.length+' photo(s) ajoutee(s)'; document.body.appendChild(t2);
-    setTimeout(function(){ t2.remove(); },2500); renderCallidusPrnc();
-  } catch(err){ toast.remove(); alert('Erreur : '+err.message); }
-}
-
-async function _supprimerCallidusPrnc(id) {
-  if(!confirm('Supprimer cette vanne ?')) return;
-  await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'});
-  if(_cpCache) _cpCache=_cpCache.filter(function(r){ return r.id!==id; });
-  renderCallidusPrnc();
-}
-
-async function _recuCallidusPrnc(id) {
-  var rec=_cpCache?_cpCache.find(function(r){ return r.id===id; }):null;
-  var tag=rec?(rec.tag||''):''; var wo=rec?(rec.wo||''):'';
-  var date=new Date().toLocaleDateString('fr-FR');
-  var subj=encodeURIComponent('Reception Callidus - '+tag+' / WO '+wo);
-  var body=encodeURIComponent('Bonjour,\n\nL equipement suivant a ete recu de Callidus :\n\n  TAG  : '+tag+'\n  WO   : '+wo+'\n  Date : '+date+'\n\nCordialement,\nEmmanuel ROSA ASIK');
-  window.location.href='mailto:emmanuel.rosa@pronyresources.com?subject='+subj+'&body='+body;
-}
-
+// ── Rendu liste ────────────────────────────────────────────────
 async function renderCallidusPrnc(forceRefresh) {
   var list = document.getElementById('cp-list-content');
   if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">Chargement...</div>';
-  var search = (document.getElementById('cp-search')||{value:''}).value.toLowerCase();
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">⏳ Chargement...</div>';
+
   if (!_cpCache || forceRefresh) {
-    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
+    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function() { return null; });
     if (!resp || !resp.ok) {
-      list.innerHTML = '<div style="text-align:center;padding:30px;color:#C00;font-weight:700">Erreur connexion</div>';
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:#C00;font-weight:700">❌ Erreur connexion</div>';
       return;
     }
     _cpCache = await resp.json();
     if (!Array.isArray(_cpCache)) _cpCache = [];
+    _cpCache.forEach(function(r) {
+      if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
+      if (!Array.isArray(r.photos)) r.photos = [];
+    });
   }
-  // Afficher/masquer la zone d'import selon si données présentes
+
+  // Mise à jour badge carte accueil
+  var cardSub = document.getElementById('cp-card-sub');
+  if (cardSub) cardSub.textContent = _cpCache.length + ' vanne' + (_cpCache.length > 1 ? 's' : '');
+
+  // Zone import visible seulement si BDD vide
   var importZone = document.getElementById('cp-import-zone');
   if (importZone) importZone.style.display = _cpCache.length === 0 ? 'block' : 'none';
-  var recs = _cpCache.filter(function(r){
+
+  // Filtrage recherche
+  var search = (document.getElementById('cp-search') || { value: '' }).value.toLowerCase();
+  var recs = _cpCache.filter(function(r) {
     if (!search) return true;
     var meta = _parseMeta(r.remarques);
-    return (r.tag||'').toLowerCase().includes(search)||(r.wo||'').toLowerCase().includes(search)
-        ||(r.serie||'').toLowerCase().includes(search)||(r.qty||'').toLowerCase().includes(search)
-        ||(meta.semaine||'').toLowerCase().includes(search);
+    return (r.tag    || '').toLowerCase().includes(search)
+        || (r.wo     || '').toLowerCase().includes(search)
+        || (r.serie  || '').toLowerCase().includes(search)
+        || (meta.semaine || '').toLowerCase().includes(search);
   });
-  var semaines = {};
-  recs.forEach(function(r){ var s=_parseMeta(r.remarques).semaine||'Sans semaine'; if(!semaines[s]) semaines[s]=[]; semaines[s].push(r); });
-  var semSorted = Object.keys(semaines).sort(function(a,b){ return b.localeCompare(a); });
-  // Mettre à jour le label semaine dans la topbar (semaine la plus récente)
+
+  // Grouper par semaine
+  var groupes = {};
+  recs.forEach(function(r) {
+    var s = _parseMeta(r.remarques).semaine || 'Sans semaine';
+    if (!groupes[s]) groupes[s] = [];
+    groupes[s].push(r);
+  });
+  var semSorted = Object.keys(groupes).sort(function(a, b) { return b.localeCompare(a); });
+
+  // Topbar label (semaine la plus récente)
   var lbl = document.getElementById('cp-semaine-lbl');
   if (lbl) lbl.textContent = semSorted.length ? semSorted[0] : '—';
-  if (!recs.length) {
-    list.innerHTML = _cpCache.length === 0
-      ? ''
-      : '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">🔍</div><div style="font-size:13px;font-weight:600;margin-top:8px">Aucun résultat</div></div>';
-    return;
-  }
-  // Bouton "Ajouter bordereau" affiché en haut de liste quand des données existent
-  var addBtnHtml = '<label style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;background:#EDE7F6;color:#7030A0;border:1.5px dashed #CE93D8;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:14px;box-sizing:border-box">📥 Importer un autre bordereau<input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none"></label>';
-  list.innerHTML = addBtnHtml + semSorted.map(function(sem) {
-    var items = semaines[sem];
-    var cards = items.map(function(r) {
-      var meta = _parseMeta(r.remarques);
-      var photos = Array.isArray(r.photos) ? r.photos.filter(Boolean) : [];
-      var pid = 'cprnc_'+r.id;
-      window._etnaPhotosMap = window._etnaPhotosMap||{}; window._etnaPhotosMap[pid]=photos;
-      var thumb = photos.length>0
-        ?('<div style="position:relative"><img src="'+cloudThumb(photos[0],600,240)+'" loading="lazy" onclick="viewPhotoByKey(\''+pid+'\',0)" style="width:100%;height:120px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer"><span style="position:absolute;bottom:5px;right:7px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">'+photos.length+' &#128247;</span></div>')
-        :'<div style="width:100%;height:40px;background:linear-gradient(135deg,#EDE7F6,#D1C4E9);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:20px">&#128295;</div>';
-      var photoCount = photos.length;
-      return '<div onclick="ouvrirFicheCallidus(\''+r.id+'\')" style="background:#fff;border-radius:12px;border:1.5px solid #CE93D8;overflow:hidden;box-shadow:0 2px 8px rgba(112,48,160,.1);cursor:pointer">'+thumb
-        +'<div style="padding:10px 12px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
-            +'<span style="font-size:13px;font-weight:800;color:#7030A0">'+(r.tag||'--')+'</span>'
-            +'<span style="font-size:10px;color:#888">'+(r.date||'')+'</span>'
-          +'</div>'
-          +(r.wo||meta.wr||r.qty||r.serie ? '<div style="background:#F3E5F5;border-radius:7px;padding:6px 9px;font-size:10px;line-height:1.8;margin-bottom:7px">'            +(r.wo?'<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')            +(meta.wr?'<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>'+meta.wr+'</strong></div>':'')            +(r.qty?'<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.qty+'</strong></div>':'')            +(r.serie?'<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')          +'</div>' : '')
-          +'<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888">'
-            +'<span>'+(photoCount?'📷 '+photoCount+' photo'+(photoCount>1?'s':''):'📷 Aucune photo')+'</span>'
-            +'<span style="color:#7030A0;font-weight:700">Voir fiche →</span>'
-          +'</div>'
-        +'</div></div>';
-    }).join('');
-    return '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="background:#7030A0;color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800">'+sem+'</div><div style="font-size:11px;color:#888;flex:1">'+items.length+' vanne'+(items.length>1?'s':'')+'</div><button onclick="cpSupprimerSemaine('+JSON.stringify(sem)+')" style="background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+cards+'</div></div>';
-  }).join('');
-}
 
-function cpRenderList(data) {
-  var list = document.getElementById('cp-list-content');
-  if (!list) return;
-  if (!data.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne enregistrée</div></div>';
+  // Sélecteur semaines (si plusieurs)
+  var sel = document.getElementById('cp-semaine-sel');
+  if (sel) {
+    var allSems = {};
+    _cpCache.forEach(function(r) { var s = _parseMeta(r.remarques).semaine || 'Sans semaine'; allSems[s] = true; });
+    var allKeys = Object.keys(allSems).sort(function(a, b) { return b.localeCompare(a); });
+    sel.style.display = allKeys.length > 1 ? 'block' : 'none';
+    sel.innerHTML = allKeys.map(function(s) { return '<option value="' + s + '">' + s + '</option>'; }).join('');
+  }
+
+  if (!recs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne trouvée</div></div>';
     return;
   }
-  list.innerHTML = data.map(function(r) {
-    var photoHtml = r.photos && r.photos.length
-      ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + r.photos.map(function(p){ return '<img src="' + cloudThumb(p,200,200) + '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer" onclick="window.open(this.src)">'; }).join('') + '</div>'
-      : '';
-    return '<div style="background:#fff;border-radius:14px;border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05)">'
-      + '<div style="background:#EDE7F6;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">'
-        + '<div><div style="font-size:14px;font-weight:800;color:#7030A0">' + (r.tag||'--') + '</div><div style="font-size:10px;color:#555">' + (r.date||'') + '</div></div>'
-        + '<div style="display:flex;gap:6px">'
-          + '<button onclick="cpModifier(&quot;' + r.id + '&quot;)" style="background:#7030A0;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">✏️</button>'
-          + '<button onclick="cpSupprimer(&quot;' + r.id + '&quot;)" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer">🗑️</button>'
+
+  list.innerHTML = semSorted.map(function(sem) {
+    var items = groupes[sem];
+    var cards = items.map(function(r) {
+      var meta   = _parseMeta(r.remarques);
+      var photos = Array.isArray(r.photos) ? r.photos.filter(Boolean) : [];
+      var pid    = 'cprnc_' + r.id;
+      window._etnaPhotosMap = window._etnaPhotosMap || {};
+      window._etnaPhotosMap[pid] = photos;
+
+      var thumb = photos.length > 0
+        ? '<div style="position:relative">'
+          + '<img src="' + cloudThumb(photos[0], 600, 240) + '" loading="lazy" onclick="event.stopPropagation();viewPhotoByKey(\'' + pid + '\',' + '0)" style="width:100%;height:120px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
+          + '<span style="position:absolute;bottom:5px;right:7px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">' + photos.length + ' 📷</span>'
+          + '</div>'
+        : '<div style="width:100%;height:40px;background:linear-gradient(135deg,#EDE7F6,#D1C4E9);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:20px">🔧</div>';
+
+      return '<div onclick="ouvrirFicheCallidus(\'' + r.id + '\')" style="background:#fff;border-radius:12px;border:1.5px solid #CE93D8;overflow:hidden;box-shadow:0 2px 8px rgba(112,48,160,.1);cursor:pointer">'
+        + thumb
+        + '<div style="padding:10px 12px">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+            + '<span style="font-size:13px;font-weight:800;color:#7030A0">' + (r.tag || '--') + '</span>'
+            + '<span style="font-size:10px;color:#888">' + (r.date || '') + '</span>'
+          + '</div>'
+          + (r.wo || meta.wr || r.qty || r.serie
+            ? '<div style="background:#F3E5F5;border-radius:7px;padding:6px 9px;font-size:10px;line-height:1.8;margin-bottom:7px">'
+              + (r.wo    ? '<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>' + r.wo    + '</strong></div>' : '')
+              + (meta.wr ? '<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>' + meta.wr + '</strong></div>' : '')
+              + (r.qty   ? '<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'  + r.qty   + '</strong></div>' : '')
+              + (r.serie ? '<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>' + r.serie  + '</strong></div>' : '')
+              + '</div>'
+            : '')
+          + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888">'
+            + '<span>' + (photos.length ? '📷 ' + photos.length + ' photo' + (photos.length > 1 ? 's' : '') : '📷 Aucune photo') + '</span>'
+            + '<span style="color:#7030A0;font-weight:700">Voir fiche →</span>'
+          + '</div>'
         + '</div>'
+      + '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:16px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        + '<div style="background:#7030A0;color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800">' + sem + '</div>'
+        + '<div style="font-size:11px;color:#888;flex:1">' + items.length + ' vanne' + (items.length > 1 ? 's' : '') + '</div>'
+        + '<button onclick="event.stopPropagation();cpSupprimerSemaine(\'' + sem + '\')" style="background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>'
       + '</div>'
-      + '<div style="padding:10px 14px">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
-          + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
-          + (r.serie ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.serie + '</div></div>' : '')
-          + (r.qty ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">QTÉ</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.qty + '</div></div>' : '')
-        + '</div>'
-        + (r.remarques ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-bottom:6px">' + r.remarques + '</div>' : '')
-        + photoHtml
-      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + cards + '</div>'
     + '</div>';
   }).join('');
 }
 
-async function cpSupprimer(id) {
-  if (!confirm('Supprimer cet enregistrement ?')) return;
-  try {
-    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), { method: 'DELETE' });
-    _cpCache = null;
-    renderCallidusPrnc(true);
-  } catch(e) { alert('Erreur : ' + e.message); }
-}
-
-async function cpModifier(id) {
-  var data = _cpCache || [];
-  var r = data.find(function(x){ return String(x.id) === String(id); });
-  if (!r) {
-    var resp = await fetch(DB_API + '?table=callidus_prnc');
-    data = await resp.json();
-    _cpCache = Array.isArray(data) ? data : [];
-    r = _cpCache.find(function(x){ return String(x.id) === String(id); });
+// Précharger en arrière-plan
+setTimeout(function() {
+  if (typeof DB_API !== 'undefined') {
+    fetch(DB_API + '?table=callidus_prnc').then(function(r) { return r.json(); }).then(function(data) {
+      if (Array.isArray(data)) {
+        data.forEach(function(r) {
+          if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
+          if (!Array.isArray(r.photos)) r.photos = [];
+        });
+        _cpCache = data;
+        var cardSub = document.getElementById('cp-card-sub');
+        if (cardSub && data.length) cardSub.textContent = data.length + ' vanne' + (data.length > 1 ? 's' : '');
+      }
+    }).catch(function() {});
   }
-  if (!r) return;
-  if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
-  if (!Array.isArray(r.photos)) r.photos = [];
+}, 2000);
 
-  var ov = document.createElement('div');
-  ov.setAttribute('data-cp-edit', '1');
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
-  ov.innerHTML = '<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 36px;max-height:90vh;overflow-y:auto">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-      + '<div style="font-size:16px;font-weight:800;color:#7030A0">✏️ Modifier</div>'
-      + '<button onclick="fermerOverlayCP(this)" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>'
-    + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cpe-wo" value="' + (r.wo||'') + '" onclick="ouvrirNumpad(\'cpe-wo\',\'N° WO\')" style="cursor:pointer"></div>'
-      + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cpe-tag" value="' + (r.tag||'') + '"></div>'
-    + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      + '<div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="cpe-serie" value="' + (r.serie||'') + '"></div>'
-      + '<div class="field-grp"><div class="field-lbl">Quantité</div><input class="fi" type="number" id="cpe-qty" value="' + (r.qty||1) + '"></div>'
-    + '</div>'
-    + '<div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="cpe-rem" style="height:70px;resize:none">' + (r.remarques||'') + '</textarea></div>'
-    + '<div class="field-grp"><div class="field-lbl">Photos</div>'
-      + '<div id="cpe-photos-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>'
-      + '<label style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:#EDE7F6;color:#7030A0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">📷 Ajouter photos<input type="file" accept="image/*" multiple style="display:none" onchange="cpeAjouterPhotos(this)"></label>'
-    + '</div>'
-    + '<button onclick="cpeSauvegarder(&quot;' + id + '&quot;,this)" style="width:100%;padding:14px;background:#7030A0;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">💾 Enregistrer</button>'
-  + '</div>';
-
-  document.body.appendChild(ov);
-  ov._photos = r.photos.slice();
-  cpRefreshPrev('cpe-photos-prev', ov._photos);
-  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-}
-
-async function cpeAjouterPhotos(input) {
-  if (!input.files.length) return;
-  var label = input.closest('label');
-  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
-  try {
-    var urls = await uploadPhotosParallel(input.files, 'callidus');
-    var ov = document.querySelector('[data-cp-edit="1"]');
-    if (ov) { ov._photos = (ov._photos||[]).concat(urls); cpRefreshPrev('cpe-photos-prev', ov._photos); }
-  } catch(e) { alert('Erreur : ' + e.message); }
-  if (label) { label.textContent = '📷 Ajouter photos'; label.style.pointerEvents = ''; }
-}
-
-async function cpeSauvegarder(id, btn) {
-  var ov = btn.closest('[data-cp-edit="1"]');
-  var photos = ov ? (ov._photos||[]) : [];
-  btn.textContent = '⏳...'; btn.disabled = true;
-  try {
-    await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(id), {
-      method: 'PATCH', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ wo: document.getElementById('cpe-wo').value.trim(), tag: document.getElementById('cpe-tag').value.trim(), serie: document.getElementById('cpe-serie').value.trim(), qty: document.getElementById('cpe-qty').value, remarques: document.getElementById('cpe-rem').value.trim(), photos: photos })
-    });
-    if (ov) ov.remove();
-    _cpCache = null;
-    renderCallidusPrnc(true);
-  } catch(e) { alert('Erreur : ' + e.message); btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
-}
 
 initSemaines();
 updateStats().then(function() {
@@ -11474,94 +11256,53 @@ function sauvegarderRemarquePlanningMC(wo) {
     <div class="topbar-title">🔧 Callidus PRNC</div>
     <div class="topbar-user" id="cp-semaine-lbl">—</div>
   </div>
-  <div style="display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0">
-    <button class="cp-tab active" id="cp-tab-liste" onclick="cpShowTab('liste')"><span style="font-size:16px">📋</span><br>Liste</button>
-
-  </div>
-  <div style="flex:1;overflow-y:auto">
-    <div class="cp-pane active" id="cp-liste" style="padding:14px">
-      <!-- Zone import bordereau -->
-      <div id="cp-import-zone" style="background:#fff;border:2px dashed #7030A0;border-radius:12px;padding:20px;text-align:center;margin-bottom:14px">
-        <div style="font-size:28px;margin-bottom:6px">📥</div>
-        <div style="font-size:13px;font-weight:700;color:#7030A0;margin-bottom:4px">Importer un bordereau Excel</div>
-        <div style="font-size:11px;color:#888;margin-bottom:12px">Fichier bordereau vannes Callidus</div>
-        <label style="background:#7030A0;color:#fff;border-radius:8px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
-          📂 Choisir fichier
-          <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
-        </label>
-      </div>
-      <!-- Barre de recherche -->
-      <div style="position:relative;margin-bottom:12px">
-        <input type="text" id="cp-search" placeholder="🔍 Rechercher par TAG, WO, série..." autocomplete="off"
-          oninput="renderCallidusPrnc()"
-          style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #CE93D8;font-size:13px;font-family:inherit;outline:none">
-        <span onclick="document.getElementById('cp-search').value='';renderCallidusPrnc()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">✕</span>
-      </div>
-      <div id="cp-list-content"><div style="text-align:center;color:var(--muted);padding:40px">⏳ Chargement...</div></div>
-    </div>
-</div>
-  </div>
-</div>
-
-
-<!-- ═══════════════ MODAL P99 ZONE VANNE ═══════════════ -->
-<div id="p99-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <div style="font-size:16px;font-weight:800;color:#1F3864">📦 Expédier vers P99</div>
-        <div style="font-size:11px;color:#888;margin-top:2px" id="p99-subtitle"></div>
-      </div>
-      <button onclick="fermerP99()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>
-    </div>
-    <div style="background:#E3F2FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#1565C0">
-      📍 La localisation sera mise à jour vers <strong>P99 Zone Vanne</strong>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Email destinataire <span class="req">*</span></div>
-      <input class="fi" type="email" id="p99-email" placeholder="Ex : prenom.nom@pronyresources.com">
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Contacts MCREPAR (CC automatique)</div>
-      <div id="p99-cc-list" style="background:#f5f7fa;border-radius:8px;padding:10px 12px;font-size:11px;color:#555">
-        jean-francois.dellac@pronyresources.com<br>
-        regis.eurimindia@pronyresources.com<br>
-        pascal.bafue@pronyresources.com<br>
-        emmanuel.rosa@pronyresources.com
-      </div>
-    </div>
-    <button onclick="envoyerP99()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565C0,#1976D2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px">
-      📧 Envoyer notification + Mettre à jour localisation
-    </button>
-  </div>
-</div>
-
-
-<!-- ═══════════════ MODAL FICHE CALLIDUS PRNC ═══════════════ -->
-<div id="cp-fiche-overlay" onclick="fermerFicheCallidus()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9800;align-items:flex-end;justify-content:center">
-  <div id="cp-fiche-inner" onclick="event.stopPropagation()" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding-bottom:24px">
-    <div style="background:#7030A0;border-radius:18px 18px 0 0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10">
-      <div id="cp-fiche-titre" style="font-size:16px;font-weight:800;color:#fff">🔧 —</div>
-      <button onclick="fermerFicheCallidus()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">✕</button>
-    </div>
-    <div id="cp-fiche-infos" style="padding:14px 18px 0"></div>
-    <div style="padding:0 18px">
-      <div style="font-size:11px;font-weight:700;color:#7030A0;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">📷 Photos</div>
-      <div id="cp-fiche-photos" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
-      <label id="cp-fiche-add-photo-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border:1.5px dashed #CE93D8;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
-        📷 Ajouter des photos
-        <input type="file" accept="image/*" multiple style="display:none" onchange="cpFicheAjouterPhotos(this)">
+  <div style="padding:12px">
+    <div id="cp-import-zone" style="display:none;background:#fff;border:2px dashed #7030A0;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:24px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:#7030A0;margin-bottom:4px">Importer un bordereau Excel</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier bordereau vannes Callidus</div>
+      <label style="background:#7030A0;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
+        📂 Choisir fichier
+        <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
       </label>
     </div>
-    <div style="padding:12px 18px 0;display:flex;gap:8px">
-      <button onclick="cpFicheRecu()" style="flex:1;padding:11px;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Reçu</button>
-      <button onclick="cpFicheSupprimer()" style="padding:11px 14px;background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>
+    <select id="cp-semaine-sel" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-weight:700;font-family:inherit;color:#7030A0;margin-bottom:8px;background:#fff" onchange="cpChangerSemaine(this.value)"></select>
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" id="cp-search" placeholder="🔍 Rechercher par TAG, WO, série..." autocomplete="off"
+        oninput="renderCallidusPrnc()"
+        style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-family:inherit;outline:none">
+      <span onclick="document.getElementById('cp-search').value='';renderCallidusPrnc()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">✕</span>
+    </div>
+    <div id="cp-list-content">
+      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+        <div style="font-size:32px;margin-bottom:8px">🔧</div>
+        Importez le bordereau Excel pour afficher les vannes
+      </div>
+    </div>
+  </div>
+  <!-- Fiche détail vanne -->
+  <div id="cp-fiche-overlay" onclick="fermerFicheCallidus()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9800;align-items:flex-end;justify-content:center">
+    <div id="cp-fiche-inner" onclick="event.stopPropagation()" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding-bottom:24px">
+      <div style="background:#7030A0;border-radius:18px 18px 0 0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10">
+        <div id="cp-fiche-titre" style="font-size:16px;font-weight:800;color:#fff">🔧 —</div>
+        <button onclick="fermerFicheCallidus()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">✕</button>
+      </div>
+      <div id="cp-fiche-infos" style="padding:14px 18px 0"></div>
+      <div style="padding:0 18px">
+        <div style="font-size:11px;font-weight:700;color:#7030A0;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">📷 Photos</div>
+        <div id="cp-fiche-photos" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+        <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border:1.5px dashed #CE93D8;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
+          📷 Ajouter des photos
+          <input type="file" accept="image/*" multiple style="display:none" onchange="cpFicheAjouterPhotos(this)">
+        </label>
+      </div>
+      <div style="padding:12px 18px 0;display:flex;gap:8px">
+        <button onclick="cpFicheRecu()" style="flex:1;padding:11px;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Reçu</button>
+        <button onclick="cpFicheSupprimer()" style="padding:11px 14px;background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>
+      </div>
     </div>
   </div>
 </div>
-
-</body>
-</html>
 
 <!-- ═══════════════ PLANNING ATELIER P17 ═══════════════ -->
 <div class="screen" id="s-planning">
