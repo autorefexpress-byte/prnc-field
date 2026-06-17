@@ -8268,31 +8268,45 @@ function ouvrirFicheCallidus(id) {
   var meta   = _parseMeta(rec.remarques);
   var photos = Array.isArray(rec.photos) ? rec.photos.filter(Boolean) : [];
 
+  // Titre
   document.getElementById('cp-fiche-titre').textContent = '🔧 ' + (rec.tag || '--');
-  document.getElementById('cp-fiche-infos').innerHTML =
-    '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;font-size:12px;line-height:2">'
-    + (rec.tag     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">TAG</span><strong>' + rec.tag  + '</strong></div>' : '')
-    + (rec.wo      ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WO</span><strong>'  + rec.wo   + '</strong></div>' : '')
-    + (meta.wr     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WR</span><strong>'  + meta.wr  + '</strong></div>' : '')
-    + (rec.qty     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">S/C</span><strong>' + rec.qty  + '</strong></div>' : '')
-    + (rec.serie   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">IR BDS/SN</span><strong>' + rec.serie + '</strong></div>' : '')
-    + (meta.semaine? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Sem.</span><span>'  + meta.semaine + '</span></div>' : '')
-    + (rec.date    ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Date</span><span>' + rec.date  + '</span></div>' : '')
-    + '</div>';
 
-  var pid = 'cprnc_' + id;
-  window._etnaPhotosMap = window._etnaPhotosMap || {};
-  window._etnaPhotosMap[pid] = photos;
-  var container = document.getElementById('cp-fiche-photos');
-  if (container) container.innerHTML = photos.map(function(p, i) {
-    return '<div style="position:relative">'
-      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewPhotoByKey(\'' + pid + '\',' + i + ')" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+  // Construire le contenu complet UNE SEULE FOIS (style P17)
+  var photosHtml = photos.map(function(p, i) {
+    return '<div style="position:relative" id="cp-photo-wrap-' + i + '">'
+      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
       + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
       + '</div>';
   }).join('');
 
+  document.getElementById('cp-fiche-content').innerHTML =
+    '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;font-size:12px;line-height:2;margin-bottom:12px">'
+    + (rec.tag     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">TAG</span><strong>' + rec.tag      + '</strong></div>' : '')
+    + (rec.wo      ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">WO</span><strong>'  + rec.wo       + '</strong></div>' : '')
+    + (meta.wr     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">WR</span><strong>'  + meta.wr      + '</strong></div>' : '')
+    + (rec.qty     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">S/C</span><strong>' + rec.qty      + '</strong></div>' : '')
+    + (rec.serie   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">IR BDS/SN</span><strong>' + rec.serie + '</strong></div>' : '')
+    + (meta.semaine? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">Semaine</span><span>' + meta.semaine + '</span></div>' : '')
+    + (rec.date    ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:80px">Date</span><span>'   + rec.date     + '</span></div>' : '')
+    + '</div>'
+    + '<div style="font-size:11px;font-weight:700;color:#7030A0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📷 Photos</div>'
+    + '<div id="cp-fiche-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">' + photosHtml + '</div>'
+    + '<label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border:1.5px dashed #CE93D8;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">'
+    + '📷 Ajouter des photos'
+    + '<input type="file" accept="image/*" multiple style="display:none" onchange="cpFicheAjouterPhotos(this)">'
+    + '</label>'
+    + '<div style="display:flex;gap:8px;margin-top:12px">'
+    + '<button onclick="cpFicheRecu()" style="flex:1;padding:11px;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Reçu</button>'
+    + '<button onclick="cpFicheSupprimer()" style="padding:11px 14px;background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>'
+    + '</div>';
+
+  // Stocker les photos dans _etnaPhotosMap pour viewPhotoByKey
+  var pid = 'cprnc_' + id;
+  window._etnaPhotosMap = window._etnaPhotosMap || {};
+  window._etnaPhotosMap[pid] = photos;
+
   var ov = document.getElementById('cp-fiche-overlay');
-  if (ov) { ov.style.display = 'flex'; }
+  if (ov) ov.style.display = 'flex';
   setTimeout(function() {
     var inner = document.getElementById('cp-fiche-inner');
     if (inner) inner.scrollTop = 0;
@@ -8308,16 +8322,18 @@ function fermerFicheCallidus() {
 async function cpFicheAjouterPhotos(input) {
   var files = Array.from(input.files);
   if (!files.length) return;
-  var container = document.getElementById('cp-fiche-photos');
-  var pid = 'cprnc_' + _cpFicheId;
-  // Afficher placeholders immédiatement (comme P17)
+  var preview = document.getElementById('cp-fiche-preview');
+  // Placeholders immédiats (style P17)
   var placeholders = [];
   files.forEach(function(file) {
     var reader = new FileReader();
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative';
     var img = document.createElement('img');
     img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;opacity:0.5';
-    if (container) container.appendChild(img);
-    placeholders.push(img);
+    wrap.appendChild(img);
+    if (preview) preview.appendChild(wrap);
+    placeholders.push({ wrap: wrap, img: img });
     reader.onload = function(e) { img.src = e.target.result; };
     reader.readAsDataURL(file);
   });
@@ -8330,10 +8346,27 @@ async function cpFicheAjouterPhotos(input) {
       body: JSON.stringify({ photos: newPhotos })
     });
     if (rec) rec.photos = newPhotos;
-    // Mettre à jour uniquement le bloc photos sans toucher aux infos
-    _cpRefreshPhotos(newPhotos);
+    // Remplacer placeholders par vraies URLs (style P17) — pas de reconstruction
+    urls.forEach(function(url, i) {
+      if (placeholders[i]) {
+        placeholders[i].img.src = url;
+        placeholders[i].img.style.opacity = '1';
+        placeholders[i].img.onclick = function() { viewImg(this.src); };
+        // Ajouter bouton supprimer
+        var idx = newPhotos.indexOf(url);
+        var btn = document.createElement('button');
+        btn.textContent = '✕';
+        btn.style.cssText = 'position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700';
+        btn.onclick = (function(n) { return function() { cpFicheSupprimerPhoto(n); }; })(idx);
+        placeholders[i].wrap.appendChild(btn);
+      }
+    });
+    // Mettre à jour _etnaPhotosMap
+    var pid = 'cprnc_' + _cpFicheId;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[pid] = newPhotos;
   } catch(e) {
-    placeholders.forEach(function(img) { img.remove(); });
+    placeholders.forEach(function(p) { p.wrap.remove(); });
     alert('Erreur upload : ' + e.message);
   }
 }
@@ -8355,22 +8388,19 @@ async function cpFicheSupprimerPhoto(idx) {
     body: JSON.stringify({ photos: photos })
   });
   if (rec) rec.photos = photos;
-  _cpRefreshPhotos(photos);
-}
-
-function _cpRefreshPhotos(photos) {
-  if (!_cpFicheId) return;
-  var pid = 'cprnc_' + _cpFicheId;
-  window._etnaPhotosMap = window._etnaPhotosMap || {};
-  window._etnaPhotosMap[pid] = photos;
-  var container = document.getElementById('cp-fiche-photos');
-  if (!container) return;
-  container.innerHTML = photos.map(function(p, i) {
-    return '<div style="position:relative">'
-      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewPhotoByKey(\'' + pid + '\',' + i + ')" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
-      + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
-      + '</div>';
-  }).join('');
+  // Reconstruire uniquement la zone photos (pas les infos)
+  var preview = document.getElementById('cp-fiche-preview');
+  if (preview) {
+    var pid = 'cprnc_' + _cpFicheId;
+    window._etnaPhotosMap = window._etnaPhotosMap || {};
+    window._etnaPhotosMap[pid] = photos;
+    preview.innerHTML = photos.map(function(p, i) {
+      return '<div style="position:relative">'
+        + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+        + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
+        + '</div>';
+    }).join('');
+  }
 }
 
 async function cpFicheRecu() {
@@ -11317,19 +11347,7 @@ function sauvegarderRemarquePlanningMC(wo) {
         <div id="cp-fiche-titre" style="font-size:16px;font-weight:800;color:#fff">🔧 —</div>
         <button onclick="fermerFicheCallidus()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">✕</button>
       </div>
-      <div id="cp-fiche-infos" style="padding:14px 18px 0"></div>
-      <div style="padding:0 18px">
-        <div style="font-size:11px;font-weight:700;color:#7030A0;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">📷 Photos</div>
-        <div id="cp-fiche-photos" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
-        <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border:1.5px dashed #CE93D8;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
-          📷 Ajouter des photos
-          <input type="file" accept="image/*" multiple style="display:none" onchange="cpFicheAjouterPhotos(this)">
-        </label>
-      </div>
-      <div style="padding:12px 18px 0;display:flex;gap:8px">
-        <button onclick="cpFicheRecu()" style="flex:1;padding:11px;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Reçu</button>
-        <button onclick="cpFicheSupprimer()" style="padding:11px 14px;background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>
-      </div>
+      <div id="cp-fiche-content" style="padding:14px 18px"></div>
     </div>
   </div>
 </div>
