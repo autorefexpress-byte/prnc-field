@@ -1520,7 +1520,8 @@ function _initLocSel(selId, inpId, val) {
   <div class="nav-item" id="nav-hist" onclick="show('s-hist')"><div class="nav-icon">&#128202;</div><div class="nav-lbl">Histo.</div></div>
   <div class="nav-item" id="nav-templates" onclick="show('s-templates');updateTemplateStatus()"><div class="nav-icon">📄</div><div class="nav-lbl">Tmpl.</div></div>
 </div>
-<script defer src="qrcode.js">
+<script defer src="qrcode.js"></script>
+<script>
 // ─── FICHE DÉTAIL CALLIDUS PRNC ───────────────────────────────────────────
 var _cpFicheId = null;
 
@@ -1564,12 +1565,14 @@ function _cpFicheRefreshPhotos(photos) {
     container.innerHTML = '<div style="color:#aaa;font-size:12px;padding:6px 0">Aucune photo</div>';
     return;
   }
-  container.innerHTML = photos.map(function(p, i) {
-    return '<div style="position:relative">'
-      + '<img src="'+cloudThumb(p,200,200)+'" loading="lazy" onclick="viewPhotoByKey(''+pid+'','+i+')" style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:2px solid #CE93D8;cursor:pointer">'
-      + '<button onclick="cpFicheSupprimerPhoto('+i+')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center">✕</button>'
+  var html = '';
+  photos.forEach(function(p, i) {
+    html += '<div style="position:relative">'
+      + '<img src="' + cloudThumb(p,200,200) + '" loading="lazy" onclick="viewPhotoByKey(' + JSON.stringify(pid) + ',' + i + ')" style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:2px solid #CE93D8;cursor:pointer">'
+      + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">&#x2715;</button>'
       + '</div>';
-  }).join('');
+  });
+  container.innerHTML = html;
 }
 
 async function cpFicheAjouterPhotos(input) {
@@ -1629,6 +1632,26 @@ async function cpFicheSupprimer() {
   renderCallidusPrnc();
 }
 
+async function cpSupprimerSemaine(semaine) {
+  var nb = _cpCache ? _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).length : '?';
+  if (!confirm('Supprimer toutes les vannes de la semaine ' + semaine + ' (' + nb + ' vanne' + (nb>1?'s':'') + ') ?')) return;
+  var ids = (_cpCache||[]).filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).map(function(r){ return r.id; });
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  toast.textContent = 'Suppression ' + semaine + '...';
+  document.body.appendChild(toast);
+  await Promise.all(ids.map(function(id){
+    return fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(id),{method:'DELETE'}).catch(function(){});
+  }));
+  if (_cpCache) _cpCache = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')!==semaine; });
+  toast.remove();
+  var t2 = document.createElement('div');
+  t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t2.textContent = '✅ Semaine ' + semaine + ' supprimée';
+  document.body.appendChild(t2);
+  setTimeout(function(){ t2.remove(); }, 3000);
+  renderCallidusPrnc();
+}
 </script>
 
 <script>
@@ -8709,7 +8732,7 @@ async function renderCallidusPrnc(forceRefresh) {
           +'</div>'
         +'</div></div>';
     }).join('');
-    return '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="background:#7030A0;color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800">'+sem+'</div><div style="font-size:11px;color:#888">'+items.length+' vanne'+(items.length>1?'s':'')+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+cards+'</div></div>';
+    return '<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="background:#7030A0;color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800">'+sem+'</div><div style="font-size:11px;color:#888;flex:1">'+items.length+' vanne'+(items.length>1?'s':'')+'</div><button onclick="cpSupprimerSemaine('+JSON.stringify(sem)+')" style="background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+cards+'</div></div>';
   }).join('');
 }
 
