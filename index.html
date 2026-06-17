@@ -8306,28 +8306,41 @@ function fermerFicheCallidus() {
 }
 
 async function cpFicheAjouterPhotos(input) {
-  if (!_cpFicheId || !input.files.length) return;
-  var label = input.closest('label');
-  var oldHtml = label ? label.innerHTML : '';
-  if (label) { label.innerHTML = '<span style="pointer-events:none">⏳ Upload en cours...</span>'; label.style.pointerEvents = 'none'; }
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var container = document.getElementById('cp-fiche-photos');
+  var pid = 'cprnc_' + _cpFicheId;
+  // Afficher placeholders immédiatement (comme P17)
+  var placeholders = [];
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    var img = document.createElement('img');
+    img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;opacity:0.5';
+    if (container) container.appendChild(img);
+    placeholders.push(img);
+    reader.onload = function(e) { img.src = e.target.result; };
+    reader.readAsDataURL(file);
+  });
   try {
-    var urls = await uploadPhotosParallel(input.files, 'callidus');
-    var rec  = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
+    var urls = await uploadPhotosParallel(files, 'callidus');
+    var rec = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
     var newPhotos = (rec && Array.isArray(rec.photos) ? rec.photos : []).concat(urls);
     await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ photos: newPhotos })
     });
     if (rec) rec.photos = newPhotos;
-    // Mettre à jour uniquement le bloc photos sans reconstruire toute la fiche
+    // Mettre à jour uniquement le bloc photos sans toucher aux infos
     _cpRefreshPhotos(newPhotos);
-  } catch(e) { alert('Erreur upload : ' + e.message); }
-  if (label) { label.innerHTML = oldHtml; label.style.pointerEvents = ''; }
+  } catch(e) {
+    placeholders.forEach(function(img) { img.remove(); });
+    alert('Erreur upload : ' + e.message);
+  }
 }
 
 async function cpFicheSupprimerPhoto(idx) {
   if (!_cpFicheId) return;
-  var rec    = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
+  var rec = _cpCache ? _cpCache.find(function(r) { return r.id === _cpFicheId; }) : null;
   var photos = rec && Array.isArray(rec.photos) ? rec.photos.slice() : [];
   if (!confirm('Supprimer cette photo ?')) return;
   var removed = photos.splice(idx, 1)[0];
@@ -8342,11 +8355,11 @@ async function cpFicheSupprimerPhoto(idx) {
     body: JSON.stringify({ photos: photos })
   });
   if (rec) rec.photos = photos;
-  // Mettre à jour uniquement le bloc photos
   _cpRefreshPhotos(photos);
 }
 
 function _cpRefreshPhotos(photos) {
+  if (!_cpFicheId) return;
   var pid = 'cprnc_' + _cpFicheId;
   window._etnaPhotosMap = window._etnaPhotosMap || {};
   window._etnaPhotosMap[pid] = photos;
