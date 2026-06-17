@@ -8275,7 +8275,7 @@ function ouvrirFicheCallidus(id) {
     + (rec.wo      ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WO</span><strong>'  + rec.wo   + '</strong></div>' : '')
     + (meta.wr     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">WR</span><strong>'  + meta.wr  + '</strong></div>' : '')
     + (rec.qty     ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">S/C</span><strong>' + rec.qty  + '</strong></div>' : '')
-    + (rec.serie   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">BDS</span><strong>' + rec.serie + '</strong></div>' : '')
+    + (rec.serie   ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">IR BDS/SN</span><strong>' + rec.serie + '</strong></div>' : '')
     + (meta.semaine? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Sem.</span><span>'  + meta.semaine + '</span></div>' : '')
     + (rec.date    ? '<div><span style="color:#7030A0;font-weight:700;display:inline-block;width:55px">Date</span><span>' + rec.date  + '</span></div>' : '')
     + '</div>';
@@ -8414,7 +8414,7 @@ async function _importerBordereauCallidus(input) {
           if (v === 'SEMAINE' || /^S\d{2}$/.test(v)) semaine = String(r[j] || '').trim();
           if (v === 'TAG' || v.includes('TAG'))       { colTAG = j; headerRow = i; }
           if (v === 'S/C' || v === 'SC')               colSC  = j;
-          if (v === 'BDS')                              colBDS = j;
+          if (v === 'BDS' || v.includes('BDS') || v.includes('IR BDS') || v.includes('SN'))  colBDS = j;
           if (v.includes('WO') || v.includes('W.O'))  colWO  = j;
           if (v.includes('LIEU') || v.includes('LIVR')) colLIEU = j;
           if (v.includes('DESC') || v.includes('LIBEL')) colDESC = j;
@@ -8566,7 +8566,7 @@ async function renderCallidusPrnc(forceRefresh) {
               + (r.wo    ? '<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>' + r.wo    + '</strong></div>' : '')
               + (meta.wr ? '<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>' + meta.wr + '</strong></div>' : '')
               + (r.qty   ? '<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'  + r.qty   + '</strong></div>' : '')
-              + (r.serie ? '<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>' + r.serie  + '</strong></div>' : '')
+              + (r.serie ? '<div><span style="color:#7030A0;font-weight:700">IR BDS/SN&nbsp;</span><strong>' + r.serie  + '</strong></div>' : '')
               + '</div>'
             : '')
           + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888">'
