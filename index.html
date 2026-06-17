@@ -4615,41 +4615,56 @@ async function _importerBordereauCallidus(input) {
       var ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
 
-      // Semaine : row 4 col A (index 3,0)
+      // Semaine : chercher pattern S\d+ dans les 15 premières lignes
       var semaine = '';
-      for (var ri = 0; ri < 10; ri++) {
-        if (rows[ri] && rows[ri][0] && /^S\d+$/i.test(String(rows[ri][0]).trim())) {
-          semaine = String(rows[ri][0]).trim(); break;
+      for (var ri = 0; ri < 15; ri++) {
+        if (!rows[ri]) continue;
+        for (var ci2 = 0; ci2 < rows[ri].length; ci2++) {
+          if (rows[ri][ci2] && /^S\d+$/i.test(String(rows[ri][ci2]).trim())) {
+            semaine = String(rows[ri][ci2]).trim(); break;
+          }
+        }
+        if (semaine) break;
+      }
+      // Si pas de semaine dans le fichier, demander à l'utilisateur
+      if (!semaine) {
+        semaine = (prompt('Numéro de semaine non détecté dans le fichier.\nEntrez la semaine (ex: S25) :') || '').trim();
+        if (!semaine) { alert('Import annulé : semaine requise.'); return; }
+        if (!/^S\d+$/i.test(semaine)) semaine = 'S' + semaine.replace(/\D/g,'');
+      }
+
+      // Date du jour par défaut
+      var dateT = new Date().toLocaleDateString('fr-FR');
+      // Chercher une date dans les premières lignes
+      for (var ri3 = 0; ri3 < Math.min(25, rows.length); ri3++) {
+        if (!rows[ri3]) continue;
+        for (var ci3 = 0; ci3 < rows[ri3].length; ci3++) {
+          var cv = rows[ri3][ci3];
+          if (cv instanceof Date) { dateT = cv.toLocaleDateString('fr-FR'); break; }
+          if (typeof cv === 'string' && /\d{2}\/\d{2}\/\d{4}/.test(cv)) { dateT = cv.trim().slice(0,10); break; }
         }
       }
 
-      // Date transport
-      var dateT = '';
-      if (rows[18] && rows[18][2]) {
-        var dt = rows[18][2];
-        if (dt instanceof Date) dateT = dt.toLocaleDateString('fr-FR');
-        else dateT = String(dt).replace(/\n/g,'').trim().split(' ')[0];
-        if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateT)) dateT = dateT.slice(0,6)+'20'+dateT.slice(6);
-      }
-
-      // Détecter la ligne d'en-tête (celle qui contient "S/C" ou "IR BDS")
+      // Détecter la ligne d'en-tête dans TOUTE la feuille (0 à 30)
       var headerRow = -1;
-      var colSC=-1, colBDS=-1, colDESC=-1, colWO=-1, colTAG=-1, colLIEU=-1;
-      for (var ri2 = 15; ri2 < 30; ri2++) {
+      var colSC=-1, colBDS=-1, colDESC=-1, colWO=-1, colTAG=-1, colLIEU=-1, colCOLIS=-1;
+      for (var ri2 = 0; ri2 < Math.min(30, rows.length); ri2++) {
         var row = rows[ri2]; if (!row) continue;
+        var foundInRow = false;
         for (var ci = 0; ci < row.length; ci++) {
-          var val = row[ci] ? String(row[ci]).trim().toUpperCase() : '';
-          if (val === 'S/C')           { colSC   = ci; headerRow = ri2; }
-          if (val === 'IR BDS' || val === 'BDS') { colBDS  = ci; headerRow = ri2; }
-          if (val.includes('DESCRIPTION'))        { colDESC = ci; headerRow = ri2; }
-          if (val.includes('WO') && val.includes('WR')) { colWO = ci; headerRow = ri2; }
-          if (val === 'TAG')           { colTAG  = ci; headerRow = ri2; }
-          if (val.includes('LIVRAISON') || val.includes('LIEU')) { colLIEU = ci; headerRow = ri2; }
+          var val = row[ci] ? String(row[ci]).replace(/\n/g,' ').trim().toUpperCase() : '';
+          if (val === 'S/C')                                  { colSC   = ci; foundInRow = true; }
+          if (val.includes('BDS'))                            { colBDS  = ci; foundInRow = true; }
+          if (val.includes('DESCRIPTION'))                    { colDESC = ci; foundInRow = true; }
+          if (val.includes('WO') && val.includes('WR'))       { colWO   = ci; foundInRow = true; }
+          if (val === 'TAG')                                  { colTAG  = ci; foundInRow = true; }
+          if (val.includes('LIVRAISON') || val === 'LIEU DE LIVRAISON') { colLIEU = ci; foundInRow = true; }
+          if (val.includes('COLIS'))                          { colCOLIS= ci; foundInRow = true; }
         }
-        if (headerRow === ri2) break;
+        if (foundInRow) { headerRow = ri2; break; }
       }
 
-      // Si colonnes non détectées, utiliser les indices connus du template
+      // Fallback colonnes si template ancien connu
       if (colSC  < 0) colSC   = 8;
       if (colBDS < 0) colBDS  = 9;
       if (colDESC< 0) colDESC = 10;
@@ -4657,10 +4672,11 @@ async function _importerBordereauCallidus(input) {
       if (colTAG < 0) colTAG  = 12;
       if (colLIEU< 0) colLIEU = 14;
 
-      var startRow = headerRow >= 0 ? headerRow + 2 : 23;
+      // Démarrer après la ligne d'en-tête (skip ligne vide éventuelle)
+      var startRow = headerRow >= 0 ? headerRow + 1 : 23;
 
       var items = [];
-      for (var r = startRow; r < Math.min(startRow + 40, rows.length); r++) {
+      for (var r = startRow; r < Math.min(startRow + 80, rows.length); r++) {
         var row = rows[r]; if (!row) continue;
         var sc   = row[colSC]   != null ? String(row[colSC]).trim()   : '';
         var bds  = row[colBDS]  != null ? String(row[colBDS]).trim()  : '';
@@ -4669,12 +4685,14 @@ async function _importerBordereauCallidus(input) {
         var tag  = row[colTAG]  != null ? String(row[colTAG]).trim()  : '';
         var lieu = row[colLIEU] != null ? String(row[colLIEU]).trim() : '';
 
-        // Ignorer formules non calculées
+        // Ignorer formules non calculées et lignes vides
         if (sc.startsWith('=') || wo.startsWith('=') || tag.startsWith('=')) continue;
         if (!sc && !tag && !wo) continue;
-        if (sc === 'S/C' || tag === 'TAG' || wo === 'WO') continue;
+        // Ignorer si c'est encore une ligne d'en-tête
+        var scUp = sc.toUpperCase(); var tagUp = tag.toUpperCase(); var woUp = wo.toUpperCase();
+        if (scUp === 'S/C' || tagUp === 'TAG' || woUp === 'WO' || woUp === 'WO / WR' || woUp === 'WO/WR') continue;
 
-        // Séparer WO et WR
+        // Séparer WO et WR (séparateurs: / ou espace)
         var wr = '';
         if (wo.includes('/')) { var pts=wo.split('/'); wo=pts[0].trim(); wr=pts[1]?pts[1].trim():''; }
 
@@ -4682,13 +4700,13 @@ async function _importerBordereauCallidus(input) {
       }
 
       if (!items.length) {
-        alert('Aucun equipement trouve.\nSemaine detectee: "' + semaine + '"\nLigne header: ' + (headerRow+1) + '\nColonnes: SC=' + colSC + ' WO=' + colWO + ' TAG=' + colTAG);
+        alert('Aucun équipement trouvé dans le fichier.\n\nDétails:\n- Semaine: "' + semaine + '"\n- Ligne en-têtes: ' + (headerRow+1) + '\n- Colonnes: SC=' + colSC + ' BDS=' + colBDS + ' WO=' + colWO + ' TAG=' + colTAG + ' LIEU=' + colLIEU);
         return;
       }
 
       var toast = document.createElement('div');
       toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      toast.textContent = 'Semaine ' + semaine + ' — ' + items.length + ' vanne(s) en cours...';
+      toast.textContent = semaine + ' — ' + items.length + ' vanne(s) en cours d\'import...';
       document.body.appendChild(toast);
 
       await Promise.all(items.map(function(item) {
@@ -4701,18 +4719,18 @@ async function _importerBordereauCallidus(input) {
         });
       }));
 
-      _cpCache = null; // invalider le cache après import
+      _cpCache = null;
       toast.remove();
       var t2 = document.createElement('div');
       t2.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      t2.textContent = semaine + ' — ' + items.length + ' vanne(s) importee(s)';
+      t2.textContent = '✅ ' + semaine + ' — ' + items.length + ' vanne(s) importée(s)';
       document.body.appendChild(t2);
       setTimeout(function(){ t2.remove(); }, 4000);
 
       if (typeof cpShowTab === 'function') cpShowTab('liste');
       renderCallidusPrnc(true);
     } catch(err) {
-      alert('Erreur : ' + err.message);
+      alert('Erreur import : ' + err.message);
       console.error(err);
     }
   };
@@ -8390,28 +8408,30 @@ async function _importerBordereauCallidus(input) {
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
       var semaine='';
-      for(var ri=0;ri<10;ri++){ if(rows[ri]&&rows[ri][0]&&/^S\d+$/i.test(String(rows[ri][0]).trim())){ semaine=String(rows[ri][0]).trim(); break; } }
-      var dateT='';
-      if(rows[18]&&rows[18][2]){ var dt=rows[18][2]; dateT=(dt instanceof Date)?dt.toLocaleDateString('fr-FR'):String(dt).replace(/\n/g,'').trim().split(' ')[0]; if(/^\d{2}\/\d{2}\/\d{2}$/.test(dateT)) dateT=dateT.slice(0,6)+'20'+dateT.slice(6); }
+      for(var ri=0;ri<15;ri++){ if(!rows[ri]) continue; for(var ci2=0;ci2<rows[ri].length;ci2++){ if(rows[ri][ci2]&&/^S\d+$/i.test(String(rows[ri][ci2]).trim())){ semaine=String(rows[ri][ci2]).trim(); break; } } if(semaine) break; }
+      if(!semaine){ semaine=(prompt('Numéro de semaine non détecté.\nEntrez la semaine (ex: S25) :')||'').trim(); if(!semaine){ alert('Import annulé : semaine requise.'); return; } if(!/^S\d+$/i.test(semaine)) semaine='S'+semaine.replace(/\D/g,''); }
+      var dateT=new Date().toLocaleDateString('fr-FR');
+      for(var ri3=0;ri3<Math.min(25,rows.length);ri3++){ if(!rows[ri3]) continue; for(var ci3=0;ci3<rows[ri3].length;ci3++){ var cv=rows[ri3][ci3]; if(cv instanceof Date){ dateT=cv.toLocaleDateString('fr-FR'); break; } if(typeof cv==='string'&&/\d{2}\/\d{2}\/\d{4}/.test(cv)){ dateT=cv.trim().slice(0,10); break; } } }
       var headerRow=-1,colSC=-1,colBDS=-1,colDESC=-1,colWO=-1,colTAG=-1,colLIEU=-1;
-      for(var ri2=15;ri2<30;ri2++){
+      for(var ri2=0;ri2<Math.min(30,rows.length);ri2++){
         var row=rows[ri2]; if(!row) continue;
+        var foundInRow=false;
         for(var ci=0;ci<row.length;ci++){
-          var val=row[ci]?String(row[ci]).trim().toUpperCase():'';
-          if(val==='S/C'){colSC=ci;headerRow=ri2;}
-          if(val==='IR BDS'||val==='BDS'){colBDS=ci;headerRow=ri2;}
-          if(val.includes('DESCRIPTION')){colDESC=ci;headerRow=ri2;}
-          if(val.includes('WO')&&val.includes('WR')){colWO=ci;headerRow=ri2;}
-          if(val==='TAG'){colTAG=ci;headerRow=ri2;}
-          if(val.includes('LIVRAISON')||val.includes('LIEU')){colLIEU=ci;headerRow=ri2;}
+          var val=row[ci]?String(row[ci]).replace(/\n/g,' ').trim().toUpperCase():'';
+          if(val==='S/C'){ colSC=ci; foundInRow=true; }
+          if(val.includes('BDS')){ colBDS=ci; foundInRow=true; }
+          if(val.includes('DESCRIPTION')){ colDESC=ci; foundInRow=true; }
+          if(val.includes('WO')&&val.includes('WR')){ colWO=ci; foundInRow=true; }
+          if(val==='TAG'){ colTAG=ci; foundInRow=true; }
+          if(val.includes('LIVRAISON')||val==='LIEU DE LIVRAISON'){ colLIEU=ci; foundInRow=true; }
         }
-        if(headerRow===ri2) break;
+        if(foundInRow){ headerRow=ri2; break; }
       }
       if(colSC<0) colSC=8; if(colBDS<0) colBDS=9; if(colDESC<0) colDESC=10;
       if(colWO<0) colWO=11; if(colTAG<0) colTAG=12; if(colLIEU<0) colLIEU=14;
-      var startRow=headerRow>=0?headerRow+2:23;
+      var startRow=headerRow>=0?headerRow+1:23;
       var items=[];
-      for(var r=startRow;r<Math.min(startRow+40,rows.length);r++){
+      for(var r=startRow;r<Math.min(startRow+80,rows.length);r++){
         var row=rows[r]; if(!row) continue;
         var sc=row[colSC]!=null?String(row[colSC]).trim():'';
         var bds=row[colBDS]!=null?String(row[colBDS]).trim():'';
@@ -8421,14 +8441,15 @@ async function _importerBordereauCallidus(input) {
         var lieu=row[colLIEU]!=null?String(row[colLIEU]).trim():'';
         if(sc.startsWith('=')||wo.startsWith('=')||tag.startsWith('=')) continue;
         if(!sc&&!tag&&!wo) continue;
-        if(sc==='S/C'||tag==='TAG'||wo==='WO') continue;
+        var scUp=sc.toUpperCase(),tagUp=tag.toUpperCase(),woUp=wo.toUpperCase();
+        if(scUp==='S/C'||tagUp==='TAG'||woUp==='WO'||woUp==='WO / WR'||woUp==='WO/WR') continue;
         var wr=''; if(wo.includes('/')){ var pts=wo.split('/'); wo=pts[0].trim(); wr=pts[1]?pts[1].trim():''; }
         items.push({sc,bds,desc,wo,wr,tag,lieu,semaine,date:dateT});
       }
-      if(!items.length){ alert('Aucun equipement trouve.\nSemaine: "'+semaine+'" Ligne header: '+(headerRow+1)+'\nColonnes SC='+colSC+' WO='+colWO+' TAG='+colTAG); return; }
+      if(!items.length){ alert('Aucun équipement trouvé.\nSemaine: "'+semaine+'" Ligne header: '+(headerRow+1)+'\nColonnes SC='+colSC+' BDS='+colBDS+' WO='+colWO+' TAG='+colTAG); return; }
       var toast=document.createElement('div');
       toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      toast.textContent='Semaine '+semaine+' — '+items.length+' vanne(s) en cours...';
+      toast.textContent=semaine+' — '+items.length+' vanne(s) en cours d\'import...';
       document.body.appendChild(toast);
       _cpCache=null;
       await Promise.all(items.map(function(item){
@@ -8440,11 +8461,11 @@ async function _importerBordereauCallidus(input) {
       _cpCache=null; toast.remove();
       var t2=document.createElement('div');
       t2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-      t2.textContent=semaine+' — '+items.length+' vanne(s) importee(s)';
+      t2.textContent='✅ '+semaine+' — '+items.length+' vanne(s) importée(s)';
       document.body.appendChild(t2); setTimeout(function(){ t2.remove(); },4000);
       if(typeof cpShowTab==='function') cpShowTab('liste');
       renderCallidusPrnc(true);
-    } catch(err){ alert('Erreur : '+err.message); }
+    } catch(err){ alert('Erreur import : '+err.message); console.error(err); }
   };
   reader.readAsArrayBuffer(file);
 }
