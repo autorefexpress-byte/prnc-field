@@ -1633,9 +1633,14 @@ async function cpFicheSupprimer() {
 }
 
 async function cpSupprimerSemaine(semaine) {
-  var nb = _cpCache ? _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).length : '?';
+  if (!_cpCache) {
+    var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function(){ return null; });
+    if (resp && resp.ok) { _cpCache = await resp.json(); if (!Array.isArray(_cpCache)) _cpCache = []; }
+    else { alert('Erreur connexion'); return; }
+  }
+  var nb = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).length;
   if (!confirm('Supprimer toutes les vannes de la semaine ' + semaine + ' (' + nb + ' vanne' + (nb>1?'s':'') + ') ?')) return;
-  var ids = (_cpCache||[]).filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).map(function(r){ return r.id; });
+  var ids = _cpCache.filter(function(r){ return (_parseMeta(r.remarques).semaine||'Sans semaine')===semaine; }).map(function(r){ return r.id; });
   var toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
   toast.textContent = 'Suppression ' + semaine + '...';
@@ -8439,9 +8444,9 @@ async function cpEnregistrer() {
   try {
     await fetch(DB_API + '?table=callidus_prnc', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ id: Date.now().toString(), wo: wo, tag: tag, serie: serie, qty: qty, remarques: rem, photos: _cpPhotos, date: new Date().toLocaleDateString('fr-FR'), statut: 'Envoyé' })
+      body: JSON.stringify({ id: Date.now().toString(), wo: wo, tag: tag, serie: serie, qty: qty, remarques: JSON.stringify({semaine: document.getElementById('cp-semaine').value.trim(), wr: document.getElementById('cp-wr').value.trim(), desc: rem, lieu: ''}), photos: _cpPhotos, date: new Date().toLocaleDateString('fr-FR'), statut: 'Envoyé' })
     });
-    ['cp-wo','cp-tag','cp-serie','cp-rem'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    ['cp-wo','cp-tag','cp-serie','cp-rem','cp-semaine','cp-wr'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
     document.getElementById('cp-qty').value = '1';
     _cpPhotos = [];
     cpRefreshPrev('cp-photos-prev', []);
@@ -8695,12 +8700,7 @@ async function renderCallidusPrnc(forceRefresh) {
             +'<span style="font-size:13px;font-weight:800;color:#7030A0">'+(r.tag||'--')+'</span>'
             +'<span style="font-size:10px;color:#888">'+(r.date||'')+'</span>'
           +'</div>'
-          +'<div style="background:#F3E5F5;border-radius:7px;padding:6px 9px;font-size:10px;line-height:1.8;margin-bottom:7px">'
-            +(r.wo?'<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')
-            +(meta.wr?'<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>'+meta.wr+'</strong></div>':'')
-            +(r.qty?'<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.qty+'</strong></div>':'')
-            +(r.serie?'<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')
-          +'</div>'
+          +(r.wo||meta.wr||r.qty||r.serie ? '<div style="background:#F3E5F5;border-radius:7px;padding:6px 9px;font-size:10px;line-height:1.8;margin-bottom:7px">'            +(r.wo?'<div><span style="color:#7030A0;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')            +(meta.wr?'<div><span style="color:#7030A0;font-weight:700">WR&nbsp;&nbsp;&nbsp;</span><strong>'+meta.wr+'</strong></div>':'')            +(r.qty?'<div><span style="color:#7030A0;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.qty+'</strong></div>':'')            +(r.serie?'<div><span style="color:#7030A0;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')          +'</div>' : '')
           +'<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888">'
             +'<span>'+(photoCount?'📷 '+photoCount+' photo'+(photoCount>1?'s':''):'📷 Aucune photo')+'</span>'
             +'<span style="color:#7030A0;font-weight:700">Voir fiche →</span>'
@@ -11474,7 +11474,7 @@ function sauvegarderRemarquePlanningMC(wo) {
   </div>
   <div style="display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0">
     <button class="cp-tab active" id="cp-tab-liste" onclick="cpShowTab('liste')"><span style="font-size:16px">📋</span><br>Liste</button>
-    <button class="cp-tab" id="cp-tab-nouveau" onclick="cpShowTab('nouveau')"><span style="font-size:16px">➕</span><br>Nouveau</button>
+
   </div>
   <div style="flex:1;overflow-y:auto">
     <div class="cp-pane active" id="cp-liste" style="padding:14px">
@@ -11497,25 +11497,7 @@ function sauvegarderRemarquePlanningMC(wo) {
       </div>
       <div id="cp-list-content"><div style="text-align:center;color:var(--muted);padding:40px">⏳ Chargement...</div></div>
     </div>
-    <div class="cp-pane" id="cp-nouveau" style="padding:14px;padding-bottom:40px">
-      <div class="sec-lbl">📋 Informations équipement</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="cp-wo" placeholder="Ex: 886483" onclick="ouvrirNumpad('cp-wo','N° WO')" style="cursor:pointer"></div>
-        <div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="cp-tag" placeholder="Ex: 220-VLS-030"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="cp-serie" placeholder="Ex: SN-2025-001"></div>
-        <div class="field-grp"><div class="field-lbl">Quantité</div><input class="fi" type="number" id="cp-qty" value="1" min="1"></div>
-      </div>
-      <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="cp-rem" style="height:70px;resize:none" placeholder="Description des travaux..."></textarea></div>
-      <div class="sec-lbl">📷 Photos</div>
-      <div id="cp-photos-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:#EDE7F6;color:#7030A0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">
-        📷 Ajouter des photos
-        <input type="file" accept="image/*" multiple style="display:none" onchange="cpAjouterPhotos(this)">
-      </label>
-      <button onclick="cpEnregistrer()" style="width:100%;padding:14px;background:#7030A0;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Enregistrer</button>
-    </div>
+</div>
   </div>
 </div>
 
