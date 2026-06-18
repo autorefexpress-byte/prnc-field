@@ -8327,6 +8327,13 @@ async function _importerBordereauCallidus(input) {
         if (headerRow >= 0) break;
       }
       if (headerRow < 0) { alert('Entête non trouvée dans le fichier'); return; }
+      // Toujours demander la semaine — proposer celle détectée comme valeur par défaut
+      var semainePrompt = prompt('Numéro de semaine pour ce bordereau :', semaine || 'S25');
+      if (semainePrompt === null) { return; } // annulé
+      semaine = semainePrompt.trim();
+      if (!semaine) { alert('La semaine est obligatoire.'); return; }
+      // Normaliser : si juste un chiffre, préfixer S
+      if (/^\d+$/.test(semaine)) semaine = 'S' + semaine;
       var dateT = new Date().toLocaleDateString('fr-FR');
       var items = [];
       for (var i = headerRow + 1; i < rows.length; i++) {
