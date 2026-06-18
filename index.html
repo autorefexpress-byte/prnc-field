@@ -8188,7 +8188,7 @@ async function cpFicheAjouterPhotos(input) {
     var newPhotos = (rec && Array.isArray(rec.photos) ? rec.photos : []).concat(urls);
     await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photos: newPhotos })
+      body: JSON.stringify({ wo: rec?rec.wo:null, tag: rec?rec.tag:null, serie: rec?rec.serie:null, qty: rec?rec.qty:null, remarques: rec?rec.remarques:null, statut: rec?rec.statut:null, photos: newPhotos })
     });
     if (rec) rec.photos = newPhotos;
     // Remplacer placeholders par vraies URLs (style P17) — pas de reconstruction
@@ -8230,7 +8230,7 @@ async function cpFicheSupprimerPhoto(idx) {
   } catch(e) {}
   await fetch(DB_API + '?table=callidus_prnc&id=' + encodeURIComponent(_cpFicheId), {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ photos: photos })
+    body: JSON.stringify({ wo: rec?rec.wo:null, tag: rec?rec.tag:null, serie: rec?rec.serie:null, qty: rec?rec.qty:null, remarques: rec?rec.remarques:null, statut: rec?rec.statut:null, photos: photos })
   });
   if (rec) rec.photos = photos;
   // Reconstruire uniquement la zone photos (pas les infos)
