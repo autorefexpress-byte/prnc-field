@@ -8327,13 +8327,6 @@ async function _importerBordereauCallidus(input) {
         if (headerRow >= 0) break;
       }
       if (headerRow < 0) { alert('Entête non trouvée dans le fichier'); return; }
-      // Toujours demander la semaine — proposer celle détectée comme valeur par défaut
-      var semainePrompt = prompt('Numéro de semaine pour ce bordereau :', semaine || 'S25');
-      if (semainePrompt === null) { return; } // annulé
-      semaine = semainePrompt.trim();
-      if (!semaine) { alert('La semaine est obligatoire.'); return; }
-      // Normaliser : si juste un chiffre, préfixer S
-      if (/^\d+$/.test(semaine)) semaine = 'S' + semaine;
       var dateT = new Date().toLocaleDateString('fr-FR');
       var items = [];
       for (var i = headerRow + 1; i < rows.length; i++) {
@@ -9632,10 +9625,10 @@ function importPlanningExcel(input) {
       if (rows.length < 3) return;
 
       // Format MR04: row0=headers, row1=dates jours, row2+=données
-      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-16=Lun-Ven,17=Ressource
-      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
+      // Colonnes: 0=WO,1=WR,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-18=Lun-Dim,19=Ressource
+      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
       var jours = [];
-      for (var j = 12; j <= 16; j++) {
+      for (var j = 12; j <= 18; j++) {
         var dval = rows[1] && rows[1][j];
         if (dval) {
           var d = new Date(dval);
@@ -9655,10 +9648,10 @@ function importPlanningExcel(input) {
         var descTache = (row[9]||'').toString().trim();
         var descWO = (row[10]||'').toString().trim();
         var commentaire = (row[7]||'').toString().trim();
-        var ressource = (row[17]||'').toString().trim();
+        var ressource = (row[19]||'').toString().trim();
         var wr = (row[1]||'').toString().trim();
         var joursTache = [];
-        for (var jj = 0; jj < 5; jj++) {
+        for (var jj = 0; jj < 7; jj++) {
           var hval = row[12+jj];
           if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
         }
@@ -10543,10 +10536,10 @@ function importPlanningExcelMC(input) {
       if (rows.length < 3) return;
 
       // Format MCCHAUD: row0=headers, row1=dates jours, row2+=données
-      // Colonnes: 0=WO,2=WR,6=Task,9=ACTIONS/INFOS(commentaire),10=Tag,11=desc tache,12=desc WO,14-18=Lun-Ven,21=Ressources
-      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
+      // Colonnes: 0=WO,2=WR,6=Task,9=ACTIONS/INFOS(commentaire),10=Tag,11=desc tache,12=desc WO,14-20=Lun-Dim,21=Ressources
+      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
       var jours = [];
-      for (var j = 14; j <= 18; j++) {
+      for (var j = 14; j <= 20; j++) {
         var dval = rows[1] && rows[1][j];
         if (dval) {
           var d = new Date(dval);
@@ -10570,7 +10563,7 @@ function importPlanningExcelMC(input) {
         var wr = (row[2]||'').toString().trim();
         if (wr.toUpperCase() === 'N/A') wr = '';
         var joursTache = [];
-        for (var jj = 0; jj < 5; jj++) {
+        for (var jj = 0; jj < 7; jj++) {
           var hval = row[14+jj];
           if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
         }
