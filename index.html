@@ -10648,7 +10648,7 @@ function _renderPlanningListMC() {
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
             +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
-            +(item.ressource?'<span style="background:#EDE7F6;color:#7030A0;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
+            +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceMC(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#EDE7F6;color:#7030A0;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
@@ -10808,6 +10808,7 @@ function ouvrirPlanningModalMC(wo, semaine) {
       + '</div>'
       + '<button onclick="fermerPlanningModalMC()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
     + '</div>'
+    + (item.ressource ? '<button onclick="notifierRessourceMC(\'' + wo + '\')" style="display:inline-flex;align-items:center;gap:6px;background:#7030A0;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">📧 Notifier ' + item.ressource + ' — matos dispo</button>' : '')
     + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
     + (item.jours && item.jours.length
         ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
@@ -10833,6 +10834,118 @@ function ouvrirPlanningModalMC(wo, semaine) {
 
   var modal = document.getElementById('planning-modal-mc');
   if (modal) modal.style.display = 'flex';
+}
+
+// ═══ Notification mail "matos dispo" — Planning MCCHAUD ═══
+var MCCHAUD_CONTACTS = [
+  {name:'Roban Fatuimoana',   mail:'roban.fatuimoana@pronyresources.com'},
+  {name:'Essau Thevedin',     mail:'essau.thevedin@pronyresources.com'},
+  {name:'Kepu Takasi',        mail:'kepu.takasi@pronyresources.com'},
+  {name:'Petelo Manusauaki',  mail:'petelo.manusauaki@pronyresources.com'},
+  {name:'Jonathan Gnai',      mail:'jonathan.gnai@pronyresources.com'},
+  {name:'Jean-Marie Poumalis',mail:'jean-marie.poumalis@pronyresources.com'},
+  {name:'Karel Gallyot',      mail:'karel.gallyot@pronyresources.com'}
+];
+
+var MCCHAUD_NOTIF_CC = [
+  'cyril.alosio@pronyresources.com',
+  'pascal.bafue@pronyresources.com',
+  'abel.vendegou@pronyresources.com',
+  'emmanuel.rosa@pronyresources.com'
+].join(';');
+
+function _stripAccents(s) {
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function _normNameKey(name) {
+  return _stripAccents(name).trim().toLowerCase();
+}
+
+function findMailForRessource(name) {
+  if (!name) return '';
+  var norm = _normNameKey(name).replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!norm) return '';
+  var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  var found = MCCHAUD_CONTACTS.find(function(c) {
+    var cNorm = _normNameKey(c.name);
+    var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
+    return tokens.some(function(t) { return cTokens.indexOf(t) !== -1; })
+      || cNorm.indexOf(norm) !== -1 || norm.indexOf(cNorm) !== -1;
+  });
+  return found ? found.mail : '';
+}
+
+function getContactMailMC(name) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mc') || '{}');
+    var manual = map[_normNameKey(name)] || '';
+    if (manual) return manual;
+  } catch(e) {}
+  return findMailForRessource(name);
+}
+
+function saveContactMailMC(name, email) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mc') || '{}');
+    map[_normNameKey(name)] = email;
+    localStorage.setItem('prnc-contacts-mc', JSON.stringify(map));
+  } catch(e) {}
+}
+
+function notifierRessourceMC(wo) {
+  var item = _planningDataMC.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMC) item = _allPlanningCacheMC.find(function(i){ return i.wo === wo; });
+  if (!item) { alert('WO introuvable.'); return; }
+  if (!item.ressource) { alert('Aucun nom de ressource sur ce WO.'); return; }
+
+  var email = getContactMailMC(item.ressource);
+  if (!email) {
+    var saisie = prompt('Email de ' + item.ressource + ' introuvable dans l\'annuaire. Le saisir :', '');
+    if (saisie === null) return;
+    email = saisie.trim();
+    if (!email || email.indexOf('@') === -1) { alert('Adresse email invalide.'); return; }
+    saveContactMailMC(item.ressource, email);
+  }
+
+  var joursStr = item.jours && item.jours.length ? item.jours.join(', ') : '';
+  var photosArr = (item._photos || []).filter(Boolean);
+  var subject = "Matériel disponible — devant l'atelier MCCHAUD — " + (item.tag || item.wo);
+
+  var baseBody = 'Bonjour ' + item.ressource + ',\n\n'
+    + "Le matériel suivant est disponible devant l'atelier MCCHAUD :\n\n"
+    + 'TAG : ' + (item.tag || '-') + '\n'
+    + 'WO : ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + '\n'
+    + (item.desc ? 'Description : ' + item.desc + '\n' : '')
+    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '');
+
+  var footer = "\nMerci de passer le récupérer devant l'atelier MCCHAUD.\n\n"
+    + 'Cordialement,\nAtelier MCCHAUD - PRNC';
+
+  var body = baseBody;
+  var nbPhotosInclus = 0;
+  if (photosArr.length) {
+    var maxLen = 560;
+    for (var i = 0; i < photosArr.length; i++) {
+      var candidat = '\nPhoto(s) :\n' + photosArr.slice(0, i + 1).join('\n') + '\n';
+      if ((baseBody + candidat + footer).length > maxLen) break;
+      nbPhotosInclus = i + 1;
+    }
+    if (nbPhotosInclus > 0) {
+      var photoBlock = '\nPhoto(s) :\n' + photosArr.slice(0, nbPhotosInclus).join('\n') + '\n';
+      if (photosArr.length > nbPhotosInclus) photoBlock += '(+' + (photosArr.length - nbPhotosInclus) + " autre(s) photo(s) sur l'application)\n";
+      body += photoBlock;
+    }
+  }
+  body += footer;
+
+  mailto(email, subject, body, MCCHAUD_NOTIF_CC);
+
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t.textContent = nbPhotosInclus > 0 ? '📧 Email préparé pour ' + item.ressource + ' avec ' + nbPhotosInclus + ' photo(s)' : '📧 Email préparé pour ' + item.ressource;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
 }
 
 async function ajouterPhotoPlanningMC(wo, input) {
