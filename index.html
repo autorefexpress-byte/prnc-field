@@ -10909,41 +10909,22 @@ function notifierRessourceMC(wo) {
   }
 
   var joursStr = item.jours && item.jours.length ? item.jours.join(', ') : '';
-  var photosArr = (item._photos || []).filter(Boolean);
   var subject = "Matériel disponible — devant l'atelier MCCHAUD — " + (item.tag || item.wo);
 
-  var baseBody = 'Bonjour ' + item.ressource + ',\n\n'
+  var body = 'Bonjour ' + item.ressource + ',\n\n'
     + "Le matériel suivant est disponible devant l'atelier MCCHAUD :\n\n"
     + 'TAG : ' + (item.tag || '-') + '\n'
     + 'WO : ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + '\n'
     + (item.desc ? 'Description : ' + item.desc + '\n' : '')
-    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '');
-
-  var footer = "\nMerci de passer le récupérer devant l'atelier MCCHAUD.\n\n"
+    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '')
+    + "\nMerci de passer le récupérer devant l'atelier MCCHAUD.\n\n"
     + 'Cordialement,\nAtelier MCCHAUD - PRNC';
-
-  var body = baseBody;
-  var nbPhotosInclus = 0;
-  if (photosArr.length) {
-    var maxLen = 560;
-    for (var i = 0; i < photosArr.length; i++) {
-      var candidat = '\nPhoto(s) :\n' + photosArr.slice(0, i + 1).join('\n') + '\n';
-      if ((baseBody + candidat + footer).length > maxLen) break;
-      nbPhotosInclus = i + 1;
-    }
-    if (nbPhotosInclus > 0) {
-      var photoBlock = '\nPhoto(s) :\n' + photosArr.slice(0, nbPhotosInclus).join('\n') + '\n';
-      if (photosArr.length > nbPhotosInclus) photoBlock += '(+' + (photosArr.length - nbPhotosInclus) + " autre(s) photo(s) sur l'application)\n";
-      body += photoBlock;
-    }
-  }
-  body += footer;
 
   mailto(email, subject, body, MCCHAUD_NOTIF_CC);
 
   var t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7030A0;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
-  t.textContent = nbPhotosInclus > 0 ? '📧 Email préparé pour ' + item.ressource + ' avec ' + nbPhotosInclus + ' photo(s)' : '📧 Email préparé pour ' + item.ressource;
+  t.textContent = '📧 Email préparé pour ' + item.ressource;
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 3000);
 }
