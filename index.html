@@ -10844,8 +10844,18 @@ var MCCHAUD_CONTACTS = [
   {name:'Petelo Manusauaki',  mail:'petelo.manusauaki@pronyresources.com'},
   {name:'Jonathan Gnai',      mail:'jonathan.gnai@pronyresources.com'},
   {name:'Jean-Marie Poumalis',mail:'jean-marie.poumalis@pronyresources.com'},
-  {name:'Karel Gallyot',      mail:'karel.gallyot@pronyresources.com'}
+  {name:'Karel Gallyot',      mail:'karel.gallyot@pronyresources.com'},
+  {name:'Jean Brukooua',      mail:'jean.brukooua@pronyresources.com'}
 ];
+
+// Surnoms utilisés dans le planning atelier MCCHAUD
+var MCCHAUD_NICKNAMES = {
+  'jo':      'jonathan.gnai@pronyresources.com',
+  'telo':    'petelo.manusauaki@pronyresources.com',
+  'jm':      'jean-marie.poumalis@pronyresources.com',
+  'roboam':  'roban.fatuimoana@pronyresources.com',
+  'michou':  'jean.brukooua@pronyresources.com'
+};
 
 var MCCHAUD_NOTIF_CC = [
   'cyril.alosio@pronyresources.com',
@@ -10866,7 +10876,11 @@ function findMailForRessource(name) {
   if (!name) return '';
   var norm = _normNameKey(name).replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
   if (!norm) return '';
+  if (MCCHAUD_NICKNAMES[norm]) return MCCHAUD_NICKNAMES[norm];
   var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  for (var i = 0; i < tokens.length; i++) {
+    if (MCCHAUD_NICKNAMES[tokens[i]]) return MCCHAUD_NICKNAMES[tokens[i]];
+  }
   var found = MCCHAUD_CONTACTS.find(function(c) {
     var cNorm = _normNameKey(c.name);
     var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
