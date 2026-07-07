@@ -286,6 +286,20 @@
   .zone-count { font-size:10px; margin-top:1px; color:#7a8494; }
   .zone-card.occupe .zone-count { color:rgba(255,255,255,.6); }
 
+  /* YARD (plan extérieur réel autour du dock P50) */
+  .yard-grid {
+    display: grid;
+    grid-template-columns: 0.8fr 1fr 1fr 0.65fr;
+    grid-template-rows: repeat(2, minmax(30px, auto));
+    grid-template-areas:
+      "acal r10 r9  r8"
+      "t1   r1  r2  r8";
+    gap: 4px;
+  }
+  .yard-cell.zone-card { padding: 4px 2px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .yard-cell .zone-label { font-size: 9px; line-height:1.15; }
+  .yard-cell .zone-count { font-size: 7px; }
+
   /* DETAIL PANEL */
   .detail-panel {
     background: var(--card);
@@ -608,7 +622,11 @@
             <div class="plan-grid" id="grid-G"></div>
           </div>
           <div class="rangee-section">
-            <div class="rangee-label">⚡ Zones spéciales</div>
+            <div class="rangee-label">🗺️ Cour extérieure (autour du dock P50)</div>
+            <div id="grid-yard" class="yard-grid"></div>
+          </div>
+          <div class="rangee-section">
+            <div class="rangee-label">⚡ Autres zones</div>
             <div id="grid-zones" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
           </div>
         </div>
@@ -664,7 +682,7 @@ function _planLocChange() {
   if(s.value==='__autre__'){ i.style.display='block'; i.value=''; i.focus(); }
   else { i.style.display='none'; i.value=s.value; }
 }
-var _PLAN_LOCS = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17', 'Zone depart ETNA'];
+var _PLAN_LOCS = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R1', 'R2', 'R8', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'T1', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone planifier P17', 'Zone depart ETNA'];
 
 var TYPE_COLORS = {
   ARRIVEE   : { bg:'#EDE7F6', border:'#7030A0', label:'ARRIVÉE'    },
@@ -678,7 +696,7 @@ var TYPE_COLORS = {
 var _data = [];
 var _occupMap = {};
 var _ZONES = [
-  { id:'A-cal', label:'A-cal', icon:'🅰️' },
+  { id:'A-cal', label:'A-cal', icon:'🅰️', area:'acal' },
   { id:'Atelier P17', label:'Atelier P17', icon:'🏗️' },
   { id:'CLN', label:'CLN', icon:'🔧' },
   { id:'Dalle de lavage', label:'Dalle de lavage', icon:'🚿' },
@@ -687,10 +705,14 @@ var _ZONES = [
   { id:'Etagere Callidus P17', label:'Etagere Callidus P17', icon:'📦' },
   { id:'ETNA', label:'ETNA', icon:'🔬' },
   { id:'Parking P02', label:'Parking P02', icon:'🅿️' },
-  { id:'R10', label:'R10', icon:'📍' },
-  { id:'R9', label:'R9', icon:'📍' },
+  { id:'R1', label:'R1', icon:'📍', area:'r1' },
+  { id:'R2', label:'R2', icon:'📍', area:'r2' },
+  { id:'R8', label:'R8', icon:'📍', area:'r8' },
+  { id:'R10', label:'R10', icon:'📍', area:'r10' },
+  { id:'R9', label:'R9', icon:'📍', area:'r9' },
   { id:'Retour demandeur', label:'Retour demandeur', icon:'👤' },
   { id:'Retour magasin', label:'Retour magasin', icon:'🏪' },
+  { id:'T1', label:'T1', icon:'🔧', area:'t1' },
   { id:'Zone A1', label:'Zone A1', icon:'🅰️' },
   { id:'Zone départ Callidus', label:'Zone départ Callidus', icon:'📤' },
   { id:'Zone fer', label:'Zone fer', icon:'⚙️' },
@@ -823,11 +845,36 @@ function renderGrids() {
     }
   });
 
-  // Zones définies globalement
+  // Cour extérieure : mini-carte positionnée selon le plan réel
+  var yardGrid = document.getElementById('grid-yard');
+  if (yardGrid) {
+    yardGrid.innerHTML = '';
+    _ZONES.filter(function(z){ return z.area; }).forEach(function(z) {
+      var equips = _occupMap[z.id] || [];
+      var isOccupe = equips.length > 0;
+      var div = document.createElement('div');
+      var _zwo = equips.length ? (equips[0].wo || '') : '';
+      var _zps = _getPlanningStatuts();
+      var _zpst = _zwo && _zps[_zwo] ? _zps[_zwo] : null;
+      var _zpic = { PLANIFIE:'📅', EN_COURS:'▶️', ATT_PIECES:'⏳', TERMINE:'✅' };
+      div.className = 'zone-card yard-cell ' + (isOccupe ? 'occupe' : 'libre');
+      div.setAttribute('data-loc', z.id);
+      div.style.gridArea = z.area;
+      div.innerHTML = '<div>'
+          + '<div class="zone-label">' + z.label + (_zpst ? ' <span style="font-size:8px">' + _zpic[_zpst] + '</span>' : '') + '</div>'
+          + '<div class="zone-count">' + (isOccupe ? equips.length + ' éq.' : 'Libre') + '</div>'
+        + '</div>'
+        + (equips.length > 1 ? '<div style="position:absolute;top:-5px;right:-5px;background:#C55A11;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center">'+equips.length+'</div>' : '');
+      div.onclick = (function(id, eqs){ return function(){ showDetail(id, eqs); }; })(z.id, equips);
+      yardGrid.appendChild(div);
+    });
+  }
+
+  // Autres zones (non positionnées sur le plan de cour)
   var zonesGrid = document.getElementById('grid-zones');
   if (zonesGrid) {
     zonesGrid.innerHTML = '';
-    _ZONES.forEach(function(z) {
+    _ZONES.filter(function(z){ return !z.area; }).forEach(function(z) {
       var equips = _occupMap[z.id] || [];
       var isOccupe = equips.length > 0;
       var div = document.createElement('div');
