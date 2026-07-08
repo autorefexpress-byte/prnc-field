@@ -8308,9 +8308,12 @@ async function _importerBordereauCallidus(input) {
   reader.onload = async function(e) {
     try {
       var wb   = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-      var ws   = wb.Sheets[wb.SheetNames[0]];
+      var sheetName = wb.SheetNames[0];
+      var ws   = wb.Sheets[sheetName];
       var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-      var semaine = '', headerRow = -1;
+      // La semaine est généralement portée par le nom de l'onglet (ex: "S28")
+      var semaine = /^S\d{2}$/i.test(sheetName.trim()) ? sheetName.trim().toUpperCase() : '';
+      var headerRow = -1;
       var colSC = -1, colBDS = -1, colWO = -1, colTAG = -1, colLIEU = -1, colDESC = -1;
       for (var i = 0; i < Math.min(rows.length, 20); i++) {
         var r = rows[i]; if (!r) continue;
@@ -8327,6 +8330,10 @@ async function _importerBordereauCallidus(input) {
         if (headerRow >= 0) break;
       }
       if (headerRow < 0) { alert('Entête non trouvée dans le fichier'); return; }
+      // Confirmation manuelle de la semaine (pré-remplie avec la détection auto)
+      var semaineSaisie = prompt('Semaine pour cet import (ex: S28) :', semaine || '');
+      if (semaineSaisie === null) return; // annulé
+      semaine = semaineSaisie.trim().toUpperCase();
       var dateT = new Date().toLocaleDateString('fr-FR');
       var items = [];
       for (var i = headerRow + 1; i < rows.length; i++) {
