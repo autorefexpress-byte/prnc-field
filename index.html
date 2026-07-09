@@ -9739,6 +9739,7 @@ function _renderPlanningList() {
     try {
     var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
     var woVal = item.wo||'';
+    var woSafe = woVal.replace(/'/g, "\\'");
     var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
     var searchActive = !!(document.getElementById('planning-search')||{value:''}).value;
     return '<div data-wo="'+woVal+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModal(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
@@ -9748,7 +9749,7 @@ function _renderPlanningList() {
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
             +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+woVal+'</span>'
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
-            +(item.ressource?'<span style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+item.ressource+'</span>':'')
+            +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceP17(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
@@ -9940,6 +9941,7 @@ function ouvrirPlanningModal(wo, semaine) {
       + '<textarea id="planning-remarque-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
       + '<button onclick="sauvegarderRemarquePlanning(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
     + '</div>'
+    + (item.ressource ? '<button onclick="notifierRessourceP17(\'' + wo + '\')" style="display:inline-flex;align-items:center;gap:6px;background:#C55A11;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">📧 Notifier ' + item.ressource + ' — matos dispo</button>' : '')
     + '<div style="display:flex;gap:8px">' + btns + '</div>';
 
   var modal = document.getElementById('planning-modal');
@@ -9948,6 +9950,99 @@ function ouvrirPlanningModal(wo, semaine) {
 
 function btn(onclick, bg, color, border, label) {
   return '<button onclick="'+onclick+'" style="flex:1;padding:12px;background:'+bg+';color:'+color+';border:'+border+';border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">'+label+'</button>';
+}
+
+// ═══ Notification mail "matos dispo" — Planning Atelier P17 ═══
+var P17_CONTACTS = [
+  {name:'Christopher Lalié (Topher)', mail:'christopher.lalie@pronyresources.com'},
+  {name:'Yoctan Ofatuku',             mail:'yoctan.ofatuku@pronyresources.com'},
+  {name:'Sonny Santacroce',           mail:'sonny.santacroce@pronyresources.com'}
+];
+
+// Surnoms utilisés dans le planning atelier P17
+var P17_NICKNAMES = {
+  'topher': 'christopher.lalie@pronyresources.com',
+  'yoctan': 'yoctan.ofatuku@pronyresources.com',
+  'sonny':  'sonny.santacroce@pronyresources.com'
+};
+
+var P17_NOTIF_CC = [
+  'emmanuel.rosa@pronyresources.com',
+  'Jean-Francois.Dellac@pronyresources.com',
+  'Regis.Eurimindia@pronyresources.com',
+  'kendji.kasovimoin.ext@pronyresources.com',
+  'Pascal.Bafue@pronyresources.com'
+].join(';');
+
+function findMailForRessourceP17(name) {
+  if (!name) return '';
+  var norm = _normNameKey(name).replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!norm) return '';
+  if (P17_NICKNAMES[norm]) return P17_NICKNAMES[norm];
+  var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  for (var i = 0; i < tokens.length; i++) {
+    if (P17_NICKNAMES[tokens[i]]) return P17_NICKNAMES[tokens[i]];
+  }
+  var found = P17_CONTACTS.find(function(c) {
+    var cNorm = _normNameKey(c.name);
+    var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
+    return tokens.some(function(t) { return cTokens.indexOf(t) !== -1; })
+      || cNorm.indexOf(norm) !== -1 || norm.indexOf(cNorm) !== -1;
+  });
+  return found ? found.mail : '';
+}
+
+function getContactMailP17(name) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-p17') || '{}');
+    var manual = map[_normNameKey(name)] || '';
+    if (manual) return manual;
+  } catch(e) {}
+  return findMailForRessourceP17(name);
+}
+
+function saveContactMailP17(name, email) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-p17') || '{}');
+    map[_normNameKey(name)] = email;
+    localStorage.setItem('prnc-contacts-p17', JSON.stringify(map));
+  } catch(e) {}
+}
+
+function notifierRessourceP17(wo) {
+  var item = _planningData.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCache) item = _allPlanningCache.find(function(i){ return i.wo === wo; });
+  if (!item) { alert('WO introuvable.'); return; }
+  if (!item.ressource) { alert('Aucun nom de ressource sur ce WO.'); return; }
+
+  var email = getContactMailP17(item.ressource);
+  if (!email) {
+    var saisie = prompt('Email de ' + item.ressource + ' introuvable dans l\'annuaire. Le saisir :', '');
+    if (saisie === null) return;
+    email = saisie.trim();
+    if (!email || email.indexOf('@') === -1) { alert('Adresse email invalide.'); return; }
+    saveContactMailP17(item.ressource, email);
+  }
+
+  var joursStr = item.jours && item.jours.length ? item.jours.join(', ') : '';
+  var subject = "Matériel disponible — devant l'atelier P17 — " + (item.tag || item.wo);
+
+  var body = 'Bonjour ' + item.ressource + ',\n\n'
+    + "L'équipement suivant est disponible en zone planifiée P17 :\n\n"
+    + 'TAG : ' + (item.tag || '-') + '\n'
+    + 'WO : ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + '\n'
+    + (item.desc ? 'Description : ' + item.desc + '\n' : '')
+    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '')
+    + "\nMerci de prendre en compte ce mail.\n\n"
+    + 'Cordialement,\nAtelier P17 - PRNC';
+
+  mailto(email, subject, body, P17_NOTIF_CC);
+
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t.textContent = '📧 Email préparé pour ' + item.ressource;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
 }
 
 function pChip(l,v) {
