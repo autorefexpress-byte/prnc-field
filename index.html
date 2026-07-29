@@ -9632,15 +9632,25 @@ function importPlanningExcel(input) {
       if (rows.length < 3) return;
 
       // Format MR04: row0=headers, row1=dates jours, row2+=données
-      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12-18=Lun-Dim,19=Ressource
-      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+      // Colonnes: 0=WO,1=WR,4=Task,7=commentaire,8=Tag,9=desc tache,10=desc WO,12..=jours (Lun..),puis=Ressource
+      // Le nb de colonnes jours est variable (5 en semaine normale, 7 si Sam/Dim présents) :
+      // on détecte dynamiquement la colonne RESSOURCES dans l'entête pour bornier la zone des jours.
+      var joursNomsRef = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+      var ressourceCol = 19; // valeur par défaut (ancien format 7 jours)
+      var headerRow = rows[0] || [];
+      for (var hc = 12; hc < headerRow.length; hc++) {
+        var hval = (headerRow[hc]||'').toString().trim().toUpperCase();
+        if (hval.indexOf('RESSOURCE') === 0) { ressourceCol = hc; break; }
+      }
+      var nbJours = Math.max(1, ressourceCol - 12);
       var jours = [];
-      for (var j = 12; j <= 18; j++) {
+      for (var j = 12; j < 12 + nbJours; j++) {
         var dval = rows[1] && rows[1][j];
+        var nom = joursNomsRef[j-12] || ('J'+(j-11));
         if (dval) {
           var d = new Date(dval);
-          jours.push(!isNaN(d) ? joursNoms[j-12]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-12]);
-        } else { jours.push(joursNoms[j-12]); }
+          jours.push(!isNaN(d) ? nom+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : nom);
+        } else { jours.push(nom); }
       }
 
       var woDict = {};
@@ -9655,10 +9665,10 @@ function importPlanningExcel(input) {
         var descTache = (row[9]||'').toString().trim();
         var descWO = (row[10]||'').toString().trim();
         var commentaire = (row[7]||'').toString().trim();
-        var ressource = (row[19]||'').toString().trim();
+        var ressource = (row[ressourceCol]||'').toString().trim();
         var wr = (row[1]||'').toString().trim();
         var joursTache = [];
-        for (var jj = 0; jj < 7; jj++) {
+        for (var jj = 0; jj < nbJours; jj++) {
           var hval = row[12+jj];
           if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
         }
