@@ -10652,15 +10652,34 @@ function importPlanningExcelMC(input) {
       if (rows.length < 3) return;
 
       // Format MCCHAUD: row0=headers, row1=dates jours, row2+=données
-      // Colonnes: 0=WO,2=WR,6=Task,9=ACTIONS/INFOS(commentaire),10=Tag,11=desc tache,12=desc WO,14-18=Lun-Ven,21=Ressources
-      var joursNoms = ['Lun','Mar','Mer','Jeu','Ven'];
+      // La position des colonnes varie selon les exports (ex: colonne S/C présente ou non,
+      // Samedi/Dimanche présents ou non) : on détecte donc chaque colonne via son en-tête
+      // plutôt que via un index fixe.
+      var headerRowMC = rows[0] || [];
+      function _findColMC(matchFn, fallback) {
+        for (var i = 0; i < headerRowMC.length; i++) {
+          var h = (headerRowMC[i]||'').toString().trim().toUpperCase();
+          if (matchFn(h)) return i;
+        }
+        return fallback;
+      }
+      var wrColMC = _findColMC(function(h){ return h === 'WR'; }, 1);
+      var commentColMC = _findColMC(function(h){ return h.indexOf('ACTIONS') === 0 || h.indexOf('COMMENTAIRE') === 0; }, 8);
+      var tagColMC = _findColMC(function(h){ return h === 'TAG'; }, 9);
+      var descTacheColMC = _findColMC(function(h){ return h.indexOf('DESCRIPTIF TACHE') === 0; }, 10);
+      var descWoColMC = _findColMC(function(h){ return h.indexOf('DESCRIPTIF WO') === 0; }, 11);
+      var lundiColMC = _findColMC(function(h){ return h === 'LUNDI'; }, 13);
+      var ressourceColMC = _findColMC(function(h){ return h.indexOf('RESSOURCE') === 0; }, 18);
+      var nbJoursMC = Math.max(1, ressourceColMC - lundiColMC);
+      var joursNomsRefMC = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
       var jours = [];
-      for (var j = 14; j <= 18; j++) {
+      for (var j = lundiColMC; j < lundiColMC + nbJoursMC; j++) {
         var dval = rows[1] && rows[1][j];
+        var nom = joursNomsRefMC[j-lundiColMC] || ('J'+(j-lundiColMC+1));
         if (dval) {
           var d = new Date(dval);
-          jours.push(!isNaN(d) ? joursNoms[j-14]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : joursNoms[j-14]);
-        } else { jours.push(joursNoms[j-14]); }
+          jours.push(!isNaN(d) ? nom+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : nom);
+        } else { jours.push(nom); }
       }
 
       var woDict = {};
@@ -10671,16 +10690,16 @@ function importPlanningExcelMC(input) {
         var row = rows[r];
         if (!row || !row[0]) continue;
         var wo = row[0].toString().trim();
-        var tag = (row[10]||'').toString().trim();
-        var descTache = (row[11]||'').toString().trim();
-        var descWO = (row[12]||'').toString().trim();
-        var commentaire = (row[9]||'').toString().trim();
-        var ressource = (row[21]||'').toString().trim();
-        var wr = (row[2]||'').toString().trim();
+        var tag = (row[tagColMC]||'').toString().trim();
+        var descTache = (row[descTacheColMC]||'').toString().trim();
+        var descWO = (row[descWoColMC]||'').toString().trim();
+        var commentaire = (row[commentColMC]||'').toString().trim();
+        var ressource = (row[ressourceColMC]||'').toString().trim();
+        var wr = (row[wrColMC]||'').toString().trim();
         if (wr.toUpperCase() === 'N/A') wr = '';
         var joursTache = [];
-        for (var jj = 0; jj < 5; jj++) {
-          var hval = row[14+jj];
+        for (var jj = 0; jj < nbJoursMC; jj++) {
+          var hval = row[lundiColMC+jj];
           if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
         }
         if (!woDict[wo]) {
