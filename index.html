@@ -408,6 +408,16 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">PI</div>
       <div class="card-sub">Suivi pièces par WO</div>
     </div>
+    <div class="action-card" onclick="show('s-nc');renderNC()">
+      <div class="card-icon">⚠️</div>
+      <div class="card-lbl">Non-Conformités</div>
+      <div class="card-sub">Rapports NC magasin</div>
+    </div>
+    <div class="action-card" onclick="show('s-kpi');renderKPI()">
+      <div class="card-icon">📊</div>
+      <div class="card-lbl">KPI</div>
+      <div class="card-sub">Indicateurs de performance</div>
+    </div>
     <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
       <div class="card-lbl">Planning Atelier P17</div>
@@ -1708,7 +1718,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud'];
+const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -11146,6 +11156,617 @@ function sauvegarderRemarquePlanningMC(wo) {
   });
 }
 
+
+// ══════════════════════════════════════════
+// NON-CONFORMITÉS
+// ══════════════════════════════════════════
+var NC_KEY = 'prnc-nc';
+var _ncCurrentId = null;
+var _ncWG = '';
+var _kpiPeriode = 'mois';
+
+var NC_TO = [
+  'Alfred.Waima@pronyresources.com',
+  'Bernardino.Asi2@pronyresources.com',
+  'Christophe.Villelongue@pronyresources.com',
+  'gabrielle.pujapujane@pronyresources.com',
+  'Hennerick.Boireau@pronyresources.com',
+  'jonathan.hnasson@pronyresources.com',
+  'TATIANA.POITCHILI@pronyresources.com'
+];
+
+var NC_CC = {
+  chaud: ['abel.vendegou@pronyresources.com','Emmanuel.Rosa@pronyresources.com','pascal.bafue@pronyresources.com'],
+  repar: ['regis.eurimindia@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','Emmanuel.Rosa@pronyresources.com','pascal.bafue@pronyresources.com'],
+  elins: ['Michel.Pierucci@pronyresources.com','Emmanuel.Rosa@pronyresources.com','pascal.bafue@pronyresources.com'],
+  mecus: ['Pierre.Zeoula@pronyresources.com','Emmanuel.Rosa@pronyresources.com','pascal.bafue@pronyresources.com']
+};
+
+var NC_WG_LABELS = { chaud:'MCCHAUD', repar:'MCREPAR', elins:'MCELINS', mecus:'MCMECUS' };
+var NC_WG_COLORS = { chaud:'#7030A0', repar:'#C55A11', elins:'#1F4E79', mecus:'#375623' };
+
+function setNcWG(wg) {
+  _ncWG = wg;
+  ['chaud','repar','elins','mecus'].forEach(function(w) {
+    var el = document.getElementById('nc-wg-' + w);
+    if (!el) return;
+    if (w === wg) {
+      el.style.background = NC_WG_COLORS[w];
+      el.style.color = '#fff';
+      el.style.borderColor = NC_WG_COLORS[w];
+    } else {
+      el.style.background = '';
+      el.style.color = '';
+      el.style.borderColor = '';
+    }
+  });
+}
+
+function getNC() {
+  try { return JSON.parse(localStorage.getItem(NC_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveNCData(data) {
+  try { localStorage.setItem(NC_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function getNcNumero() {
+  var data = getNC();
+  var year = new Date().getFullYear();
+  var max = 0;
+  data.forEach(function(d) {
+    var m = (d.numero||'').match(/NC-\d{4}-(\d+)/);
+    if (m) max = Math.max(max, parseInt(m[1]));
+  });
+  return 'NC-' + year + '-' + String(max + 1).padStart(3, '0');
+}
+
+function initNcForm() {
+  var num = getNcNumero();
+  var el = document.getElementById('nc-num-display');
+  if (el) el.textContent = num;
+  var today = new Date().toISOString().split('T')[0];
+  var dr = document.getElementById('nc-date-recep');
+  if (dr) dr.value = today;
+  var sem = document.getElementById('nc-semaine');
+  if (sem) {
+    var d = new Date();
+    var oneJan = new Date(d.getFullYear(), 0, 1);
+    var week = Math.ceil((((d - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+    sem.value = 'S' + week;
+  }
+  // Reset WG
+  ['chaud','repar','elins','mecus'].forEach(function(w){
+    var el2 = document.getElementById('nc-wg-' + w);
+    if(el2){ el2.style.background=''; el2.style.color=''; el2.style.borderColor=''; }
+  });
+  _ncWG = '';
+}
+
+function saveNC() {
+  var numero = document.getElementById('nc-num-display') ? document.getElementById('nc-num-display').textContent : '';
+  var semaine = document.getElementById('nc-semaine') ? document.getElementById('nc-semaine').value.trim() : '';
+  var ir = document.getElementById('nc-ir') ? document.getElementById('nc-ir').value.trim() : '';
+  var wo = document.getElementById('nc-wo') ? document.getElementById('nc-wo').value.trim() : '';
+  var tag = document.getElementById('nc-tag') ? document.getElementById('nc-tag').value.trim() : '';
+  var dateRecep = document.getElementById('nc-date-recep') ? document.getElementById('nc-date-recep').value : '';
+  var dateRetour = document.getElementById('nc-date-retour') ? document.getElementById('nc-date-retour').value : '';
+  var controlePar = document.getElementById('nc-controle-par') ? document.getElementById('nc-controle-par').value.trim() : '';
+  var remarques = document.getElementById('nc-remarques') ? document.getElementById('nc-remarques').value.trim() : '';
+
+  var types = [];
+  if (document.getElementById('nc-type-mauvaise') && document.getElementById('nc-type-mauvaise').checked) types.push('Mauvaise piece');
+  if (document.getElementById('nc-type-quantite') && document.getElementById('nc-type-quantite').checked) types.push('Quantite incorrecte');
+  if (document.getElementById('nc-type-endommage') && document.getElementById('nc-type-endommage').checked) types.push('Piece endommagee');
+
+  if (!_ncWG) { alert('Selectionnez un Workgroup.'); return; }
+  if (!ir) { alert('Le N° IR/PR est obligatoire.'); return; }
+  if (!dateRecep) { alert('La date de reception est obligatoire.'); return; }
+  if (!types.length) { alert('Selectionnez au moins un type de non-conformite.'); return; }
+
+  var wgl = NC_WG_LABELS[_ncWG] || _ncWG.toUpperCase();
+
+  var cmdSC = document.getElementById('nc-cmd-sc') ? document.getElementById('nc-cmd-sc').value.trim() : '';
+  var cmdPN = document.getElementById('nc-cmd-pn') ? document.getElementById('nc-cmd-pn').value.trim() : '';
+  var cmdQte = document.getElementById('nc-cmd-qte') ? document.getElementById('nc-cmd-qte').value.trim() : '';
+  var cmdDesc = document.getElementById('nc-cmd-desc') ? document.getElementById('nc-cmd-desc').value.trim() : '';
+  var recSC = document.getElementById('nc-rec-sc') ? document.getElementById('nc-rec-sc').value.trim() : '';
+  var recPN = document.getElementById('nc-rec-pn') ? document.getElementById('nc-rec-pn').value.trim() : '';
+  var recQte = document.getElementById('nc-rec-qte') ? document.getElementById('nc-rec-qte').value.trim() : '';
+  var recDesc = document.getElementById('nc-rec-desc') ? document.getElementById('nc-rec-desc').value.trim() : '';
+
+  var dateRecepFR = dateRecep ? new Date(dateRecep).toLocaleDateString('fr-FR') : '--';
+
+  // Sauvegarder pour KPI
+  var data = getNC();
+  var nc = {
+    id: Date.now().toString(),
+    numero: numero,
+    wg: wgl,
+    semaine: semaine,
+    ir: ir,
+    wo: wo,
+    tag: tag,
+    dateRecep: dateRecepFR,
+    dateRetour: dateRetour ? new Date(dateRetour).toLocaleDateString('fr-FR') : '',
+    controlePar: controlePar,
+    types: types,
+    cmd: { sc: cmdSC, pn: cmdPN, qte: cmdQte, desc: cmdDesc },
+    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc },
+    remarques: remarques,
+    statut: dateRetour ? 'Retourne' : 'Ouvert',
+    created_at: new Date().toISOString(),
+    mois: new Date().toISOString().slice(0, 7)
+  };
+  data.unshift(nc);
+  saveNCData(data);
+
+  // Corps du mail
+  var typesTxt = types.join(' + ');
+  var subj = '[' + numero + '] Non-Conformite ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
+  var body = [
+    'Bonjour,', '',
+    'Rapport de non-conformite ' + numero,
+    '',
+    'Workgroup   : ' + wgl,
+    'IR/PR       : ' + ir,
+    wo ? 'WO          : ' + wo : null,
+    tag ? 'TAG         : ' + tag : null,
+    'Semaine     : ' + semaine,
+    'Date recep. : ' + dateRecepFR,
+    'Controle par: ' + controlePar,
+    'Type NC     : ' + typesTxt,
+    '',
+    '--- ITEM COMMANDE ---',
+    cmdSC ? 'S/C  : ' + cmdSC : null,
+    cmdPN ? 'P/N  : ' + cmdPN : null,
+    cmdQte ? 'Qte  : ' + cmdQte : null,
+    cmdDesc ? 'Desc : ' + cmdDesc : null,
+    '',
+    '--- ITEM RECEPTIONNE ---',
+    recSC ? 'S/C  : ' + recSC : null,
+    recPN ? 'P/N  : ' + recPN : null,
+    recQte ? 'Qte  : ' + recQte : null,
+    recDesc ? 'Desc : ' + recDesc : null,
+    remarques ? '' : null,
+    remarques ? 'Remarques : ' + remarques : null,
+    '',
+    'NB : Photos a joindre separement via Outlook.',
+    '',
+    'Cordialement,',
+    'Emmanuel ROSA ASIK',
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].filter(function(l){ return l !== null; }).join('\n');
+
+  var toList = NC_TO.join(',');
+  var ccList = (NC_CC[_ncWG] || []).join(',');
+  var mailTo = 'mailto:' + toList +
+    '?subject=' + encodeURIComponent(subj) +
+    '&body=' + encodeURIComponent(body) +
+    (ccList ? '&cc=' + ccList : '');
+  window.location.href = mailTo;
+
+  // Reset formulaire
+  ['nc-ir','nc-wo','nc-tag','nc-remarques','nc-cmd-sc','nc-cmd-pn','nc-cmd-qte','nc-cmd-desc',
+   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.checked = false;
+  });
+  var dr2 = document.getElementById('nc-date-retour'); if(dr2) dr2.value = '';
+  ['chaud','repar','elins','mecus'].forEach(function(w){
+    var el = document.getElementById('nc-wg-' + w);
+    if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+  });
+  _ncWG = '';
+
+  show('s-nc');
+  renderNC();
+}
+
+function renderNC() {
+  var list = document.getElementById('nc-list');
+  if (!list) return;
+  var search = (document.getElementById('nc-search')||{value:''}).value.toLowerCase();
+  var data = getNC();
+
+  var moisCourant = new Date().toISOString().slice(0, 7);
+  var moisCount = data.filter(function(d){ return d.mois === moisCourant; }).length;
+  var ouvertCount = data.filter(function(d){ return d.statut === 'Ouvert'; }).length;
+  var el1 = document.getElementById('nc-count-mois'); if(el1) el1.textContent = moisCount;
+  var el2 = document.getElementById('nc-count-total'); if(el2) el2.textContent = data.length;
+  var el3 = document.getElementById('nc-count-ouvert'); if(el3) el3.textContent = ouvertCount;
+
+  var filtered = data.filter(function(d) {
+    if (!search) return true;
+    return (d.numero||'').toLowerCase().includes(search) ||
+           (d.ir||'').toLowerCase().includes(search) ||
+           (d.wo||'').toLowerCase().includes(search) ||
+           (d.tag||'').toLowerCase().includes(search) ||
+           (d.wg||'').toLowerCase().includes(search);
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">Aucun rapport NC</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(function(d) {
+    var statColor = d.statut === 'Retourne' ? '#375623' : '#C00000';
+    var statBg = d.statut === 'Retourne' ? '#E2EFDA' : '#FCE4D6';
+    var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
+    return '<div data-ncid="' + d.id + '" onclick="ouvrirDetailNC(this.dataset.ncid)" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
+        '<div style="font-weight:800;font-size:14px;color:#C00000">' + (d.numero||'--') + '</div>' +
+        '<div style="background:' + statBg + ';color:' + statColor + ';border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700">' + (d.statut||'Ouvert') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">' +
+        '<div style="background:' + wgColor + ';color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (d.wg||'--') + '</div>' +
+        '<div style="font-size:12px;color:#555">IR : ' + (d.ir||'--') + (d.wo ? ' · WO : ' + d.wo : '') + '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#888">' + (d.semaine||'') + ' · ' + (d.dateRecep||'--') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function ouvrirDetailNC(id) {
+  _ncCurrentId = id;
+  var data = getNC();
+  var d = data.find(function(x){ return x.id === id; });
+  if (!d) return;
+
+  var title = document.getElementById('nc-detail-title');
+  if (title) title.textContent = d.numero || 'Rapport NC';
+
+  var content = document.getElementById('nc-detail-content');
+  var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
+
+  if (content) content.innerHTML =
+    '<div style="background:#FCE4D6;border-radius:10px;padding:10px;margin-bottom:12px">' +
+      '<div style="font-weight:700;color:#C00000">' + (d.numero||'--') + '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:4px">' +
+        '<span style="background:' + wgColor + ';color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (d.wg||'--') + '</span>' +
+        '<span style="font-size:11px;color:#555">' + (d.semaine||'') + ' · ' + (d.dateRecep||'--') + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-bottom:10px;font-size:13px">' +
+      'IR/PR : <strong>' + (d.ir||'--') + '</strong><br>' +
+      (d.wo ? 'WO : <strong>' + d.wo + '</strong><br>' : '') +
+      (d.tag ? 'TAG : <strong>' + d.tag + '</strong><br>' : '') +
+      'Controlé par : ' + (d.controlePar||'--') +
+    '</div>' +
+    '<div style="margin-bottom:10px">' +
+      '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
+      (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
+      '</div>' +
+      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
+      '</div>' +
+    '</div>' +
+    (d.dateRetour ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">Retourne au magasin le ' + d.dateRetour + '</div>' : '') +
+    (d.remarques ? '<div style="margin-top:8px;font-size:12px;color:#555;font-style:italic">' + d.remarques + '</div>' : '');
+
+  show('s-nc-detail');
+}
+
+function majDateRetourNC() {
+  var data = getNC();
+  var d = data.find(function(x){ return x.id === _ncCurrentId; });
+  if (!d) return;
+  var date = prompt('Date de retour magasin (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
+  if (!date) return;
+  d.dateRetour = date;
+  d.statut = 'Retourne';
+  saveNCData(data);
+  ouvrirDetailNC(_ncCurrentId);
+}
+
+function supprimerNC() {
+  if (!confirm('Supprimer ce rapport NC ?')) return;
+  saveNCData(getNC().filter(function(x){ return x.id !== _ncCurrentId; }));
+  show('s-nc');
+  renderNC();
+}
+
+// ══ KPI ══
+function setKpiPeriode(p) {
+  _kpiPeriode = p;
+  ['semaine','mois','trimestre'].forEach(function(k) {
+    var el = document.getElementById('kpi-btn-' + k);
+    if (el) el.className = 'type-btn' + (k === p ? ' on' : '');
+  });
+  renderKPI();
+}
+
+async function renderKPI() {
+  var content = document.getElementById('kpi-content');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+
+  var records = [];
+  try { records = await dbLoad(); } catch(e) {}
+  var ncData = getNC();
+  var now = new Date();
+  var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
+
+  function getPeriodKey(dateStr, periode) {
+    if (!dateStr) return null;
+    var parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    var d = new Date(parts[2], parts[1]-1, parts[0]);
+    if (isNaN(d)) return null;
+    if (periode === 'semaine') {
+      var oneJan = new Date(d.getFullYear(), 0, 1);
+      var week = Math.ceil((((d-oneJan)/86400000)+oneJan.getDay()+1)/7);
+      return d.getFullYear() + '-S' + String(week).padStart(2,'0');
+    } else if (periode === 'mois') {
+      return parts[2] + '-' + parts[1];
+    } else {
+      return parts[2] + '-T' + Math.ceil(parseInt(parts[1])/3);
+    }
+  }
+
+  var nowFR = now.toLocaleDateString('fr-FR');
+  var currentKey = getPeriodKey(nowFR, _kpiPeriode);
+  var byPeriod = {};
+  arrivees.forEach(function(r) {
+    var k = getPeriodKey(r.date, _kpiPeriode);
+    if (!k) return;
+    if (!byPeriod[k]) byPeriod[k] = { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
+    byPeriod[k].total++;
+    if (r.wg) byPeriod[k][r.wg] = (byPeriod[k][r.wg]||0)+1;
+  });
+
+  var periods = Object.keys(byPeriod).sort().reverse();
+  var current = byPeriod[currentKey] || { total:0, MCCHAUD:0, MCREPAR:0, STROB:0 };
+  var prevKey = periods[periods[0]===currentKey ? 1 : 0];
+  var prev = (prevKey && prevKey !== currentKey && byPeriod[prevKey]) || { total:0 };
+
+  var diff = current.total - prev.total;
+  var diffTxt = diff > 0 ? '+' + diff : String(diff);
+  var diffColor = diff > 0 ? '#C55A11' : diff < 0 ? '#375623' : '#888';
+  var periodeLabel = _kpiPeriode === 'semaine' ? 'Cette semaine' : _kpiPeriode === 'mois' ? 'Ce mois' : 'Ce trimestre';
+  var prevLabel = _kpiPeriode === 'semaine' ? 'Sem. prec.' : _kpiPeriode === 'mois' ? 'Mois prec.' : 'Trim. prec.';
+
+  var moisCourant = now.toISOString().slice(0,7);
+  var ncMois = ncData.filter(function(d){ return d.mois === moisCourant; });
+
+  var html = '';
+
+  // Arrivées
+  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Equipements arrives</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:12px">' +
+      '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#1565C0">' + current.total + '</div>' +
+        '<div style="font-size:10px;color:#1565C0">' + periodeLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#555">' + prev.total + '</div>' +
+        '<div style="font-size:10px;color:#888">' + prevLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid ' + diffColor + '">' +
+        '<div style="font-size:24px;font-weight:800;color:' + diffColor + '">' + diffTxt + '</div>' +
+        '<div style="font-size:10px;color:#888">Evolution</div>' +
+      '</div>' +
+    '</div>' +
+    ['MCCHAUD','MCREPAR','STROB'].map(function(wg) {
+      var val = current[wg]||0;
+      var pct = current.total>0 ? Math.round(val/current.total*100) : 0;
+      var colors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56'};
+      return '<div style="margin-bottom:6px">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+          '<span style="font-size:12px;font-weight:700;color:' + colors[wg] + '">' + wg + '</span>' +
+          '<span style="font-size:12px">' + val + ' (' + pct + '%)</span>' +
+        '</div>' +
+        '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
+          '<div style="background:' + colors[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+        '</div></div>';
+    }).join('') +
+  '</div>';
+
+  // NC
+  var ncTypes = {'Mauvaise piece':0,'Quantite incorrecte':0,'Piece endommagee':0};
+  ncMois.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
+
+  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+    '<div style="font-weight:700;color:#C00000;margin-bottom:10px">Non-Conformites — Ce mois</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="flex:1;background:#FCE4D6;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#C00000">' + ncMois.length + '</div>' +
+        '<div style="font-size:10px;color:#C00000">Total NC</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncMois.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
+        '<div style="font-size:10px;color:#375623">Retournes</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncMois.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
+        '<div style="font-size:10px;color:#E65100">Ouverts</div>' +
+      '</div>' +
+    '</div>' +
+    Object.keys(ncTypes).map(function(t) {
+      var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥'};
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
+        '<span>' + (icons[t]||'') + ' ' + t + '</span><span style="font-weight:700">' + ncTypes[t] + '</span></div>';
+    }).join('') +
+  '</div>';
+
+  // Historique
+  if (periods.length > 0) {
+    html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+      '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique</div>' +
+      periods.slice(0,6).map(function(p) {
+        var d = byPeriod[p];
+        var isCurrent = p === currentKey;
+        return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0">' +
+          '<span style="font-size:12px;' + (isCurrent?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isCurrent?' (actuel)':'') + '</span>' +
+          '<span style="font-weight:700">' + d.total + '</span></div>';
+      }).join('') +
+    '</div>';
+  }
+
+  content.innerHTML = html;
+}
+
+async function exportKpiExcel() {
+  if (typeof XLSX === 'undefined') { alert('Librairie Excel en chargement, reessayez.'); return; }
+  var records = [];
+  try { records = await dbLoad(); } catch(e) {}
+  var ncData = getNC();
+  var wb = XLSX.utils.book_new();
+
+  var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
+  var ws1 = XLSX.utils.aoa_to_sheet([['Date','WO','TAG','WR','Workgroup','Stock Code','Statut']].concat(
+    arrivees.map(function(r){ return [r.date||'',r.wo||'',r.tag||'',r.wr||'',r.wg||'',r.sc||'',r.statut||'']; })
+  ));
+  XLSX.utils.book_append_sheet(wb, ws1, 'Arrivees');
+
+  var ws2 = XLSX.utils.aoa_to_sheet([['N° Rapport','WG','Semaine','IR/PR','WO','TAG','Date Recep.','Date Retour','Type NC','S/C Cmd','S/C Recu','Statut']].concat(
+    ncData.map(function(d){ return [d.numero||'',d.wg||'',d.semaine||'',d.ir||'',d.wo||'',d.tag||'',d.dateRecep||'',d.dateRetour||'',(d.types||[]).join(' + '),(d.cmd&&d.cmd.sc)||'',(d.rec&&d.rec.sc)||'',d.statut||'']; })
+  ));
+  XLSX.utils.book_append_sheet(wb, ws2, 'Non-Conformites');
+
+  var byMois = {};
+  arrivees.forEach(function(r) {
+    if (!r.date) return;
+    var p = r.date.split('/'); if(p.length!==3) return;
+    var m = p[2]+'-'+p[1];
+    if (!byMois[m]) byMois[m]={total:0,MCCHAUD:0,MCREPAR:0,STROB:0};
+    byMois[m].total++;
+    if(r.wg) byMois[m][r.wg]=(byMois[m][r.wg]||0)+1;
+  });
+  var ws3 = XLSX.utils.aoa_to_sheet([['Mois','Total Arrivees','MCCHAUD','MCREPAR','STROB','NC Total']].concat(
+    Object.keys(byMois).sort().reverse().map(function(m){
+      var d=byMois[m];
+      var nc=ncData.filter(function(n){ return n.mois===m; }).length;
+      return [m,d.total,d.MCCHAUD||0,d.MCREPAR||0,d.STROB||0,nc];
+    })
+  ));
+  XLSX.utils.book_append_sheet(wb, ws3, 'KPI par mois');
+
+  var today = new Date().toLocaleDateString('fr-FR').replace(/[/]/g,'-');
+  XLSX.writeFile(wb, 'PRNC_KPI_' + today + '.xlsx');
+}
+
+
+// ══ CATALOGUE ARTICLES (chargé depuis catalog.json) ══
+var _catalog = null;
+var _catalogLoading = false;
+
+async function loadCatalog() {
+  if (_catalog) return _catalog;
+  if (_catalogLoading) return null;
+  _catalogLoading = true;
+  try {
+    var resp = await fetch('/catalog.json');
+    if (resp.ok) {
+      _catalog = await resp.json();
+      console.log('Catalogue chargé:', Object.keys(_catalog).length, 'articles');
+    }
+  } catch(e) {
+    console.warn('Catalogue non disponible:', e);
+  }
+  _catalogLoading = false;
+  return _catalog;
+}
+
+// Calculer la semaine depuis la date de réception
+function calcSemaineFromDate(dateStr) {
+  if (!dateStr) return;
+  var d = new Date(dateStr);
+  if (isNaN(d)) return;
+  var oneJan = new Date(d.getFullYear(), 0, 1);
+  var week = Math.ceil((((d - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+  var sem = document.getElementById('nc-semaine');
+  if (sem) sem.value = 'S' + week;
+}
+
+// Rechercher un article par Stock Code
+async function rechercherArticle(sc, type) {
+  var suggestEl = document.getElementById('nc-' + type + '-suggest');
+  if (!suggestEl) return;
+
+  sc = sc.trim();
+  if (sc.length < 4) {
+    suggestEl.style.display = 'none';
+    return;
+  }
+
+  var catalog = await loadCatalog();
+  if (!catalog) return;
+
+  // Chercher avec et sans zéros leading
+  var scPadded = sc.padStart(9, '0');
+  var scNoZero = sc.replace(/^0+/, '');
+
+  var results = [];
+  // Cherche exacte d'abord
+  if (catalog[sc]) results.push({ sc: sc, ...catalog[sc] });
+  else if (catalog[scPadded]) results.push({ sc: scPadded, ...catalog[scPadded] });
+  else if (catalog[scNoZero]) results.push({ sc: scNoZero, ...catalog[scNoZero] });
+
+  // Si pas de résultat exact, chercher partiel (max 5)
+  if (!results.length) {
+    var keys = Object.keys(catalog);
+    for (var i = 0; i < keys.length && results.length < 5; i++) {
+      if (keys[i].includes(sc) || keys[i].replace(/^0+/,'').startsWith(scNoZero)) {
+        results.push({ sc: keys[i], ...catalog[keys[i]] });
+      }
+    }
+  }
+
+  if (!results.length) {
+    suggestEl.style.display = 'none';
+    return;
+  }
+
+  suggestEl.style.display = 'block';
+  suggestEl.innerHTML = results.slice(0, 5).map(function(r) {
+    return '<div data-type="' + type + '" data-sc="' + r.sc + '" onclick="selectionnerArticle(this.dataset.type,this.dataset.sc)" ' +
+      'style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:12px" ' +
+      'style="cursor:pointer;border-bottom:1px solid #f0f0f0;padding:10px 12px">' +
+      '<div style="font-weight:700;color:#1F3864">' + r.sc + ' — ' + (r.item||'') + '</div>' +
+      '<div style="color:#555;font-size:11px;margin-top:2px">' + (r.desc||'').slice(0,60) + '</div>' +
+      (r.pn ? '<div style="color:#888;font-size:10px">P/N : ' + r.pn + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function selectionnerArticle(type, sc) {
+  if (!_catalog || !_catalog[sc]) return;
+  var entry = _catalog[sc];
+
+  // Remplir les champs
+  var scEl = document.getElementById('nc-' + type + '-sc');
+  var pnEl = document.getElementById('nc-' + type + '-pn');
+  var descEl = document.getElementById('nc-' + type + '-desc');
+
+  if (scEl) scEl.value = sc;
+  if (pnEl && entry.pn) pnEl.value = entry.pn;
+  if (descEl && entry.desc) descEl.value = entry.desc;
+
+  // Fermer les suggestions
+  var suggestEl = document.getElementById('nc-' + type + '-suggest');
+  if (suggestEl) suggestEl.style.display = 'none';
+}
+
+// Charger le catalogue au démarrage
+loadCatalog();
+
+
 </script>
 
 <!-- POPUP CONTACT PICKER -->
@@ -11165,6 +11786,240 @@ function sauvegarderRemarquePlanningMC(wo) {
 
 
 <!-- ═══════════════ NUMPAD ═══════════════ -->
+
+<!-- ═══════════════ NON-CONFORMITÉS ═══════════════ -->
+<div class="screen" id="s-nc">
+  <div class="form-header" style="background:linear-gradient(135deg,#C00000,#FF0000);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">⚠️ Non-Conformités</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Rapports NC — Magasin</div>
+    </div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Stats -->
+    <div style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#C00000,#FF0000)">
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-mois" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📅 Ce mois</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-ouvert" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">🔓 Ouverts</div>
+      </div>
+    </div>
+    <!-- Recherche + bouton -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <input class="fi" type="text" id="nc-search" placeholder="🔍 Rechercher WO, IR, TAG..."
+        oninput="renderNC()" style="flex:1;margin:0">
+      <button onclick="show('s-nc-nouveau')" style="background:#C00000;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+        ➕ Nouveau
+      </button>
+    </div>
+    <!-- Liste NC -->
+    <div id="nc-list" style="padding:10px 14px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ NOUVEAU RAPPORT NC ═══════════════ -->
+<div class="screen" id="s-nc-nouveau">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-nc')">←</div>
+    <div class="form-title">Nouveau Rapport NC</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C00000">⚠️ NC</div>
+  </div>
+  <div class="form-body">
+    <!-- N° rapport auto -->
+    <div class="field-grp">
+      <div class="field-lbl">N° Rapport</div>
+      <div id="nc-num-display" style="background:#f0f0f0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;color:#C00000">NC-2026-001</div>
+    </div>
+
+    <!-- Workgroup -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button class="wg-btn" id="nc-wg-chaud" onclick="setNcWG('chaud')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">MCCHAUD</button>
+        <button class="wg-btn" id="nc-wg-repar" onclick="setNcWG('repar')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">MCREPAR</button>
+        <button class="wg-btn" id="nc-wg-elins" onclick="setNcWG('elins')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">MCELINS</button>
+        <button class="wg-btn" id="nc-wg-mecus" onclick="setNcWG('mecus')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">MCMECUS</button>
+      </div>
+    </div>
+
+    <!-- Semaine auto -->
+    <div class="field-grp">
+      <div class="field-lbl">Semaine <span style="font-size:10px;color:var(--muted)">(calculée automatiquement)</span></div>
+      <input class="fi" type="text" id="nc-semaine" placeholder="S17" readonly style="background:#f5f5f5;color:#1F3864;font-weight:700">
+    </div>
+
+    <!-- IR/PR -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> N° IR/PR</div>
+      <input class="fi" type="text" id="nc-ir" placeholder="Ex : D32958">
+    </div>
+
+    <!-- WO -->
+    <div class="field-grp">
+      <div class="field-lbl">WO</div>
+      <input class="fi" type="text" id="nc-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('nc-wo','N° WO')">
+    </div>
+
+    <!-- TAG -->
+    <div class="field-grp">
+      <div class="field-lbl">TAG Équipement</div>
+      <input class="fi" type="text" id="nc-tag" placeholder="Ex : 220-X-00315">
+    </div>
+
+    <!-- Date réception -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Date de réception</div>
+      <input class="fi" type="date" id="nc-date-recep" onchange="calcSemaineFromDate(this.value)">
+    </div>
+
+    <!-- Contrôlé par -->
+    <div class="field-grp">
+      <div class="field-lbl">Contrôlé par</div>
+      <input class="fi" type="text" id="nc-controle-par" value="Emmanuel ROSA ASIK">
+    </div>
+
+    <!-- Type NC -->
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Type de non-conformité</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="nc-type-mauvaise" style="width:18px;height:18px;accent-color:#C00000">
+          <span style="font-size:13px;font-weight:600">🔄 Mauvaise pièce</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="nc-type-quantite" style="width:18px;height:18px;accent-color:#C00000">
+          <span style="font-size:13px;font-weight:600">🔢 Quantité incorrecte</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="nc-type-endommage" style="width:18px;height:18px;accent-color:#C00000">
+          <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Séparateur -->
+    <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
+      <div style="font-weight:700;font-size:12px;color:#C00000">ITEM COMMANDÉ</div>
+    </div>
+
+    <!-- Item commandé -->
+    <div class="field-grp">
+      <div class="field-lbl">S/C (Stock Code)</div>
+      <input class="fi" type="text" id="nc-cmd-sc" placeholder="Ex : 158659 ou 000158659"
+        oninput="rechercherArticle(this.value,'cmd')" autocomplete="off">
+      <div id="nc-cmd-suggest" style="display:none;background:#fff;border:1px solid #ddd;border-radius:10px;margin-top:4px;max-height:150px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">P/N (Part Number)</div>
+      <input class="fi" type="text" id="nc-cmd-pn" placeholder="Ex : ABC-123">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Quantité commandée</div>
+      <input class="fi" type="text" id="nc-cmd-qte" placeholder="Ex : 2" onclick="ouvrirNumpad('nc-cmd-qte','Qté commandée')">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Description</div>
+      <input class="fi" type="text" id="nc-cmd-desc" placeholder="Ex : Joint torique TI Grade 12">
+    </div>
+
+    <!-- Séparateur -->
+    <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
+      <div style="font-weight:700;font-size:12px;color:#1F3864">ITEM RÉCEPTIONNÉ</div>
+    </div>
+
+    <!-- Item reçu -->
+    <div class="field-grp">
+      <div class="field-lbl">S/C (Stock Code)</div>
+      <input class="fi" type="text" id="nc-rec-sc" placeholder="Ex : 158660 ou 000158660"
+        oninput="rechercherArticle(this.value,'rec')" autocomplete="off">
+      <div id="nc-rec-suggest" style="display:none;background:#fff;border:1px solid #ddd;border-radius:10px;margin-top:4px;max-height:150px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">P/N (Part Number)</div>
+      <input class="fi" type="text" id="nc-rec-pn" placeholder="Ex : ABC-124">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Quantité reçue</div>
+      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Description</div>
+      <input class="fi" type="text" id="nc-rec-desc" placeholder="Ex : Joint torique SS Grade 2">
+    </div>
+
+    <!-- Date retour magasin -->
+    <div class="field-grp">
+      <div class="field-lbl">Date retour magasin</div>
+      <input class="fi" type="date" id="nc-date-retour">
+    </div>
+
+    <!-- Remarques -->
+    <div class="field-grp">
+      <div class="field-lbl">Remarques</div>
+      <textarea class="fi" id="nc-remarques" rows="3" placeholder="Détails supplémentaires..."></textarea>
+    </div>
+
+    <button onclick="saveNC()" class="send-btn" style="background:#C00000">
+      📧 Enregistrer et envoyer
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════ DETAIL NC ═══════════════ -->
+<div class="screen" id="s-nc-detail">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-nc');renderNC()">←</div>
+    <div class="form-title" id="nc-detail-title">Rapport NC</div>
+    <div class="form-badge" style="background:#FCE4D6;color:#C00000">⚠️ NC</div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <div id="nc-detail-content" style="padding:14px"></div>
+    <div style="padding:10px 14px;display:flex;gap:8px">
+      <button onclick="majDateRetourNC()" style="flex:1;background:#1F4E79;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📅 Retour magasin
+      </button>
+      <button onclick="supprimerNC()" style="background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ KPI ═══════════════ -->
+<div class="screen" id="s-kpi">
+  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">📊 KPI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Indicateurs de performance</div>
+    </div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <!-- Filtre période -->
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px">
+      <button onclick="setKpiPeriode('semaine')" id="kpi-btn-semaine" class="type-btn" style="flex:1;font-size:12px">Semaine</button>
+      <button onclick="setKpiPeriode('mois')" id="kpi-btn-mois" class="type-btn on" style="flex:1;font-size:12px">Mois</button>
+      <button onclick="setKpiPeriode('trimestre')" id="kpi-btn-trimestre" class="type-btn" style="flex:1;font-size:12px">Trimestre</button>
+    </div>
+    <!-- Contenu KPI -->
+    <div id="kpi-content" style="padding:12px 14px"></div>
+    <!-- Bouton export -->
+    <div style="padding:10px 14px">
+      <button onclick="exportKpiExcel()" style="width:100%;background:#375623;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        📥 Exporter Excel
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="numpad-overlay" id="numpad-overlay" onclick="fermerNumpad()">
   <div style="background:#f4f6fb;border-radius:18px 18px 0 0;width:100%;padding:16px;box-sizing:border-box" onclick="event.stopPropagation()">
     <div class="numpad-label" id="numpad-label">SAISIE</div>
