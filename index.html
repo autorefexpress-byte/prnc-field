@@ -72,14 +72,16 @@ input.fi:focus,select.fi:focus,textarea.fi:focus{outline:none;border-color:var(-
 textarea.fi{resize:none;height:68px;line-height:1.5}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-.wg-grp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.wg-btn{padding:11px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
-.wg-icon{font-size:18px;margin-bottom:4px}
-.wg-lbl{font-size:12px;font-weight:700;color:var(--text)}
-.wg-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.wg-grp{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.wg-btn{padding:9px 3px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
+.wg-icon{font-size:15px;margin-bottom:2px}
+.wg-lbl{font-size:10.5px;font-weight:700;color:var(--text)}
+.wg-sub{font-size:8px;color:var(--muted);margin-top:1px}
 .wg-btn.on-chaud{border-color:var(--orange);background:var(--lorange)}.wg-btn.on-chaud .wg-lbl{color:var(--orange)}
 .wg-btn.on-repar{border-color:var(--blue);background:var(--lblue)}.wg-btn.on-repar .wg-lbl{color:var(--navy2)}
 .wg-btn.on-strob{border-color:var(--purple);background:var(--lpurple)}.wg-btn.on-strob .wg-lbl{color:var(--purple)}
+.wg-btn.on-elins{border-color:#1F4E79;background:var(--llblue)}.wg-btn.on-elins .wg-lbl{color:#1F4E79}
+.wg-btn.on-mecus{border-color:var(--green);background:var(--lgreen)}.wg-btn.on-mecus .wg-lbl{color:var(--green)}
 .statut-grp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .statut-btn{padding:12px 8px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
 .statut-icon{font-size:20px;margin-bottom:4px}
@@ -119,6 +121,8 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .c-check.on-chaud{background:var(--orange);border-color:var(--orange);color:#fff}
 .c-check.on-repar{background:var(--blue);border-color:var(--blue);color:#fff}
 .c-check.on-strob{background:var(--purple);border-color:var(--purple);color:#fff}
+.c-check.on-elins{background:#1F4E79;border-color:#1F4E79;color:#fff}
+.c-check.on-mecus{background:var(--green);border-color:var(--green);color:#fff}
 .c-check.on-generic{background:var(--navy);border-color:var(--navy);color:#fff}
 .c-avatar{width:32px;height:32px;border-radius:50%;background:var(--grey);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--muted)}
 .c-info{flex:1;min-width:0}
@@ -337,11 +341,6 @@ function _initLocSel(selId, inpId, val) {
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
   <div class="action-grid">
 
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-fsuiveuse')">
-      <div class="card-icon" style="background:var(--llblue);color:var(--navy2)">&#128203;</div>
-      <div class="card-lbl">Fiche suiveuse</div>
-      <div class="card-sub">Saisir depuis la fiche</div>
-    </div>
     <div class="action-card" onclick="if(!checkConsultMode())show('s-equip')">
       <div class="card-icon green">&#9989;</div>
       <div class="card-lbl">Équipement terminé</div>
@@ -351,11 +350,6 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-icon purple">&#128229;</div>
       <div class="card-lbl">Équipement arrivé</div>
       <div class="card-sub">Notifier à l'arrivée</div>
-    </div>
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-usage')">
-      <div class="card-icon red">&#9889;</div>
-      <div class="card-lbl">Usage direct</div>
-      <div class="card-sub">Utilisation sur site</div>
     </div>
     <div class="action-card" onclick="show('s-peinture')">
       <div class="card-icon orange">&#127912;</div>
@@ -458,7 +452,8 @@ function _initLocSel(selId, inpId, val) {
       <div class="wg-grp">
         <div class="wg-btn" id="ar-wg-chaud" onclick="setWG('ar','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
         <div class="wg-btn" id="ar-wg-repar" onclick="setWG('ar','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
-        <div class="wg-btn" id="ar-wg-strob" onclick="setWG('ar','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
+        <div class="wg-btn" id="ar-wg-elins" onclick="setWG('ar','elins')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">MCELINS</div><div class="wg-sub">Élec. / Instrum.</div></div>
+        <div class="wg-btn" id="ar-wg-mecus" onclick="setWG('ar','mecus')"><div class="wg-icon">&#9881;</div><div class="wg-lbl">MCMECUS</div><div class="wg-sub">Mécanique Usine</div></div>
       </div>
     </div>
 
@@ -514,7 +509,6 @@ function _initLocSel(selId, inpId, val) {
       <div class="statut-grp">
         <div class="statut-btn" id="ar-diag" onclick="setStatut('diag')"><div class="statut-icon">&#128269;</div><div class="statut-lbl">En attente diagnostic</div><div class="statut-sub">Inspection à faire</div></div>
         <div class="statut-btn" id="ar-urg" onclick="setStatut('urg')"><div class="statut-icon">&#9888;</div><div class="statut-lbl" style="color:var(--red)">URGENCE</div><div class="statut-sub">Traitement immédiat</div></div>
-        <div class="statut-btn" id="ar-etna" onclick="setStatut('etna')"><div class="statut-icon">&#127912;</div><div class="statut-lbl" style="color:var(--orange)">Retour ETNA</div><div class="statut-sub">Check qualité à faire</div></div>
       </div>
     </div>
     <div class="field-grp">
@@ -585,7 +579,8 @@ function _initLocSel(selId, inpId, val) {
       <div class="wg-grp">
         <div class="wg-btn" id="eq-wg-chaud" onclick="setWG('eq','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
         <div class="wg-btn" id="eq-wg-repar" onclick="setWG('eq','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
-        <div class="wg-btn" id="eq-wg-strob" onclick="setWG('eq','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
+        <div class="wg-btn" id="eq-wg-elins" onclick="setWG('eq','elins')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">MCELINS</div><div class="wg-sub">Élec. / Instrum.</div></div>
+        <div class="wg-btn" id="eq-wg-mecus" onclick="setWG('eq','mecus')"><div class="wg-icon">&#9881;</div><div class="wg-lbl">MCMECUS</div><div class="wg-sub">Mécanique Usine</div></div>
       </div>
     </div>
 
@@ -720,6 +715,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="wg-grp">
         <div class="wg-btn" id="pt-wg-chaud" onclick="setPtWG('chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
         <div class="wg-btn" id="pt-wg-repar" onclick="setPtWG('repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
+        <div class="wg-btn" id="pt-wg-mecus" onclick="setPtWG('mecus')"><div class="wg-icon">&#9881;</div><div class="wg-lbl">MCMECUS</div><div class="wg-sub">Mécanique Usine</div></div>
       </div>
     </div>
 
@@ -870,6 +866,8 @@ function _initLocSel(selId, inpId, val) {
     <div style="background:#FCE4D6;color:#C55A11;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCREPAR : <span id="cnt-repar">0</span></div>
     <div style="background:#E1F5EE;color:#0F6E56;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STROB : <span id="cnt-strob">0</span></div>
     <div style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STCHAUD : <span id="cnt-stchaud">0</span></div>
+    <div style="background:#DEEAF1;color:#1F4E79;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCELINS : <span id="cnt-elins">0</span></div>
+    <div style="background:#E2EFDA;color:#375623;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCMECUS : <span id="cnt-mecus">0</span></div>
     <div style="background:#f0f0f0;color:#555;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">Total : <span id="cnt-total">0</span></div>
   </div>
   <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
@@ -1201,7 +1199,8 @@ function _initLocSel(selId, inpId, val) {
       <div class="wg-grp">
         <div class="wg-btn" id="cal-wg-chaud" onclick="setWG('cal','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
         <div class="wg-btn" id="cal-wg-repar" onclick="setWG('cal','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
-        <div class="wg-btn" id="cal-wg-strob" onclick="setWG('cal','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
+        <div class="wg-btn" id="cal-wg-elins" onclick="setWG('cal','elins')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">MCELINS</div><div class="wg-sub">Élec. / Instrum.</div></div>
+        <div class="wg-btn" id="cal-wg-mecus" onclick="setWG('cal','mecus')"><div class="wg-icon">&#9881;</div><div class="wg-lbl">MCMECUS</div><div class="wg-sub">Mécanique Usine</div></div>
       </div>
     </div>
 
@@ -1345,7 +1344,8 @@ function _initLocSel(selId, inpId, val) {
       <div class="wg-grp">
         <div class="wg-btn" id="cr-wg-chaud" onclick="setWG('cr','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div></div>
         <div class="wg-btn" id="cr-wg-repar" onclick="setWG('cr','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div></div>
-        <div class="wg-btn" id="cr-wg-strob" onclick="setWG('cr','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div></div>
+        <div class="wg-btn" id="cr-wg-elins" onclick="setWG('cr','elins')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">MCELINS</div></div>
+        <div class="wg-btn" id="cr-wg-mecus" onclick="setWG('cr','mecus')"><div class="wg-icon">&#9881;</div><div class="wg-lbl">MCMECUS</div></div>
       </div>
     </div>
 
@@ -1526,7 +1526,6 @@ function _initLocSel(selId, inpId, val) {
   <div class="nav-item on" id="nav-home"   onclick="show('s-home')"><div class="nav-icon">&#127968;</div><div class="nav-lbl">Accueil</div></div>
   <div class="nav-item" id="nav-arrive"    onclick="show('s-arrive')"><div class="nav-icon">&#128229;</div><div class="nav-lbl">Arrivée</div></div>
   <div class="nav-item" id="nav-equip"     onclick="show('s-equip')"><div class="nav-icon">&#9989;</div><div class="nav-lbl">Terminé</div></div>
-  <div class="nav-item" id="nav-usage"     onclick="show('s-usage')"><div class="nav-icon">&#9889;</div><div class="nav-lbl">Usage</div></div>
   <div class="nav-item" id="nav-hist" onclick="show('s-hist')"><div class="nav-icon">&#128202;</div><div class="nav-lbl">Histo.</div></div>
   <div class="nav-item" id="nav-templates" onclick="show('s-templates');updateTemplateStatus()"><div class="nav-icon">📄</div><div class="nav-lbl">Tmpl.</div></div>
 </div>
@@ -1563,6 +1562,12 @@ const WG_CONTACTS = {
     {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
     {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
   ]},
+  elins: { label:'MCELINS', contacts:[
+    // TODO: contacts MCELINS à compléter
+  ]},
+  mecus: { label:'MCMECUS', contacts:[
+    // TODO: contacts MCMECUS à compléter
+  ]},
 };
 
 const AR_CONTACTS = {
@@ -1578,6 +1583,7 @@ const AR_CONTACTS = {
     {name:'Pascal BAFUE',         mail:'pascal.bafue@pronyresources.com',          self:false, cc:true},
     {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
     {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
+    {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.ext@pronyresources.com', self:false, cc:true},
   ]},
   strob: { label:'STROB', contacts:[
     {name:'Kendji KASOVIMOIN',    mail:'kendji.kasovimoin.EXT@pronyresources.com', self:false, cc:false},
@@ -1585,6 +1591,21 @@ const AR_CONTACTS = {
     {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
     {name:'Régis EURIMINDIA',     mail:'regis.eurimindia@pronyresources.com',      self:false, cc:true},
     {name:'Jacques TRIMARI',      mail:'jacques.trimari@pronyresources.com',       self:false, cc:true},
+  ]},
+  elins: { label:'MCELINS', contacts:[
+    {name:'Michel PIERUCCI',      mail:'Michel.Pierucci@pronyresources.com',       self:false, cc:false},
+    {name:'Jean-Francois DELLAC', mail:'Jean-Francois.Dellac@pronyresources.com',  self:false, cc:true},
+    {name:'Pascal BAFUE',         mail:'Pascal.Bafue@pronyresources.com',          self:false, cc:true},
+    {name:'Jacques TRIMARI',      mail:'Jacques.Trimari@pronyresources.com',       self:false, cc:true},
+    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
+  ]},
+  mecus: { label:'MCMECUS', contacts:[
+    {name:'Pierre ZEOULA',        mail:'Pierre.Zeoula@pronyresources.com',         self:false, cc:false},
+    {name:'Richard NATOLIS',      mail:'Richard.Natolis@pronyresources.com',       self:false, cc:true},
+    {name:'Alberto COTTIN',       mail:'Alberto.Cottin@pronyresources.com',        self:false, cc:true},
+    {name:'Pascal BAFUE',         mail:'Pascal.Bafue@pronyresources.com',          self:false, cc:true},
+    {name:'Jacques TRIMARI',      mail:'Jacques.Trimari@pronyresources.com',       self:false, cc:true},
+    {name:'Emmanuel ROSA ASIK',   mail:'emmanuel.rosa@pronyresources.com',         self:true,  cc:true},
   ]}
 };
 
@@ -1703,6 +1724,9 @@ const ETNA_CONTACTS = {
     {name:'CCS (Boissonnet)',    mail:'mboissonnet@ccs.nc',                    self:false, cc:true},
     {name:'Jacques TRIMARI',     mail:'Jacques.Trimari@pronyresources.com',     self:false, cc:true},
     {name:'Emmanuel ROSA ASIK',  mail:'emmanuel.rosa@pronyresources.com',       self:true,  cc:true},
+  ]},
+  mecus: { label:'MCMECUS', contacts:[
+    // TODO: contacts MCMECUS à compléter
   ]}
 };
 
@@ -1719,7 +1743,7 @@ const state = {
 };
 
 const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
-const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-usage':'nav-usage','s-hist':'nav-hist','s-templates':'nav-templates'};
+const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
@@ -1792,7 +1816,7 @@ function setSemaine(val) {
 
 function setWG(prefix, wg) {
   state[prefix].wg = wg;
-  ['chaud','repar','strob'].forEach(w => {
+  ['chaud','repar','elins','mecus'].forEach(w => {
     const el = document.getElementById(prefix+'-wg-'+w);
     if (el) el.className = 'wg-btn' + (w===wg?' on-'+w:'');
   });
@@ -1809,9 +1833,9 @@ function setWG(prefix, wg) {
   if (state[prefix] !== undefined) state[prefix].wg = wg;
 
   if (prefix === 'ar') {
-    const showSC       = wg === 'repar' || wg === 'strob';
+    const showSC       = wg === 'repar' || wg === 'elins' || wg === 'mecus';
     const showTypeEqt  = wg === 'chaud';
-    const showSerie    = wg === 'chaud' || wg === 'repar' || wg === 'strob';
+    const showSerie    = wg === 'chaud' || wg === 'repar' || wg === 'elins' || wg === 'mecus';
     const fieldSC      = document.getElementById('ar-field-sc');
     const fieldTypeEqt = document.getElementById('ar-field-typeeqt');
     const fieldSerie   = document.getElementById('ar-field-serie');
@@ -2204,7 +2228,7 @@ function showSuccess(icon, iconClass, title, sub, detail, etiqData) {
   setTimeout(() => { flashHistBadge(); checkRelances(); }, 300);
 }
 
-const WG_LABELS = {chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB'};
+const WG_LABELS = {chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB', elins:'MCELINS', mecus:'MCMECUS'};
 const WG_COLORS = {
   chaud:'background:var(--lorange);color:var(--orange)',
   repar:'background:var(--llblue);color:var(--navy2)',
@@ -2922,7 +2946,7 @@ function sendEquip() {
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
-    const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)'};
+    const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
     var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
     var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
     var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
@@ -2947,7 +2971,7 @@ function sendPeinture() {
   if(!tag)    {alert('Le TAG est obligatoire.');return;}
   if(!trait)  {alert('Sélectionne un type de traitement.');return;}
 
-  const wgl = _ptWG === 'chaud' ? 'MCCHAUD' : 'MCREPAR';
+  const wgl = WG_LABELS[_ptWG] || _ptWG.toUpperCase();
   const subj = (prio==='URGENT'?'[URGENT] ':'') + '['+wgl+'] Demande traitement ETNA -- '+tag+' -- WO '+wo;
 
   let body = 'Bonjour,\n\nNous vous adressons une demande de traitement pour l\u0027équipement suivant :\n\n';
@@ -3161,8 +3185,8 @@ function buildEtiquetteSVG(d, width) {
   const W = width || 400;
   const H = Math.round(W * 0.62);   // ratio étiquette ~A6 paysage
 
-  const WG_BG   = {chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE'};
-  const WG_FG   = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56'};
+  const WG_BG   = {chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', elins:'#DEEAF1', mecus:'#E2EFDA'};
+  const WG_FG   = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
   const bg      = WG_BG[d.wg] || '#DEEAF1';
   const fg      = WG_FG[d.wg] || '#1F3864';
   const urgBg   = d.isUrg ? '#E24B4A' : '#1F3864';
@@ -3288,7 +3312,7 @@ function imprimerEtiquette() {
   if (!_etiqData) { alert('Aucune étiquette à imprimer.'); return; }
   const svg = buildEtiquetteSVG(_etiqData, 560);
   const wg = _etiqData.wg;
-  const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56'};
+  const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
   const fg = WG_FG[wg] || '#1F3864';
 
   const html = `<!DOCTYPE html>
@@ -3354,7 +3378,7 @@ function mailEtiquette() {
 function afficherEtiquetteURL(params) {
   const d = {
     wg       : params.get('wg')      || '',
-    wgl      : {chaud:'MCCHAUD',repar:'MCREPAR',strob:'STROB'}[params.get('wg')] || 'PRNC',
+    wgl      : {chaud:'MCCHAUD',repar:'MCREPAR',strob:'STROB',elins:'MCELINS',mecus:'MCMECUS'}[params.get('wg')] || 'PRNC',
     wr       : params.get('wr')      || '',
     tag      : params.get('tag')     || '',
     sc       : params.get('sc')      || '',
@@ -3366,7 +3390,7 @@ function afficherEtiquetteURL(params) {
     typeEqt  : params.get('typeeqt') || '',
     isUrg    : params.get('urg') === '1'
   };
-  const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56'};
+  const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
   const fg = WG_FG[d.wg] || '#1F3864';
   const svg = buildEtiquetteSVG(d, 560);
 
@@ -3916,6 +3940,8 @@ function renderPlanifier() {
     'MCCHAUD':  { color:'#C55A11', bg:'#FCE4D6', icon:'🔥' },
     'STROB':    { color:'#7030A0', bg:'#EDE7F6', icon:'⚡' },
     'STCHAUD':  { color:'#375623', bg:'#E2EFDA', icon:'🌡️' },
+    'MCELINS':  { color:'#1F4E79', bg:'#DEEAF1', icon:'⚡' },
+    'MCMECUS':  { color:'#375623', bg:'#E2EFDA', icon:'⚙️' },
   };
 
   var groups = {};
@@ -4610,7 +4636,7 @@ async function sendEnvoiCallidus() {
   _calEqtCount = 0;
   var list = document.getElementById('cal-eqt-list'); if (list) list.innerHTML = '';
   var remEl = document.getElementById('cal-rem'); if (remEl) remEl.value = '';
-  ['cal-wg-chaud','cal-wg-repar','cal-wg-strob'].forEach(function(id){ var el=document.getElementById(id); if(el) el.className='wg-btn'; });
+  ['cal-wg-chaud','cal-wg-repar','cal-wg-elins','cal-wg-mecus'].forEach(function(id){ var el=document.getElementById(id); if(el) el.className='wg-btn'; });
   if (state.cal) state.cal.wg = '';
 }
 
@@ -4733,6 +4759,8 @@ const WG_CC_CREDIT = {
   'MCCHAUD': ['cyril.alosio@pronyresources.com','abel.vendegou@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
   'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
   'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+  'MCELINS': [], // TODO: contacts MCELINS à compléter
+  'MCMECUS': [], // TODO: contacts MCMECUS à compléter
 };
 
 async function sendCreditMagasin() {
@@ -4794,7 +4822,7 @@ async function sendCreditMagasin() {
   });
   var qtyEl = document.getElementById('cr-qty'); if(qtyEl) qtyEl.value = '1';
   var dateEl = document.getElementById('cr-date'); if(dateEl) dateEl.value = '';
-  ['cr-wg-chaud','cr-wg-repar','cr-wg-strob'].forEach(function(id){
+  ['cr-wg-chaud','cr-wg-repar','cr-wg-elins','cr-wg-mecus'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.className='wg-btn';
   });
   if (state.cr) state.cr.wg = '';
@@ -5396,8 +5424,8 @@ async function ouvrirFicheQR(id) {
   window._etnaPhotosMap = window._etnaPhotosMap || {};
   if (photos.length) window._etnaPhotosMap[_pid] = photos;
 
-  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
-  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', MCELINS:'#1F4E79', MCMECUS:'#375623' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
 
   if (content) content.innerHTML =
     (photos.length ? '<img src="' + cloudThumb(photos[0],600,400) + '" loading="lazy" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;cursor:pointer">' : '') +
@@ -7274,7 +7302,7 @@ var _ptTraitLabel = '';
 
 function setPtWG(wg) {
   _ptWG = wg;
-  ['chaud','repar'].forEach(w => {
+  ['chaud','repar','mecus'].forEach(w => {
     const el = document.getElementById('pt-wg-'+w);
     if (el) el.className = 'wg-btn' + (w===wg?' on-'+w:'');
   });
@@ -7373,8 +7401,8 @@ async function ouvrirHistoriqueTag(tag) {
   });
 
   var last = tagRecs[0] || {};
-  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', STCHAUD:'#1F3864' };
-  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', STCHAUD:'#DEEAF1' };
+  var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', STCHAUD:'#1F3864', MCELINS:'#1F4E79', MCMECUS:'#375623' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', STCHAUD:'#DEEAF1', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
   var wgColor  = wgColors[last.wg] || '#1F3864';
   var wgBg     = wgBgs[last.wg]    || '#DEEAF1';
 
@@ -7633,7 +7661,7 @@ var _bsCurrentId = null;
 
 function setBsnWG(wg) {
   _bsnWG = wg;
-  ['chaud','repar','strob','stchaud'].forEach(function(w) {
+  ['chaud','repar','elins','mecus','stchaud'].forEach(function(w) {
     var el = document.getElementById('bsn-wg-' + w);
     if (!el) return;
     el.className = 'wg-btn' + (w === wg ? ' on-' + w : '');
@@ -7744,7 +7772,7 @@ async function saveBonsSortieWO() {
   ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['chaud','repar','strob','stchaud'].forEach(function(w) {
+  ['chaud','repar','elins','mecus','stchaud'].forEach(function(w) {
     var el = document.getElementById('bsn-wg-' + w);
     if(el) el.className = 'wg-btn';
   });
@@ -7787,15 +7815,16 @@ async function renderBonsSortie() {
     return;
   }
 
-  var wgOrder = ['chaud','repar','strob','stchaud'];
-  var wgLabels = { chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB', stchaud:'STCHAUD' };
-  var wgColors = { chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', stchaud:'#1F3864' };
-  var wgBgs    = { chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', stchaud:'#DEEAF1' };
+  var wgOrder = ['chaud','repar','elins','mecus','stchaud'];
+  var wgLabels = { chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB', stchaud:'STCHAUD', elins:'MCELINS', mecus:'MCMECUS' };
+  var wgColors = { chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', stchaud:'#1F3864', elins:'#1F4E79', mecus:'#375623' };
+  var wgBgs    = { chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', stchaud:'#DEEAF1', elins:'#DEEAF1', mecus:'#E2EFDA' };
   var wgPlanif = {
     chaud:   'abel.vendegou@pronyresources.com',
     repar:   'regis.eurimindia@pronyresources.com',
     stchaud: 'gary.wayaridri.ext@pronyresources.com',
     strob:   'kendji.kasovimoin.ext@pronyresources.com'
+    // TODO: elins / mecus à compléter
   };
   var CC_ALWAYS = 'emmanuel.rosa@pronyresources.com';
 
@@ -7888,8 +7917,8 @@ async function ouvrirDetailBS(id) {
 
   var infoEl = document.getElementById('bs-detail-info');
   if(infoEl) {
-    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56' };
-    var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE' };
+    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', MCELINS:'#1F4E79', MCMECUS:'#375623' };
+    var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
     infoEl.innerHTML =
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
         '<div style="background:' + (wgBgs[d.wg]||'#f0f0f0') + ';color:' + (wgColors[d.wg]||'#555') + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + (d.wg||'--') + '</div>' +
@@ -8690,12 +8719,12 @@ async function renderRelances() {
       html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:12px 0 4px;margin-top:4px">&#9203; En attente recente (&lt; 3 jours) &mdash; ' + recents.length + '</div>';
       recents.forEach(function(r){ html += renderRelanceCard(r, false); });
     }
-    var wgMap = { MCCHAUD:0, MCREPAR:0, STROB:0, STCHAUD:0 };
+    var wgMap = { MCCHAUD:0, MCREPAR:0, STROB:0, STCHAUD:0, MCELINS:0, MCMECUS:0 };
     records.forEach(function(r) {
       var wg = (r.wg||'').toUpperCase().trim();
       if (wgMap.hasOwnProperty(wg)) wgMap[wg]++;
     });
-    var wgKeys = { MCCHAUD:'cnt-chaud', MCREPAR:'cnt-repar', STROB:'cnt-strob', STCHAUD:'cnt-stchaud' };
+    var wgKeys = { MCCHAUD:'cnt-chaud', MCREPAR:'cnt-repar', STROB:'cnt-strob', STCHAUD:'cnt-stchaud', MCELINS:'cnt-elins', MCMECUS:'cnt-mecus' };
     Object.keys(wgKeys).forEach(function(wg) {
       var el = document.getElementById(wgKeys[wg]);
       if (el) el.textContent = wgMap[wg];
@@ -8785,6 +8814,8 @@ function renderRelanceCard(r, urgent) {
     'MCCHAUD': ['cyril.alosio@pronyresources.com','abel.vendegou@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
     'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
     'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+    'MCELINS': [], // TODO: contacts MCELINS à compléter
+    'MCMECUS': [], // TODO: contacts MCMECUS à compléter
   };
   var wgContacts = WG_RELANCE[wg] || [];
   var toAddr  = emailDem || (wgContacts.length ? wgContacts[0] : '');
@@ -8968,6 +8999,8 @@ async function marquerRecupere(id, btn) {
     'MCCHAUD': ['cyril.alosio@pronyresources.com','abel.vendegou@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
     'MCREPAR': ['jean-francois.dellac@pronyresources.com','regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
     'STROB'  : ['jean-francois.dellac@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','pascal.bafue@pronyresources.com','gerard.weinane@pronyresources.com'],
+    'MCELINS': [], // TODO: contacts MCELINS à compléter
+    'MCMECUS': [], // TODO: contacts MCMECUS à compléter
   };
 
   try {
@@ -10149,7 +10182,7 @@ function sauvegarderRemarquePlanning(wo) {
 function _afficherListeWOGWR(items, list) {
   if (!items || !items.length) { list.style.display = 'none'; return; }
   list.style.display = 'block';
-  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
+  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6', MCELINS:'#1F4E79', MCMECUS:'#375623'};
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
@@ -10175,13 +10208,15 @@ function _selectionnerWOGWR(wo) {
   if(w.wg==='MCCHAUD') setWG('ar','chaud');
   else if(w.wg==='MCREPAR') setWG('ar','repar');
   else if(w.wg==='STROB') setWG('ar','strob');
+  else if(w.wg==='MCELINS') setWG('ar','elins');
+  else if(w.wg==='MCMECUS') setWG('ar','mecus');
   var list=document.getElementById('ar-wr-list'); if(list) list.style.display='none';
 }
 
 function _afficherListeWOGTag(items, list) {
   if (!items || !items.length) { list.style.display = 'none'; return; }
   list.style.display = 'block';
-  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
+  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6', MCELINS:'#1F4E79', MCMECUS:'#375623'};
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
@@ -10209,6 +10244,8 @@ function _selectionnerWOGTag(wo) {
   if(w.wg==='MCCHAUD') setWG('ar','chaud');
   else if(w.wg==='MCREPAR') setWG('ar','repar');
   else if(w.wg==='STROB') setWG('ar','strob');
+  else if(w.wg==='MCELINS') setWG('ar','elins');
+  else if(w.wg==='MCMECUS') setWG('ar','mecus');
   var list=document.getElementById('ar-tag-list'); if(list) list.style.display='none';
 }
 
@@ -10232,7 +10269,7 @@ function _filtrerWOGWO(val) {
 function _afficherListeWOGWO(items,list){
   if(!items||!items.length){ list.style.display='none'; return; }
   list.style.display='block';
-  var wgColors={MCCHAUD:'#C55A11',MCREPAR:'#7030A0',STROB:'#2E75B6'};
+  var wgColors={MCCHAUD:'#C55A11',MCREPAR:'#7030A0',STROB:'#2E75B6',MCELINS:'#1F4E79',MCMECUS:'#375623'};
   list.innerHTML=items.map(function(w){
     var c=wgColors[w.wg]||'#555';
     return '<div data-wo="'+(w.wo||'')+'" onclick="_selectionnerWOGWO(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWO(this.dataset.wo)" style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
@@ -10254,6 +10291,8 @@ function _selectionnerWOGWO(wo){
   if(w.wg==='MCCHAUD') setWG('ar','chaud');
   else if(w.wg==='MCREPAR') setWG('ar','repar');
   else if(w.wg==='STROB') setWG('ar','strob');
+  else if(w.wg==='MCELINS') setWG('ar','elins');
+  else if(w.wg==='MCMECUS') setWG('ar','mecus');
   var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
   var clear=document.getElementById('ar-wo-clear'); if(clear) clear.style.display='block';
 }
@@ -10376,7 +10415,7 @@ function _filtrerWOGWO(val) {
 function _afficherListeWOGWO(items, list) {
   if (!items || !items.length) { list.style.display = 'none'; return; }
   list.style.display = 'block';
-  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6'};
+  var wgColors = {MCCHAUD:'#C55A11', MCREPAR:'#7030A0', STROB:'#2E75B6', MCELINS:'#1F4E79', MCMECUS:'#375623'};
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var w = items[i];
@@ -10411,6 +10450,8 @@ function _selectionnerWOGWO(wo) {
   if (w.wg === 'MCCHAUD') setWG('ar','chaud');
   else if (w.wg === 'MCREPAR') setWG('ar','repar');
   else if (w.wg === 'STROB') setWG('ar','strob');
+  else if (w.wg === 'MCELINS') setWG('ar','elins');
+  else if (w.wg === 'MCMECUS') setWG('ar','mecus');
   // Fermer la liste
   var list = document.getElementById('ar-wo-list');
   if (list) list.style.display = 'none';
@@ -11530,7 +11571,7 @@ async function renderKPI() {
   });
 
   var periods = Object.keys(byPeriod).sort().reverse();
-  var current = byPeriod[currentKey] || { total:0, MCCHAUD:0, MCREPAR:0, STROB:0 };
+  var current = byPeriod[currentKey] || { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
   var prevKey = periods[periods[0]===currentKey ? 1 : 0];
   var prev = (prevKey && prevKey !== currentKey && byPeriod[prevKey]) || { total:0 };
 
@@ -11562,10 +11603,10 @@ async function renderKPI() {
         '<div style="font-size:10px;color:#888">Evolution</div>' +
       '</div>' +
     '</div>' +
-    ['MCCHAUD','MCREPAR','STROB'].map(function(wg) {
+    ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'].map(function(wg) {
       var val = current[wg]||0;
       var pct = current.total>0 ? Math.round(val/current.total*100) : 0;
-      var colors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56'};
+      var colors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
       return '<div style="margin-bottom:6px">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
           '<span style="font-size:12px;font-weight:700;color:' + colors[wg] + '">' + wg + '</span>' +
@@ -11644,15 +11685,15 @@ async function exportKpiExcel() {
     if (!r.date) return;
     var p = r.date.split('/'); if(p.length!==3) return;
     var m = p[2]+'-'+p[1];
-    if (!byMois[m]) byMois[m]={total:0,MCCHAUD:0,MCREPAR:0,STROB:0};
+    if (!byMois[m]) byMois[m]={total:0,MCCHAUD:0,MCREPAR:0,STROB:0,MCELINS:0,MCMECUS:0};
     byMois[m].total++;
     if(r.wg) byMois[m][r.wg]=(byMois[m][r.wg]||0)+1;
   });
-  var ws3 = XLSX.utils.aoa_to_sheet([['Mois','Total Arrivees','MCCHAUD','MCREPAR','STROB','NC Total']].concat(
+  var ws3 = XLSX.utils.aoa_to_sheet([['Mois','Total Arrivees','MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS','NC Total']].concat(
     Object.keys(byMois).sort().reverse().map(function(m){
       var d=byMois[m];
       var nc=ncData.filter(function(n){ return n.mois===m; }).length;
-      return [m,d.total,d.MCCHAUD||0,d.MCREPAR||0,d.STROB||0,nc];
+      return [m,d.total,d.MCCHAUD||0,d.MCREPAR||0,d.STROB||0,d.MCELINS||0,d.MCMECUS||0,nc];
     })
   ));
   XLSX.utils.book_append_sheet(wb, ws3, 'KPI par mois');
@@ -12107,7 +12148,8 @@ loadCatalog();
       <div class="wg-grp">
         <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
         <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
-        <div class="wg-btn" id="bsn-wg-strob" onclick="setBsnWG('strob')">STROB</div>
+        <div class="wg-btn" id="bsn-wg-elins" onclick="setBsnWG('elins')">MCELINS</div>
+        <div class="wg-btn" id="bsn-wg-mecus" onclick="setBsnWG('mecus')">MCMECUS</div>
         <div class="wg-btn" id="bsn-wg-stchaud" onclick="setBsnWG('stchaud')">STCHAUD</div>
       </div>
     </div>
