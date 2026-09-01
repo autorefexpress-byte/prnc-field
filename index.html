@@ -343,6 +343,47 @@ function _initLocSel(selId, inpId, val) {
 
   <hr class="sec" style="margin:0 0 4px">
   <div class="section-lbl">Actions rapides</div>
+  <!-- Section 0 : Planning Atelier -->
+  <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Planning Atelier</div>
+  <div class="action-grid">
+    <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
+      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
+      <div class="card-lbl">Planning Atelier MCREPAR</div>
+      <div class="card-sub" id="planning-card-sub">Voir les WO</div>
+      <label id="planning-import-label" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#C55A11;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
+      </label>
+    </div>
+    <div class="action-card" style="border:1.5px solid #7030A0;position:relative" onclick="ouvrirPlanningAccueilMC()">
+      <div class="card-icon" style="background:#EDE7F6;color:#7030A0">📅</div>
+      <div class="card-lbl">Planning Atelier MCCHAUD</div>
+      <div class="card-sub" id="planning-card-sub-mc">Voir les WO</div>
+      <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
+      </label>
+    </div>
+    <div class="action-card" style="border:1.5px solid #1F4E79;position:relative" onclick="ouvrirPlanningAccueilMCEL()">
+      <div class="card-icon" style="background:#DEEAF1;color:#1F4E79">📅</div>
+      <div class="card-lbl">Planning Atelier MCELINS</div>
+      <div class="card-sub" id="planning-card-sub-mcel">Voir les WO</div>
+      <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#1F4E79;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
+      </label>
+    </div>
+    <div class="action-card" style="border:1.5px solid #375623;position:relative" onclick="ouvrirPlanningAccueilMCMEC()">
+      <div class="card-icon" style="background:#E2EFDA;color:#375623">📅</div>
+      <div class="card-lbl">Planning Atelier MCMECUS</div>
+      <div class="card-sub" id="planning-card-sub-mcmec">Voir les WO</div>
+      <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#375623;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
+      </label>
+    </div>
+  </div>
+
   <!-- Section 1 : Flux équipements -->
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
   <div class="action-grid">
@@ -422,42 +463,6 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-icon">📊</div>
       <div class="card-lbl">KPI</div>
       <div class="card-sub">Indicateurs de performance</div>
-    </div>
-    <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
-      <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
-      <div class="card-lbl">Planning Atelier MCREPAR</div>
-      <div class="card-sub" id="planning-card-sub">Voir les WO</div>
-      <label id="planning-import-label" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#C55A11;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
-        ↑ Importer
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
-      </label>
-    </div>
-    <div class="action-card" style="border:1.5px solid #7030A0;position:relative" onclick="ouvrirPlanningAccueilMC()">
-      <div class="card-icon" style="background:#EDE7F6;color:#7030A0">📅</div>
-      <div class="card-lbl">Planning Atelier MCCHAUD</div>
-      <div class="card-sub" id="planning-card-sub-mc">Voir les WO</div>
-      <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
-        ↑ Importer
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
-      </label>
-    </div>
-    <div class="action-card" style="border:1.5px solid #1F4E79;position:relative" onclick="ouvrirPlanningAccueilMCEL()">
-      <div class="card-icon" style="background:#DEEAF1;color:#1F4E79">📅</div>
-      <div class="card-lbl">Planning Atelier MCELINS</div>
-      <div class="card-sub" id="planning-card-sub-mcel">Voir les WO</div>
-      <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#1F4E79;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
-        ↑ Importer
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
-      </label>
-    </div>
-    <div class="action-card" style="border:1.5px solid #375623;position:relative" onclick="ouvrirPlanningAccueilMCMEC()">
-      <div class="card-icon" style="background:#E2EFDA;color:#375623">📅</div>
-      <div class="card-lbl">Planning Atelier MCMECUS</div>
-      <div class="card-sub" id="planning-card-sub-mcmec">Voir les WO</div>
-      <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#375623;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
-        ↑ Importer
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
-      </label>
     </div>
   </div></div>
 </div>
