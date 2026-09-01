@@ -2,11 +2,14 @@ const { neon } = require('@neondatabase/serverless');
 const https  = require('https');
 const crypto = require('crypto');
 
-const sql = neon('postgresql://neondb_owner:npg_tOasz0jxXp2M@ep-blue-tree-a79w2h77.ap-southeast-2.aws.neon.tech/neondb?sslmode=require');
+if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL env var is not set');
+const sql = neon(process.env.DATABASE_URL);
 
-const CLOUD_NAME = 'dns5b6fix';
-const API_KEY    = '847395583118243';
-const API_SECRET = 'nBuyEerlJYeOfbD7RcHPzD2vkHU';
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'dns5b6fix';
+const API_KEY    = process.env.CLOUDINARY_API_KEY;
+const API_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 // ── INIT TABLES (une seule fois au démarrage) ──────────
 let _tablesReady = false;
@@ -44,6 +47,25 @@ async function ensureTables() {
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
     )`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcchaud_wo_semaine_idx ON planning_mcchaud(wo, semaine)`;
+    // ── Planning Atelier MCELINS (table séparée, même schéma) ──
+    await sql`CREATE TABLE IF NOT EXISTS planning_mcelins (
+      id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
+      ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
+      jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
+      photos JSONB DEFAULT '[]', remarque TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcelins_wo_semaine_idx ON planning_mcelins(wo, semaine)`;
+
+    // ── Planning Atelier MCMECUS (table séparée, même schéma) ──
+    await sql`CREATE TABLE IF NOT EXISTS planning_mcmecus (
+      id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
+      ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
+      jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
+      photos JSONB DEFAULT '[]', remarque TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcmecus_wo_semaine_idx ON planning_mcmecus(wo, semaine)`;
 
     await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
       id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
@@ -78,6 +100,7 @@ ensureTables();
 
 async function deleteCloudinaryPhotos(photoUrls) {
   if (!photoUrls || !photoUrls.length) return;
+  if (!API_KEY || !API_SECRET) { console.warn('Cloudinary credentials not configured; skipping photo delete'); return; }
   const public_ids = photoUrls.filter(Boolean).map(url => {
     const m = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
     return m ? m[1] : null;
@@ -242,8 +265,144 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
   return res.status(400).json({ error: 'Unknown planning_mcchaud request' });
 }
 
+// ── Logique pour la table planning_mcelins (même schéma, table séparée) ──
+async function handlePlanningMCELINS(req, res, id, method) {
+  if (method === 'GET') {
+    let semaine = req.query?.semaine || null;
+    if (!semaine) {
+      try {
+        const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active_mcelins'`;
+        if (cfg.length) semaine = cfg[0].value;
+      } catch(e) {}
+    }
+    const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcelins ORDER BY semaine DESC`;
+    const rows = semaine
+      ? await sql`SELECT * FROM planning_mcelins WHERE semaine=${semaine} ORDER BY wo ASC`
+      : await sql`SELECT * FROM planning_mcelins ORDER BY updated_at DESC LIMIT 200`;
+    return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
+  }
+  if (method === 'POST') {
+    const d = req.body || {};
+    if (d.bulk && Array.isArray(d.items) && d.semaine) {
+      if (d.first !== false) await sql`DELETE FROM planning_mcelins WHERE semaine=${d.semaine}`;
+      for (const item of d.items) {
+        await sql`INSERT INTO planning_mcelins (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+          VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
+                  ${item.ressource||null},${item.commentaire||null},
+                  ${JSON.stringify(item.taches||[])}::jsonb,
+                  ${JSON.stringify(item.jours||[])}::jsonb,
+                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+      }
+      await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcelins',${d.semaine})
+        ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
+      const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcelins ORDER BY semaine DESC`;
+      if (semaines.length > 4) {
+        const aSupprimer = semaines.slice(4).map(r => r.semaine);
+        for (const s of aSupprimer) await sql`DELETE FROM planning_mcelins WHERE semaine=${s}`;
+      }
+      return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
+    }
+    return res.status(400).json({ error: 'Missing bulk/items/semaine' });
+  }
+  if (method === 'PATCH') {
+    const d = req.body || {};
+    if (d.wo && d.semaine) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcelins SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcelins SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcelins SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      return res.status(200).json({ ok: true });
+    }
+    if (id) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcelins SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcelins SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcelins SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
+      return res.status(200).json({ ok: true });
+    }
+    return res.status(400).json({ error: 'Missing wo+semaine or id' });
+  }
+  if (method === 'DELETE') {
+    if (req.query?.wo) {
+      const planRows = await sql`SELECT photos FROM planning_mcelins WHERE wo=${req.query.wo}`;
+      if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
+      await sql`DELETE FROM planning_mcelins WHERE wo=${req.query.wo}`;
+    }
+    else if (req.query?.semaine) await sql`DELETE FROM planning_mcelins WHERE semaine=${req.query.semaine}`;
+    else if (id) await sql`DELETE FROM planning_mcelins WHERE id=${id}`;
+    return res.status(200).json({ ok: true });
+  }
+  return res.status(400).json({ error: 'Unknown planning_mcelins request' });
+}
+
+// ── Logique pour la table planning_mcmecus (même schéma, table séparée) ──
+async function handlePlanningMCMECUS(req, res, id, method) {
+  if (method === 'GET') {
+    let semaine = req.query?.semaine || null;
+    if (!semaine) {
+      try {
+        const cfg = await sql`SELECT value FROM planning_config WHERE key='semaine_active_mcmecus'`;
+        if (cfg.length) semaine = cfg[0].value;
+      } catch(e) {}
+    }
+    const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcmecus ORDER BY semaine DESC`;
+    const rows = semaine
+      ? await sql`SELECT * FROM planning_mcmecus WHERE semaine=${semaine} ORDER BY wo ASC`
+      : await sql`SELECT * FROM planning_mcmecus ORDER BY updated_at DESC LIMIT 200`;
+    return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
+  }
+  if (method === 'POST') {
+    const d = req.body || {};
+    if (d.bulk && Array.isArray(d.items) && d.semaine) {
+      if (d.first !== false) await sql`DELETE FROM planning_mcmecus WHERE semaine=${d.semaine}`;
+      for (const item of d.items) {
+        await sql`INSERT INTO planning_mcmecus (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+          VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
+                  ${item.ressource||null},${item.commentaire||null},
+                  ${JSON.stringify(item.taches||[])}::jsonb,
+                  ${JSON.stringify(item.jours||[])}::jsonb,
+                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+      }
+      await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcmecus',${d.semaine})
+        ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
+      const semaines = await sql`SELECT DISTINCT semaine FROM planning_mcmecus ORDER BY semaine DESC`;
+      if (semaines.length > 4) {
+        const aSupprimer = semaines.slice(4).map(r => r.semaine);
+        for (const s of aSupprimer) await sql`DELETE FROM planning_mcmecus WHERE semaine=${s}`;
+      }
+      return res.status(201).json({ ok: true, count: d.items.length, semaine: d.semaine });
+    }
+    return res.status(400).json({ error: 'Missing bulk/items/semaine' });
+  }
+  if (method === 'PATCH') {
+    const d = req.body || {};
+    if (d.wo && d.semaine) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcmecus SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcmecus SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      return res.status(200).json({ ok: true });
+    }
+    if (id) {
+      if (d.statut !== undefined) await sql`UPDATE planning_mcmecus SET statut=${d.statut}, updated_at=NOW() WHERE id=${id}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE id=${id}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcmecus SET remarque=${d.remarque||null}, updated_at=NOW() WHERE id=${id}`;
+      return res.status(200).json({ ok: true });
+    }
+    return res.status(400).json({ error: 'Missing wo+semaine or id' });
+  }
+  if (method === 'DELETE') {
+    if (req.query?.wo) {
+      const planRows = await sql`SELECT photos FROM planning_mcmecus WHERE wo=${req.query.wo}`;
+      if (planRows.length && planRows[0].photos?.length) await deleteCloudinaryPhotos(planRows[0].photos);
+      await sql`DELETE FROM planning_mcmecus WHERE wo=${req.query.wo}`;
+    }
+    else if (req.query?.semaine) await sql`DELETE FROM planning_mcmecus WHERE semaine=${req.query.semaine}`;
+    else if (id) await sql`DELETE FROM planning_mcmecus WHERE id=${id}`;
+    return res.status(200).json({ ok: true });
+  }
+  return res.status(400).json({ error: 'Unknown planning_mcmecus request' });
+}
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -305,6 +464,16 @@ module.exports = async function handler(req, res) {
     // ── PLANNING ATELIER MCCHAUD ──────────────────────
     if (table === 'planning_mcchaud') {
       return handlePlanningMCCHAUD(req, res, id, method);
+    }
+
+    // ── PLANNING ATELIER MCELINS ──────────────────────
+    if (table === 'planning_mcelins') {
+      return handlePlanningMCELINS(req, res, id, method);
+    }
+
+    // ── PLANNING ATELIER MCMECUS ──────────────────────
+    if (table === 'planning_mcmecus') {
+      return handlePlanningMCMECUS(req, res, id, method);
     }
 
     // ── LOC_MOUVEMENTS ───────────────────────────────
@@ -505,6 +674,16 @@ module.exports = async function handler(req, res) {
             if (planRowsMC.length && planRowsMC[0].photos?.length) await deleteCloudinaryPhotos(planRowsMC[0].photos);
             await sql`DELETE FROM planning_mcchaud WHERE wo=${rows[0].wo}`;
           } catch(e) { console.warn('planning_mcchaud delete err:', e); }
+          try {
+            const planRowsEl = await sql`SELECT photos FROM planning_mcelins WHERE wo=${rows[0].wo}`;
+            if (planRowsEl.length && planRowsEl[0].photos?.length) await deleteCloudinaryPhotos(planRowsEl[0].photos);
+            await sql`DELETE FROM planning_mcelins WHERE wo=${rows[0].wo}`;
+          } catch(e) { console.warn('planning_mcelins delete err:', e); }
+          try {
+            const planRowsMec = await sql`SELECT photos FROM planning_mcmecus WHERE wo=${rows[0].wo}`;
+            if (planRowsMec.length && planRowsMec[0].photos?.length) await deleteCloudinaryPhotos(planRowsMec[0].photos);
+            await sql`DELETE FROM planning_mcmecus WHERE wo=${rows[0].wo}`;
+          } catch(e) { console.warn('planning_mcmecus delete err:', e); }
         }
       }
       await sql`DELETE FROM historique WHERE id=${id}`;
