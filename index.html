@@ -238,7 +238,7 @@ function _initLocSel(selId, inpId, val) {
     <div class="topbar-sub">Maintenance Centrale — P50</div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <div class="topbar-user">ROSA ASIK E.<br>Préposé aux pièces</div>
+    <div class="topbar-user" onclick="setUserName()" style="cursor:pointer" title="Toucher pour modifier"><span id="topbar-user-name"></span><br>Préposé aux pièces</div>
     <button onclick="deconnexion()" title="Déconnexion"
       style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:16px;color:#fff;line-height:1">
       &#128274;
@@ -255,9 +255,8 @@ function _initLocSel(selId, inpId, val) {
     <select id="pin-mode-dropdown" onchange="selectPinMode(this.value)"
       style="width:100%;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.3);font-family:inherit;-webkit-appearance:none;text-align:center">
       <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
-      <option value="etna"       style="background:#1F3864;color:#fff">&#127912; ETNA — Prestataire</option>
-      <option value="callidus"   style="background:#1F3864;color:#fff">&#128295; Callidus — Prestataire</option>
       <option value="atelier"    style="background:#1F3864;color:#fff">&#128295; Mcrepar — Atelier P17</option>
+      <option value="atelier-mc" style="background:#1F3864;color:#fff">&#128293; Mcchaud — Atelier MCCHAUD</option>
     </select>
   </div>
 
@@ -287,8 +286,15 @@ function _initLocSel(selId, inpId, val) {
 </div>
 
 <!-- Bandeau mode Atelier P17 -->
-<div id="atelier-banner" style="display:none;background:#C55A11;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
-  &#128295; MODE ATELIER P17 — Mcrepar
+<div id="atelier-banner" style="display:none;background:#C55A11;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99;align-items:center;justify-content:center;gap:10px">
+  <span>&#128295; MODE ATELIER P17 — Mcrepar</span>
+  <span onclick="deconnexion()" style="background:rgba(255,255,255,.2);border-radius:6px;padding:2px 10px;cursor:pointer;font-weight:700">&#8592; Quitter</span>
+</div>
+
+<!-- Bandeau mode Atelier MCCHAUD -->
+<div id="atelier-mc-banner" style="display:none;background:#7030A0;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99;align-items:center;justify-content:center;gap:10px">
+  <span>&#128293; MODE ATELIER MCCHAUD</span>
+  <span onclick="deconnexion()" style="background:rgba(255,255,255,.2);border-radius:6px;padding:2px 10px;cursor:pointer;font-weight:700">&#8592; Quitter</span>
 </div>
 
 <!-- Bandeau mode Callidus -->
@@ -312,7 +318,7 @@ function _initLocSel(selId, inpId, val) {
 <div class="screen active" id="s-home">
   <div class="home-hero">
     <div class="home-greeting">Bonjour,</div>
-    <div class="home-name">Emmanuel <span>ROSA ASIK</span></div>
+    <div class="home-name" onclick="setUserName()" style="cursor:pointer" title="Toucher pour modifier ton nom"><span id="home-user-name">Préposé aux pièces</span></div>
   </div>
   <div class="stats-row">
     <div class="stat-card"><div class="stat-num teal" id="stat-planning">—</div><div class="stat-label">Planning</div></div>
@@ -799,12 +805,23 @@ function _initLocSel(selId, inpId, val) {
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Destinataire</div>
       <div class="add-manual" onclick="addManual('en-dest')" style="font-weight:700;color:var(--teal)">+ Ajouter un destinataire</div>
-      <div class="manual-list" id="en-dest"></div>
+      <div class="manual-list" id="en-dest">
+        <div class="manual-item"><input class="fi" type="email" value="jean-pierre.tate@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="PRNC-ServiceIndustriel@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+      </div>
     </div>
     <div class="field-grp">
       <div class="field-lbl">CC</div>
       <div class="add-manual" onclick="addManual('en-cc')">+ Ajouter un CC</div>
-      <div class="manual-list" id="en-cc"></div>
+      <div class="manual-list" id="en-cc">
+        <div class="manual-item"><input class="fi" type="email" value="prnc-serviceplanificationmtc@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="prnc-maintenancecentrale@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="yannick.tein.EXT@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="kendji.kasovimoin.EXT@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="yannick.marceau.EXT@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="ryan.qapitro.EXT@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+        <div class="manual-item"><input class="fi" type="email" value="anne-marie.gnibekan.EXT@pronyresources.com"><div class="del-btn" onclick="this.parentNode.remove()">&times;</div></div>
+      </div>
     </div>
 
     <button class="send-btn" style="background:var(--teal)" onclick="sendEqtNettoyer()">&#129529; Envoyer</button>
@@ -1786,6 +1803,7 @@ function show(id) {
   if (_isConsult2Mode && !['s-home','s-etna-suivi','s-dashboard','s-relances','s-hist'].includes(id)) return;
   if (_isCallidusMode && !['s-callidus-prestataire','s-callidus-update','s-success'].includes(id)) return;
   if (_isAtelierMode  && !['s-planning','s-success'].includes(id)) return;
+  if (_isAtelierMCMode && !['s-planning-mcchaud','s-success'].includes(id)) return;
   // s-planning accessible aussi en mode Préposé
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
@@ -1826,6 +1844,10 @@ function show(id) {
     setTimeout(function() { checkRelances(); }, 300);
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
+  if (id === 's-nc-nouveau') {
+    var ncCp = document.getElementById('nc-controle-par');
+    if (ncCp && !ncCp.value) ncCp.value = getUserName();
+  }
 }
 
 function initSemaines() {
@@ -1902,7 +1924,7 @@ function renderContacts(prefix, wg) {
     html += `<div class="c-check ${isSelected?'on-'+wg:''}" id="chk-${prefix}-${id}">${isSelected?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-    if (c.self) html += `<span class="c-self">Moi</span>`;
+    if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
     html += `</div>`;
   });
 
@@ -1915,7 +1937,7 @@ function renderContacts(prefix, wg) {
       html += `<div class="c-check on-${wg}" id="chk-${prefix}-${id}" style="font-size:9px">CC</div>`;
       html += `<div class="c-avatar" style="background:var(--navy2);font-size:9px">${init}</div>`;
       html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-      if (c.self) html += `<span class="c-self">Moi</span>`;
+      if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
       html += `</div>`;
     });
   }
@@ -1946,7 +1968,7 @@ function renderContactsFrom(source, prefix, wg) {
     html += `<div class="c-check ${isSelected?'on-'+wg:''}" id="chk-${prefix}-${id}">${isSelected?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-    if (c.self) html += `<span class="c-self">Moi</span>`;
+    if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
     html += `</div>`;
   });
 
@@ -1959,7 +1981,7 @@ function renderContactsFrom(source, prefix, wg) {
       html += `<div class="c-check on-${wg}" id="chk-${prefix}-${id}" style="font-size:9px">CC</div>`;
       html += `<div class="c-avatar" style="background:var(--navy2);font-size:9px">${init}</div>`;
       html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-      if (c.self) html += `<span class="c-self">Moi</span>`;
+      if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
       html += `</div>`;
     });
   }
@@ -2063,7 +2085,7 @@ function renderEtnaRetourContacts(wg) {
     html += '<div class="c-check" style="font-size:9px">CC</div>';
     html += '<div class="c-avatar" style="background:var(--navy2);font-size:9px">' + init + '</div>';
     html += '<div class="c-info"><div class="c-name">' + c.name + '</div><div class="c-mail">' + c.mail + '</div></div>';
-    if (c.self) html += '<span class="c-self">Moi</span>';
+    if (isMeContact(c)) html += '<span class="c-self">Moi</span>';
     html += '</div>';
   });
 
@@ -2224,6 +2246,54 @@ async function addPhotos(input, prevId) {
 }
 
 function v(id) { const el=document.getElementById(id); return el ? el.value.trim() : ''; }
+
+// ── Identité utilisateur (léger, par appareil -- localStorage) ──
+const USER_NAME_KEY = 'prnc-user-name';
+const USER_EMAIL_KEY = 'prnc-user-email';
+
+function getUserName() {
+  var n = localStorage.getItem(USER_NAME_KEY);
+  if (!n) n = setUserName();
+  return n || 'Préposé aux pièces';
+}
+
+function getUserEmail() {
+  return (localStorage.getItem(USER_EMAIL_KEY) || '').trim();
+}
+
+// Reconnaît "Moi" sur la bonne personne dans les listes de contacts.
+// Si l'utilisateur n'a pas encore renseigné son email, on retombe sur le
+// marqueur self:true d'origine (Emmanuel) pour ne rien casser.
+function isMeContact(c) {
+  var email = getUserEmail();
+  if (email) return !!(c.mail && c.mail.toLowerCase() === email.toLowerCase());
+  return !!c.self;
+}
+
+function setUserName() {
+  var current = localStorage.getItem(USER_NAME_KEY) || '';
+  var n = (prompt('Ton nom et prénom (utilisé pour signer tes emails) :', current) || '').trim();
+  if (n) localStorage.setItem(USER_NAME_KEY, n);
+
+  var currentEmail = localStorage.getItem(USER_EMAIL_KEY) || '';
+  var e = (prompt('Ton email @pronyresources.com (pour te reconnaître dans les listes de contacts) :', currentEmail) || '').trim();
+  if (e) localStorage.setItem(USER_EMAIL_KEY, e);
+
+  renderUserName();
+  return n || current;
+}
+
+function renderUserName() {
+  if (localStorage.getItem(USER_NAME_KEY) === null && !localStorage.getItem('prnc-user-name-asked')) {
+    localStorage.setItem('prnc-user-name-asked', '1');
+    setUserName();
+  }
+  var name = localStorage.getItem(USER_NAME_KEY) || 'Préposé aux pièces';
+  var homeEl = document.getElementById('home-user-name');
+  if (homeEl) homeEl.textContent = name;
+  var topbarEl = document.getElementById('topbar-user-name');
+  if (topbarEl) topbarEl.textContent = name;
+}
 
 function mailto(to, subj, body, cc) {
   const toList = (to  || '').split(';').map(s=>s.trim()).filter(Boolean);
@@ -2451,7 +2521,7 @@ async function saveFichesuiveuse() {
     'NB : Les photos seront ajoutees separement via Outlook.',
     '',
     'Cordialement,',
-    'Emmanuel ROSA ASIK',
+    getUserName(),
     'Prepose aux pieces | PRNC — Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; }).join('\n');
 
@@ -2625,7 +2695,7 @@ function sendPlanning() {
   body += '  Validé par : ' + supNom + '\n';
   body += '  Date       : ' + new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) + '\n';
   body += '------\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
+  body += '\nCordialement,\n' + getUserName() + '\nPrepose aux pieces | PRNC -- Maintenance Centrale';
 
   mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
 
@@ -2715,7 +2785,7 @@ function sendArrive() {
     ? 'Merci de proceder au check qualite de cet equipement retour ETNA.'
     : 'Merci de prendre en compte cet equipement.';
 
-  var _bodyFin = '\n' + msgFin + '\n\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
+  var _bodyFin = '\n' + msgFin + '\n\nCordialement,\n' + getUserName() + '\nPrepose aux pieces | PRNC -- Maintenance Centrale';
   body += _bodyFin;
 
   confirmEnvoi('Confirmer la notification arrivée', [
@@ -2875,7 +2945,7 @@ function renderEqContacts(wg, statut) {
       html += `<div class="c-check on-${wg}" id="chk-eq-${id}" style="font-size:9px">CC</div>`;
       html += `<div class="c-avatar" style="background:var(--navy2);font-size:9px">${init}</div>`;
       html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-      if (c.self) html += `<span class="c-self">Moi</span>`;
+      if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
       html += `</div>`;
     });
     box.innerHTML = html;
@@ -2896,7 +2966,7 @@ function renderEqContacts(wg, statut) {
     html += `<div class="c-check ${isSel2?'on-'+wg:''}" id="chk-eq-${id}">${isSel2?'\u2713':''}</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-    if (c.self) html += `<span class="c-self">Moi</span>`;
+    if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
     html += `</div>`;
   });
 
@@ -2909,7 +2979,7 @@ function renderEqContacts(wg, statut) {
       html += `<div class="c-check on-${wg}" id="chk-eq-${id}" style="font-size:9px">CC</div>`;
       html += `<div class="c-avatar" style="background:var(--navy2);font-size:9px">${init}</div>`;
       html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-      if (c.self) html += `<span class="c-self">Moi</span>`;
+      if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
       html += `</div>`;
     });
   }
@@ -2957,7 +3027,7 @@ function sendEquip() {
     ? 'Merci de procéder à la récupération de votre équipement.'
     : 'Merci de confirmer la réception.';
   body += '\n' + msgFin + '\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
+  body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
@@ -3023,7 +3093,7 @@ function sendPeinture() {
   if(delai)body += '  Délai souhaité : ' + delai + '\n';
   body += '  QAQC (CCS)     : ' + qaqc + '\n';
   if(rem)  body += '\nExigences qualité :\n' + rem + '\n';
-  body += '\nMerci de confirmer la prise en charge.\n\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
+  body += '\nMerci de confirmer la prise en charge.\n\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   const allTo  = [...(state.selectedTo.pt||new Set()), ...getEmails('pt-manual')];
   if (allTo.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
@@ -3048,12 +3118,12 @@ function sendEqtNettoyer() {
   const cc   = getEmails('en-cc');
   if (dest.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
 
-  const subj = '[EQT À NETTOYER] TAG ' + tag + ' -- WR ' + wr;
+  const subj = '[Eqt à nettoyer à la MTC] TAG ' + tag + ' -- WR ' + wr;
   let body = 'Bonjour,\n\nMerci de procéder au nettoyage de l\u0027équipement suivant :\n\n';
   body += '  WR   : ' + wr + '\n';
   body += '  TAG  : ' + tag + '\n';
   if (preco) body += '\nPréconisation :\n' + preco + '\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
+  body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   const ccFinal = [...dest.slice(1), ...cc].filter(Boolean).join(';');
   mailto(dest[0], subj, body, ccFinal);
@@ -3062,8 +3132,6 @@ function sendEqtNettoyer() {
     '<strong>TAG :</strong> '+tag+'<br><strong>WR :</strong> '+wr+'<br><strong>À :</strong> '+dest.join(', ')+'<br><strong>CC :</strong> '+cc.length+' destinataire'+(cc.length>1?'s':''));
 
   resetForm(['en-wr','en-tag','en-preco'], [], null);
-  const destList = document.getElementById('en-dest'); if (destList) destList.innerHTML = '';
-  const ccList2  = document.getElementById('en-cc');   if (ccList2)  ccList2.innerHTML = '';
 }
 
 function genererFicheFromURL(params) {
@@ -3435,7 +3503,7 @@ function mailEtiquette() {
   body += lienEtiq + '\n';
   body += '  -> Ouvre dans Chrome -> Imprimer -> A6 paysage\n';
   body += '----------------------------------\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK | PRNC - Maintenance Centrale';
+  body += '\nCordialement,\n' + getUserName() + ' | PRNC - Maintenance Centrale';
 
   window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
 }
@@ -3611,7 +3679,7 @@ async function sendUsageDirect() {
   body += '  Signature : ' + sigLink + '\n';
   body += '  (Ouvrir le lien depuis Chrome pour voir la signature)\n';
   body += '------\n';
-  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPrepose aux pieces | PRNC -- Maintenance Centrale';
+  body += '\nCordialement,\n' + getUserName() + '\nPrepose aux pieces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer usage direct', [
     {label:'TAG', value:tag}, {label:'WO', value:wo}, {label:'QTY', value:qty},
@@ -4320,7 +4388,7 @@ async function genererRapportPDF() {
     <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
   </div>
   <h1>Rapport Mensuel -- ${moisNoms[mois]} ${annee}</h1>
-  <p style="font-size:12px;color:#666">Préposé aux pièces : Emmanuel ROSA ASIK -- PRNC Maintenance Centrale -- P50</p>
+  <p style="font-size:12px;color:#666">Préposé aux pièces : ${getUserName()} -- PRNC Maintenance Centrale -- P50</p>
   <div class="stats">
     <div class="stat"><div class="stat-n">${arrives}</div><div class="stat-l">Arrivées</div></div>
     <div class="stat"><div class="stat-n">${termines}</div><div class="stat-l">Terminés</div></div>
@@ -4361,7 +4429,7 @@ async function sauvegarderHistorique() {
   const records = await dbLoad();
   if(records.length === 0){ alert('Aucune donnée à sauvegarder.'); return; }
   const json = JSON.stringify({ version:'1.0', date: new Date().toISOString(),
-    app:'PRNC Field', auteur:'Emmanuel ROSA ASIK', total:records.length, records }, null, 2);
+    app:'PRNC Field', auteur:getUserName(), total:records.length, records }, null, 2);
   const blob = new Blob([json], {type:'application/json'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -4381,6 +4449,7 @@ const PIN_ETNA      = '1111';  // PIN mode ETNA prestataire
 const PIN_CONSULT2  = '2222';  // PIN mode consultation
 const PIN_CALLIDUS  = '3333';  // PIN mode Callidus prestataire
 const PIN_ATELIER   = '4444';  // PIN mode Mcrepar Atelier P17
+const PIN_ATELIER_MC = '5555'; // PIN mode Atelier MCCHAUD
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
@@ -4389,6 +4458,7 @@ var _isEtnaMode     = false;   // true = mode prestataire ETNA
 var _isConsult2Mode = false;   // true = mode consultation lecture seule
 var _isCallidusMode = false;   // true = mode prestataire Callidus
 var _isAtelierMode  = false;   // true = mode Mcrepar Atelier P17
+var _isAtelierMCMode = false;  // true = mode Atelier MCCHAUD
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
@@ -4415,6 +4485,9 @@ function selectPinMode(mode) {
   } else if (mode === 'atelier') {
     lbl.textContent = 'Entrez le code PIN Atelier P17 (4444)';
     if (dd) dd.style.background = 'rgba(197,90,17,.6)';
+  } else if (mode === 'atelier-mc') {
+    lbl.textContent = 'Entrez le code PIN Atelier MCCHAUD (5555)';
+    if (dd) dd.style.background = 'rgba(112,48,160,.6)';
   }
 }
 
@@ -4479,6 +4552,13 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    if (_pinModeSelect === 'atelier-mc' && _pinBuffer === PIN_ATELIER_MC) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeAtelierMC();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
@@ -4510,12 +4590,33 @@ function activerModeAtelier() {
   _isEtnaMode     = false;
   _isConsultMode  = false;
   var banner = document.getElementById('atelier-banner');
-  if (banner) banner.style.display = 'block';
-  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+  if (banner) banner.style.display = 'flex';
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home','nav-templates'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
   chargerPlanningNeon().then(function(){ renderPlanning(); });
+}
+
+function activerModeAtelierMC() {
+  _isAtelierMCMode = true;
+  _isAtelierMode   = false;
+  _isCallidusMode  = false;
+  _isEtnaMode      = false;
+  _isConsultMode   = false;
+  var banner = document.getElementById('atelier-mc-banner');
+  if (banner) banner.style.display = 'flex';
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home','nav-templates'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  show('s-planning-mcchaud');
+  var iz = document.getElementById('planning-import-zone-mc');
+  var plist = document.getElementById('planning-list-mc');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMC().then(function() {
+    if (iz) iz.style.display = _planningDataMC.length ? 'none' : 'block';
+    _renderPlanningListMC();
+  });
 }
 
 function activerModeCallidus() {
@@ -4687,7 +4788,7 @@ async function sendEnvoiCallidus() {
     if (e.desc) bodyParts.push('   Travaux : ' + e.desc);
   });
   if (rem) { bodyParts.push('', 'Remarques :', rem); }
-  bodyParts.push('', 'Cordialement,', 'Emmanuel ROSA ASIK', 'Prepose aux pieces | PRNC -- Maintenance Centrale');
+  bodyParts.push('', 'Cordialement,', getUserName(), 'Prepose aux pieces | PRNC -- Maintenance Centrale');
 
   var mailTo = 'mailto:logistique-stores@callidusgroup.com.au?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(bodyParts.join('\n'));
   window.location.href = mailTo;
@@ -4858,7 +4959,7 @@ async function sendCreditMagasin() {
     rem  ? '  Remarques    : ' + rem  : null,
     '', 'Merci de confirmer la reception.',
     '', 'Cordialement,',
-    'Emmanuel ROSA ASIK',
+    getUserName(),
     'Prepose aux pieces | PRNC -- Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; }).join('\n');
 
@@ -6223,7 +6324,7 @@ function sendWhatsAppMagasin(tag, statut, loc, wo, woMtc, zone, recordId) {
   msg += line + '\n';
   msg += '\uD83D\uDC4D Merci de deposer dans la bonne zone.\n';
   msg += line + '\n';
-  msg += 'Emmanuel ROSA ASIK -- Prepose aux pieces';
+  msg += getUserName() + ' -- Prepose aux pieces';
 
   var newNum = prompt('Numéro WhatsApp du magasinier :', num);
   if (!newNum) return;
@@ -7336,7 +7437,7 @@ async function exportTimelinePDF() {
     <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
   </div>
   <h1>Activite du ${selDate}</h1>
-  <p style="font-size:12px;color:#666">${dayRecs.length} action(s) -- Emmanuel ROSA ASIK -- PRNC Maintenance Centrale P50</p>
+  <p style="font-size:12px;color:#666">${dayRecs.length} action(s) -- ${getUserName()} -- PRNC Maintenance Centrale P50</p>
   <table><tr><th>Heure</th><th>Type</th><th>TAG</th><th>WO</th><th>Workgroup</th><th>Statut</th></tr>${rows}</table>
   <div class="footer">PRNC Field -- ${selDate}</div>
   
@@ -7394,7 +7495,7 @@ function renderEtnaContacts(wg) {
     html += `<div class="c-check on-${wg}" id="chk-pt-${id}">&#10003;</div>`;
     html += `<div class="c-avatar">${init}</div>`;
     html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-    if (c.self) html += `<span class="c-self">Moi</span>`;
+    if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
     html += `</div>`;
   });
 
@@ -7407,7 +7508,7 @@ function renderEtnaContacts(wg) {
       html += `<div class="c-check on-${wg}" id="chk-pt-${id}" style="font-size:9px">CC</div>`;
       html += `<div class="c-avatar" style="background:var(--navy2);font-size:9px">${init}</div>`;
       html += `<div class="c-info"><div class="c-name">${c.name}</div><div class="c-mail">${c.mail}</div></div>`;
-      if (c.self) html += `<span class="c-self">Moi</span>`;
+      if (isMeContact(c)) html += `<span class="c-self">Moi</span>`;
       html += `</div>`;
     });
   }
@@ -7655,7 +7756,7 @@ function envoyerRecapBS() {
   body.push(recues.length + '/' + pieces.length + ' pièces reçues (' + pct + '%)');
   body.push('');
   body.push('Cordialement,');
-  body.push('Emmanuel ROSA ASIK');
+  body.push(getUserName());
   body.push('Préposé aux pièces | PRNC — Maintenance Centrale P50');
 
   var mailTo = 'mailto:Emmanuel.Rosa@pronyresources.com' +
@@ -7945,7 +8046,7 @@ async function renderBonsSortie() {
           'TAG : ' + (d.tag||'--') + '\n' +
           'Workgroup : ' + wgLabel + '\n' +
           'Pièces : ' + recus + '/' + total + ' reçues\n\n' +
-          'Cordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC'
+          'Cordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC'
         );
         var mailtoUrl = 'mailto:' + planifTo + '?cc=' + CC_ALWAYS + '&subject=' + subject + '&body=' + body;
         html += '<button onclick="window.location.href=\'' + mailtoUrl + '\'" style="flex:1;background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">📧 Notifier planificateur</button>';
@@ -8623,6 +8724,7 @@ setTimeout(function() {
 
 
 initSemaines();
+renderUserName();
 updateStats().then(function() {
   renderPlanifier();
   checkRelances();
@@ -8871,7 +8973,7 @@ function renderRelanceCard(r, urgent) {
     'Merci de venir recuperer votre equipement dans les meilleurs delais.',
     '',
     'Cordialement,',
-    'Emmanuel ROSA ASIK',
+    getUserName(),
     'Prepose aux pieces -- Maintenance Centrale P50',
     'PRONY RESOURCES NC'
   ].filter(function(l){return l!==null;}).join('\n');
@@ -9100,7 +9202,7 @@ async function marquerRecupere(id, btn) {
       var bodyParts = ['Bonjour,', '', 'Equipement recupere :', '', '  TAG : ' + tag, '  WO : ' + wo, '  WR : ' + wr, '  WG : ' + wg];
       if (woUsine) bodyParts.push('  WO Usine : ' + woUsine);
       if (dest) bodyParts.push('  Recupere par : ' + dest);
-      bodyParts.push('  Date : ' + now, '', 'Equipement clos.', '', 'Cordialement,', 'Emmanuel ROSA ASIK | PRNC');
+      bodyParts.push('  Date : ' + now, '', 'Equipement clos.', '', 'Cordialement,', getUserName() + ' | PRNC');
       var body = bodyParts.join('\n');
       var EMMANUEL = 'emmanuel.rosa@pronyresources.com';
       // Emmanuel en destinataire principal
@@ -11439,7 +11541,7 @@ function saveNC() {
     'NB : Photos a joindre separement via Outlook.',
     '',
     'Cordialement,',
-    'Emmanuel ROSA ASIK',
+    getUserName(),
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; }).join('\n');
 
@@ -12018,7 +12120,7 @@ loadCatalog();
     <!-- Contrôlé par -->
     <div class="field-grp">
       <div class="field-lbl">Contrôlé par</div>
-      <input class="fi" type="text" id="nc-controle-par" value="Emmanuel ROSA ASIK">
+      <input class="fi" type="text" id="nc-controle-par">
     </div>
 
     <!-- Type NC -->
