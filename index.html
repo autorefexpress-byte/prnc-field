@@ -356,6 +356,11 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Demande peinture</div>
       <div class="card-sub">Envoi vers ETNA</div>
     </div>
+    <div class="action-card" onclick="show('s-eqt-nettoyer')">
+      <div class="card-icon" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
+      <div class="card-lbl">Eqt à nettoyer</div>
+      <div class="card-sub">Demande de nettoyage</div>
+    </div>
 
   </div>
 
@@ -766,6 +771,43 @@ function _initLocSel(selId, inpId, val) {
     </div>
 
     <button class="send-btn btn-orange" onclick="sendPeinture()">&#127912; Envoyer demande ETNA</button>
+  </div>
+</div>
+
+<!-- ═══════════════ EQT À NETTOYER ═══════════════ -->
+<div class="screen" id="s-eqt-nettoyer">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Eqt à nettoyer</div>
+    <div class="form-badge" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
+  </div>
+  <div class="form-body">
+
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> WR</div>
+      <input class="fi" type="text" id="en-wr" placeholder="Ex : 118466">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> TAG Équipement</div>
+      <input class="fi" type="text" id="en-tag" placeholder="Ex : 220-X-00315">
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Préconisation</div>
+      <textarea class="fi" id="en-preco" placeholder="Ex : Nettoyage haute pression, décontamination..."></textarea>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Destinataire</div>
+      <div class="add-manual" onclick="addManual('en-dest')" style="font-weight:700;color:var(--teal)">+ Ajouter un destinataire</div>
+      <div class="manual-list" id="en-dest"></div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">CC</div>
+      <div class="add-manual" onclick="addManual('en-cc')">+ Ajouter un CC</div>
+      <div class="manual-list" id="en-cc"></div>
+    </div>
+
+    <button class="send-btn" style="background:var(--teal)" onclick="sendEqtNettoyer()">&#129529; Envoyer</button>
   </div>
 </div>
 
@@ -1736,7 +1778,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
+const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -2993,6 +3035,35 @@ function sendPeinture() {
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
     '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
+}
+
+function sendEqtNettoyer() {
+  if (checkConsultMode()) return;
+  const wr = v('en-wr'), tag = v('en-tag'), preco = v('en-preco');
+
+  if (!wr)  { alert('Le WR est obligatoire.'); return; }
+  if (!tag) { alert('Le TAG est obligatoire.'); return; }
+
+  const dest = getEmails('en-dest');
+  const cc   = getEmails('en-cc');
+  if (dest.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
+
+  const subj = '[EQT À NETTOYER] TAG ' + tag + ' -- WR ' + wr;
+  let body = 'Bonjour,\n\nMerci de procéder au nettoyage de l\u0027équipement suivant :\n\n';
+  body += '  WR   : ' + wr + '\n';
+  body += '  TAG  : ' + tag + '\n';
+  if (preco) body += '\nPréconisation :\n' + preco + '\n';
+  body += '\nCordialement,\nEmmanuel ROSA ASIK\nPréposé aux pièces | PRNC -- Maintenance Centrale';
+
+  const ccFinal = [...dest.slice(1), ...cc].filter(Boolean).join(';');
+  mailto(dest[0], subj, body, ccFinal);
+
+  showSuccess('&#129529;','si-teal','Demande de nettoyage ouverte !','Vérifie et envoie depuis Outlook.',
+    '<strong>TAG :</strong> '+tag+'<br><strong>WR :</strong> '+wr+'<br><strong>À :</strong> '+dest.join(', ')+'<br><strong>CC :</strong> '+cc.length+' destinataire'+(cc.length>1?'s':''));
+
+  resetForm(['en-wr','en-tag','en-preco'], [], null);
+  const destList = document.getElementById('en-dest'); if (destList) destList.innerHTML = '';
+  const ccList2  = document.getElementById('en-cc');   if (ccList2)  ccList2.innerHTML = '';
 }
 
 function genererFicheFromURL(params) {
