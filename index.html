@@ -6279,6 +6279,23 @@ async function deleteRecord(id) {
       const piRow=Array.isArray(pi)?pi.find(p=>p.wo===wo):null;
       if(piRow){ await fetch(DB_API+'?table=pi_suivi&id='+encodeURIComponent(piRow.id),{method:'DELETE'}); _piCache=null; }
     } catch(e){}
+    try {
+      const tr=await fetch(DB_API+'?table=transport').then(r=>r.json());
+      for (const row of (Array.isArray(tr)?tr:[]).filter(r=>r.wo===wo)) {
+        for (const pp of (row.photos||[]).filter(Boolean))
+          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
+        await fetch(DB_API+'?table=transport&id='+encodeURIComponent(row.id),{method:'DELETE'}).catch(()=>{});
+      }
+    } catch(e){}
+    try {
+      const cp=await fetch(DB_API+'?table=callidus_prnc').then(r=>r.json());
+      for (const row of (Array.isArray(cp)?cp:[]).filter(r=>r.wo===wo)) {
+        for (const pp of (row.photos||[]).filter(Boolean))
+          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
+        await fetch(DB_API+'?table=callidus_prnc&id='+encodeURIComponent(row.id),{method:'DELETE'}).catch(()=>{});
+      }
+      _cpCache=null;
+    } catch(e){}
     _dbCache=null; _photosByWOCache=null;
     if(typeof _planningData!=='undefined') _planningData=_planningData.filter(i=>i.wo!==wo);
     try{ const l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY,JSON.stringify(l.filter(r=>r.wo!==wo))); }catch(e){}
