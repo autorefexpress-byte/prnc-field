@@ -425,7 +425,7 @@ function _initLocSel(selId, inpId, val) {
     </div>
     <div class="action-card" style="border:1.5px solid #C55A11;position:relative" onclick="ouvrirPlanningAccueil()">
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
-      <div class="card-lbl">Planning Atelier P17</div>
+      <div class="card-lbl">Planning Atelier MCREPAR</div>
       <div class="card-sub" id="planning-card-sub">Voir les WO</div>
       <label id="planning-import-label" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#C55A11;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
         ↑ Importer
@@ -439,6 +439,24 @@ function _initLocSel(selId, inpId, val) {
       <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
+      </label>
+    </div>
+    <div class="action-card" style="border:1.5px solid #1F4E79;position:relative" onclick="ouvrirPlanningAccueilMCEL()">
+      <div class="card-icon" style="background:#DEEAF1;color:#1F4E79">📅</div>
+      <div class="card-lbl">Planning Atelier MCELINS</div>
+      <div class="card-sub" id="planning-card-sub-mcel">Voir les WO</div>
+      <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#1F4E79;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
+      </label>
+    </div>
+    <div class="action-card" style="border:1.5px solid #375623;position:relative" onclick="ouvrirPlanningAccueilMCMEC()">
+      <div class="card-icon" style="background:#E2EFDA;color:#375623">📅</div>
+      <div class="card-lbl">Planning Atelier MCMECUS</div>
+      <div class="card-sub" id="planning-card-sub-mcmec">Voir les WO</div>
+      <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#375623;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+        ↑ Importer
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
       </label>
     </div>
   </div></div>
@@ -1795,7 +1813,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
+const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist','s-templates':'nav-templates'};
 
 function show(id) {
@@ -9759,6 +9777,18 @@ var _semaineActiveMC  = '';
 var _planningFilterMC = null;
 var _planningSemainesMC = [];
 var _currentModalWOMC = '';
+var _planningDataMCEL = [];
+var _allPlanningCacheMCEL = null;
+var _semaineActiveMCEL  = '';
+var _planningFilterMCEL = null;
+var _planningSemainesMCEL = [];
+var _currentModalWOMCEL = '';
+var _planningDataMCMEC = [];
+var _allPlanningCacheMCMEC = null;
+var _semaineActiveMCMEC  = '';
+var _planningFilterMCMEC = null;
+var _planningSemainesMCMEC = [];
+var _currentModalWOMCMEC = '';
 
 function ouvrirPlanningAccueil() {
   show('s-planning');
@@ -11381,6 +11411,1158 @@ function sauvegarderRemarquePlanningMC(wo) {
   });
 }
 
+// ═══════════════ PLANNING ATELIER MCELINS ═══════════════
+function ouvrirPlanningAccueilMCEL() {
+  show('s-planning-mcelins');
+  var iz = document.getElementById('planning-import-zone-mcel');
+  var plist = document.getElementById('planning-list-mcel');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMCEL().then(function() {
+    // Préposé : montrer zone import si pas de données
+    if (iz) iz.style.display = _planningDataMCEL.length ? 'none' : 'block';
+    _renderPlanningListMCEL();
+  });
+}
+
+async function sauvegarderPlanningNeonMCEL(data, semaine) {
+  try {
+    var photoMap={};
+    try {
+      var existing=await fetch(DB_API+'?table=planning_mcelins&semaine='+encodeURIComponent(semaine)).then(function(r){ return r.json(); });
+      var existingRows=existing.rows||(Array.isArray(existing)?existing:[]);
+      existingRows.forEach(function(row){ if(row.wo&&row.photos&&row.photos.length) photoMap[row.wo]=row.photos.filter(Boolean); });
+    } catch(e){}
+    for(var b=0;b<data.length;b+=20){
+      await fetch(DB_API+'?table=planning_mcelins',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
+    }
+    _dbCache=null;
+    var histRecords=await dbLoad();
+    _planningDataMCEL.forEach(function(item){
+      var wo=item.wo, planPhotos=photoMap[wo]||[], histPhotos=[];
+      histRecords.forEach(function(r){ var match=(r.wo&&r.wo===wo)||(r.woUsine&&r.woUsine===wo); if(match&&r.photos&&r.photos.length) r.photos.forEach(function(p){ if(p&&histPhotos.indexOf(p)<0) histPhotos.push(p); }); });
+      var merged=planPhotos.slice(); histPhotos.forEach(function(p){ if(merged.indexOf(p)<0) merged.push(p); });
+      if(merged.length>0){ photoMap[wo]=merged; item._photos=merged; }
+    });
+    var wosAvecPhotos=Object.keys(photoMap);
+    if(wosAvecPhotos.length>0){
+      await Promise.all(wosAvecPhotos.map(function(wo){
+        return fetch(DB_API+'?table=planning_mcelins',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,photos:photoMap[wo]})}).catch(function(e){ console.warn('photo restore err',e); });
+      }));
+    }
+    _allPlanningCacheMCEL=null;
+  } catch(e){ console.warn('planning save err',e); }
+}
+
+async function chargerPlanningNeonMCEL(semaine) {
+  try {
+    var url = DB_API + '?table=planning_mcelins' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    var resp = await fetch(url);
+    var data = await resp.json();
+    var rows = data.rows || data;
+    var semaineActive = data.semaine_active || (rows[0] && rows[0].semaine) || '';
+    _semaineActiveMCEL = semaineActive;
+    _planningSemainesMCEL = data.semaines || [];
+    if (rows && rows.length) {
+      _planningDataMCEL = rows.map(function(r) {
+        return {
+          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
+          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
+          commentaire: r.commentaire||'',
+          taches: r.taches||[], jours: r.jours||[],
+          statut: r.statut||'PLANIFIE',
+          semaine: r.semaine||semaineActive,
+          _photos: r.photos||[],
+          _remarque: r.remarque||'',
+          woUsine: r.wo_usine||'', wso: r.wso||'',
+        };
+      });
+      var lbl = document.getElementById('planning-semaine-lbl-mcel');
+      if (lbl) lbl.textContent = semaineActive || 'Planning';
+      _renderSemainesSelectorMCEL();
+      // Mettre à jour le sous-titre de la carte accueil
+      var sub = document.getElementById('planning-card-sub-mcel');
+      if (sub) sub.textContent = _planningDataMCEL.length + ' WO — ' + (semaineActive || '');
+    }
+    return rows;
+  } catch(e) { console.warn('planning load err', e); return []; }
+}
+
+function _renderSemainesSelectorMCEL() {
+  var sel = document.getElementById('planning-semaine-sel-mcel');
+  if (!sel || !_planningSemainesMCEL.length) return;
+  var current = _planningDataMCEL[0] && _planningDataMCEL[0].semaine || '';
+  sel.innerHTML = _planningSemainesMCEL.map(function(s) {
+    return '<option value="'+s+'"'+(s===current?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  sel.style.display = _planningSemainesMCEL.length > 1 ? 'block' : 'none';
+}
+
+function changerSemainePlanningMCEL(semaine) {
+  _planningDataMCEL = [];
+  var list = document.getElementById('planning-list-mcel');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  chargerPlanningNeonMCEL(semaine).then(function(){ _renderPlanningListMCEL(); });
+}
+
+function importPlanningExcelMCEL(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+      if (rows.length < 3) return;
+
+      // Format MCELINS: row0=headers, row1=dates jours, row2+=données
+      // La position des colonnes varie selon les exports (ex: colonne S/C présente ou non,
+      // Samedi/Dimanche présents ou non) : on détecte donc chaque colonne via son en-tête
+      // plutôt que via un index fixe.
+      var headerRowMCEL = rows[0] || [];
+      function _findColMCEL(matchFn, fallback) {
+        for (var i = 0; i < headerRowMCEL.length; i++) {
+          var h = (headerRowMCEL[i]||'').toString().trim().toUpperCase();
+          if (matchFn(h)) return i;
+        }
+        return fallback;
+      }
+      var wrColMCEL = _findColMCEL(function(h){ return h === 'WR'; }, 1);
+      var commentColMCEL = _findColMCEL(function(h){ return h.indexOf('ACTIONS') === 0 || h.indexOf('COMMENTAIRE') === 0; }, 8);
+      var tagColMCEL = _findColMCEL(function(h){ return h === 'TAG'; }, 9);
+      var descTacheColMCEL = _findColMCEL(function(h){ return h.indexOf('DESCRIPTIF TACHE') === 0; }, 10);
+      var descWoColMCEL = _findColMCEL(function(h){ return h.indexOf('DESCRIPTIF WO') === 0; }, 11);
+      var lundiColMCEL = _findColMCEL(function(h){ return h === 'LUNDI'; }, 13);
+      var ressourceColMCEL = _findColMCEL(function(h){ return h.indexOf('RESSOURCE') === 0; }, 18);
+      var nbJoursMCEL = Math.max(1, ressourceColMCEL - lundiColMCEL);
+      var joursNomsRefMCEL = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+      var jours = [];
+      for (var j = lundiColMCEL; j < lundiColMCEL + nbJoursMCEL; j++) {
+        var dval = rows[1] && rows[1][j];
+        var nom = joursNomsRefMCEL[j-lundiColMCEL] || ('J'+(j-lundiColMCEL+1));
+        if (dval) {
+          var d = new Date(dval);
+          jours.push(!isNaN(d) ? nom+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : nom);
+        } else { jours.push(nom); }
+      }
+
+      var woDict = {};
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem('planning-statuts-mcelins')||'{}'); } catch(ex){}
+
+      for (var r = 2; r < rows.length; r++) {
+        var row = rows[r];
+        if (!row || !row[0]) continue;
+        var wo = row[0].toString().trim();
+        var tag = (row[tagColMCEL]||'').toString().trim();
+        var descTache = (row[descTacheColMCEL]||'').toString().trim();
+        var descWO = (row[descWoColMCEL]||'').toString().trim();
+        var commentaire = (row[commentColMCEL]||'').toString().trim();
+        var ressource = (row[ressourceColMCEL]||'').toString().trim();
+        var wr = (row[wrColMCEL]||'').toString().trim();
+        if (wr.toUpperCase() === 'N/A') wr = '';
+        var joursTache = [];
+        for (var jj = 0; jj < nbJoursMCEL; jj++) {
+          var hval = row[lundiColMCEL+jj];
+          if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
+        }
+        if (!woDict[wo]) {
+          woDict[wo] = {
+            wo:wo, wr:wr, tag:tag, desc:descWO,
+            ressource:ressource, commentaire:commentaire,
+            taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
+          };
+        }
+        if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
+        joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
+        if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
+        if (ressource && !woDict[wo].ressource) woDict[wo].ressource = ressource;
+      }
+
+      _planningDataMCEL = Object.values(woDict).filter(function(w){ return w.wo; });
+    _allPlanningCacheMCEL = null; // invalider cache recherche globale
+      // Sauvegarder dans Neon pour partage multi-appareils
+      sauvegarderPlanningNeonMCEL(_planningDataMCEL, sheetName);
+      var lbl = document.getElementById('planning-semaine-lbl-mcel');
+      if (lbl) lbl.textContent = sheetName || 'Planning importé';
+      var importZone = document.getElementById('planning-import-zone-mcel');
+      if (importZone) importZone.style.display = 'none';
+      show('s-planning-mcelins');
+      setTimeout(renderPlanningMCEL, 100);
+      var t=document.createElement('div');
+      t.textContent='✅ Planning importé — '+_planningDataMCEL.length+' WO';
+      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 3000);
+    } catch(err) { alert('Erreur Excel: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPlanningMCEL() {
+  var list = document.getElementById('planning-list-mcel');
+  if (!list) return;
+  // Si pas de données, charger depuis Neon
+  if (!_planningDataMCEL.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    chargerPlanningNeonMCEL().then(function(){ _renderPlanningListMCEL(); });
+    return;
+  }
+  _renderPlanningListMCEL();
+}
+
+function _renderPlanningListMCEL() {
+  var list = document.getElementById('planning-list-mcel');
+  if (!list) return;
+  var searchVal = (document.getElementById('planning-search-mcel')||{value:''}).value.toLowerCase();
+  // Si recherche active : chercher dans tous les plannings (toutes semaines)
+  var sourceData = (searchVal && _allPlanningCacheMCEL) ? _allPlanningCacheMCEL : _planningDataMCEL;
+  var data = sourceData.filter(function(i){
+    if (_planningFilterMCEL && i.statut !== _planningFilterMCEL) return false;
+    if (!searchVal) return true;
+    return (i.wo||'').toLowerCase().includes(searchVal)
+        || (i.wr||'').toLowerCase().includes(searchVal)
+        || (i.tag||'').toLowerCase().includes(searchVal)
+        || (i.desc||'').toLowerCase().includes(searchVal)
+        || (i.ressource||'').toLowerCase().includes(searchVal)
+        || (i.semaine||'').toLowerCase().includes(searchVal);
+  });
+  if (!data.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilterMCEL?' pour ce statut':'')+'</div>';
+    return;
+  }
+  list.innerHTML = data.map(function(item) {
+    var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+    var woSafe = item.wo.replace(/'/g, "\'");
+    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
+    var searchActive = !!(document.getElementById('planning-search-mcel')||{value:''}).value;
+    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModalMCEL(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="min-width:0;flex:1">'
+          +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
+            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
+            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
+            +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceMCEL(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#DEEAF1;color:#1F4E79;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
+          +'</div>'
+          +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
+          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#1F4E79;font-weight:700;margin-top:2px">'
+              +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
+              +(item.woUsine&&item.wso?' · ':'')
+              +(item.wso?'🔖 WSO '+item.wso:'')
+            +'</div>' : '')
+        +'</div>'
+        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function filtrerPlanningMCEL(type) {
+  _planningFilterMCEL = type;
+  ['all','PLANIFIE','EN_COURS','ATT_PIECES','TERMINE'].forEach(function(t) {
+    var b = document.getElementById('pfbtn-mcel-'+t);
+    if (b) b.style.opacity = ((!type&&t==='all')||t===type)?'1':'0.4';
+  });
+  renderPlanningMCEL();
+}
+
+function fermerPlanningModalMCEL() {
+  var modal=document.getElementById('planning-modal-mcel');
+  if(modal) modal.style.display='none';
+  _currentModalWOMCEL=null;
+}
+
+async function _onPlanningSearchMCEL(val) {
+  if (!val) { _renderPlanningListMCEL(); return; }
+  if (!_allPlanningCacheMCEL) {
+    var list=document.getElementById('planning-list-mcel');
+    if(list) list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px">Chargement...</div>';
+    try {
+      var resp=await fetch(DB_API+'?table=planning_mcelins');
+      var data=await resp.json();
+      var rows=data.rows||(Array.isArray(data)?data:[]);
+      var semaines=data.semaines||[];
+      if(semaines.length>1){
+        var allRows=[];
+        await Promise.all(semaines.map(function(sem){
+          return fetch(DB_API+'?table=planning_mcelins&semaine='+encodeURIComponent(sem))
+            .then(function(r){ return r.json(); })
+            .then(function(d){ var r2=d.rows||(Array.isArray(d)?d:[]); r2.forEach(function(row){ allRows.push(row); }); }).catch(function(){});
+        }));
+        rows=allRows;
+      }
+      _allPlanningCacheMCEL=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+    } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMCEL(); return; }
+  }
+  _renderPlanningListMCEL();
+}
+
+async function changerStatutPlanningMCEL(wo, newStatut) {
+  if(!wo) return;
+  var item=_planningDataMCEL.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  item.statut=newStatut;
+  var semaine=item.semaine||_semaineActiveMCEL||'';
+  fetch(DB_API+'?table=planning_mcelins',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,statut:newStatut})}).catch(function(e){ console.warn('statut save err',e); });
+  try{ var saved=JSON.parse(localStorage.getItem('planning-statuts-mcelins')||'{}'); saved[wo]=newStatut; localStorage.setItem('planning-statuts-mcelins',JSON.stringify(saved)); }catch(e){}
+  if(newStatut==='TERMINE'){
+    var now=new Date(), dateStr=now.toLocaleDateString('fr-FR'), heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    await dbAdd({type:'PLANNING_MCELINS',tag:item.tag||'',wo:item.wo||'',wr:item.wr||'',wg:'MCELINS',statut:'TERMINE — Atelier MCELINS ('+(semaine||'?')+')',loc:'',desc:item.desc||'',date:dateStr,heure:heureStr,photos:(item._photos||[]).filter(Boolean)});
+    _dbCache=null;
+    var t=document.createElement('div'); t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+    t.textContent='WO '+wo+' marque Termine dans la Gestion des flux'; document.body.appendChild(t); setTimeout(function(){ t.remove(); },3000);
+  }
+  ouvrirPlanningModalMCEL(wo); renderPlanningMCEL();
+}
+
+function ouvrirPlanningModalMCEL(wo, semaine) {
+  var currentWO = wo;
+  _currentModalWOMCEL = wo;
+  // Chercher dans _planningDataMCEL d'abord, puis dans _allPlanningCacheMCEL si recherche globale
+  var item = _planningDataMCEL.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMCEL) {
+    item = _allPlanningCacheMCEL.find(function(i){ return i.wo === wo && (!semaine || i.semaine === semaine); });
+  }
+  if (!item) return;
+  var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
+
+  var btns = '';
+  if (item.statut === 'PLANIFIE') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="flex:1;padding:12px;background:#DEEAF1;color:#1F4E79;border:1.5px solid #1F4E79;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+  } else if (item.statut === 'EN_COURS') {
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else if (item.statut === 'ATT_PIECES') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="flex:1;padding:12px;background:#DEEAF1;color:#1F4E79;border:1.5px solid #1F4E79;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else {
+    btns = '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'
+         + '<div style="padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>'
+         + '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCEL(_currentModalWOMCEL,this.dataset.statut)" style="padding:10px;background:rgba(197,90,17,.1);color:#1F4E79;border:1.5px solid #1F4E79;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
+         + '</div>';
+  }
+
+  var tachesHtml = '';
+  if (item.taches && item.taches.length) {
+    tachesHtml = '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
+      + item.taches.map(function(t){
+          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
+            + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+
+  // Photos existantes (depuis mémoire)
+  var photos = (item._photos || []).filter(Boolean);
+  var photosExistHtml = '<div id="planning-photos-exist-mcel-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + '</div>';
+  // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
+  setTimeout(function() {
+    // Le backend retourne toute la semaine — on filtre côté client
+    var semaine = item.semaine || _semaineActiveMCEL || '';
+    var url = DB_API + '?table=planning_mcelins' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        // Le backend renvoie { rows: [...] } ou directement un tableau
+        var rows = [];
+        if (data && Array.isArray(data.rows)) rows = data.rows;
+        else if (Array.isArray(data)) rows = data;
+        var row = rows.find(function(r){ return r && r.wo === wo; });
+        if (!row) return;
+        var freshPhotos = (row.photos || []).filter(Boolean);
+        // Mettre à jour _planningDataMCEL en mémoire même si vide
+        item._photos = freshPhotos;
+        // Mettre à jour la zone photos dans la modal
+        var zone = document.getElementById('planning-photos-exist-mcel-' + wo);
+        if (!zone) return;
+        zone.innerHTML = freshPhotos.map(function(p){
+          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+        }).join('');
+        // Vider le preview temporaire (éviter doublons)
+        var prev = document.getElementById('planning-photos-preview-mcel-' + wo);
+        if (prev) prev.innerHTML = '';
+      }).catch(function(e){ console.warn('fetch photos live err', e); });
+  }, 200);
+
+  var content2 = document.getElementById('planning-modal-content-mcel');
+  if (!content2) return;
+  content2.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      + '<div>'
+        + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
+        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+        + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+      + '</div>'
+      + '<button onclick="fermerPlanningModalMCEL()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
+    + '</div>'
+    + (item.ressource ? '<button onclick="notifierRessourceMCEL(\'' + wo + '\')" style="display:inline-flex;align-items:center;gap:6px;background:#1F4E79;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">📧 Notifier ' + item.ressource + ' — matos dispo</button>' : '')
+    + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
+    + (item.jours && item.jours.length
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+            + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+          + '</div>' : '')
+
+    + tachesHtml
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+      + photosExistHtml
+      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+        + '📷 Ajouter photo(s)'
+        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanningMCEL(\'' + wo + '\',this)" style="display:none">'
+      + '</label>'
+      + '<div id="planning-photos-preview-mcel-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+      + '<textarea id="planning-remarque-mcel-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
+      + '<button onclick="sauvegarderRemarquePlanningMCEL(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px">' + btns + '</div>';
+
+  var modal = document.getElementById('planning-modal-mcel');
+  if (modal) modal.style.display = 'flex';
+}
+
+// ═══ Notification mail "matos dispo" — Planning MCELINS ═══
+var MCELINS_CONTACTS = [
+  // TODO: contacts MCELINS à compléter
+];
+
+// Surnoms utilisés dans le planning atelier MCELINS -- TODO à compléter
+var MCELINS_NICKNAMES = {};
+
+var MCELINS_NOTIF_CC = [
+  // TODO: destinataires CC MCELINS à compléter
+].join(';');
+
+function findMailForRessourceMCEL(name) {
+  if (!name) return '';
+  var norm = _normNameKey(name).replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!norm) return '';
+  if (MCELINS_NICKNAMES[norm]) return MCELINS_NICKNAMES[norm];
+  var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  for (var i = 0; i < tokens.length; i++) {
+    if (MCELINS_NICKNAMES[tokens[i]]) return MCELINS_NICKNAMES[tokens[i]];
+  }
+  var found = MCELINS_CONTACTS.find(function(c) {
+    var cNorm = _normNameKey(c.name);
+    var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
+    return tokens.some(function(t) { return cTokens.indexOf(t) !== -1; })
+      || cNorm.indexOf(norm) !== -1 || norm.indexOf(cNorm) !== -1;
+  });
+  return found ? found.mail : '';
+}
+
+function getContactMailMCEL(name) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mcel') || '{}');
+    var manual = map[_normNameKey(name)] || '';
+    if (manual) return manual;
+  } catch(e) {}
+  return findMailForRessourceMCEL(name);
+}
+
+function saveContactMailMCEL(name, email) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mcel') || '{}');
+    map[_normNameKey(name)] = email;
+    localStorage.setItem('prnc-contacts-mcel', JSON.stringify(map));
+  } catch(e) {}
+}
+
+function notifierRessourceMCEL(wo) {
+  var item = _planningDataMCEL.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMCEL) item = _allPlanningCacheMCEL.find(function(i){ return i.wo === wo; });
+  if (!item) { alert('WO introuvable.'); return; }
+  if (!item.ressource) { alert('Aucun nom de ressource sur ce WO.'); return; }
+
+  var email = getContactMailMCEL(item.ressource);
+  if (!email) {
+    var saisie = prompt('Email de ' + item.ressource + ' introuvable dans l\'annuaire. Le saisir :', '');
+    if (saisie === null) return;
+    email = saisie.trim();
+    if (!email || email.indexOf('@') === -1) { alert('Adresse email invalide.'); return; }
+    saveContactMailMCEL(item.ressource, email);
+  }
+
+  var joursStr = item.jours && item.jours.length ? item.jours.join(', ') : '';
+  var subject = "Matériel disponible — devant l'atelier MCELINS — " + (item.tag || item.wo);
+
+  var body = 'Bonjour ' + item.ressource + ',\n\n'
+    + "Le matériel suivant est disponible devant l'atelier MCELINS :\n\n"
+    + 'TAG : ' + (item.tag || '-') + '\n'
+    + 'WO : ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + '\n'
+    + (item.desc ? 'Description : ' + item.desc + '\n' : '')
+    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '')
+    + "\nMerci de passer le récupérer devant l'atelier MCELINS.\n\n"
+    + 'Cordialement,\nAtelier MCELINS - PRNC';
+
+  mailto(email, subject, body, MCELINS_NOTIF_CC);
+
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F4E79;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t.textContent = '📧 Email préparé pour ' + item.ressource;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+
+async function ajouterPhotoPlanningMCEL(wo, input) {
+  var files=Array.from(input.files); if(!files.length) return;
+  var preview=document.getElementById('planning-photos-preview-mcel-'+wo);
+  var item=_planningDataMCEL.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  if(!item._photos) item._photos=[];
+  var loadDiv=document.createElement('div');
+  loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+  loadDiv.textContent='Upload en cours...';
+  if(preview) preview.appendChild(loadDiv);
+  var placeholders=[];
+  files.forEach(function(file){
+    var reader=new FileReader(), img=document.createElement('img');
+    img.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
+    if(preview) preview.insertBefore(img,loadDiv);
+    placeholders.push(img);
+    reader.onload=function(e){ img.src=e.target.result; };
+    reader.readAsDataURL(file);
+  });
+  try {
+    // Compression avant upload pour accélérer le transfert
+    var compressedFiles = await Promise.all(files.map(function(file){
+      return compressImage(file, 1200, 0.75).then(function(b){ return b||file; }).catch(function(){ return file; });
+    }));
+    var urls=(await Promise.all(compressedFiles.map(function(file){
+      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
+    }))).filter(Boolean);
+    urls.forEach(function(url,i){
+      if(placeholders[i]){ placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
+      item._photos.push(url);
+    });
+    if(loadDiv) loadDiv.remove();
+    if(!urls.length){ alert('Echec upload Cloudinary'); return; }
+    var semaineSave=item.semaine||_semaineActiveMCEL||'';
+    if(!semaineSave){ alert('Semaine introuvable. Rechargez le planning.'); return; }
+    var res=await fetch(DB_API+'?table=planning_mcelins',{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
+    if(res&&res.ok){
+      var zone=document.getElementById('planning-photos-exist-mcel-'+wo);
+      if(zone) zone.innerHTML=item._photos.map(function(p){
+        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+      }).join('');
+      var prev2=document.getElementById('planning-photos-preview-mcel-'+wo);
+      if(prev2) prev2.innerHTML='';
+    } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
+  } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
+}
+
+function sauvegarderRemarquePlanningMCEL(wo) {
+  var ta = document.getElementById('planning-remarque-mcel-' + wo);
+  if (!ta) return;
+  var item = _planningDataMCEL.find(function(i){ return i.wo === wo; });
+  if (item) item._remarque = ta.value;
+  var btn = ta.nextElementSibling;
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  fetch(DB_API + '?table=planning_mcelins', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      wo: wo,
+      semaine: item ? (item.semaine || '') : '',
+      remarque: ta.value
+    })
+  }).then(function(){
+    if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+  }).catch(function(){
+    if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
+  });
+}
+
+// ═══════════════ PLANNING ATELIER MCMECUS ═══════════════
+function ouvrirPlanningAccueilMCMEC() {
+  show('s-planning-mcmecus');
+  var iz = document.getElementById('planning-import-zone-mcmec');
+  var plist = document.getElementById('planning-list-mcmec');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMCMEC().then(function() {
+    // Préposé : montrer zone import si pas de données
+    if (iz) iz.style.display = _planningDataMCMEC.length ? 'none' : 'block';
+    _renderPlanningListMCMEC();
+  });
+}
+
+async function sauvegarderPlanningNeonMCMEC(data, semaine) {
+  try {
+    var photoMap={};
+    try {
+      var existing=await fetch(DB_API+'?table=planning_mcmecus&semaine='+encodeURIComponent(semaine)).then(function(r){ return r.json(); });
+      var existingRows=existing.rows||(Array.isArray(existing)?existing:[]);
+      existingRows.forEach(function(row){ if(row.wo&&row.photos&&row.photos.length) photoMap[row.wo]=row.photos.filter(Boolean); });
+    } catch(e){}
+    for(var b=0;b<data.length;b+=20){
+      await fetch(DB_API+'?table=planning_mcmecus',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
+    }
+    _dbCache=null;
+    var histRecords=await dbLoad();
+    _planningDataMCMEC.forEach(function(item){
+      var wo=item.wo, planPhotos=photoMap[wo]||[], histPhotos=[];
+      histRecords.forEach(function(r){ var match=(r.wo&&r.wo===wo)||(r.woUsine&&r.woUsine===wo); if(match&&r.photos&&r.photos.length) r.photos.forEach(function(p){ if(p&&histPhotos.indexOf(p)<0) histPhotos.push(p); }); });
+      var merged=planPhotos.slice(); histPhotos.forEach(function(p){ if(merged.indexOf(p)<0) merged.push(p); });
+      if(merged.length>0){ photoMap[wo]=merged; item._photos=merged; }
+    });
+    var wosAvecPhotos=Object.keys(photoMap);
+    if(wosAvecPhotos.length>0){
+      await Promise.all(wosAvecPhotos.map(function(wo){
+        return fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,photos:photoMap[wo]})}).catch(function(e){ console.warn('photo restore err',e); });
+      }));
+    }
+    _allPlanningCacheMCMEC=null;
+  } catch(e){ console.warn('planning save err',e); }
+}
+
+async function chargerPlanningNeonMCMEC(semaine) {
+  try {
+    var url = DB_API + '?table=planning_mcmecus' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    var resp = await fetch(url);
+    var data = await resp.json();
+    var rows = data.rows || data;
+    var semaineActive = data.semaine_active || (rows[0] && rows[0].semaine) || '';
+    _semaineActiveMCMEC = semaineActive;
+    _planningSemainesMCMEC = data.semaines || [];
+    if (rows && rows.length) {
+      _planningDataMCMEC = rows.map(function(r) {
+        return {
+          wo: r.wo||'', wr: r.wr||'', tag: r.tag||'',
+          desc: r.description_wo||r.desc||'', ressource: r.ressource||'',
+          commentaire: r.commentaire||'',
+          taches: r.taches||[], jours: r.jours||[],
+          statut: r.statut||'PLANIFIE',
+          semaine: r.semaine||semaineActive,
+          _photos: r.photos||[],
+          _remarque: r.remarque||'',
+          woUsine: r.wo_usine||'', wso: r.wso||'',
+        };
+      });
+      var lbl = document.getElementById('planning-semaine-lbl-mcmec');
+      if (lbl) lbl.textContent = semaineActive || 'Planning';
+      _renderSemainesSelectorMCMEC();
+      // Mettre à jour le sous-titre de la carte accueil
+      var sub = document.getElementById('planning-card-sub-mcmec');
+      if (sub) sub.textContent = _planningDataMCMEC.length + ' WO — ' + (semaineActive || '');
+    }
+    return rows;
+  } catch(e) { console.warn('planning load err', e); return []; }
+}
+
+function _renderSemainesSelectorMCMEC() {
+  var sel = document.getElementById('planning-semaine-sel-mcmec');
+  if (!sel || !_planningSemainesMCMEC.length) return;
+  var current = _planningDataMCMEC[0] && _planningDataMCMEC[0].semaine || '';
+  sel.innerHTML = _planningSemainesMCMEC.map(function(s) {
+    return '<option value="'+s+'"'+(s===current?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  sel.style.display = _planningSemainesMCMEC.length > 1 ? 'block' : 'none';
+}
+
+function changerSemainePlanningMCMEC(semaine) {
+  _planningDataMCMEC = [];
+  var list = document.getElementById('planning-list-mcmec');
+  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  chargerPlanningNeonMCMEC(semaine).then(function(){ _renderPlanningListMCMEC(); });
+}
+
+function importPlanningExcelMCMEC(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+      if (rows.length < 3) return;
+
+      // Format MCMECUS: row0=headers, row1=dates jours, row2+=données
+      // La position des colonnes varie selon les exports (ex: colonne S/C présente ou non,
+      // Samedi/Dimanche présents ou non) : on détecte donc chaque colonne via son en-tête
+      // plutôt que via un index fixe.
+      var headerRowMCMEC = rows[0] || [];
+      function _findColMCMEC(matchFn, fallback) {
+        for (var i = 0; i < headerRowMCMEC.length; i++) {
+          var h = (headerRowMCMEC[i]||'').toString().trim().toUpperCase();
+          if (matchFn(h)) return i;
+        }
+        return fallback;
+      }
+      var wrColMCMEC = _findColMCMEC(function(h){ return h === 'WR'; }, 1);
+      var commentColMCMEC = _findColMCMEC(function(h){ return h.indexOf('ACTIONS') === 0 || h.indexOf('COMMENTAIRE') === 0; }, 8);
+      var tagColMCMEC = _findColMCMEC(function(h){ return h === 'TAG'; }, 9);
+      var descTacheColMCMEC = _findColMCMEC(function(h){ return h.indexOf('DESCRIPTIF TACHE') === 0; }, 10);
+      var descWoColMCMEC = _findColMCMEC(function(h){ return h.indexOf('DESCRIPTIF WO') === 0; }, 11);
+      var lundiColMCMEC = _findColMCMEC(function(h){ return h === 'LUNDI'; }, 13);
+      var ressourceColMCMEC = _findColMCMEC(function(h){ return h.indexOf('RESSOURCE') === 0; }, 18);
+      var nbJoursMCMEC = Math.max(1, ressourceColMCMEC - lundiColMCMEC);
+      var joursNomsRefMCMEC = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+      var jours = [];
+      for (var j = lundiColMCMEC; j < lundiColMCMEC + nbJoursMCMEC; j++) {
+        var dval = rows[1] && rows[1][j];
+        var nom = joursNomsRefMCMEC[j-lundiColMCMEC] || ('J'+(j-lundiColMCMEC+1));
+        if (dval) {
+          var d = new Date(dval);
+          jours.push(!isNaN(d) ? nom+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : nom);
+        } else { jours.push(nom); }
+      }
+
+      var woDict = {};
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem('planning-statuts-mcmecus')||'{}'); } catch(ex){}
+
+      for (var r = 2; r < rows.length; r++) {
+        var row = rows[r];
+        if (!row || !row[0]) continue;
+        var wo = row[0].toString().trim();
+        var tag = (row[tagColMCMEC]||'').toString().trim();
+        var descTache = (row[descTacheColMCMEC]||'').toString().trim();
+        var descWO = (row[descWoColMCMEC]||'').toString().trim();
+        var commentaire = (row[commentColMCMEC]||'').toString().trim();
+        var ressource = (row[ressourceColMCMEC]||'').toString().trim();
+        var wr = (row[wrColMCMEC]||'').toString().trim();
+        if (wr.toUpperCase() === 'N/A') wr = '';
+        var joursTache = [];
+        for (var jj = 0; jj < nbJoursMCMEC; jj++) {
+          var hval = row[lundiColMCMEC+jj];
+          if (hval && parseFloat(hval) > 0) joursTache.push(jours[jj]);
+        }
+        if (!woDict[wo]) {
+          woDict[wo] = {
+            wo:wo, wr:wr, tag:tag, desc:descWO,
+            ressource:ressource, commentaire:commentaire,
+            taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
+          };
+        }
+        if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
+        joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
+        if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
+        if (ressource && !woDict[wo].ressource) woDict[wo].ressource = ressource;
+      }
+
+      _planningDataMCMEC = Object.values(woDict).filter(function(w){ return w.wo; });
+    _allPlanningCacheMCMEC = null; // invalider cache recherche globale
+      // Sauvegarder dans Neon pour partage multi-appareils
+      sauvegarderPlanningNeonMCMEC(_planningDataMCMEC, sheetName);
+      var lbl = document.getElementById('planning-semaine-lbl-mcmec');
+      if (lbl) lbl.textContent = sheetName || 'Planning importé';
+      var importZone = document.getElementById('planning-import-zone-mcmec');
+      if (importZone) importZone.style.display = 'none';
+      show('s-planning-mcmecus');
+      setTimeout(renderPlanningMCMEC, 100);
+      var t=document.createElement('div');
+      t.textContent='✅ Planning importé — '+_planningDataMCMEC.length+' WO';
+      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+      document.body.appendChild(t);
+      setTimeout(function(){ t.remove(); }, 3000);
+    } catch(err) { alert('Erreur Excel: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPlanningMCMEC() {
+  var list = document.getElementById('planning-list-mcmec');
+  if (!list) return;
+  // Si pas de données, charger depuis Neon
+  if (!_planningDataMCMEC.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    chargerPlanningNeonMCMEC().then(function(){ _renderPlanningListMCMEC(); });
+    return;
+  }
+  _renderPlanningListMCMEC();
+}
+
+function _renderPlanningListMCMEC() {
+  var list = document.getElementById('planning-list-mcmec');
+  if (!list) return;
+  var searchVal = (document.getElementById('planning-search-mcmec')||{value:''}).value.toLowerCase();
+  // Si recherche active : chercher dans tous les plannings (toutes semaines)
+  var sourceData = (searchVal && _allPlanningCacheMCMEC) ? _allPlanningCacheMCMEC : _planningDataMCMEC;
+  var data = sourceData.filter(function(i){
+    if (_planningFilterMCMEC && i.statut !== _planningFilterMCMEC) return false;
+    if (!searchVal) return true;
+    return (i.wo||'').toLowerCase().includes(searchVal)
+        || (i.wr||'').toLowerCase().includes(searchVal)
+        || (i.tag||'').toLowerCase().includes(searchVal)
+        || (i.desc||'').toLowerCase().includes(searchVal)
+        || (i.ressource||'').toLowerCase().includes(searchVal)
+        || (i.semaine||'').toLowerCase().includes(searchVal);
+  });
+  if (!data.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilterMCMEC?' pour ce statut':'')+'</div>';
+    return;
+  }
+  list.innerHTML = data.map(function(item) {
+    var s = _PSTAT[item.statut]||_PSTAT.PLANIFIE;
+    var woSafe = item.wo.replace(/'/g, "\'");
+    var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
+    var searchActive = !!(document.getElementById('planning-search-mcmec')||{value:''}).value;
+    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModalMCMEC(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="min-width:0;flex:1">'
+          +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
+            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
+            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
+            +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceMCMEC(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
+          +'</div>'
+          +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
+          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#375623;font-weight:700;margin-top:2px">'
+              +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
+              +(item.woUsine&&item.wso?' · ':'')
+              +(item.wso?'🔖 WSO '+item.wso:'')
+            +'</div>' : '')
+        +'</div>'
+        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function filtrerPlanningMCMEC(type) {
+  _planningFilterMCMEC = type;
+  ['all','PLANIFIE','EN_COURS','ATT_PIECES','TERMINE'].forEach(function(t) {
+    var b = document.getElementById('pfbtn-mcmec-'+t);
+    if (b) b.style.opacity = ((!type&&t==='all')||t===type)?'1':'0.4';
+  });
+  renderPlanningMCMEC();
+}
+
+function fermerPlanningModalMCMEC() {
+  var modal=document.getElementById('planning-modal-mcmec');
+  if(modal) modal.style.display='none';
+  _currentModalWOMCMEC=null;
+}
+
+async function _onPlanningSearchMCMEC(val) {
+  if (!val) { _renderPlanningListMCMEC(); return; }
+  if (!_allPlanningCacheMCMEC) {
+    var list=document.getElementById('planning-list-mcmec');
+    if(list) list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px">Chargement...</div>';
+    try {
+      var resp=await fetch(DB_API+'?table=planning_mcmecus');
+      var data=await resp.json();
+      var rows=data.rows||(Array.isArray(data)?data:[]);
+      var semaines=data.semaines||[];
+      if(semaines.length>1){
+        var allRows=[];
+        await Promise.all(semaines.map(function(sem){
+          return fetch(DB_API+'?table=planning_mcmecus&semaine='+encodeURIComponent(sem))
+            .then(function(r){ return r.json(); })
+            .then(function(d){ var r2=d.rows||(Array.isArray(d)?d:[]); r2.forEach(function(row){ allRows.push(row); }); }).catch(function(){});
+        }));
+        rows=allRows;
+      }
+      _allPlanningCacheMCMEC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+    } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMCMEC(); return; }
+  }
+  _renderPlanningListMCMEC();
+}
+
+async function changerStatutPlanningMCMEC(wo, newStatut) {
+  if(!wo) return;
+  var item=_planningDataMCMEC.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  item.statut=newStatut;
+  var semaine=item.semaine||_semaineActiveMCMEC||'';
+  fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,statut:newStatut})}).catch(function(e){ console.warn('statut save err',e); });
+  try{ var saved=JSON.parse(localStorage.getItem('planning-statuts-mcmecus')||'{}'); saved[wo]=newStatut; localStorage.setItem('planning-statuts-mcmecus',JSON.stringify(saved)); }catch(e){}
+  if(newStatut==='TERMINE'){
+    var now=new Date(), dateStr=now.toLocaleDateString('fr-FR'), heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    await dbAdd({type:'PLANNING_MCMECUS',tag:item.tag||'',wo:item.wo||'',wr:item.wr||'',wg:'MCMECUS',statut:'TERMINE — Atelier MCMECUS ('+(semaine||'?')+')',loc:'',desc:item.desc||'',date:dateStr,heure:heureStr,photos:(item._photos||[]).filter(Boolean)});
+    _dbCache=null;
+    var t=document.createElement('div'); t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+    t.textContent='WO '+wo+' marque Termine dans la Gestion des flux'; document.body.appendChild(t); setTimeout(function(){ t.remove(); },3000);
+  }
+  ouvrirPlanningModalMCMEC(wo); renderPlanningMCMEC();
+}
+
+function ouvrirPlanningModalMCMEC(wo, semaine) {
+  var currentWO = wo;
+  _currentModalWOMCMEC = wo;
+  // Chercher dans _planningDataMCMEC d'abord, puis dans _allPlanningCacheMCMEC si recherche globale
+  var item = _planningDataMCMEC.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMCMEC) {
+    item = _allPlanningCacheMCMEC.find(function(i){ return i.wo === wo && (!semaine || i.semaine === semaine); });
+  }
+  if (!item) return;
+  var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
+
+  var btns = '';
+  if (item.statut === 'PLANIFIE') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+  } else if (item.statut === 'EN_COURS') {
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else if (item.statut === 'ATT_PIECES') {
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+  } else {
+    btns = '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'
+         + '<div style="padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>'
+         + '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="padding:10px;background:rgba(197,90,17,.1);color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
+         + '</div>';
+  }
+
+  var tachesHtml = '';
+  if (item.taches && item.taches.length) {
+    tachesHtml = '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
+      + item.taches.map(function(t){
+          return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
+            + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+
+  // Photos existantes (depuis mémoire)
+  var photos = (item._photos || []).filter(Boolean);
+  var photosExistHtml = '<div id="planning-photos-exist-mcmec-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + '</div>';
+  // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
+  setTimeout(function() {
+    // Le backend retourne toute la semaine — on filtre côté client
+    var semaine = item.semaine || _semaineActiveMCMEC || '';
+    var url = DB_API + '?table=planning_mcmecus' + (semaine ? '&semaine=' + encodeURIComponent(semaine) : '');
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        // Le backend renvoie { rows: [...] } ou directement un tableau
+        var rows = [];
+        if (data && Array.isArray(data.rows)) rows = data.rows;
+        else if (Array.isArray(data)) rows = data;
+        var row = rows.find(function(r){ return r && r.wo === wo; });
+        if (!row) return;
+        var freshPhotos = (row.photos || []).filter(Boolean);
+        // Mettre à jour _planningDataMCMEC en mémoire même si vide
+        item._photos = freshPhotos;
+        // Mettre à jour la zone photos dans la modal
+        var zone = document.getElementById('planning-photos-exist-mcmec-' + wo);
+        if (!zone) return;
+        zone.innerHTML = freshPhotos.map(function(p){
+          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+        }).join('');
+        // Vider le preview temporaire (éviter doublons)
+        var prev = document.getElementById('planning-photos-preview-mcmec-' + wo);
+        if (prev) prev.innerHTML = '';
+      }).catch(function(e){ console.warn('fetch photos live err', e); });
+  }, 200);
+
+  var content2 = document.getElementById('planning-modal-content-mcmec');
+  if (!content2) return;
+  content2.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      + '<div>'
+        + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
+        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+        + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+      + '</div>'
+      + '<button onclick="fermerPlanningModalMCMEC()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
+    + '</div>'
+    + (item.ressource ? '<button onclick="notifierRessourceMCMEC(\'' + wo + '\')" style="display:inline-flex;align-items:center;gap:6px;background:#375623;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">📧 Notifier ' + item.ressource + ' — matos dispo</button>' : '')
+    + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
+    + (item.jours && item.jours.length
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+            + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+          + '</div>' : '')
+
+    + tachesHtml
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+      + photosExistHtml
+      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+        + '📷 Ajouter photo(s)'
+        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanningMCMEC(\'' + wo + '\',this)" style="display:none">'
+      + '</label>'
+      + '<div id="planning-photos-preview-mcmec-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+      + '<textarea id="planning-remarque-mcmec-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
+      + '<button onclick="sauvegarderRemarquePlanningMCMEC(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px">' + btns + '</div>';
+
+  var modal = document.getElementById('planning-modal-mcmec');
+  if (modal) modal.style.display = 'flex';
+}
+
+// ═══ Notification mail "matos dispo" — Planning MCMECUS ═══
+var MCMECUS_CONTACTS = [
+  // TODO: contacts MCMECUS à compléter
+];
+
+// Surnoms utilisés dans le planning atelier MCMECUS -- TODO à compléter
+var MCMECUS_NICKNAMES = {};
+
+var MCMECUS_NOTIF_CC = [
+  // TODO: destinataires CC MCMECUS à compléter
+].join(';');
+
+function findMailForRessourceMCMEC(name) {
+  if (!name) return '';
+  var norm = _normNameKey(name).replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!norm) return '';
+  if (MCMECUS_NICKNAMES[norm]) return MCMECUS_NICKNAMES[norm];
+  var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  for (var i = 0; i < tokens.length; i++) {
+    if (MCMECUS_NICKNAMES[tokens[i]]) return MCMECUS_NICKNAMES[tokens[i]];
+  }
+  var found = MCMECUS_CONTACTS.find(function(c) {
+    var cNorm = _normNameKey(c.name);
+    var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
+    return tokens.some(function(t) { return cTokens.indexOf(t) !== -1; })
+      || cNorm.indexOf(norm) !== -1 || norm.indexOf(cNorm) !== -1;
+  });
+  return found ? found.mail : '';
+}
+
+function getContactMailMCMEC(name) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mcmec') || '{}');
+    var manual = map[_normNameKey(name)] || '';
+    if (manual) return manual;
+  } catch(e) {}
+  return findMailForRessourceMCMEC(name);
+}
+
+function saveContactMailMCMEC(name, email) {
+  try {
+    var map = JSON.parse(localStorage.getItem('prnc-contacts-mcmec') || '{}');
+    map[_normNameKey(name)] = email;
+    localStorage.setItem('prnc-contacts-mcmec', JSON.stringify(map));
+  } catch(e) {}
+}
+
+function notifierRessourceMCMEC(wo) {
+  var item = _planningDataMCMEC.find(function(i){ return i.wo === wo; });
+  if (!item && _allPlanningCacheMCMEC) item = _allPlanningCacheMCMEC.find(function(i){ return i.wo === wo; });
+  if (!item) { alert('WO introuvable.'); return; }
+  if (!item.ressource) { alert('Aucun nom de ressource sur ce WO.'); return; }
+
+  var email = getContactMailMCMEC(item.ressource);
+  if (!email) {
+    var saisie = prompt('Email de ' + item.ressource + ' introuvable dans l\'annuaire. Le saisir :', '');
+    if (saisie === null) return;
+    email = saisie.trim();
+    if (!email || email.indexOf('@') === -1) { alert('Adresse email invalide.'); return; }
+    saveContactMailMCMEC(item.ressource, email);
+  }
+
+  var joursStr = item.jours && item.jours.length ? item.jours.join(', ') : '';
+  var subject = "Matériel disponible — devant l'atelier MCMECUS — " + (item.tag || item.wo);
+
+  var body = 'Bonjour ' + item.ressource + ',\n\n'
+    + "Le matériel suivant est disponible devant l'atelier MCMECUS :\n\n"
+    + 'TAG : ' + (item.tag || '-') + '\n'
+    + 'WO : ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + '\n'
+    + (item.desc ? 'Description : ' + item.desc + '\n' : '')
+    + (joursStr ? 'Jour(s) planifié(s) : ' + joursStr + '\n' : '')
+    + "\nMerci de passer le récupérer devant l'atelier MCMECUS.\n\n"
+    + 'Cordialement,\nAtelier MCMECUS - PRNC';
+
+  mailto(email, subject, body, MCMECUS_NOTIF_CC);
+
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t.textContent = '📧 Email préparé pour ' + item.ressource;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+
+async function ajouterPhotoPlanningMCMEC(wo, input) {
+  var files=Array.from(input.files); if(!files.length) return;
+  var preview=document.getElementById('planning-photos-preview-mcmec-'+wo);
+  var item=_planningDataMCMEC.find(function(i){ return i.wo===wo; });
+  if(!item) return;
+  if(!item._photos) item._photos=[];
+  var loadDiv=document.createElement('div');
+  loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+  loadDiv.textContent='Upload en cours...';
+  if(preview) preview.appendChild(loadDiv);
+  var placeholders=[];
+  files.forEach(function(file){
+    var reader=new FileReader(), img=document.createElement('img');
+    img.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:8px;opacity:0.5';
+    if(preview) preview.insertBefore(img,loadDiv);
+    placeholders.push(img);
+    reader.onload=function(e){ img.src=e.target.result; };
+    reader.readAsDataURL(file);
+  });
+  try {
+    // Compression avant upload pour accélérer le transfert
+    var compressedFiles = await Promise.all(files.map(function(file){
+      return compressImage(file, 1200, 0.75).then(function(b){ return b||file; }).catch(function(){ return file; });
+    }));
+    var urls=(await Promise.all(compressedFiles.map(function(file){
+      var fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CLOUDINARY_PRESET);
+      return fetch('https://api.cloudinary.com/v1_1/'+CLOUDINARY_CLOUD+'/image/upload',{method:'POST',body:fd})
+        .then(function(r){ return r.json(); }).then(function(d){ return d.secure_url||null; });
+    }))).filter(Boolean);
+    urls.forEach(function(url,i){
+      if(placeholders[i]){ placeholders[i].src=url; placeholders[i].style.opacity='1'; placeholders[i].onclick=function(){ viewImg(this.src); }; }
+      item._photos.push(url);
+    });
+    if(loadDiv) loadDiv.remove();
+    if(!urls.length){ alert('Echec upload Cloudinary'); return; }
+    var semaineSave=item.semaine||_semaineActiveMCMEC||'';
+    if(!semaineSave){ alert('Semaine introuvable. Rechargez le planning.'); return; }
+    var res=await fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
+    if(res&&res.ok){
+      var zone=document.getElementById('planning-photos-exist-mcmec-'+wo);
+      if(zone) zone.innerHTML=item._photos.map(function(p){
+        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
+      }).join('');
+      var prev2=document.getElementById('planning-photos-preview-mcmec-'+wo);
+      if(prev2) prev2.innerHTML='';
+    } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
+  } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
+}
+
+function sauvegarderRemarquePlanningMCMEC(wo) {
+  var ta = document.getElementById('planning-remarque-mcmec-' + wo);
+  if (!ta) return;
+  var item = _planningDataMCMEC.find(function(i){ return i.wo === wo; });
+  if (item) item._remarque = ta.value;
+  var btn = ta.nextElementSibling;
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  fetch(DB_API + '?table=planning_mcmecus', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      wo: wo,
+      semaine: item ? (item.semaine || '') : '',
+      remarque: ta.value
+    })
+  }).then(function(){
+    if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+  }).catch(function(){
+    if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
+  });
+}
+
 
 // ══════════════════════════════════════════
 // NON-CONFORMITÉS
@@ -12553,7 +13735,7 @@ loadCatalog();
 <!-- ═══════════════ PLANNING ATELIER P17 ═══════════════ -->
 <div class="screen" id="s-planning">
   <div class="topbar" style="background:#C55A11">
-    <div class="topbar-title">📅 Planning Atelier P17</div>
+    <div class="topbar-title">📅 Planning Atelier MCREPAR</div>
     <div class="topbar-user" id="planning-semaine-lbl">Semaine —</div>
   </div>
   <div style="padding:12px">
@@ -12637,4 +13819,93 @@ loadCatalog();
     </div>
   </div>
 </div>
+
+<div class="screen" id="s-planning-mcelins">
+  <div class="topbar" style="background:#1F4E79">
+    <div class="topbar-title">📅 Planning Atelier MCELINS</div>
+    <div class="topbar-user" id="planning-semaine-lbl-mcel">Semaine —</div>
+  </div>
+  <div style="padding:12px">
+    <div id="planning-import-zone-mcel" style="display:none;background:#fff;border:2px dashed #1F4E79;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:24px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:#1F4E79;margin-bottom:4px">Importer le planning Excel</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCELINS</div>
+      <label style="background:#1F4E79;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
+        📂 Choisir fichier
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
+      </label>
+    </div>
+    <select id="planning-semaine-sel-mcel" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #1F4E79;font-size:13px;font-weight:700;font-family:inherit;color:#1F4E79;margin-bottom:8px;background:#fff" onchange="changerSemainePlanningMCEL(this.value)"></select>
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" id="planning-search-mcel" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
+        oninput="_onPlanningSearchMCEL(this.value)"
+        style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #1F4E79;font-size:13px;font-family:inherit;outline:none">
+      <span onclick="document.getElementById('planning-search-mcel').value='';_onPlanningSearchMCEL('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+    </div>
+    <div id="planning-filtres-mcel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="filtrerPlanningMCEL(null)" id="pfbtn-mcel-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMCEL('PLANIFIE')" id="pfbtn-mcel-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMCEL('EN_COURS')" id="pfbtn-mcel-EN_COURS" style="background:#DEEAF1;color:#1F4E79;border:1.5px solid #1F4E79;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
+      <button onclick="filtrerPlanningMCEL('ATT_PIECES')" id="pfbtn-mcel-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
+      <button onclick="filtrerPlanningMCEL('TERMINE')" id="pfbtn-mcel-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
+    </div>
+    <div id="planning-list-mcel">
+      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        Importez le planning Excel pour afficher les WO de la semaine
+      </div>
+    </div>
+  </div>
+  <div id="planning-modal-mcel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
+    <div id="planning-modal-inner-mcel" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto">
+      <div id="planning-modal-content-mcel"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="screen" id="s-planning-mcmecus">
+  <div class="topbar" style="background:#375623">
+    <div class="topbar-title">📅 Planning Atelier MCMECUS</div>
+    <div class="topbar-user" id="planning-semaine-lbl-mcmec">Semaine —</div>
+  </div>
+  <div style="padding:12px">
+    <div id="planning-import-zone-mcmec" style="display:none;background:#fff;border:2px dashed #375623;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:24px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:#375623;margin-bottom:4px">Importer le planning Excel</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCMECUS</div>
+      <label style="background:#375623;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
+        📂 Choisir fichier
+        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
+      </label>
+    </div>
+    <select id="planning-semaine-sel-mcmec" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #375623;font-size:13px;font-weight:700;font-family:inherit;color:#375623;margin-bottom:8px;background:#fff" onchange="changerSemainePlanningMCMEC(this.value)"></select>
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" id="planning-search-mcmec" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
+        oninput="_onPlanningSearchMCMEC(this.value)"
+        style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #375623;font-size:13px;font-family:inherit;outline:none">
+      <span onclick="document.getElementById('planning-search-mcmec').value='';_onPlanningSearchMCMEC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+    </div>
+    <div id="planning-filtres-mcmec" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="filtrerPlanningMCMEC(null)" id="pfbtn-mcmec-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMCMEC('PLANIFIE')" id="pfbtn-mcmec-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMCMEC('EN_COURS')" id="pfbtn-mcmec-EN_COURS" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
+      <button onclick="filtrerPlanningMCMEC('ATT_PIECES')" id="pfbtn-mcmec-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
+      <button onclick="filtrerPlanningMCMEC('TERMINE')" id="pfbtn-mcmec-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
+    </div>
+    <div id="planning-list-mcmec">
+      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+        <div style="font-size:32px;margin-bottom:8px">📋</div>
+        Importez le planning Excel pour afficher les WO de la semaine
+      </div>
+    </div>
+  </div>
+  <div id="planning-modal-mcmec" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
+    <div id="planning-modal-inner-mcmec" style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto">
+      <div id="planning-modal-content-mcmec"></div>
+    </div>
+  </div>
+</div>
+
 
