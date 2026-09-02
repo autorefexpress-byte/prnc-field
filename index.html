@@ -851,61 +851,6 @@ function _initLocSel(selId, inpId, val) {
   </div>
 </div>
 
-<!-- ═══════════════ FICHE SUIVEUSE ═══════════════ -->
-<div class="screen" id="s-fsuiveuse">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-home')">←</div>
-    <div class="form-title">Fiche suiveuse</div>
-    <div class="form-badge" style="background:var(--llblue);color:var(--navy2)">Saisie</div>
-  </div>
-  <div class="form-body">
-
-    <!-- Workgroup -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
-      <div class="wg-grp">
-        <div class="wg-btn" id="fs-wg-chaud" onclick="setWG('fs','chaud')"><div class="wg-icon">&#128293;</div><div class="wg-lbl">MCCHAUD</div><div class="wg-sub">Soudure/Chaud.</div></div>
-        <div class="wg-btn" id="fs-wg-repar" onclick="setWG('fs','repar')"><div class="wg-icon">&#128296;</div><div class="wg-lbl">MCREPAR</div><div class="wg-sub">Vanne &amp; Act.</div></div>
-        <div class="wg-btn" id="fs-wg-strob" onclick="setWG('fs','strob')"><div class="wg-icon">&#9889;</div><div class="wg-lbl">STROB</div><div class="wg-sub">Instrumentation</div></div>
-      </div>
-    </div>
-
-    <!-- Infos principales -->
-    <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><div style="position:relative">
-  <input class="fi" type="text" id="fs-wo" placeholder="Tapez WO ou TAG..." autocomplete="off"
-    oninput="_filtrerWOG(this.value)" onfocus="_filtrerWOG(this.value)" inputmode="numeric"
-    style="padding-right:36px">
-  <span id="fs-wo-clear" onclick="_clearWOG()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">✕</span>
-  <div id="fs-wo-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2E75B6;border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
-</div></div>
-      <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="fs-wr" placeholder="Ex : 118466" inputmode="numeric"></div>
-    </div>
-    <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="fs-wo-usine" placeholder="Ex : 876230" inputmode="numeric"></div>
-    <div class="row2">
-      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="fs-tag" placeholder="Ex : 220-X-00315"></div>
-      <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="fs-sc" placeholder="Ex : 158659" onclick="ouvrirNumpad('fs-sc','Stock Code')" style="cursor:pointer"></div>
-    </div>
-    <div class="field-grp"><div class="field-lbl">Nom du demandeur</div><input class="fi" type="text" id="fs-demandeur" placeholder="Ex : HONAKOKO Jade"></div>
-    <div class="field-grp"><div class="field-lbl">Email du demandeur</div><input class="fi" type="email" id="fs-email-demandeur" placeholder="Ex : jade.honakoko@pronyresources.com"></div>
-
-    <!-- Information -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Information</div>
-      <input class="fi" type="text" id="fs-statut-input" placeholder="Ex : PC-USINE / Retour demandeur / En attente pièces...">
-    </div>
-
-    <!-- Photo fiche -->
-    <div class="field-grp">
-      </div>
-    </div>
-
-    <div class="field-grp"><div class="field-lbl">Remarques</div><textarea class="fi" id="fs-rem" placeholder="Optionnel..."></textarea></div>
-
-    <button class="send-btn" style="background:var(--navy2);color:#fff" onclick="saveFichesuiveuse()">&#128203; Enregistrer la fiche</button>
-  </div>
-</div>
-
 <!-- ═══════════════ HISTORIQUE WO CLOTURES ═══════════════ -->
 <div class="screen" id="s-hist-wo">
   <div class="form-header">
@@ -972,22 +917,6 @@ function _initLocSel(selId, inpId, val) {
     </div>
     <button class="back-home-btn" onclick="show('s-home')" style="margin-top:18px">← Retour à l'accueil</button>
   </div>
-</div>
-
-<!-- ═══════════════ FICHE SUIVEUSE ═══════════════ -->
-<div class="screen" id="s-fiche">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-success')">←</div>
-    <div class="form-title" id="fiche-title">Fiche suiveuse</div>
-    <div class="form-badge" id="fiche-badge" style="background:var(--lorange);color:var(--orange)">MCREPAR</div>
-  </div>
-  <div style="padding:12px 16px 4px;">
-    <div style="display:flex;gap:8px;">
-      <button onclick="printFiche()" style="flex:1;padding:11px;border:none;border-radius:10px;background:var(--navy);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">&#128424;️ Imprimer</button>
-      <button onclick="mailFiche()" style="flex:1;padding:11px;border:none;border-radius:10px;background:var(--teal);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">✉️ Envoyer par mail</button>
-    </div>
-  </div>
-  <div id="fiche-content" style="padding:12px 16px 40px;font-size:13px;"></div>
 </div>
 
 <!-- ═══════════════ USAGE DIRECT ═══════════════ -->
@@ -1105,12 +1034,12 @@ function _initLocSel(selId, inpId, val) {
       <option value="">Tous les mouvements</option>
       <option value="ARRIVEE">Arrivées</option>
       <option value="TERMINE">Terminés / Sortis</option>
-      <option value="FICHE">Fiches suiveuses</option>
-      <option value="USAGE">Usages directs</option>
       <option value="TRANSPORT">Transports</option>
       <option value="PEINTURE">Peintures</option>
-      <option value="PLANNING">Planning</option>
+      <option value="PLANNING">Planning MCREPAR</option>
       <option value="PLANNING_MCCHAUD">Planning MCCHAUD</option>
+      <option value="PLANNING_MCELINS">Planning MCELINS</option>
+      <option value="PLANNING_MCMECUS">Planning MCMECUS</option>
     </select>
     <button onclick="exportExcel()" style="background:var(--green);color:#fff;border:none;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">Excel</button>
     <button onclick="if(confirm('Effacer tout ?')) clearHist()" style="background:var(--lred);color:var(--red);border:1px solid var(--red);padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>
@@ -1602,7 +1531,6 @@ function _initLocSel(selId, inpId, val) {
   <div class="nav-item" id="nav-arrive"    onclick="show('s-arrive')"><div class="nav-icon">&#128229;</div><div class="nav-lbl">Arrivée</div></div>
   <div class="nav-item" id="nav-equip"     onclick="show('s-equip')"><div class="nav-icon">&#9989;</div><div class="nav-lbl">Terminé</div></div>
   <div class="nav-item" id="nav-hist" onclick="show('s-hist')"><div class="nav-icon">&#128202;</div><div class="nav-lbl">Histo.</div></div>
-  <div class="nav-item" id="nav-templates" onclick="show('s-templates');updateTemplateStatus()"><div class="nav-icon">📄</div><div class="nav-lbl">Tmpl.</div></div>
 </div>
 <script defer src="qrcode.js"></script>
 
@@ -1816,8 +1744,8 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-templates','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-fiche','s-fsuiveuse','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
-const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist','s-templates':'nav-templates'};
+const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
+const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist'};
 
 function show(id) {
   if (_isEtnaMode && id !== 's-etna-prestataire' && id !== 's-etna-update' && id !== 's-success') return;
@@ -1831,7 +1759,6 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
-  if (id === 's-templates') { setTimeout(updateTemplateStatus, 50); }
   if (id === 's-hist') {
     var searchEl = document.getElementById('hist-search');
     if (searchEl) { searchEl.value = ''; searchEl.blur(); }
@@ -2472,112 +2399,6 @@ function clearPlanSig() {
   _plSigHasMark = false;
 }
 
-const FS_STATUT_LABELS = {
-  pcusine:'PC-USINE', demandeur:'Retour demandeur',
-  posinsitu:'POSE IN SITU', mcmecus:'MCMECUS',
-  magasin:'MAGASIN', na:'N/A'
-};
-
-function setFsStatut(s) {
-  state.fs = state.fs || {};
-  state.fs.statut = s;
-  Object.keys(FS_STATUT_LABELS).forEach(function(k) {
-    var el = document.getElementById('fs-st-' + k);
-    if (!el) return;
-    el.className = 'type-btn' + (k === s ? ' on' : '');
-  });
-}
-
-async function saveFichesuiveuse() {
-  var wo      = v('fs-wo');
-  var wr      = v('fs-wr');
-  var tag     = v('fs-tag');
-  var dem     = v('fs-demandeur');
-  var rem     = v('fs-rem');
-  var woUsine = v('fs-wo-usine');
-  var sc      = v('fs-sc') || '';
-  var wg      = state.fs && state.fs.wg ? state.fs.wg : '';
-  var st      = document.getElementById('fs-statut-input') ? document.getElementById('fs-statut-input').value.trim() : '';
-
-  if (!wg)  { alert('Selectionne un Workgroup.'); return; }
-  if (!wo)  { alert('Le WO est obligatoire.'); return; }
-  if (!tag) { alert('Le TAG est obligatoire.'); return; }
-  if (!st)  { alert('Le champ Information est obligatoire.'); return; }
-
-  var wgl = WG_LABELS[wg];
-  var emailDem = document.getElementById('fs-email-demandeur') ? document.getElementById('fs-email-demandeur').value.trim() : '';
-
-  var records = await dbLoad();
-  var existing = records.find(function(r) { return r.wo === wo || r.tag === tag; });
-  await dbAdd({
-    type: 'FICHE', tag: tag, wo: wo, woUsine: woUsine||null, wr: wr, wg: wgl,
-    statut: st, desc: dem ? 'Demandeur : ' + dem : '',
-    emailDemandeur: emailDem || null, motif: rem
-  });
-  invalidateDbCache();
-
-  var wgContacts = WG_CONTACTS[wg];
-  var toList = wgContacts ? wgContacts.contacts.filter(function(c){ return !c.cc; }).map(function(c){ return c.mail; }) : [];
-  var ccList = wgContacts ? wgContacts.contacts.filter(function(c){ return c.cc; }).map(function(c){ return c.mail; }) : [];
-  if (emailDem && !toList.includes(emailDem)) toList.unshift(emailDem);
-
-  var today = new Date().toLocaleDateString('fr-FR');
-  var subj = '[FICHE SUIVEUSE] ' + wgl + ' — TAG ' + tag + ' — WO ' + wo;
-  var body = [
-    'Bonjour,',
-    '',
-    'Veuillez trouver ci-joint la fiche suiveuse pour l equipement suivant :',
-    '',
-    '  TAG        : ' + tag,
-    '  WO MTC     : ' + wo,
-    woUsine ? '  WO Usine   : ' + woUsine : null,
-    wr      ? '  WR         : ' + wr      : null,
-    sc      ? '  Stock Code : ' + sc      : null,
-    dem     ? '  Demandeur  : ' + dem     : null,
-    '  Workgroup  : ' + wgl,
-    '  Statut     : ' + st,
-    rem     ? '  Info       : ' + rem     : null,
-    '  Date       : ' + today,
-    '',
-    'NB : Les photos seront ajoutees separement via Outlook.',
-    '',
-    'Cordialement,',
-    getUserName(),
-    'Prepose aux pieces | PRNC — Maintenance Centrale P50'
-  ].filter(function(l){ return l !== null; }).join('\n');
-
-  var wordGenerated = false;
-
-  var mailTo = 'mailto:' + toList.join(',') +
-    '?subject=' + encodeURIComponent(subj) +
-    '&body=' + encodeURIComponent(body + (wordGenerated ? '\n\n[Fiche Word telechargee — a joindre en piece jointe]' : '')) +
-    (ccList.length ? '&cc=' + ccList.join(',') : '');
-  
-  setTimeout(function(){ window.location.href = mailTo; }, wordGenerated ? 1500 : 100);
-
-  ['fs-wg-chaud','fs-wg-repar','fs-wg-strob'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.className = 'wg-btn';
-  });
-  var fsInput = document.getElementById('fs-statut-input');
-  if (fsInput) fsInput.value = '';
-  ['fs-wo-usine','fs-email-demandeur'].forEach(function(id){
-    var el = document.getElementById(id); if(el) el.value = '';
-  });
-  if(state.fs) state.fs.wg = '';
-  resetForm(['fs-wo','fs-wr','fs-tag','fs-sc','fs-demandeur','fs-rem'], [], 'fs');
-
-  var linkedMsg = existing
-    ? '<br><br>&#128279; Lie a un enregistrement : <strong>' + existing.type + '</strong> du ' + (existing.date||'')
-    : '';
-
-  showSuccess('&#128203;','si-blue','Fiche suiveuse envoyee !',
-    wordGenerated ? 'Fiche Word téléchargée — ouvre dans Word et imprime en A3.' : 'Outlook ouvert avec les infos.',
-    '<strong>WO :</strong> ' + wo + '<br><strong>TAG :</strong> ' + tag +
-    '<br><strong>Workgroup :</strong> ' + wgl +
-    (dem ? '<br><strong>Demandeur :</strong> ' + dem : '') + linkedMsg);
-}
-
 const WO_CLOTURE_KEY = 'prnc-wo-clotures';
 
 function getWOClotures() {
@@ -2685,7 +2506,6 @@ function sendPlanning() {
     record.ts    = new Date().toISOString();
     record.date  = new Date().toLocaleDateString('fr-FR');
     record.heure = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    if (window._lastFromFiche) { record.fromFiche = true; window._lastFromFiche = false; }
     try {
       var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
       local.unshift(record);
@@ -2798,11 +2618,8 @@ function sendArrive() {
     const etiqData = { wg, wgl, wr, tag, sc, serie, loc, dateRecep, wo, desc, typeEqt, isUrg };
 
     resetForm(['ar-wo','ar-wr','ar-sc','ar-tag','ar-desc','ar-serie','ar-loc','ar-date','ar-type-eqt','ar-rem'], [], 'ar');
-    var wordMsg = (wg === 'repar' || wg === 'chaud')
-      ? '&#128196; Fiche Word téléchargée — joindre dans Outlook depuis Téléchargements.'
-      : 'Étiquette prête à imprimer ci-dessous.';
     showSuccess('&#128229;','si-purple','Notification envoyée !',
-      wordMsg,
+      'Étiquette prête à imprimer ci-dessous.',
       `<strong>WR :<\/strong> ${wr}<br><strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Statut :<\/strong> <span style="${statColor};padding:2px 8px;border-radius:20px;font-size:11px">${isUrg?'URGENCE':'En attente diag.'}<\/span><br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_COLORS[wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
@@ -3051,186 +2868,6 @@ function sendEqtNettoyer() {
     '<strong>TAG :</strong> '+tag+'<br><strong>WR :</strong> '+wr+'<br><strong>À :</strong> '+dest.join(', ')+'<br><strong>CC :</strong> '+cc.length+' destinataire'+(cc.length>1?'s':''));
 
   resetForm(['en-wr','en-tag','en-preco'], [], null);
-}
-
-function genererFicheFromURL(params) {
-  const wg      = params.get('wg')  || '';
-  const wr      = params.get('wr')  || '';
-  const tag     = params.get('tag') || '';
-  const wo      = params.get('wo')  || '';
-  const sc      = params.get('sc')  || '';
-  const desc    = params.get('desc')|| '';
-  const serie   = params.get('serie')|| '';
-  const typeEqt = params.get('typeeqt')|| '';
-  const loc     = params.get('loc') || '';
-  const dateR   = params.get('date')|| '';
-
-  const isMCCHAUD = wg === 'chaud';
-  const isMCREPAR = wg === 'repar';
-  const isSTROB   = wg === 'strob';
-
-  const couleur = isMCCHAUD ? '#7030A0' : isMCREPAR ? '#C55A11' : '#1F3864';
-  const titre   = isMCCHAUD ? 'FICHE SUIVEUSE -- MC CHAUD'
-                : isMCREPAR ? 'FICHE SUIVEUSE -- VANNE & ACTIONNEUR'
-                : 'FICHE SUIVEUSE -- STROB';
-
-  function row2(l1,v1,l2,v2) {
-    return `<tr>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;width:22%;font-size:12px">${l1}<\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v1||'--'}<\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;width:22%;font-size:12px">${l2}<\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600;width:28%">${v2||'--'}<\/td>
-    <\/tr>`;
-  }
-  function row1(l,v) {
-    return `<tr>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px">${l}<\/td>
-      <td colspan="3" style="padding:7px 10px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:600">${v||'--'}<\/td>
-    <\/tr>`;
-  }
-  function sectionHdr(t) {
-    return `<tr><td colspan="4" style="padding:8px 10px;background:${couleur};color:#fff;font-weight:700;font-size:13px;letter-spacing:.5px">${t}<\/td><\/tr>`;
-  }
-  function emptyRow(label, h=36) {
-    return `<tr style="height:${h}px">
-      <td colspan="2" style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px">${label}<\/td>
-      <td colspan="2" style="border:1px solid #ccc;background:#fff"><\/td>
-    <\/tr>`;
-  }
-  function signRow(l) {
-    return `<tr style="height:38px">
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px">${l}<\/td>
-      <td style="border:1px solid #ccc;background:#fff"><\/td>
-      <td style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px">DATE<\/td>
-      <td style="border:1px solid #ccc;background:#fff"><\/td>
-    <\/tr>`;
-  }
-
-  let tableBody = sectionHdr('RÉCEPTION');
-  if (isMCCHAUD) {
-    tableBody += row2('WR', wr, 'DATE RÉCEPTION', dateR);
-    tableBody += row2('TAG ÉQUIPEMENT', tag, 'TYPE ÉQUIPEMENT', typeEqt);
-    tableBody += row2('N° SÉRIE', serie, 'LOCALISATION', loc);
-    if (wo || desc) tableBody += row2('N° WO', wo, 'DÉSIGNATION', desc);
-  } else if (isMCREPAR) {
-    tableBody += row2('WR', wr, 'DATE RÉCEPTION', dateR);
-    tableBody += row2('STOCK CODE', sc, 'TAG ÉQUIPEMENT', tag);
-    tableBody += row1('LOCALISATION', loc);
-    if (wo || desc) tableBody += row2('N° WO', wo, 'DÉSIGNATION', desc);
-  } else {
-    tableBody += row2('WR', wr, 'DATE RÉCEPTION', dateR);
-    tableBody += row2('STOCK CODE', sc, 'TAG ÉQUIPEMENT', tag);
-    tableBody += row1('LOCALISATION', loc);
-    if (wo || desc) tableBody += row2('N° WO', wo, 'DÉSIGNATION', desc);
-  }
-
-  tableBody += sectionHdr('SÉCURITÉ');
-  tableBody += emptyRow('IDENTIFICATION DU FLUIDE',32);
-  tableBody += emptyRow('DÉCONTAMINATION OUI / NON / N/A',32);
-  tableBody += emptyRow('PORT DES EPI',32);
-
-  tableBody += sectionHdr('IDENTIFICATION DE L\'ÉQUIPEMENT');
-  tableBody += emptyRow('FABRICANT',32);
-  tableBody += row2('MATÉRIAU','','CLASSE PRESSION / TAILLE','');
-  tableBody += emptyRow('N° SÉRIE FABRICANT',32);
-
-  if (isMCCHAUD) {
-    tableBody += sectionHdr('SOUDURE -- TECHNICIEN MC CHAUD / TEMPS D\'INTERVENTION');
-    tableBody += `<tr>
-      <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-size:11px"><\/td>
-      <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px;text-align:center">TECHNICIEN<\/td>
-      <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px;text-align:center">HRS PRÉVUES<\/td>
-      <td style="padding:6px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;color:#222;font-size:12px;text-align:center">HRS RÉALISÉES / DATE<\/td><\/tr>`;
-    ['Tâche 1','Tâche 2','Tâche 3'].forEach(t => {
-      tableBody += `<tr style="height:34px">
-        <td style="padding:6px 10px;border:1px solid #ccc;background:#F5F5F5;font-weight:700;font-size:12px">${t}<\/td>
-        <td style="border:1px solid #ccc;background:#fff"><\/td>
-        <td style="border:1px solid #ccc;background:#fff"><\/td>
-        <td style="border:1px solid #ccc;background:#fff"><\/td><\/tr>`;
-    });
-    tableBody += signRow('NOM & SIGNATURE TECH.');
-    tableBody += sectionHdr('QA -- NDT');
-    tableBody += emptyRow('RAPPORT NDT AVANT RÉPARATION  OUI / NON  -- N°PV',32);
-    tableBody += emptyRow('PROCÉDURE DE RÉPARATION  OUI / NON',32);
-    ['VISUEL','RESSUAGE','RADIOGRAPHIE','ULTRASONS','DIMENSIONNEL'].forEach((n,i) => {
-      tableBody += `<tr style="height:30px">
-        <td style="padding:6px 10px;border:1px solid #ccc;background:${i%2?'#fff':'#F5F5F5'};font-weight:700;font-size:12px">${n}<\/td>
-        <td style="border:1px solid #ccc;background:#fff;text-align:center;font-size:11px">REQUIS : ___<\/td>
-        <td style="border:1px solid #ccc;background:#fff;text-align:center;font-size:11px">DATE : ___<\/td>
-        <td style="border:1px solid #ccc;background:#fff;text-align:center;font-size:12px">OUI / NON<\/td><\/tr>`;
-    });
-    tableBody += signRow('NOM & SIGNATURE SUP.');
-  }
-
-  if (isMCREPAR) {
-    tableBody += sectionHdr('TYPE DE VANNE & ACTIONNEUR');
-    tableBody += row2('TYPE DE VANNE','','TYPE ACTIONNEUR','');
-    tableBody += row2('MODE DE DÉFAILLANCE','','ORIENTATION','');
-    tableBody += sectionHdr('INSPECTION AVANT DÉMONTAGE');
-    tableBody += emptyRow('CONDITION GÉNÉRALE DE LA VANNE',36);
-    tableBody += emptyRow('CONDITION GÉNÉRALE DE L\'ACTIONNEUR',36);
-    ['A','B','C','D','F'].forEach(d => { tableBody += row2(`DIMENSION ${d}`,'','CONFORME OK/NOK',''); });
-    tableBody += signRow('NOM & SIGNATURE TECH.');
-  }
-
-  tableBody += sectionHdr('OBSERVATIONS');
-  tableBody += `<tr style="height:50px">
-    <td colspan="2" style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;font-size:12px">OBSERVATIONS PAP<\/td>
-    <td colspan="2" style="border:1px solid #ccc;background:#fff"><\/td><\/tr>`;
-  tableBody += `<tr style="height:50px">
-    <td colspan="2" style="padding:7px 10px;border:1px solid #ccc;background:#EEE;font-weight:700;font-size:12px">OBSERVATIONS PLANIFICATEUR<\/td>
-    <td colspan="2" style="border:1px solid #ccc;background:#fff"><\/td><\/tr>`;
-  tableBody += signRow('NOM & SIGNATURE SUP./REF.');
-
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${titre} -- ${tag} -- WR ${wr}<\/title>
-<style>
-  body{font-family:Arial,sans-serif;margin:10px;background:#f5f5f5}
-  .page{background:#fff;max-width:820px;margin:0 auto;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-  h1{font-size:17px;font-weight:700;color:#fff;background:${couleur};padding:12px 16px;text-align:center;margin:0 0 12px;border-radius:4px;letter-spacing:1px}
-  .subtitle{text-align:center;font-size:11px;color:#888;margin-bottom:14px}
-  table{width:100%;border-collapse:collapse;margin-bottom:10px}
-  @media print{body{margin:0;background:#fff}.page{box-shadow:none;padding:10px}.no-print{display:none!important}}
-<\/style>
-<\/head>
-<body>
-<div class="page">
-  <div class="no-print" style="text-align:center;margin-bottom:14px">
-    <button onclick="window.print()" style="background:${couleur};color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">[IMPRIMER] Imprimer / Enregistrer PDF<\/button>
-    <button onclick="window.close()" style="background:#f2f2f2;color:#333;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">✕ Fermer<\/button>
-  <\/div>
-  <h1>${titre}<\/h1>
-  <div class="subtitle">Générée le ${new Date().toLocaleDateString('fr-FR')} -- PRNC Maintenance Centrale -- WR : ${wr} -- TAG : ${tag}<\/div>
-  <table>${tableBody}<\/table>
-  <div style="font-size:10px;color:#bbb;text-align:right;margin-top:6px">PRNC -- Maintenance Centrale -- Préposé aux pièces<\/div>
-<\/div>
-<\/body>
-<\/html>`;
-
-  document.open();
-  document.write(html);
-  document.close();
-}
-
-function genererFiche() {
-  const wg = state.ar.wg;
-  if(!wg) { alert('Sélectionne un Workgroup.'); return; }
-  const params = new URLSearchParams();
-  params.set('wg', wg);
-  params.set('wr',  v('ar-wr'));
-  params.set('tag', v('ar-tag'));
-  params.set('wo',  v('ar-wo'));
-  params.set('sc',  v('ar-sc'));
-  params.set('desc',v('ar-desc'));
-  params.set('serie',v('ar-serie'));
-  params.set('typeeqt',v('ar-type-eqt'));
-  params.set('loc', v('ar-loc'));
-  params.set('date',v('ar-date'));
-  genererFicheFromURL(params);
 }
 
 function buildEtiquetteSVG(d, width) {
@@ -3671,7 +3308,6 @@ async function dbLoad() {
           woMtc: r.wo_mtc || r.woMtc || '',
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
           emailDemandeur   : r.email_demandeur   || null,
-          fromFiche        : r.from_fiche        || false,
           etnaStatut       : r.etna_statut       || null,
           etnaDateRetour   : r.etna_date_retour  || null,
           etnaCommentaire  : r.etna_commentaire  || null,
@@ -3711,7 +3347,6 @@ async function dbAdd(record) {
   record.ts    = new Date().toISOString();
   record.date  = new Date().toLocaleDateString('fr-FR');
   record.heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-  if (window._lastFromFiche) { record.fromFiche = true; window._lastFromFiche = false; }
 
   try {
     await supaFetch('/rest/v1/historique', 'POST', {
@@ -3719,7 +3354,6 @@ async function dbAdd(record) {
       wo_usine: record.woUsine || null, wr: record.wr || null, sc: record.sc || null,
       email_demandeur: record.emailDemandeur || null,
       wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
-      from_fiche: record.fromFiche ? true : null,
       shutdown: record.shutdown || null, qty: record.qty ? String(record.qty) : null,
       designation: record.desc || null, serie: record.serie || null,
       type_eqt: record.typeEqt || null, date_recep: record.dateRecep || null,
@@ -3750,10 +3384,11 @@ const TYPE_COLORS = {
   USAGE     : {bg:'#FCEBEB',fg:'#E24B4A',icon:'USE'},
   TRANSPORT : {bg:'#DEEAF1',fg:'#1F3864',icon:'TRP'},
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
-  FICHE      : {bg:'#DEEAF1',fg:'#2E75B6',icon:'FS'},
   ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'},
   PLANNING   : {bg:'#FFF3E0',fg:'#C55A11',icon:'P17'},
-  PLANNING_MCCHAUD : {bg:'#EDE7F6',fg:'#7030A0',icon:'MCC'}
+  PLANNING_MCCHAUD : {bg:'#EDE7F6',fg:'#7030A0',icon:'MCC'},
+  PLANNING_MCELINS : {bg:'#DEEAF1',fg:'#1F4E79',icon:'MCE'},
+  PLANNING_MCMECUS : {bg:'#E2EFDA',fg:'#375623',icon:'MCM'}
 };
 
 function clearHistSearch() {
@@ -3790,7 +3425,6 @@ async function renderHist() {
           wo: r.wo || '', woUsine: r.wo_usine || '', woMtc: r.wo_mtc || '',
           wr: r.wr, sc: r.sc, wg: r.wg, loc: r.loc, statut: r.statut,
           emailDemandeur: r.email_demandeur || null,
-          fromFiche: r.from_fiche || false,
           etnaStatut: r.etna_statut || null, etnaDateRetour: r.etna_date_retour || null, etnaCommentaire: r.etna_commentaire || null,
           callidusStatut: r.callidus_statut || null, callidusDateRetour: r.callidus_date_retour || null, callidusCommentaire: r.callidus_commentaire || null,
           shutdown: r.shutdown, qty: r.qty,
@@ -3866,7 +3500,6 @@ async function renderHist() {
         ${_isConsultMode
           ? '<button onclick="viewRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
           : '<button onclick="editRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
-            (r.type==='ARRIVEE' ? '<button onclick="creerFicheDepuisArrivee(this.dataset.rid)" data-rid="' + r.id + '" style="background:#E2EFDA;color:#375623;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128203; Fiche</button>' : '') +
             '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '') +
             ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wo-usine="' + (r.woUsine||'') + '" data-wr="' + (r.wr||'') + '" data-sc="' + (r.sc||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" data-desc="' + ((r.desc||'').replace(/"/g,"'")) + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
@@ -4103,7 +3736,7 @@ function resetForm(ids, selects, wgPrefix, kitReset) {
       ? '<div class="manual-item"><input class="fi" type="email" placeholder="prenom.nom@pronyresources.com"></div>'
       : '';
   });
-  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev','tr-prev','fs-prev'].forEach(pid => {
+  ['ar-prev','eq-prev','pl-prev','ud-prev','pt-prev','tr-prev'].forEach(pid => {
     const el = document.getElementById(pid);
     if (el) el.innerHTML = '';
     clearPhotos(pid);
@@ -4510,7 +4143,7 @@ function activerModeAtelier() {
   _isConsultMode  = false;
   var banner = document.getElementById('atelier-banner');
   if (banner) banner.style.display = 'flex';
-  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home','nav-templates'].forEach(function(id) {
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning');
@@ -4525,7 +4158,7 @@ function activerModeAtelierMC() {
   _isConsultMode   = false;
   var banner = document.getElementById('atelier-mc-banner');
   if (banner) banner.style.display = 'flex';
-  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home','nav-templates'].forEach(function(id) {
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   show('s-planning-mcchaud');
@@ -6328,22 +5961,13 @@ function showPhotoForWhatsApp(photos) {
   document.body.appendChild(ov);
 }
 
-function buildWorkflowHtml(r) {
-  return '<div id="workflow-'+r.id+'" style="background:#F0F4FF;border-radius:12px;padding:12px 14px;margin-bottom:2px">' +
-    '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#128196; Workflow -- ' + (r.tag||'') + '</div>' +
-    buildWorkflowSteps(r) +
-    '</div>';
-}
-
 function buildWorkflowArriveeHtml(r) {
   var html = '<div style="background:#F0F4FF;border-radius:12px;padding:12px 14px;margin-bottom:2px">';
   html += '<div style="font-size:11px;font-weight:700;color:var(--navy2);margin-bottom:10px">&#9881; Workflow -- ' + (r.tag||'') + '</div>';
 
   var steps = [
     { num:1, label:'Arrivée enregistrée', done:true, date:r.date, color:'#375623' },
-    { num:2, label:'Créer fiche suiveuse', done:false, color:'#1F3864',
-      btnLabel:'&#128196; Fiche suiveuse', action:'fiche' },
-    { num:3, label:'Mettre au rebus', done:false, color:'#C00',
+    { num:2, label:'Mettre au rebus', done:false, color:'#C00',
       btnLabel:'&#128465; Rebus', action:'rebus' },
   ];
 
@@ -6367,9 +5991,7 @@ function buildWorkflowArriveeHtml(r) {
 
 function triggerWorkflowArrivee(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
   document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
-  if (action === 'fiche') {
-    creerFicheDepuisArrivee(id);
-  } else if (action === 'rebus') {
+  if (action === 'rebus') {
     if (confirm('Mettre ' + (tag||'cet équipement') + ' au rebus ?')) {
       show('s-rebus');
       setTimeout(function() {
@@ -6382,68 +6004,6 @@ function triggerWorkflowArrivee(action, wo, tag, wr, wg, sc, id, woUsine, emailD
       }, 200);
     }
   }
-}
-
-function buildWorkflowSteps(r) {
-  var steps = [
-    { num:1, label:'Fiche suiveuse reçue', done:true, date:r.date, color:'#375623', icon:'&#9989;' },
-    { num:2, label:'Départ ETNA -- Peinture', done:false, color:'#C55A11', icon:'&#127912;',
-      action:'prefillEtna', btnLabel:'&#127912; Départ ETNA' },
-    { num:3, label:'Retour ETNA -- Check qualité', done:false, color:'#7030A0', icon:'&#128229;',
-      action:'prefillRetourEtna', btnLabel:'&#128229; Retour ETNA' },
-    { num:4, label:'Équipement terminé -- Dépôt', done:false, color:'#0F6E56', icon:'&#9989;',
-      action:'prefillTermine', btnLabel:'&#9989; Équipement terminé' },
-    { num:5, label:'Arrivée équipement', done:false, color:'#1F3864', icon:'&#128666;',
-      action:'prefillArrivee', btnLabel:'&#128666; Arrivée' },
-  ];
-
-  return steps.map(function(s) {
-    var bg    = s.done ? '#E2EFDA' : '#fff';
-    var color = s.done ? s.color : '#888';
-    var html  = '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #E0E8FF">';
-    html += '<div style="width:26px;height:26px;border-radius:50%;background:' + (s.done?s.color:'#E0E0E0') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">' + s.num + '</div>';
-    html += '<div style="flex:1">';
-    html += '<div style="font-size:12px;font-weight:700;color:' + (s.done?s.color:'#555') + '">' + (s.done?'&#9989; ':'&#9633; ') + s.label + '</div>';
-    if (s.done && s.date) html += '<div style="font-size:10px;color:#888;margin-top:2px">' + s.date + '</div>';
-    html += '</div>';
-    if (!s.done && s.action) {
-      html += '<button onclick="triggerWorkflow(&quot;' + s.action + '&quot;,&quot;' + (r.wo||'') + '&quot;,&quot;' + (r.tag||'') + '&quot;,&quot;' + (r.wr||'') + '&quot;,&quot;' + (r.wg||'') + '&quot;,&quot;' + (r.sc||'') + '&quot;,&quot;' + (r.id||'') + '&quot;,&quot;' + (r.woUsine||'') + '&quot;,&quot;' + (r.emailDemandeur||'') + '&quot;)" '
-        + 'style="padding:6px 10px;background:' + s.color + ';color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">'
-        + s.btnLabel + '</button>';
-    }
-    html += '</div>';
-    return html;
-  }).join('');
-}
-
-function triggerWorkflow(action, wo, tag, wr, wg, sc, id, woUsine, emailDem) {
-  document.querySelectorAll('.overlay-view').forEach(function(el){ el.remove(); });
-
-  if (action === 'prefillEtna') {
-    if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
-    prefillEtna(wo, tag, wg, woUsine);
-  } else if (action === 'prefillRetourEtna') {
-    if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
-    prefillRetourEtna(wo, tag, wr, wg, woUsine);
-  } else if (action === 'prefillTermine') {
-    prefillTermine(wo, tag, wr, wg, sc, id, woUsine, emailDem);
-    setTimeout(function() {
-      if (id) { deleteFicheSupabase(id); window._lastFromFiche = true; }
-    }, 500);
-  } else if (action === 'prefillArrivee') {
-    prefillArrivee(wo, tag, wr, wg, sc);
-  }
-}
-
-async function deleteFicheSupabase(id) {
-  try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'DELETE');
-    var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-    local = local.filter(function(r){ return r.id !== id; });
-    localStorage.setItem('prnc-historique', JSON.stringify(local));
-    invalidateDbCache();
-    console.log('Fiche suiveuse supprimée:', id);
-  } catch(e) { console.warn('Delete fiche err', e); }
 }
 
 function prefillEtna(wo, tag, wg, woUsine) {
@@ -6848,7 +6408,6 @@ function viewRecord(id) {
             style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
             &#128172; WhatsApp Magasinier
           </button>` : ''}
-          ${r.type==='FICHE' && !_isConsultMode ? buildWorkflowHtml(r) : ''}
           ${r.type==='ARRIVEE' && !_isConsultMode ? buildWorkflowArriveeHtml(r) : ''}
           <div style="display:flex;gap:8px">
             <button onclick="this.closest('.overlay-view').remove()" style="flex:1;padding:12px;background:var(--grey);border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Fermer</button>
@@ -6934,10 +6493,6 @@ function ouvrirWorkflowArrivee(r) {
       photosHtml +
       '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Suite du workflow</div>' +
       '<div style="display:flex;flex-direction:column;gap:10px">' +
-        '<button id="btn-fiche-overlay" style="background:#1F3864;color:#fff;border:none;border-radius:14px;padding:16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">' +
-          '<span style="font-size:22px">&#128203;</span>' +
-          '<div><div style="font-size:13px;font-weight:700">Fiche suiveuse</div><div style="font-size:11px;opacity:.8;margin-top:2px">Créer la fiche de suivi équipement</div></div>' +
-        '</button>' +
         '<button id="btn-rebus-overlay" style="background:#FFF2F2;color:#C00;border:1.5px solid #C00;border-radius:14px;padding:16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">' +
           '<span style="font-size:22px">&#128465;</span>' +
           '<div><div style="font-size:13px;font-weight:700">Rebus</div><div style="font-size:11px;opacity:.7;margin-top:2px">Équipement mis au rebus</div></div>' +
@@ -6950,45 +6505,6 @@ function ouvrirWorkflowArrivee(r) {
 
   overlay.querySelectorAll('img[data-url]').forEach(function(img) {
     img.addEventListener('click', function() { window.open(this.dataset.url, '_blank'); });
-  });
-
-  overlay.querySelector('#btn-fiche-overlay').addEventListener('click', async function() {
-    overlay.remove();
-    var records = await dbLoad();
-    var ficheExistante = records.find(function(x) {
-      if (x.type !== 'FICHE') return false;
-      if (!r.wo) return false; // pas de WO → pas de vérification
-      return x.wo && x.wo === r.wo;
-    });
-
-    if (ficheExistante) {
-      var ov2 = document.createElement('div');
-      ov2.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
-      ov2.innerHTML =
-        '<div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 36px;width:100%;max-width:430px">' +
-          '<div style="text-align:center;padding:10px 0 16px">' +
-            '<div style="font-size:36px">&#128203;</div>' +
-            '<div style="font-size:15px;font-weight:700;color:#1F3864;margin-top:8px">Fiche déjà existante</div>' +
-            '<div style="font-size:12px;color:#888;margin-top:6px">Une fiche suiveuse existe déjà pour<br><strong>' + (r.tag || r.wo || '') + '</strong></div>' +
-          '</div>' +
-          '<div style="background:#FFF9E6;border:1.5px solid #F0A500;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#7A5000">' +
-            '&#128204; TAG : <strong>' + (ficheExistante.tag || '--') + '</strong><br>' +
-            '&#128204; WO &nbsp;: <strong>' + (ficheExistante.wo || '--') + '</strong><br>' +
-            '&#128204; Date : ' + (ficheExistante.date || '--') +
-          '</div>' +
-          '<button id="btn-voir-fiche" style="width:100%;background:#1F3864;color:#fff;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:8px">&#128065; Voir la fiche existante</button>' +
-          '<button id="btn-cancel-ov2" style="width:100%;background:#f5f5f5;color:#555;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Annuler</button>' +
-        '</div>';
-      document.body.appendChild(ov2);
-      ov2.querySelector('#btn-voir-fiche').addEventListener('click', function() {
-        ov2.remove();
-        viewRecord(ficheExistante.id);
-      });
-      ov2.querySelector('#btn-cancel-ov2').addEventListener('click', function() { ov2.remove(); });
-      ov2.addEventListener('click', function(e) { if (e.target === ov2) ov2.remove(); });
-    } else {
-      creerFicheDepuisArriveeRecord(r);
-    }
   });
 
   overlay.querySelector('#btn-rebus-overlay').addEventListener('click', function() {
@@ -7014,54 +6530,6 @@ async function rebusArrivee(id) {
   } catch(e) { alert('Erreur : ' + e.message); }
 }
 
-function creerFicheDepuisArriveeRecord(r) {
-  show('s-fsuiveuse');
-  setTimeout(function() {
-    var tagEl = document.getElementById('fs-tag');
-    if (tagEl) tagEl.value = r.tag || '';
-    var woEl = document.getElementById('fs-wo');
-    if (woEl) woEl.value = r.wo || '';
-    var woUEl = document.getElementById('fs-wo-usine');
-    if (woUEl) woUEl.value = r.woUsine || '';
-    var wrEl = document.getElementById('fs-wr');
-    if (wrEl) wrEl.value = r.wr || '';
-    if (r.wg) {
-      var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === r.wg; });
-      if (wgKey) setWG('fs', wgKey);
-    }
-    var demEl = document.getElementById('fs-demandeur');
-    if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
-    var scEl = document.getElementById('fs-sc');
-    if (scEl) scEl.value = r.sc || '';
-  }, 200);
-}
-
-function creerFicheDepuisArrivee(id) {
-  dbLoad().then(function(records) {
-    var r = records.find(function(x){ return x.id === id; });
-    if (!r) return;
-    show('s-fsuiveuse');
-    setTimeout(function() {
-      var tagEl = document.getElementById('fs-tag');
-      if (tagEl) tagEl.value = r.tag || '';
-      var woEl = document.getElementById('fs-wo');
-      if (woEl) woEl.value = r.wo || '';
-      var woUEl = document.getElementById('fs-wo-usine');
-      if (woUEl) woUEl.value = r.woUsine || '';
-      var wrEl = document.getElementById('fs-wr');
-      if (wrEl) wrEl.value = r.wr || '';
-      if (r.wg) {
-        var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k] === r.wg; });
-        if (wgKey) setWG('fs', wgKey);
-      }
-      var demEl = document.getElementById('fs-demandeur');
-      if (demEl && r.desc) demEl.value = r.desc.replace('Demandeur : ', '');
-      var scEl = document.getElementById('fs-sc');
-      if (scEl) scEl.value = r.sc || '';
-    }, 200);
-  });
-}
-
 function editRecord(id) {
   if (checkConsultMode()) return;
   dbLoad().then(records => {
@@ -7084,7 +6552,6 @@ function editRecord(id) {
             <option value="USAGE"    ${r.type==='USAGE'    ?'selected':''} style="color:#000">USAGE</option>
             <option value="TRANSPORT"${r.type==='TRANSPORT'?'selected':''} style="color:#000">TRANSPORT</option>
             <option value="PEINTURE" ${r.type==='PEINTURE' ?'selected':''} style="color:#000">PEINTURE</option>
-            <option value="FICHE"       ${r.type==='FICHE'       ?'selected':''} style="color:#000">FICHE</option>
             <option value="ATT_PIECES" ${r.type==='ATT_PIECES' ?'selected':''} style="color:#000">ATT PIÈCES</option>
           </select>
         </div>
@@ -8755,11 +8222,6 @@ initPIN();
   const p = new URLSearchParams(window.location.search);
   if (p.get('etiq') === '1') {
     try { afficherEtiquetteURL(p); } catch(e) { console.warn('Etiquette URL err', e); }
-  } else if (p.get('fiche')) {
-    try {
-      const fp = new URLSearchParams(decodeURIComponent(p.get('fiche')));
-      genererFicheFromURL(fp);
-    } catch(e) { console.warn('Fiche URL err', e); }
   }
 })();
 
@@ -8932,7 +8394,6 @@ function renderRelanceCard(r, urgent) {
         '<div>' +
           '<div style="display:flex;align-items:center;gap:6px">' +
             '<span style="font-size:16px;font-weight:700;color:#1F3864">' + tag + '</span>' +
-            (r.fromFiche ? '<span style="background:#1F3864;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">FS</span>' : '') +
           '</div>' +
           (wg ? '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + wg + '</span>' : '') +
         '</div>' +
@@ -13139,66 +12600,6 @@ loadCatalog();
 
 
 
-<!-- ═══════════════ TEMPLATES WORD ═══════════════ -->
-<div class="screen" id="s-templates">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div>
-      <div class="form-title">Mes Templates Word</div>
-      <div class="form-sub">Gérer vos modèles de fiches suiveuses</div>
-    </div>
-  </div>
-
-  <div style="padding:16px">
-
-    <!-- MCREPAR -->
-    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:44px;height:44px;background:#DEEAF1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#1F3864">Fiche MCREPAR</div>
-          <div id="tmpl-repar-status" style="font-size:11px;color:#888">Chargement...</div>
-        </div>
-      </div>
-      <label style="display:block;width:100%;background:#1F3864;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
-        ⬆️ Importer mon fichier MCREPAR (.docx)
-        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'repar')">
-      </label>
-      <button onclick="deleteTemplate('repar')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-        🗑️ Supprimer mon template MCREPAR
-      </button>
-    </div>
-
-    <!-- MCCHAUD -->
-    <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:44px;height:44px;background:#FCE4D6;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:#C55A11">Fiche MCCHAUD</div>
-          <div id="tmpl-chaud-status" style="font-size:11px;color:#888">Chargement...</div>
-        </div>
-      </div>
-      <label style="display:block;width:100%;background:#C55A11;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;box-sizing:border-box">
-        ⬆️ Importer mon fichier MCCHAUD (.docx)
-        <input type="file" accept=".docx" style="display:none" onchange="importTemplate(this,'chaud')">
-      </label>
-      <button onclick="deleteTemplate('chaud')" style="width:100%;margin-top:8px;background:#FFF2F2;color:#C00;border:1.5px solid #ffcccc;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">
-        🗑️ Supprimer mon template MCCHAUD
-      </button>
-    </div>
-
-    <!-- INFO -->
-    <div style="background:#F0F7FF;border-radius:12px;padding:14px;font-size:12px;color:#1F3864;line-height:1.6">
-      <div style="font-weight:700;margin-bottom:6px">ℹ️ Comment ça marche ?</div>
-      <div>1. Importe ton fichier Word (.docx) MCREPAR ou MCCHAUD</div>
-      <div>2. Ton template est sauvegardé sur ton PC</div>
-      <div>3. Lors d'un équipement arrivé → clique <strong>"Télécharger fiche Word"</strong></div>
-      <div>4. Le fichier généré utilisera ton propre modèle</div>
-      <div style="margin-top:8px;color:#888">⚠️ Le template doit contenir les champs SDT (WO, TAG, WR...)</div>
-    </div>
-
-  </div>
-</div>
 
 
 <!-- ═══════════════ WORKSHOP ═══════════════ -->
