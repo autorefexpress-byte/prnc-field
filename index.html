@@ -1041,6 +1041,14 @@ function _initLocSel(selId, inpId, val) {
       <option value="PLANNING_MCELINS">Planning MCELINS</option>
       <option value="PLANNING_MCMECUS">Planning MCMECUS</option>
     </select>
+    <select class="fi" id="hist-wg-filtre" onchange="renderHist()" style="flex:1;padding:8px 10px;font-size:12px">
+      <option value="">Tous les WG</option>
+      <option value="MCCHAUD">MCCHAUD</option>
+      <option value="MCREPAR">MCREPAR</option>
+      <option value="MCELINS">MCELINS</option>
+      <option value="MCMECUS">MCMECUS</option>
+      <option value="STROB">STROB</option>
+    </select>
     <button onclick="exportExcel()" style="background:var(--green);color:#fff;border:none;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">Excel</button>
     <button onclick="if(confirm('Effacer tout ?')) clearHist()" style="background:var(--lred);color:var(--red);border:1px solid var(--red);padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>
   </div>
@@ -1764,6 +1772,8 @@ function show(id) {
     if (searchEl) { searchEl.value = ''; searchEl.blur(); }
     var filtreEl = document.getElementById('hist-filtre');
     if (filtreEl) filtreEl.value = '';
+    var wgFiltreEl = document.getElementById('hist-wg-filtre');
+    if (wgFiltreEl) wgFiltreEl.value = '';
     invalidateDbCache();
     // Délai pour laisser Android finir sa restauration du DOM avant de lire les champs
     setTimeout(function() {
@@ -1771,6 +1781,8 @@ function show(id) {
       if (s2) s2.value = '';
       var f2 = document.getElementById('hist-filtre');
       if (f2) f2.value = '';
+      var wf2 = document.getElementById('hist-wg-filtre');
+      if (wf2) wf2.value = '';
       dbLoad().then(function(){ renderHist(); });
     }, 100);
   }
@@ -3410,6 +3422,7 @@ async function renderHist() {
   if (!list || !countEl) return;
 
   const filtre = document.getElementById('hist-filtre') ? document.getElementById('hist-filtre').value : '';
+  const wgFiltre = document.getElementById('hist-wg-filtre') ? document.getElementById('hist-wg-filtre').value : '';
   const search = (document.getElementById('hist-search') ? document.getElementById('hist-search').value : '').trim().toLowerCase();
 
   countEl.textContent = 'Chargement...';
@@ -3444,6 +3457,7 @@ async function renderHist() {
   }
 
   let records = filtre ? all.filter(r => r.type === filtre) : all;
+  if (wgFiltre) records = records.filter(r => (r.wg || '').toUpperCase() === wgFiltre);
   if (search) {
     records = records.filter(r =>
       (r.tag     || '').toLowerCase().includes(search) ||
