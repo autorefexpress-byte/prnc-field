@@ -257,6 +257,8 @@ function _initLocSel(selId, inpId, val) {
       <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
       <option value="atelier"    style="background:#1F3864;color:#fff">&#128295; Mcrepar — Atelier P17</option>
       <option value="atelier-mc" style="background:#1F3864;color:#fff">&#128293; Mcchaud — Atelier MCCHAUD</option>
+      <option value="atelier-mcel" style="background:#1F3864;color:#fff">&#9889; Mcelins — Atelier MCELINS</option>
+      <option value="atelier-mcmec" style="background:#1F3864;color:#fff">&#9881; Mcmecus — Atelier MCMECUS</option>
     </select>
   </div>
 
@@ -294,6 +296,18 @@ function _initLocSel(selId, inpId, val) {
 <!-- Bandeau mode Atelier MCCHAUD -->
 <div id="atelier-mc-banner" style="display:none;background:#7030A0;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99;align-items:center;justify-content:center;gap:10px">
   <span>&#128293; MODE ATELIER MCCHAUD</span>
+  <span onclick="deconnexion()" style="background:rgba(255,255,255,.2);border-radius:6px;padding:2px 10px;cursor:pointer;font-weight:700">&#8592; Quitter</span>
+</div>
+
+<!-- Bandeau mode Atelier MCELINS -->
+<div id="atelier-mcel-banner" style="display:none;background:#1F4E79;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99;align-items:center;justify-content:center;gap:10px">
+  <span>&#9889; MODE ATELIER MCELINS</span>
+  <span onclick="deconnexion()" style="background:rgba(255,255,255,.2);border-radius:6px;padding:2px 10px;cursor:pointer;font-weight:700">&#8592; Quitter</span>
+</div>
+
+<!-- Bandeau mode Atelier MCMECUS -->
+<div id="atelier-mcmec-banner" style="display:none;background:#375623;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99;align-items:center;justify-content:center;gap:10px">
+  <span>&#9881; MODE ATELIER MCMECUS</span>
   <span onclick="deconnexion()" style="background:rgba(255,255,255,.2);border-radius:6px;padding:2px 10px;cursor:pointer;font-weight:700">&#8592; Quitter</span>
 </div>
 
@@ -1761,6 +1775,8 @@ function show(id) {
   if (_isCallidusMode && !['s-callidus-prestataire','s-callidus-update','s-success'].includes(id)) return;
   if (_isAtelierMode  && !['s-planning','s-success'].includes(id)) return;
   if (_isAtelierMCMode && !['s-planning-mcchaud','s-success'].includes(id)) return;
+  if (_isAtelierMCELMode && !['s-planning-mcelins','s-success'].includes(id)) return;
+  if (_isAtelierMCMECMode && !['s-planning-mcmecus','s-success'].includes(id)) return;
   // s-planning accessible aussi en mode Préposé
   SCREENS.forEach(s => { document.getElementById(s).classList.toggle('active', s===id); });
   Object.keys(NAV).forEach(k => { document.getElementById(NAV[k]).classList.toggle('on', k===id); });
@@ -4016,6 +4032,8 @@ const PIN_CONSULT2  = '2222';  // PIN mode consultation
 const PIN_CALLIDUS  = '3333';  // PIN mode Callidus prestataire
 const PIN_ATELIER   = '4444';  // PIN mode Mcrepar Atelier P17
 const PIN_ATELIER_MC = '5555'; // PIN mode Atelier MCCHAUD
+const PIN_ATELIER_MCEL = '6666';  // PIN mode Atelier MCELINS
+const PIN_ATELIER_MCMEC = '7777'; // PIN mode Atelier MCMECUS
 var _pinBuffer      = '';
 var _pinMode        = 'check'; // 'check' | 'setup'
 var _pinModeSelect  = 'prepose'; // 'prepose' | 'consult'
@@ -4025,6 +4043,8 @@ var _isConsult2Mode = false;   // true = mode consultation lecture seule
 var _isCallidusMode = false;   // true = mode prestataire Callidus
 var _isAtelierMode  = false;   // true = mode Mcrepar Atelier P17
 var _isAtelierMCMode = false;  // true = mode Atelier MCCHAUD
+var _isAtelierMCELMode = false;  // true = mode Atelier MCELINS
+var _isAtelierMCMECMode = false; // true = mode Atelier MCMECUS
 
 function selectPinMode(mode) {
   _pinModeSelect = mode;
@@ -4054,6 +4074,12 @@ function selectPinMode(mode) {
   } else if (mode === 'atelier-mc') {
     lbl.textContent = 'Entrez le code PIN Atelier MCCHAUD (5555)';
     if (dd) dd.style.background = 'rgba(112,48,160,.6)';
+  } else if (mode === 'atelier-mcel') {
+    lbl.textContent = 'Entrez le code PIN Atelier MCELINS (6666)';
+    if (dd) dd.style.background = 'rgba(31,78,121,.6)';
+  } else if (mode === 'atelier-mcmec') {
+    lbl.textContent = 'Entrez le code PIN Atelier MCMECUS (7777)';
+    if (dd) dd.style.background = 'rgba(55,86,35,.6)';
   }
 }
 
@@ -4125,6 +4151,20 @@ async function validatePIN() {
       _pinBuffer = ''; updatePinDots();
       return;
     }
+    if (_pinModeSelect === 'atelier-mcel' && _pinBuffer === PIN_ATELIER_MCEL) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeAtelierMCEL();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
+    if (_pinModeSelect === 'atelier-mcmec' && _pinBuffer === PIN_ATELIER_MCMEC) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      err.textContent = '';
+      activerModeAtelierMCMEC();
+      _pinBuffer = ''; updatePinDots();
+      return;
+    }
     if (_pinModeSelect === 'etna' && _pinBuffer === PIN_ETNA) {
       document.getElementById('pin-overlay').style.display = 'none';
       err.textContent = '';
@@ -4182,6 +4222,51 @@ function activerModeAtelierMC() {
   chargerPlanningNeonMC().then(function() {
     if (iz) iz.style.display = _planningDataMC.length ? 'none' : 'block';
     _renderPlanningListMC();
+  });
+}
+
+function activerModeAtelierMCEL() {
+  _isAtelierMCELMode = true;
+  _isAtelierMCMode   = false;
+  _isAtelierMode     = false;
+  _isCallidusMode    = false;
+  _isEtnaMode        = false;
+  _isConsultMode     = false;
+  var banner = document.getElementById('atelier-mcel-banner');
+  if (banner) banner.style.display = 'flex';
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  show('s-planning-mcelins');
+  var iz = document.getElementById('planning-import-zone-mcel');
+  var plist = document.getElementById('planning-list-mcel');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMCEL().then(function() {
+    if (iz) iz.style.display = _planningDataMCEL.length ? 'none' : 'block';
+    _renderPlanningListMCEL();
+  });
+}
+
+function activerModeAtelierMCMEC() {
+  _isAtelierMCMECMode = true;
+  _isAtelierMCELMode  = false;
+  _isAtelierMCMode    = false;
+  _isAtelierMode      = false;
+  _isCallidusMode     = false;
+  _isEtnaMode         = false;
+  _isConsultMode      = false;
+  var banner = document.getElementById('atelier-mcmec-banner');
+  if (banner) banner.style.display = 'flex';
+  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-home'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  show('s-planning-mcmecus');
+  var iz = document.getElementById('planning-import-zone-mcmec');
+  var plist = document.getElementById('planning-list-mcmec');
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  chargerPlanningNeonMCMEC().then(function() {
+    if (iz) iz.style.display = _planningDataMCMEC.length ? 'none' : 'block';
+    _renderPlanningListMCMEC();
   });
 }
 
