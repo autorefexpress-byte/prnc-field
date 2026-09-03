@@ -5833,7 +5833,6 @@ async function renderEtnaPrestataire() {
 
 function deconnexion() {
   if (!confirm('Se déconnecter ?')) return;
-  try { localStorage.removeItem('prnc-pin'); } catch(e) {}
   window.location.reload();
 }
 
