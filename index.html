@@ -379,7 +379,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-sub" id="planning-card-sub-mcmec">Voir les WO</div>
       <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#375623;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
         ↑ Importer
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
+        <input type="file" accept=".xlsx,.xls" onchange="_demanderCategorieMCMEC(this)" style="display:none">
       </label>
     </div>
   </div>
@@ -8775,6 +8775,7 @@ var _semaineActiveMCMEC  = '';
 var _planningFilterMCMEC = null;
 var _planningSemainesMCMEC = [];
 var _currentModalWOMCMEC = '';
+var _currentModalCategorieMCMEC = '';
 
 function ouvrirPlanningAccueil() {
   show('s-planning');
@@ -10991,7 +10992,7 @@ function ouvrirPlanningAccueilMCMEC() {
   });
 }
 
-async function sauvegarderPlanningNeonMCMEC(data, semaine) {
+async function sauvegarderPlanningNeonMCMEC(data, semaine, categorie) {
   try {
     var photoMap={};
     try {
@@ -11001,10 +11002,12 @@ async function sauvegarderPlanningNeonMCMEC(data, semaine) {
     } catch(e){}
     for(var b=0;b<data.length;b+=20){
       await fetch(DB_API+'?table=planning_mcmecus',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,items:data.slice(b,b+20)})});
+        body:JSON.stringify({bulk:true,first:(b===0),semaine:semaine,categorie:categorie,items:data.slice(b,b+20)})});
     }
     _dbCache=null;
     var histRecords=await dbLoad();
+    var catMapMCMEC={};
+    _planningDataMCMEC.forEach(function(item){ catMapMCMEC[item.wo]=item.categorie; });
     _planningDataMCMEC.forEach(function(item){
       var wo=item.wo, planPhotos=photoMap[wo]||[], histPhotos=[];
       histRecords.forEach(function(r){ var match=(r.wo&&r.wo===wo)||(r.woUsine&&r.woUsine===wo); if(match&&r.photos&&r.photos.length) r.photos.forEach(function(p){ if(p&&histPhotos.indexOf(p)<0) histPhotos.push(p); }); });
@@ -11014,7 +11017,7 @@ async function sauvegarderPlanningNeonMCMEC(data, semaine) {
     var wosAvecPhotos=Object.keys(photoMap);
     if(wosAvecPhotos.length>0){
       await Promise.all(wosAvecPhotos.map(function(wo){
-        return fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,photos:photoMap[wo]})}).catch(function(e){ console.warn('photo restore err',e); });
+        return fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,categorie:catMapMCMEC[wo]||categorie,photos:photoMap[wo]})}).catch(function(e){ console.warn('photo restore err',e); });
       }));
     }
     _allPlanningCacheMCMEC=null;
@@ -11042,6 +11045,7 @@ async function chargerPlanningNeonMCMEC(semaine) {
           _photos: r.photos||[],
           _remarque: r.remarque||'',
           woUsine: r.wo_usine||'', wso: r.wso||'',
+          categorie: r.categorie||'',
         };
       });
       var lbl = document.getElementById('planning-semaine-lbl-mcmec');
@@ -11072,8 +11076,29 @@ function changerSemainePlanningMCMEC(semaine) {
   chargerPlanningNeonMCMEC(semaine).then(function(){ _renderPlanningListMCMEC(); });
 }
 
-function importPlanningExcelMCMEC(input) {
+function _demanderCategorieMCMEC(input) {
+  if (!input.files || !input.files[0]) return;
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9500;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px">' +
+      '<div style="font-size:14px;font-weight:700;color:#1F3864;margin-bottom:14px;text-align:center">Ce fichier est un planning de quel type ?</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<button id="btn-cat-meca" style="padding:14px;background:#375623;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">🔧 Mécanique</button>' +
+        '<button id="btn-cat-usinage" style="padding:14px;background:#1F4E79;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">⚙️ Usinage</button>' +
+      '</div>' +
+      '<button id="btn-cat-cancel" style="margin-top:14px;width:100%;background:#f5f5f5;color:#555;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Annuler</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+  function pick(cat) { ov.remove(); importPlanningExcelMCMEC(input, cat); }
+  ov.querySelector('#btn-cat-meca').addEventListener('click', function(){ pick('meca'); });
+  ov.querySelector('#btn-cat-usinage').addEventListener('click', function(){ pick('usinage'); });
+  ov.querySelector('#btn-cat-cancel').addEventListener('click', function(){ ov.remove(); input.value=''; });
+}
+
+function importPlanningExcelMCMEC(input, categorie) {
   var file = input.files[0]; if (!file) return;
+  categorie = categorie || '';
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -11138,7 +11163,7 @@ function importPlanningExcelMCMEC(input) {
           woDict[wo] = {
             wo:wo, wr:wr, tag:tag, desc:descWO,
             ressource:ressource, commentaire:commentaire,
-            taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
+            taches:[], jours:[], statut:saved[wo]||'PLANIFIE', categorie:categorie,
           };
         }
         if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
@@ -11147,10 +11172,12 @@ function importPlanningExcelMCMEC(input) {
         if (ressource && !woDict[wo].ressource) woDict[wo].ressource = ressource;
       }
 
-      _planningDataMCMEC = Object.values(woDict).filter(function(w){ return w.wo; });
+      var nouveauxItems = Object.values(woDict).filter(function(w){ return w.wo; });
+      // On ne remplace que les WO de cette catégorie — l'autre catégorie (méca/usinage) reste intacte
+      _planningDataMCMEC = _planningDataMCMEC.filter(function(w){ return w.categorie !== categorie; }).concat(nouveauxItems);
     _allPlanningCacheMCMEC = null; // invalider cache recherche globale
       // Sauvegarder dans Neon pour partage multi-appareils
-      sauvegarderPlanningNeonMCMEC(_planningDataMCMEC, sheetName);
+      sauvegarderPlanningNeonMCMEC(nouveauxItems, sheetName, categorie);
       var lbl = document.getElementById('planning-semaine-lbl-mcmec');
       if (lbl) lbl.textContent = sheetName || 'Planning importé';
       var importZone = document.getElementById('planning-import-zone-mcmec');
@@ -11158,7 +11185,7 @@ function importPlanningExcelMCMEC(input) {
       show('s-planning-mcmecus');
       setTimeout(renderPlanningMCMEC, 100);
       var t=document.createElement('div');
-      t.textContent='✅ Planning importé — '+_planningDataMCMEC.length+' WO';
+      t.textContent='✅ Planning importé ('+(categorie==='meca'?'Mécanique':'Usinage')+') — '+nouveauxItems.length+' WO';
       t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
       document.body.appendChild(t);
       setTimeout(function(){ t.remove(); }, 3000);
@@ -11204,12 +11231,15 @@ function _renderPlanningListMCMEC() {
     var woSafe = item.wo.replace(/'/g, "\'");
     var joursStr = item.jours && item.jours.length ? item.jours.join(' · ') : '—';
     var searchActive = !!(document.getElementById('planning-search-mcmec')||{value:''}).value;
-    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" onclick="ouvrirPlanningModalMCMEC(this.dataset.wo,this.dataset.semaine)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
+    var catBadge = item.categorie === 'meca' ? '<span style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">🔧 Mécanique</span>'
+      : item.categorie === 'usinage' ? '<span style="background:#DEEAF1;color:#1F4E79;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">⚙️ Usinage</span>' : '';
+    return '<div data-wo="'+item.wo+'" data-semaine="'+(item.semaine||'')+'" data-cat="'+(item.categorie||'')+'" onclick="ouvrirPlanningModalMCMEC(this.dataset.wo,this.dataset.semaine,this.dataset.cat)" style="background:#fff;border-radius:12px;border-left:4px solid '+s.bd+';margin-bottom:8px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
             +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+            +catBadge
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceMCMEC(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
@@ -11241,6 +11271,7 @@ function fermerPlanningModalMCMEC() {
   var modal=document.getElementById('planning-modal-mcmec');
   if(modal) modal.style.display='none';
   _currentModalWOMCMEC=null;
+  _currentModalCategorieMCMEC='';
 }
 
 async function _onPlanningSearchMCMEC(val) {
@@ -11262,19 +11293,27 @@ async function _onPlanningSearchMCMEC(val) {
         }));
         rows=allRows;
       }
-      _allPlanningCacheMCMEC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+      _allPlanningCacheMCMEC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],categorie:r.categorie||''}; });
     } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMCMEC(); return; }
   }
   _renderPlanningListMCMEC();
 }
 
-async function changerStatutPlanningMCMEC(wo, newStatut) {
+function _findPlanItemMCMEC(wo, categorie) {
+  if (categorie) {
+    var found = _planningDataMCMEC.find(function(i){ return i.wo===wo && i.categorie===categorie; });
+    if (found) return found;
+  }
+  return _planningDataMCMEC.find(function(i){ return i.wo===wo; });
+}
+
+async function changerStatutPlanningMCMEC(wo, newStatut, categorie) {
   if(!wo) return;
-  var item=_planningDataMCMEC.find(function(i){ return i.wo===wo; });
+  var item=_findPlanItemMCMEC(wo, categorie);
   if(!item) return;
   item.statut=newStatut;
   var semaine=item.semaine||_semaineActiveMCMEC||'';
-  fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,statut:newStatut})}).catch(function(e){ console.warn('statut save err',e); });
+  fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({wo,semaine,categorie:item.categorie,statut:newStatut})}).catch(function(e){ console.warn('statut save err',e); });
   try{ var saved=JSON.parse(localStorage.getItem('planning-statuts-mcmecus')||'{}'); saved[wo]=newStatut; localStorage.setItem('planning-statuts-mcmecus',JSON.stringify(saved)); }catch(e){}
   if(newStatut==='TERMINE'){
     var now=new Date(), dateStr=now.toLocaleDateString('fr-FR'), heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -11283,33 +11322,34 @@ async function changerStatutPlanningMCMEC(wo, newStatut) {
     var t=document.createElement('div'); t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#375623;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
     t.textContent='WO '+wo+' marque Termine dans la Gestion des flux'; document.body.appendChild(t); setTimeout(function(){ t.remove(); },3000);
   }
-  ouvrirPlanningModalMCMEC(wo); renderPlanningMCMEC();
+  ouvrirPlanningModalMCMEC(wo, semaine, item.categorie); renderPlanningMCMEC();
 }
 
-function ouvrirPlanningModalMCMEC(wo, semaine) {
+function ouvrirPlanningModalMCMEC(wo, semaine, categorie) {
   var currentWO = wo;
   _currentModalWOMCMEC = wo;
   // Chercher dans _planningDataMCMEC d'abord, puis dans _allPlanningCacheMCMEC si recherche globale
-  var item = _planningDataMCMEC.find(function(i){ return i.wo === wo; });
+  var item = _findPlanItemMCMEC(wo, categorie);
   if (!item && _allPlanningCacheMCMEC) {
     item = _allPlanningCacheMCMEC.find(function(i){ return i.wo === wo && (!semaine || i.semaine === semaine); });
   }
   if (!item) return;
+  _currentModalCategorieMCMEC = item.categorie || '';
   var s = _PSTAT[item.statut] || _PSTAT.PLANIFIE;
 
   var btns = '';
   if (item.statut === 'PLANIFIE') {
-    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Démarrer</button>';
   } else if (item.statut === 'EN_COURS') {
-    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
-         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+    btns = '<button data-statut="ATT_PIECES" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="flex:1;padding:12px;background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else if (item.statut === 'ATT_PIECES') {
-    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
-         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
+    btns = '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">▶️ Reprendre</button>'
+         + '<button data-statut="TERMINE" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="flex:1;padding:12px;background:#E2EFDA;color:#375623;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>';
   } else {
     btns = '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'
          + '<div style="padding:12px;background:#E2EFDA;color:#375623;border-radius:10px;font-size:12px;font-weight:700;text-align:center">✅ Intervention clôturée</div>'
-         + '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut)" style="padding:10px;background:rgba(197,90,17,.1);color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
+         + '<button data-statut="EN_COURS" onclick="changerStatutPlanningMCMEC(_currentModalWOMCMEC,this.dataset.statut,_currentModalCategorieMCMEC)" style="padding:10px;background:rgba(197,90,17,.1);color:#375623;border:1.5px solid #375623;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;width:100%">↩️ Réouvrir — En cours</button>'
          + '</div>';
   }
 
@@ -11384,14 +11424,14 @@ function ouvrirPlanningModalMCMEC(wo, semaine) {
       + photosExistHtml
       + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
         + '📷 Ajouter photo(s)'
-        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanningMCMEC(\'' + wo + '\',this)" style="display:none">'
+        + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanningMCMEC(\'' + wo + '\',this,\'' + (item.categorie||'') + '\')" style="display:none">'
       + '</label>'
       + '<div id="planning-photos-preview-mcmec-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
     + '</div>'
     + '<div style="margin-bottom:12px">'
       + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
       + '<textarea id="planning-remarque-mcmec-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
-      + '<button onclick="sauvegarderRemarquePlanningMCMEC(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+      + '<button onclick="sauvegarderRemarquePlanningMCMEC(\'' + wo + '\',\'' + (item.categorie||'') + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
     + '</div>'
     + '<div style="display:flex;gap:8px">' + btns + '</div>';
 
@@ -11482,10 +11522,10 @@ function notifierRessourceMCMEC(wo) {
   setTimeout(function(){ t.remove(); }, 3000);
 }
 
-async function ajouterPhotoPlanningMCMEC(wo, input) {
+async function ajouterPhotoPlanningMCMEC(wo, input, categorie) {
   var files=Array.from(input.files); if(!files.length) return;
   var preview=document.getElementById('planning-photos-preview-mcmec-'+wo);
-  var item=_planningDataMCMEC.find(function(i){ return i.wo===wo; });
+  var item=_findPlanItemMCMEC(wo, categorie);
   if(!item) return;
   if(!item._photos) item._photos=[];
   var loadDiv=document.createElement('div');
@@ -11520,7 +11560,7 @@ async function ajouterPhotoPlanningMCMEC(wo, input) {
     var semaineSave=item.semaine||_semaineActiveMCMEC||'';
     if(!semaineSave){ alert('Semaine introuvable. Rechargez le planning.'); return; }
     var res=await fetch(DB_API+'?table=planning_mcmecus',{method:'PATCH',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
+      body:JSON.stringify({wo:item.wo,semaine:semaineSave,categorie:item.categorie,photos:item._photos})}).then(r=>r.json());
     if(res&&res.ok){
       var zone=document.getElementById('planning-photos-exist-mcmec-'+wo);
       if(zone) zone.innerHTML=item._photos.map(function(p){
@@ -11532,10 +11572,10 @@ async function ajouterPhotoPlanningMCMEC(wo, input) {
   } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
 
-function sauvegarderRemarquePlanningMCMEC(wo) {
+function sauvegarderRemarquePlanningMCMEC(wo, categorie) {
   var ta = document.getElementById('planning-remarque-mcmec-' + wo);
   if (!ta) return;
-  var item = _planningDataMCMEC.find(function(i){ return i.wo === wo; });
+  var item = _findPlanItemMCMEC(wo, categorie);
   if (item) item._remarque = ta.value;
   var btn = ta.nextElementSibling;
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
@@ -11545,6 +11585,7 @@ function sauvegarderRemarquePlanningMCMEC(wo) {
     body: JSON.stringify({
       wo: wo,
       semaine: item ? (item.semaine || '') : '',
+      categorie: item ? (item.categorie || '') : (categorie || ''),
       remarque: ta.value
     })
   }).then(function(){
@@ -12808,7 +12849,7 @@ loadCatalog();
       <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCMECUS</div>
       <label style="background:#375623;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
-        <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCMEC(this)" style="display:none">
+        <input type="file" accept=".xlsx,.xls" onchange="_demanderCategorieMCMEC(this)" style="display:none">
       </label>
     </div>
     <select id="planning-semaine-sel-mcmec" style="display:none;width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #375623;font-size:13px;font-weight:700;font-family:inherit;color:#375623;margin-bottom:8px;background:#fff" onchange="changerSemainePlanningMCMEC(this.value)"></select>
