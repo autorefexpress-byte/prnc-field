@@ -58,14 +58,17 @@ async function ensureTables() {
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcelins_wo_semaine_idx ON planning_mcelins(wo, semaine)`;
 
     // ── Planning Atelier MCMECUS (table séparée, même schéma) ──
+    // categorie ('meca'/'usinage') distingue les 2 fichiers Excel importés pour ce workgroup
     await sql`CREATE TABLE IF NOT EXISTS planning_mcmecus (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
       ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
       jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
-      photos JSONB DEFAULT '[]', remarque TEXT,
+      photos JSONB DEFAULT '[]', remarque TEXT, categorie TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
     )`;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcmecus_wo_semaine_idx ON planning_mcmecus(wo, semaine)`;
+    await sql`ALTER TABLE planning_mcmecus ADD COLUMN IF NOT EXISTS categorie TEXT`;
+    await sql`DROP INDEX IF EXISTS planning_mcmecus_wo_semaine_idx`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcmecus_wo_semaine_cat_idx ON planning_mcmecus(wo, semaine, categorie)`;
 
     await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
       id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
@@ -352,14 +355,15 @@ async function handlePlanningMCMECUS(req, res, id, method) {
   if (method === 'POST') {
     const d = req.body || {};
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
-      if (d.first !== false) await sql`DELETE FROM planning_mcmecus WHERE semaine=${d.semaine}`;
+      const categorie = d.categorie || null;
+      if (d.first !== false) await sql`DELETE FROM planning_mcmecus WHERE semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning_mcmecus (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+        await sql`INSERT INTO planning_mcmecus (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,categorie)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
-                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+                  ${item.statut||'PLANIFIE'},${d.semaine},${categorie})`;
       }
       await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcmecus',${d.semaine})
         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
@@ -375,9 +379,10 @@ async function handlePlanningMCMECUS(req, res, id, method) {
   if (method === 'PATCH') {
     const d = req.body || {};
     if (d.wo && d.semaine) {
-      if (d.statut !== undefined) await sql`UPDATE planning_mcmecus SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-      if (d.remarque !== undefined) await sql`UPDATE planning_mcmecus SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      const categorie = d.categorie || null;
+      if (d.statut !== undefined) await sql`UPDATE planning_mcmecus SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
+      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
+      if (d.remarque !== undefined) await sql`UPDATE planning_mcmecus SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
       return res.status(200).json({ ok: true });
     }
     if (id) {
