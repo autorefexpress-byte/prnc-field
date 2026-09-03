@@ -11445,7 +11445,14 @@ var MCMECUS_CONTACTS = [
 ];
 
 // Surnoms utilisés dans le planning atelier MCMECUS -- TODO à compléter
-var MCMECUS_NICKNAMES = {};
+var MCMECUS_NICKNAMES = {
+  'patita': 'soane-patita.vahaamahina@pronyresources.com',
+  'edo': 'edouard.tangopi@pronyresources.com',
+  'hugo': 'hugo.baert@pronyresources.com',
+  'jeje': 'jeremy.kasiran@pronyresources.com',
+  'gerome': 'gerome.bourlon@pronyresources.com'
+  // OTI et TOUS : pas d'adresse mail connue -- saisie manuelle proposée
+};
 
 var MCMECUS_NOTIF_CC = [
   // TODO: destinataires CC MCMECUS à compléter
@@ -11457,9 +11464,13 @@ function findMailForRessourceMCMEC(name) {
   if (!norm) return '';
   if (MCMECUS_NICKNAMES[norm]) return MCMECUS_NICKNAMES[norm];
   var tokens = norm.split(/[\s-]+/).filter(Boolean);
+  // Une ressource peut lister plusieurs personnes (ex: "JEJE / HUGO") -- on notifie tout le monde
+  var emailsTrouves = [];
   for (var i = 0; i < tokens.length; i++) {
-    if (MCMECUS_NICKNAMES[tokens[i]]) return MCMECUS_NICKNAMES[tokens[i]];
+    var mail = MCMECUS_NICKNAMES[tokens[i]];
+    if (mail && emailsTrouves.indexOf(mail) === -1) emailsTrouves.push(mail);
   }
+  if (emailsTrouves.length) return emailsTrouves.join(';');
   var found = MCMECUS_CONTACTS.find(function(c) {
     var cNorm = _normNameKey(c.name);
     var cTokens = cNorm.split(/[\s-]+/).filter(Boolean);
