@@ -1,4 +1,4 @@
-const CACHE = 'prnc-v3';
+const CACHE = 'prnc-v4';
 const FILES = [
   './',
   './index.html',
@@ -21,6 +21,14 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Les appels à l'API (données dynamiques) ne doivent jamais être mis en cache :
+  // sinon l'appareil resterait bloqué sur un ancien snapshot (ex: liste de non-conformités vide)
+  // au lieu de recevoir les données à jour du serveur.
+  if (e.request.method !== 'GET' || new URL(e.request.url).pathname.startsWith('/api/')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
