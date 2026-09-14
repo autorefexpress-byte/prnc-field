@@ -11794,6 +11794,7 @@ function saveNC() {
   if (document.getElementById('nc-type-mauvaise') && document.getElementById('nc-type-mauvaise').checked) types.push('Mauvaise piece');
   if (document.getElementById('nc-type-quantite') && document.getElementById('nc-type-quantite').checked) types.push('Quantite incorrecte');
   if (document.getElementById('nc-type-endommage') && document.getElementById('nc-type-endommage').checked) types.push('Piece endommagee');
+  if (document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked) types.push('Erreur de livraison');
 
   if (!_ncWG) { alert('Selectionnez un Workgroup.'); return; }
   if (!ir) { alert('Le N° IR/PR est obligatoire.'); return; }
@@ -11887,7 +11888,7 @@ function saveNC() {
    'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage'].forEach(function(id){
+  ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.checked = false;
   });
   var dr2 = document.getElementById('nc-date-retour'); if(dr2) dr2.value = '';
@@ -12115,7 +12116,7 @@ async function renderKPI() {
   '</div>';
 
   // NC
-  var ncTypes = {'Mauvaise piece':0,'Quantite incorrecte':0,'Piece endommagee':0};
+  var ncTypes = {'Mauvaise piece':0,'Quantite incorrecte':0,'Piece endommagee':0,'Erreur de livraison':0};
   ncMois.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
 
   html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
@@ -12135,7 +12136,7 @@ async function renderKPI() {
       '</div>' +
     '</div>' +
     Object.keys(ncTypes).map(function(t) {
-      var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥'};
+      var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥','Erreur de livraison':'📦'};
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
         '<span>' + (icons[t]||'') + ' ' + t + '</span><span style="font-weight:700">' + ncTypes[t] + '</span></div>';
     }).join('') +
@@ -12467,6 +12468,10 @@ loadCatalog();
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
           <input type="checkbox" id="nc-type-endommage" style="width:18px;height:18px;accent-color:#C00000">
           <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000">
+          <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
         </label>
       </div>
     </div>
