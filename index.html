@@ -1821,6 +1821,7 @@ function show(id) {
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
   if (id === 's-nc-nouveau') {
+    initNcForm();
     var ncCp = document.getElementById('nc-controle-par');
     if (ncCp && !ncCp.value) ncCp.value = getUserName();
   }
@@ -11739,6 +11740,30 @@ function setNcWG(wg) {
   });
 }
 
+var _ncEmballage = '';
+function setNcEmballage(type) {
+  _ncEmballage = type;
+  ['Carton','Palette'].forEach(function(t) {
+    var el = document.getElementById('nc-emb-' + t.toLowerCase());
+    if (!el) return;
+    if (t === type) { el.style.background = '#C00000'; el.style.color = '#fff'; el.style.borderColor = '#C00000'; }
+    else { el.style.background = ''; el.style.color = ''; el.style.borderColor = ''; }
+  });
+}
+
+function updateNcFormVisibility() {
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
+  var toggle = function(id, show) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  };
+  toggle('nc-fg-wo', !isLivraison);
+  toggle('nc-fg-tag', !isLivraison);
+  toggle('nc-cmd-section', !isLivraison);
+  toggle('nc-rec-standard', !isLivraison);
+  toggle('nc-rec-livraison', isLivraison);
+}
+
 var _ncCache = null;
 
 async function ncMigrateLegacyLocalStorage() {
@@ -11842,6 +11867,14 @@ async function initNcForm() {
     if(el2){ el2.style.background=''; el2.style.color=''; el2.style.borderColor=''; }
   });
   _ncWG = '';
+  // Reset emballage / destinataire
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el3 = document.getElementById('nc-emb-' + t);
+    if(el3){ el3.style.background=''; el3.style.color=''; el3.style.borderColor=''; }
+  });
+  var dest = document.getElementById('nc-rec-destinataire'); if (dest) dest.value = '';
+  updateNcFormVisibility();
 }
 
 async function saveNC() {
@@ -11867,6 +11900,7 @@ async function saveNC() {
   if (!types.length) { alert('Selectionnez au moins un type de non-conformite.'); return; }
 
   var wgl = NC_WG_LABELS[_ncWG] || _ncWG.toUpperCase();
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
 
   var cmdSC = document.getElementById('nc-cmd-sc') ? document.getElementById('nc-cmd-sc').value.trim() : '';
   var cmdPN = document.getElementById('nc-cmd-pn') ? document.getElementById('nc-cmd-pn').value.trim() : '';
@@ -11876,6 +11910,8 @@ async function saveNC() {
   var recPN = document.getElementById('nc-rec-pn') ? document.getElementById('nc-rec-pn').value.trim() : '';
   var recQte = document.getElementById('nc-rec-qte') ? document.getElementById('nc-rec-qte').value.trim() : '';
   var recDesc = document.getElementById('nc-rec-desc') ? document.getElementById('nc-rec-desc').value.trim() : '';
+  var recEmballage = _ncEmballage || '';
+  var recDestinataire = document.getElementById('nc-rec-destinataire') ? document.getElementById('nc-rec-destinataire').value.trim() : '';
 
   var dateRecepFR = dateRecep ? new Date(dateRecep).toLocaleDateString('fr-FR') : '--';
 
@@ -11893,7 +11929,7 @@ async function saveNC() {
     controlePar: controlePar,
     types: types,
     cmd: { sc: cmdSC, pn: cmdPN, qte: cmdQte, desc: cmdDesc },
-    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc },
+    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc, emballage: recEmballage, destinataire: recDestinataire },
     remarques: remarques,
     statut: dateRetour ? 'Retourne' : 'Ouvert',
     mois: new Date().toISOString().slice(0, 7)
@@ -11903,39 +11939,51 @@ async function saveNC() {
   // Corps du mail
   var typesTxt = types.join(' + ');
   var subj = '[' + numero + '] Non-Conformite ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
-  var body = [
+  var bodyLines = [
     'Bonjour,', '',
     'Rapport de non-conformite ' + numero,
     '',
     'Workgroup   : ' + wgl,
-    'IR/PR       : ' + ir,
-    wo ? 'WO          : ' + wo : null,
-    tag ? 'TAG         : ' + tag : null,
+    'IR/PR       : ' + ir
+  ];
+  if (!isLivraison && wo) bodyLines.push('WO          : ' + wo);
+  if (!isLivraison && tag) bodyLines.push('TAG         : ' + tag);
+  bodyLines.push(
     'Semaine     : ' + semaine,
     'Date recep. : ' + dateRecepFR,
     'Controle par: ' + controlePar,
     'Type NC     : ' + typesTxt,
-    '',
-    '--- ITEM COMMANDE ---',
-    cmdSC ? 'S/C  : ' + cmdSC : null,
-    cmdPN ? 'P/N  : ' + cmdPN : null,
-    cmdQte ? 'Qte  : ' + cmdQte : null,
-    cmdDesc ? 'Desc : ' + cmdDesc : null,
-    '',
-    '--- ITEM RECEPTIONNE ---',
-    recSC ? 'S/C  : ' + recSC : null,
-    recPN ? 'P/N  : ' + recPN : null,
-    recQte ? 'Qte  : ' + recQte : null,
-    recDesc ? 'Desc : ' + recDesc : null,
-    remarques ? '' : null,
-    remarques ? 'Remarques : ' + remarques : null,
+    ''
+  );
+  if (!isLivraison) {
+    bodyLines.push('--- ITEM COMMANDE ---');
+    if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
+    if (cmdPN) bodyLines.push('P/N  : ' + cmdPN);
+    if (cmdQte) bodyLines.push('Qte  : ' + cmdQte);
+    if (cmdDesc) bodyLines.push('Desc : ' + cmdDesc);
+    bodyLines.push('');
+  }
+  bodyLines.push('--- ITEM RECEPTIONNE ---');
+  if (isLivraison) {
+    if (recEmballage) bodyLines.push('Type emballage : ' + recEmballage);
+    if (recDestinataire) bodyLines.push('Destinataire   : ' + recDestinataire);
+    if (recQte) bodyLines.push('Qte recue      : ' + recQte);
+  } else {
+    if (recSC) bodyLines.push('S/C  : ' + recSC);
+    if (recPN) bodyLines.push('P/N  : ' + recPN);
+    if (recQte) bodyLines.push('Qte  : ' + recQte);
+    if (recDesc) bodyLines.push('Desc : ' + recDesc);
+  }
+  if (remarques) { bodyLines.push('', 'Remarques : ' + remarques); }
+  bodyLines.push(
     '',
     'NB : Photos a joindre separement via Outlook.',
     '',
     'Cordialement,',
     getUserName(),
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
-  ].filter(function(l){ return l !== null; }).join('\n');
+  );
+  var body = bodyLines.join('\n');
 
   var toList = NC_TO.join(',');
   var ccList = (NC_CC[_ncWG] || []).join(',');
@@ -11947,7 +11995,7 @@ async function saveNC() {
 
   // Reset formulaire
   ['nc-ir','nc-wo','nc-tag','nc-remarques','nc-cmd-sc','nc-cmd-pn','nc-cmd-qte','nc-cmd-desc',
-   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc'].forEach(function(id){
+   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc','nc-rec-destinataire'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
   ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison'].forEach(function(id){
@@ -11959,6 +12007,12 @@ async function saveNC() {
     if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
   });
   _ncWG = '';
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el = document.getElementById('nc-emb-' + t);
+    if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+  });
+  updateNcFormVisibility();
 
   show('s-nc');
   renderNC();
@@ -12020,6 +12074,31 @@ async function ouvrirDetailNC(id) {
 
   var content = document.getElementById('nc-detail-content');
   var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
+  var isLivraison = (d.types||[]).indexOf('Erreur de livraison') !== -1;
+
+  var itemsHtml = isLivraison ?
+    '<div style="background:#E3F2FD;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+      '<div style="font-size:11px">Emballage : ' + ((d.rec&&d.rec.emballage)||'--') + '</div>' +
+      '<div style="font-size:11px">Destinataire : ' + ((d.rec&&d.rec.destinataire)||'--') + '</div>' +
+      '<div style="font-size:11px">Qte reçue : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+    '</div>' :
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
+      '</div>' +
+      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
+      '</div>' +
+    '</div>';
 
   if (content) content.innerHTML =
     '<div style="background:#FCE4D6;border-radius:10px;padding:10px;margin-bottom:12px">' +
@@ -12039,22 +12118,7 @@ async function ouvrirDetailNC(id) {
       '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
-      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
-      '</div>' +
-      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
-      '</div>' +
-    '</div>' +
+    itemsHtml +
     (d.dateRetour ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">Retourne au magasin le ' + d.dateRetour + '</div>' : '') +
     (d.remarques ? '<div style="margin-top:8px;font-size:12px;color:#555;font-style:italic">' + d.remarques + '</div>' : '');
 
@@ -12490,13 +12554,13 @@ loadCatalog();
     </div>
 
     <!-- WO -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-wo">
       <div class="field-lbl">WO</div>
       <input class="fi" type="text" id="nc-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('nc-wo','N° WO')">
     </div>
 
     <!-- TAG -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-tag">
       <div class="field-lbl">TAG Équipement</div>
       <input class="fi" type="text" id="nc-tag" placeholder="Ex : 220-X-00315">
     </div>
@@ -12530,13 +12594,14 @@ loadCatalog();
           <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000">
+          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000" onchange="updateNcFormVisibility()">
           <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
         </label>
       </div>
     </div>
 
     <!-- Séparateur -->
+    <div id="nc-cmd-section">
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
       <div style="font-weight:700;font-size:12px;color:#C00000">ITEM COMMANDÉ</div>
     </div>
@@ -12560,6 +12625,7 @@ loadCatalog();
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-cmd-desc" placeholder="Ex : Joint torique TI Grade 12">
     </div>
+    </div>
 
     <!-- Séparateur -->
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
@@ -12567,6 +12633,11 @@ loadCatalog();
     </div>
 
     <!-- Item reçu -->
+    <div class="field-grp">
+      <div class="field-lbl">Quantité reçue</div>
+      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
+    </div>
+    <div id="nc-rec-standard">
     <div class="field-grp">
       <div class="field-lbl">S/C (Stock Code)</div>
       <input class="fi" type="text" id="nc-rec-sc" placeholder="Ex : 158660 ou 000158660"
@@ -12578,12 +12649,22 @@ loadCatalog();
       <input class="fi" type="text" id="nc-rec-pn" placeholder="Ex : ABC-124">
     </div>
     <div class="field-grp">
-      <div class="field-lbl">Quantité reçue</div>
-      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
-    </div>
-    <div class="field-grp">
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-rec-desc" placeholder="Ex : Joint torique SS Grade 2">
+    </div>
+    </div>
+    <div id="nc-rec-livraison" style="display:none">
+    <div class="field-grp">
+      <div class="field-lbl">Type d'emballage</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button type="button" class="wg-btn" id="nc-emb-carton" onclick="setNcEmballage('Carton')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">📦 Carton</button>
+        <button type="button" class="wg-btn" id="nc-emb-palette" onclick="setNcEmballage('Palette')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">🪵 Palette</button>
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Nom du destinataire</div>
+      <input class="fi" type="text" id="nc-rec-destinataire" placeholder="Ex : Jean Dupont">
+    </div>
     </div>
 
     <!-- Date retour magasin -->
