@@ -643,71 +643,12 @@ function _initLocSel(selId, inpId, val) {
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Statut / Dépôt</div>
       <div class="type-grp" id="eq-statut-grp">
-        <div class="type-btn" id="eq-st-demandeur"  onclick="setEqStatut('demandeur')">Retour demandeur</div>
         <div class="type-btn" id="eq-st-p99fabric"  onclick="setEqStatut('p99fabric')">P99 Zone fabric.</div>
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
-        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Retour magasin</div>
-        <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Dock P50</div>
-        <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
+        <div class="type-btn" id="eq-st-p99caisse1" onclick="setEqStatut('p99caisse1')">Dock P99 Caisse 1</div>
+        <div class="type-btn" id="eq-st-p99caisse2" onclick="setEqStatut('p99caisse2')">Dock P99 Caisse 2</div>
+        <div class="type-btn" id="eq-st-p99caisse3" onclick="setEqStatut('p99caisse3')">Dock P99 Caisse 3</div>
       </div>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Localisation</div>
-      <select class="fi" id="eq-zone-sel" onchange="_locChange('eq-zone-sel','eq-zone')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-zone" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Zone à déposer</div>
-      <input class="fi" type="text" id="eq-zone-depot" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-    </div>
-    <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
-      <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
-      <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-loc-p50" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
     </div>
 
     <!-- Destinataires auto par workgroup -->
@@ -2658,12 +2599,11 @@ function sendArrive() {
 }
 
 const EQ_STATUT_LABELS = {
-  demandeur : 'DÉPOSER -- Retour demandeur',
   p99fabric  : 'DÉPOSER -- P99 Zone fabrication',
   p99vanne   : 'DÉPOSER -- P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER -- Retour magasin',
-  p50        : 'RANGÉ -- Dock P50',
-  attinfo    : 'EN ATTENTE INFO'
+  p99caisse1 : 'RANGÉ -- Dock P99 Caisse 1',
+  p99caisse2 : 'RANGÉ -- Dock P99 Caisse 2',
+  p99caisse3 : 'RANGÉ -- Dock P99 Caisse 3'
 };
 function setEqStatut(s) {
   state.eq = state.eq || {};
@@ -2673,20 +2613,18 @@ function setEqStatut(s) {
     if (!el) return;
     if (k === s) {
       el.className = 'type-btn on';
-      if (k === 'attinfo') { el.style.background='var(--llblue)'; el.style.color='var(--navy2)'; el.style.borderColor='var(--navy2)'; }
-      else { el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+      el.style.background=''; el.style.color=''; el.style.borderColor='';
     } else {
       el.className = 'type-btn';
       el.style.background=''; el.style.color=''; el.style.borderColor='';
     }
   });
-  var p50grp = document.getElementById('eq-loc-p50-grp');
-  if (p50grp) p50grp.style.display = s === 'p50' ? '' : 'none';
   renderEqContacts(state.eq.wg || '', s);
 }
 
 function renderEqContacts(wg, statut) {
-  const key = wg + '_' + statut;
+  const isP99Caisse = statut === 'p99caisse1' || statut === 'p99caisse2' || statut === 'p99caisse3';
+  const key = wg + '_' + (isP99Caisse ? 'p99vanne' : statut);
   const data = EQ_CONTACTS[key];
   const box  = document.getElementById('eq-contacts');
   if (!box) return;
@@ -2756,8 +2694,7 @@ function sendEquip() {
   if (checkConsultMode()) return;
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
   const tag  = v('eq-tag'), desc = v('eq-desc'), serie = v('eq-serie');
-  const zone = v('eq-zone'), rem  = v('eq-rem'), zoneDepot = v('eq-zone-depot');
-  const locP50 = v('eq-loc-p50');
+  const rem  = v('eq-rem');
   const manual = getEmails('eq-manual'), cc = getEmails('eq-cc');
 
   if (!tag) { alert('Le TAG est obligatoire.'); return; }
@@ -2784,25 +2721,19 @@ function sendEquip() {
   if (desc)  body += '  Désignation    : ' + desc + '\n';
   body += '  Workgroup      : ' + wgl + '\n';
   body += '  Statut         : ' + statutTxt + '\n';
-  if (zone)  body += '  Zone précise   : ' + zone + '\n';
-  if (locP50) body += '  Dock P50       : ' + locP50 + '\n';
   if (rem)   body += '\nRemarques :\n' + rem + '\n';
-  const isRetourDemandeur = state.eq.statut === 'demandeur';
-  const msgFin = isRetourDemandeur
-    ? 'Merci de procéder à la récupération de votre équipement.'
-    : 'Merci de confirmer la réception.';
-  body += '\n' + msgFin + '\n';
+  body += '\nMerci de confirmer la réception.\n';
   body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
-    {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'--'}, {label:'À', value:allTo.join(', ')}
+    {label:'Statut', value:statutTxt}, {label:'À', value:allTo.join(', ')}
   ], () => {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
     var _jacquesMail = 'jacques.trimari@pronyresources.com';
     var _eqWg = (state.eq && state.eq.wg || '').toLowerCase().replace('mc','');
     var _jacquesWG = ['chaud','repar','strob'].includes(_eqWg);
-    var _jacquesStatut = ['demandeur','p99fabric','p99vanne'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
+    var _jacquesStatut = ['p99fabric','p99vanne','p99caisse1','p99caisse2','p99caisse3'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
     var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
@@ -2813,16 +2744,12 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot, zoneDepot, zoneDepot,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
-    var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
-    var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
-    var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
-    var s2=document.getElementById('eq-loc-p50-sel'); if(s2) s2.value='';
-    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-zone-depot','eq-rem'], [], 'eq');
+    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
