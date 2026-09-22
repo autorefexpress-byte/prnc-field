@@ -92,6 +92,13 @@ async function ensureTables() {
       statut TEXT DEFAULT 'Envoyé', date TEXT, created_at TIMESTAMP DEFAULT NOW()
     )`;
 
+    await sql`CREATE TABLE IF NOT EXISTS nc (
+      id TEXT PRIMARY KEY, numero TEXT, wg TEXT, semaine TEXT, ir TEXT, wo TEXT, tag TEXT,
+      date_recep TEXT, date_retour TEXT, controle_par TEXT, types JSONB DEFAULT '[]',
+      cmd JSONB DEFAULT '{}', rec JSONB DEFAULT '{}', remarques TEXT,
+      statut TEXT DEFAULT 'Ouvert', mois TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+
     _tablesReady = true;
   } catch(e) {
     console.error('ensureTables err:', e);
@@ -599,6 +606,33 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown request' });
+    }
+
+    // ── NON-CONFORMITES (NC) ─────────────────────────
+    if (table === 'nc') {
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM nc ORDER BY created_at DESC`);
+      if (method === 'POST') {
+        const d = req.body || {};
+        await sql`INSERT INTO nc (id,numero,wg,semaine,ir,wo,tag,date_recep,date_retour,
+          controle_par,types,cmd,rec,remarques,statut,mois)
+          VALUES (${d.id},${d.numero||null},${d.wg||null},${d.semaine||null},${d.ir||null},
+            ${d.wo||null},${d.tag||null},${d.dateRecep||null},${d.dateRetour||null},
+            ${d.controlePar||null},${JSON.stringify(d.types||[])}::jsonb,
+            ${JSON.stringify(d.cmd||{})}::jsonb,${JSON.stringify(d.rec||{})}::jsonb,
+            ${d.remarques||null},${d.statut||'Ouvert'},${d.mois||null})`;
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'PATCH' && id) {
+        const d = req.body || {};
+        if (d.statut !== undefined) await sql`UPDATE nc SET statut=${d.statut||null} WHERE id=${id}`;
+        if (d.dateRetour !== undefined) await sql`UPDATE nc SET date_retour=${d.dateRetour||null} WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        await sql`DELETE FROM nc WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown nc request' });
     }
 
     // ── HISTORIQUE GET ───────────────────────────────
