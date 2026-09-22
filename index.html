@@ -11741,11 +11741,32 @@ function setNcWG(wg) {
 
 var _ncCache = null;
 
+async function ncMigrateLegacyLocalStorage() {
+  var legacy = [];
+  try { legacy = JSON.parse(localStorage.getItem(NC_KEY) || '[]'); } catch(e) { return; }
+  if (!legacy.length) return;
+  for (const item of legacy) {
+    try {
+      await fetch(DB_API + '?table=nc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    } catch(e) { console.warn('NC migration err', e); return; }
+  }
+  try { localStorage.removeItem(NC_KEY); } catch(e) {}
+}
+
 async function ncLoad() {
   if (_ncCache) return _ncCache;
   try {
     const r = await fetch(DB_API + '?table=nc');
-    const data = await r.json();
+    let data = await r.json();
+    if (Array.isArray(data) && !data.length) {
+      await ncMigrateLegacyLocalStorage();
+      const r2 = await fetch(DB_API + '?table=nc');
+      data = await r2.json();
+    }
     _ncCache = Array.isArray(data) ? data.map(function(d) {
       return {
         id: d.id, numero: d.numero, wg: d.wg, semaine: d.semaine, ir: d.ir, wo: d.wo, tag: d.tag,
