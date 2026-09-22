@@ -11739,15 +11739,59 @@ function setNcWG(wg) {
   });
 }
 
-function getNC() {
-  try { return JSON.parse(localStorage.getItem(NC_KEY) || '[]'); } catch(e) { return []; }
-}
-function saveNCData(data) {
-  try { localStorage.setItem(NC_KEY, JSON.stringify(data)); } catch(e) {}
+var _ncCache = null;
+
+async function ncLoad() {
+  if (_ncCache) return _ncCache;
+  try {
+    const r = await fetch(DB_API + '?table=nc');
+    const data = await r.json();
+    _ncCache = Array.isArray(data) ? data.map(function(d) {
+      return {
+        id: d.id, numero: d.numero, wg: d.wg, semaine: d.semaine, ir: d.ir, wo: d.wo, tag: d.tag,
+        dateRecep: d.date_recep, dateRetour: d.date_retour, controlePar: d.controle_par,
+        types: d.types || [], cmd: d.cmd || {}, rec: d.rec || {}, remarques: d.remarques,
+        statut: d.statut, mois: d.mois
+      };
+    }) : [];
+    return _ncCache;
+  } catch(e) {
+    console.warn('NC load err', e);
+    try { return JSON.parse(localStorage.getItem(NC_KEY) || '[]'); } catch(e2) { return []; }
+  }
 }
 
-function getNcNumero() {
-  var data = getNC();
+async function ncAdd(item) {
+  _ncCache = null;
+  try {
+    await fetch(DB_API + '?table=nc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+  } catch(e) { console.warn('NC add err', e); }
+}
+
+async function ncUpdate(id, data) {
+  _ncCache = null;
+  try {
+    await fetch(DB_API + '?table=nc&id=' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.warn('NC update err', e); }
+}
+
+async function ncDelete(id) {
+  _ncCache = null;
+  try {
+    await fetch(DB_API + '?table=nc&id=' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch(e) { console.warn('NC delete err', e); }
+}
+
+async function getNcNumero() {
+  var data = await ncLoad();
   var year = new Date().getFullYear();
   var max = 0;
   data.forEach(function(d) {
@@ -11757,8 +11801,8 @@ function getNcNumero() {
   return 'NC-' + year + '-' + String(max + 1).padStart(3, '0');
 }
 
-function initNcForm() {
-  var num = getNcNumero();
+async function initNcForm() {
+  var num = await getNcNumero();
   var el = document.getElementById('nc-num-display');
   if (el) el.textContent = num;
   var today = new Date().toISOString().split('T')[0];
@@ -11779,7 +11823,7 @@ function initNcForm() {
   _ncWG = '';
 }
 
-function saveNC() {
+async function saveNC() {
   var numero = document.getElementById('nc-num-display') ? document.getElementById('nc-num-display').textContent : '';
   var semaine = document.getElementById('nc-semaine') ? document.getElementById('nc-semaine').value.trim() : '';
   var ir = document.getElementById('nc-ir') ? document.getElementById('nc-ir').value.trim() : '';
@@ -11815,7 +11859,6 @@ function saveNC() {
   var dateRecepFR = dateRecep ? new Date(dateRecep).toLocaleDateString('fr-FR') : '--';
 
   // Sauvegarder pour KPI
-  var data = getNC();
   var nc = {
     id: Date.now().toString(),
     numero: numero,
@@ -11832,11 +11875,9 @@ function saveNC() {
     rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc },
     remarques: remarques,
     statut: dateRetour ? 'Retourne' : 'Ouvert',
-    created_at: new Date().toISOString(),
     mois: new Date().toISOString().slice(0, 7)
   };
-  data.unshift(nc);
-  saveNCData(data);
+  await ncAdd(nc);
 
   // Corps du mail
   var typesTxt = types.join(' + ');
@@ -11902,11 +11943,11 @@ function saveNC() {
   renderNC();
 }
 
-function renderNC() {
+async function renderNC() {
   var list = document.getElementById('nc-list');
   if (!list) return;
   var search = (document.getElementById('nc-search')||{value:''}).value.toLowerCase();
-  var data = getNC();
+  var data = await ncLoad();
 
   var moisCourant = new Date().toISOString().slice(0, 7);
   var moisCount = data.filter(function(d){ return d.mois === moisCourant; }).length;
@@ -11947,9 +11988,9 @@ function renderNC() {
   }).join('');
 }
 
-function ouvrirDetailNC(id) {
+async function ouvrirDetailNC(id) {
   _ncCurrentId = id;
-  var data = getNC();
+  var data = await ncLoad();
   var d = data.find(function(x){ return x.id === id; });
   if (!d) return;
 
@@ -11999,21 +12040,19 @@ function ouvrirDetailNC(id) {
   show('s-nc-detail');
 }
 
-function majDateRetourNC() {
-  var data = getNC();
+async function majDateRetourNC() {
+  var data = await ncLoad();
   var d = data.find(function(x){ return x.id === _ncCurrentId; });
   if (!d) return;
   var date = prompt('Date de retour magasin (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
   if (!date) return;
-  d.dateRetour = date;
-  d.statut = 'Retourne';
-  saveNCData(data);
+  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: 'Retourne' });
   ouvrirDetailNC(_ncCurrentId);
 }
 
-function supprimerNC() {
+async function supprimerNC() {
   if (!confirm('Supprimer ce rapport NC ?')) return;
-  saveNCData(getNC().filter(function(x){ return x.id !== _ncCurrentId; }));
+  await ncDelete(_ncCurrentId);
   show('s-nc');
   renderNC();
 }
@@ -12035,7 +12074,7 @@ async function renderKPI() {
 
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
-  var ncData = getNC();
+  var ncData = await ncLoad();
   var now = new Date();
   var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
 
@@ -12192,7 +12231,7 @@ async function exportKpiExcel() {
   if (typeof XLSX === 'undefined') { alert('Librairie Excel en chargement, reessayez.'); return; }
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
-  var ncData = getNC();
+  var ncData = await ncLoad();
   var wb = XLSX.utils.book_new();
 
   var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
