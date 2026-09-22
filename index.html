@@ -11650,6 +11650,27 @@ var NC_CC = {
 var NC_WG_LABELS = { chaud:'MCCHAUD', repar:'MCREPAR', elins:'MCELINS', mecus:'MCMECUS' };
 var NC_WG_COLORS = { chaud:'#7030A0', repar:'#C55A11', elins:'#1F4E79', mecus:'#375623' };
 
+var NC_RESOLUTIONS = {
+  'Mauvaise piece':       ['Piece echangee'],
+  'Quantite incorrecte':  ['Quantite completee', 'Surplus retourne'],
+  'Piece endommagee':     ['Piece remplacee', 'Retournee au magasin'],
+  'Erreur de livraison':  ['Retournee au magasin']
+};
+
+function getNcResolutionOptions(types) {
+  var opts = [];
+  (types||[]).forEach(function(t) {
+    (NC_RESOLUTIONS[t]||[]).forEach(function(o) {
+      if (opts.indexOf(o) === -1) opts.push(o);
+    });
+  });
+  return opts;
+}
+
+function ncIsResolved(statut) {
+  return !!statut && statut !== 'Ouvert';
+}
+
 function setNcWG(wg) {
   _ncWG = wg;
   ['chaud','repar','elins','mecus'].forEach(function(w) {
@@ -11971,8 +11992,8 @@ async function renderNC() {
   }
 
   list.innerHTML = filtered.map(function(d) {
-    var statColor = d.statut === 'Retourne' ? '#375623' : '#C00000';
-    var statBg = d.statut === 'Retourne' ? '#E2EFDA' : '#FCE4D6';
+    var statColor = ncIsResolved(d.statut) ? '#375623' : '#C00000';
+    var statBg = ncIsResolved(d.statut) ? '#E2EFDA' : '#FCE4D6';
     var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
     return '<div data-ncid="' + d.id + '" onclick="ouvrirDetailNC(this.dataset.ncid)" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
@@ -12044,19 +12065,31 @@ async function ouvrirDetailNC(id) {
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
     '</div>' +
     itemsHtml +
-    (d.dateRetour ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">Retourne au magasin le ' + d.dateRetour + '</div>' : '') +
+    (ncIsResolved(d.statut) ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">' + d.statut + (d.dateRetour ? ' le ' + d.dateRetour : '') + '</div>' : '') +
     (d.remarques ? '<div style="margin-top:8px;font-size:12px;color:#555;font-style:italic">' + d.remarques + '</div>' : '');
+
+  var actions = document.getElementById('nc-resolution-actions');
+  if (actions) {
+    var opts = getNcResolutionOptions(d.types);
+    actions.innerHTML = opts.map(function(label) {
+      var isActive = d.statut === label;
+      var bg = isActive ? '#375623' : '#1F4E79';
+      return '<button onclick="resoudreNC(\'' + label.replace(/'/g,"\\'") + '\')" style="background:' + bg + ';color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">' +
+        (isActive ? '✓ ' : '') + label +
+      '</button>';
+    }).join('');
+  }
 
   show('s-nc-detail');
 }
 
-async function majDateRetourNC() {
+async function resoudreNC(label) {
   var data = await ncLoad();
   var d = data.find(function(x){ return x.id === _ncCurrentId; });
   if (!d) return;
-  var date = prompt('Date de retour magasin (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
+  var date = prompt('Date (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
   if (!date) return;
-  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: 'Retourne' });
+  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: label });
   ouvrirDetailNC(_ncCurrentId);
 }
 
@@ -12176,8 +12209,8 @@ async function renderKPI() {
         '<div style="font-size:10px;color:#C00000">Total NC</div>' +
       '</div>' +
       '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncMois.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
-        '<div style="font-size:10px;color:#375623">Retournes</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncMois.filter(function(d){ return ncIsResolved(d.statut); }).length + '</div>' +
+        '<div style="font-size:10px;color:#375623">Resolus</div>' +
       '</div>' +
       '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncMois.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
@@ -12619,12 +12652,10 @@ loadCatalog();
   </div>
   <div class="form-body" style="padding:0">
     <div id="nc-detail-content" style="padding:14px"></div>
-    <div style="padding:10px 14px;display:flex;gap:8px">
-      <button onclick="majDateRetourNC()" style="flex:1;background:#1F4E79;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📅 Retour magasin
-      </button>
-      <button onclick="supprimerNC()" style="background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        🗑
+    <div id="nc-resolution-actions" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:0 14px 14px">
+      <button onclick="supprimerNC()" style="width:100%;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑 Supprimer
       </button>
     </div>
   </div>
