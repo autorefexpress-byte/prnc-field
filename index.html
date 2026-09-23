@@ -648,6 +648,7 @@ function _initLocSel(selId, inpId, val) {
         <div class="type-btn" id="eq-st-p99caisse1" onclick="setEqStatut('p99caisse1')">Dock P99 Caisse 1</div>
         <div class="type-btn" id="eq-st-p99caisse2" onclick="setEqStatut('p99caisse2')">Dock P99 Caisse 2</div>
         <div class="type-btn" id="eq-st-p99caisse3" onclick="setEqStatut('p99caisse3')">Dock P99 Caisse 3</div>
+        <div class="type-btn" id="eq-st-p99etagere" onclick="setEqStatut('p99etagere')">Dock P99 Étagère</div>
       </div>
     </div>
 
@@ -2603,7 +2604,8 @@ const EQ_STATUT_LABELS = {
   p99vanne   : 'DÉPOSER -- P99 Zone vanne',
   p99caisse1 : 'RANGÉ -- Dock P99 Caisse 1',
   p99caisse2 : 'RANGÉ -- Dock P99 Caisse 2',
-  p99caisse3 : 'RANGÉ -- Dock P99 Caisse 3'
+  p99caisse3 : 'RANGÉ -- Dock P99 Caisse 3',
+  p99etagere : 'RANGÉ -- Dock P99 Étagère'
 };
 function setEqStatut(s) {
   state.eq = state.eq || {};
@@ -2624,7 +2626,9 @@ function setEqStatut(s) {
 
 function renderEqContacts(wg, statut) {
   const isP99Caisse = statut === 'p99caisse1' || statut === 'p99caisse2' || statut === 'p99caisse3';
-  const key = wg + '_' + (isP99Caisse ? 'p99vanne' : statut);
+  const isP99Etagere = statut === 'p99etagere';
+  const lookupWg = isP99Etagere ? 'repar' : wg;
+  const key = lookupWg + '_' + ((isP99Caisse || isP99Etagere) ? 'p99vanne' : statut);
   const data = EQ_CONTACTS[key];
   const box  = document.getElementById('eq-contacts');
   if (!box) return;
@@ -2733,7 +2737,7 @@ function sendEquip() {
     var _jacquesMail = 'jacques.trimari@pronyresources.com';
     var _eqWg = (state.eq && state.eq.wg || '').toLowerCase().replace('mc','');
     var _jacquesWG = ['chaud','repar','strob'].includes(_eqWg);
-    var _jacquesStatut = ['p99fabric','p99vanne','p99caisse1','p99caisse2','p99caisse3'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
+    var _jacquesStatut = ['p99fabric','p99vanne','p99caisse1','p99caisse2','p99caisse3','p99etagere'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
     var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
