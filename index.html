@@ -12090,6 +12090,33 @@ async function resoudreNC(label) {
   var date = prompt('Date (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
   if (!date) return;
   await ncUpdate(_ncCurrentId, { dateRetour: date, statut: label });
+
+  var wgKey = Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k] === d.wg; }) || '';
+  var subj = '[' + (d.numero||'') + '] Non-Conformite RESOLUE - ' + label;
+  var body = [
+    'Bonjour,', '',
+    'Le rapport de non-conformite ' + (d.numero||'') + ' est resolu.',
+    '',
+    'Workgroup   : ' + (d.wg||'--'),
+    'IR/PR       : ' + (d.ir||'--'),
+    d.wo ? 'WO          : ' + d.wo : null,
+    d.tag ? 'TAG         : ' + d.tag : null,
+    'Resolution  : ' + label,
+    'Date        : ' + date,
+    '',
+    'Cordialement,',
+    getUserName(),
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].filter(function(l){ return l !== null; }).join('\n');
+
+  var toList = NC_TO.join(',');
+  var ccList = (NC_CC[wgKey] || []).join(',');
+  var mailTo = 'mailto:' + toList +
+    '?subject=' + encodeURIComponent(subj) +
+    '&body=' + encodeURIComponent(body) +
+    (ccList ? '&cc=' + ccList : '');
+  window.location.href = mailTo;
+
   ouvrirDetailNC(_ncCurrentId);
 }
 
