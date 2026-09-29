@@ -2732,7 +2732,10 @@ function sendEquip() {
   body += '  Workgroup      : ' + wgl + '\n';
   body += '  Statut         : ' + statutTxt + '\n';
   if (rem)   body += '\nRemarques :\n' + rem + '\n';
-  body += '\nMerci de confirmer la réception.\n';
+  var msgFin = state.eq.statut === 'demandeurdl3'
+    ? 'Merci de venir la récupérer à la maintenance centrale.'
+    : 'Merci de confirmer la réception.';
+  body += '\n' + msgFin + '\n';
   body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
