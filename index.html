@@ -5535,10 +5535,10 @@ async function renderEtnaHistorique() {
         (r.statut||'').toUpperCase() === 'RETOUR ETNA'
       ));
     if (!isEtna) return false;
-    var done = r.etna_statut && (
-      r.etna_statut.includes('Terminé') ||
-      r.etna_statut.includes('Livré') ||
-      r.etna_statut.includes('Réceptionné')
+    var done = r.etnaStatut && (
+      r.etnaStatut.includes('Terminé') ||
+      r.etnaStatut.includes('Livré') ||
+      r.etnaStatut.includes('Réceptionné')
     );
     if (!done) return false;
     if (!search) return true;
@@ -5559,7 +5559,7 @@ async function renderEtnaHistorique() {
   var html = '';
   histoRecs.forEach(function(r) {
     var photos = (r.photos || []).filter(Boolean);
-    var statut = r.etna_statut || '--';
+    var statut = r.etnaStatut || '--';
     var statColor = '#375623';
     var statBg = '#E2EFDA';
     if (statut.includes('Livré')) { statColor = '#0F6E56'; statBg = '#E1F5EE'; }
@@ -5585,11 +5585,11 @@ async function renderEtnaHistorique() {
     if (r.wo) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:13px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>';
     if (r.wr) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:13px;font-weight:700;color:#C55A11">' + r.wr + '</div></div>';
     if (r.date) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE ARRIVÉE</div><div style="font-size:12px;font-weight:600">' + r.date + '</div></div>';
-    if (r.etna_date_retour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etna_date_retour + '</div></div>';
+    if (r.etnaDateRetour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etnaDateRetour + '</div></div>';
     html += '</div>';
 
-    if (r.etna_commentaire) {
-      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etna_commentaire + '</div>';
+    if (r.etnaCommentaire) {
+      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etnaCommentaire + '</div>';
     }
 
     if (photos.length > 1) {
