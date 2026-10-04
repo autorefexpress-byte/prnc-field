@@ -643,71 +643,14 @@ function _initLocSel(selId, inpId, val) {
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Statut / Dépôt</div>
       <div class="type-grp" id="eq-statut-grp">
-        <div class="type-btn" id="eq-st-demandeur"  onclick="setEqStatut('demandeur')">Retour demandeur</div>
         <div class="type-btn" id="eq-st-p99fabric"  onclick="setEqStatut('p99fabric')">P99 Zone fabric.</div>
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
-        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Retour magasin</div>
-        <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Dock P50</div>
-        <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
+        <div class="type-btn" id="eq-st-p99caisse1" onclick="setEqStatut('p99caisse1')">Dock P99 Caisse 1</div>
+        <div class="type-btn" id="eq-st-p99caisse2" onclick="setEqStatut('p99caisse2')">Dock P99 Caisse 2</div>
+        <div class="type-btn" id="eq-st-p99caisse3" onclick="setEqStatut('p99caisse3')">Dock P99 Caisse 3</div>
+        <div class="type-btn" id="eq-st-p99etagere" onclick="setEqStatut('p99etagere')">Dock P99 Étagère</div>
+        <div class="type-btn" id="eq-st-demandeurdl3" onclick="setEqStatut('demandeurdl3')">Retour demandeur pour DL3</div>
       </div>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Localisation</div>
-      <select class="fi" id="eq-zone-sel" onchange="_locChange('eq-zone-sel','eq-zone')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-zone" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Zone à déposer</div>
-      <input class="fi" type="text" id="eq-zone-depot" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-    </div>
-    <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
-      <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
-      <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-loc-p50" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
     </div>
 
     <!-- Destinataires auto par workgroup -->
@@ -1821,6 +1764,7 @@ function show(id) {
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
   if (id === 's-nc-nouveau') {
+    initNcForm();
     var ncCp = document.getElementById('nc-controle-par');
     if (ncCp && !ncCp.value) ncCp.value = getUserName();
   }
@@ -2657,12 +2601,13 @@ function sendArrive() {
 }
 
 const EQ_STATUT_LABELS = {
-  demandeur : 'DÉPOSER -- Retour demandeur',
   p99fabric  : 'DÉPOSER -- P99 Zone fabrication',
   p99vanne   : 'DÉPOSER -- P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER -- Retour magasin',
-  p50        : 'RANGÉ -- Dock P50',
-  attinfo    : 'EN ATTENTE INFO'
+  p99caisse1 : 'RANGÉ -- Dock P99 Caisse 1',
+  p99caisse2 : 'RANGÉ -- Dock P99 Caisse 2',
+  p99caisse3 : 'RANGÉ -- Dock P99 Caisse 3',
+  p99etagere : 'RANGÉ -- Dock P99 Étagère',
+  demandeurdl3 : 'DÉPOSER -- Retour demandeur pour DL3'
 };
 function setEqStatut(s) {
   state.eq = state.eq || {};
@@ -2672,21 +2617,25 @@ function setEqStatut(s) {
     if (!el) return;
     if (k === s) {
       el.className = 'type-btn on';
-      if (k === 'attinfo') { el.style.background='var(--llblue)'; el.style.color='var(--navy2)'; el.style.borderColor='var(--navy2)'; }
-      else { el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+      el.style.background=''; el.style.color=''; el.style.borderColor='';
     } else {
       el.className = 'type-btn';
       el.style.background=''; el.style.color=''; el.style.borderColor='';
     }
   });
-  var p50grp = document.getElementById('eq-loc-p50-grp');
-  if (p50grp) p50grp.style.display = s === 'p50' ? '' : 'none';
   renderEqContacts(state.eq.wg || '', s);
 }
 
 function renderEqContacts(wg, statut) {
-  const key = wg + '_' + statut;
-  const data = EQ_CONTACTS[key];
+  const isP99Caisse = statut === 'p99caisse1' || statut === 'p99caisse2' || statut === 'p99caisse3';
+  const isP99Etagere = statut === 'p99etagere';
+  const isDemandeurDL3 = statut === 'demandeurdl3';
+  const lookupWg = isP99Etagere ? 'repar' : wg;
+  const key = lookupWg + '_' + ((isP99Caisse || isP99Etagere) ? 'p99vanne' : statut);
+  const data = isDemandeurDL3
+    ? { to: [{name:'Freddy SIS', mail:'freddy.sis@pronyresources.com', self:false}],
+        cc: (EQ_CONTACTS.repar_p99vanne && EQ_CONTACTS.repar_p99vanne.cc) || [] }
+    : EQ_CONTACTS[key];
   const box  = document.getElementById('eq-contacts');
   if (!box) return;
 
@@ -2755,8 +2704,7 @@ function sendEquip() {
   if (checkConsultMode()) return;
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
   const tag  = v('eq-tag'), desc = v('eq-desc'), serie = v('eq-serie');
-  const zone = v('eq-zone'), rem  = v('eq-rem'), zoneDepot = v('eq-zone-depot');
-  const locP50 = v('eq-loc-p50');
+  const rem  = v('eq-rem');
   const manual = getEmails('eq-manual'), cc = getEmails('eq-cc');
 
   if (!tag) { alert('Le TAG est obligatoire.'); return; }
@@ -2783,25 +2731,22 @@ function sendEquip() {
   if (desc)  body += '  Désignation    : ' + desc + '\n';
   body += '  Workgroup      : ' + wgl + '\n';
   body += '  Statut         : ' + statutTxt + '\n';
-  if (zone)  body += '  Zone précise   : ' + zone + '\n';
-  if (locP50) body += '  Dock P50       : ' + locP50 + '\n';
   if (rem)   body += '\nRemarques :\n' + rem + '\n';
-  const isRetourDemandeur = state.eq.statut === 'demandeur';
-  const msgFin = isRetourDemandeur
-    ? 'Merci de procéder à la récupération de votre équipement.'
+  var msgFin = state.eq.statut === 'demandeurdl3'
+    ? 'Merci de venir la récupérer à la maintenance centrale.'
     : 'Merci de confirmer la réception.';
   body += '\n' + msgFin + '\n';
   body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
-    {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'--'}, {label:'À', value:allTo.join(', ')}
+    {label:'Statut', value:statutTxt}, {label:'À', value:allTo.join(', ')}
   ], () => {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
     var _jacquesMail = 'jacques.trimari@pronyresources.com';
     var _eqWg = (state.eq && state.eq.wg || '').toLowerCase().replace('mc','');
     var _jacquesWG = ['chaud','repar','strob'].includes(_eqWg);
-    var _jacquesStatut = ['demandeur','p99fabric','p99vanne'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
+    var _jacquesStatut = ['p99fabric','p99vanne','p99caisse1','p99caisse2','p99caisse3','p99etagere'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
     var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
@@ -2812,16 +2757,12 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot, zoneDepot, zoneDepot,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
-    var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
-    var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
-    var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
-    var s2=document.getElementById('eq-loc-p50-sel'); if(s2) s2.value='';
-    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-zone-depot','eq-rem'], [], 'eq');
+    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
@@ -5594,10 +5535,10 @@ async function renderEtnaHistorique() {
         (r.statut||'').toUpperCase() === 'RETOUR ETNA'
       ));
     if (!isEtna) return false;
-    var done = r.etna_statut && (
-      r.etna_statut.includes('Terminé') ||
-      r.etna_statut.includes('Livré') ||
-      r.etna_statut.includes('Réceptionné')
+    var done = r.etnaStatut && (
+      r.etnaStatut.includes('Terminé') ||
+      r.etnaStatut.includes('Livré') ||
+      r.etnaStatut.includes('Réceptionné')
     );
     if (!done) return false;
     if (!search) return true;
@@ -5618,7 +5559,7 @@ async function renderEtnaHistorique() {
   var html = '';
   histoRecs.forEach(function(r) {
     var photos = (r.photos || []).filter(Boolean);
-    var statut = r.etna_statut || '--';
+    var statut = r.etnaStatut || '--';
     var statColor = '#375623';
     var statBg = '#E2EFDA';
     if (statut.includes('Livré')) { statColor = '#0F6E56'; statBg = '#E1F5EE'; }
@@ -5644,11 +5585,11 @@ async function renderEtnaHistorique() {
     if (r.wo) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:13px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>';
     if (r.wr) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:13px;font-weight:700;color:#C55A11">' + r.wr + '</div></div>';
     if (r.date) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE ARRIVÉE</div><div style="font-size:12px;font-weight:600">' + r.date + '</div></div>';
-    if (r.etna_date_retour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etna_date_retour + '</div></div>';
+    if (r.etnaDateRetour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etnaDateRetour + '</div></div>';
     html += '</div>';
 
-    if (r.etna_commentaire) {
-      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etna_commentaire + '</div>';
+    if (r.etnaCommentaire) {
+      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etnaCommentaire + '</div>';
     }
 
     if (photos.length > 1) {
@@ -11722,6 +11663,27 @@ var NC_CC = {
 var NC_WG_LABELS = { chaud:'MCCHAUD', repar:'MCREPAR', elins:'MCELINS', mecus:'MCMECUS' };
 var NC_WG_COLORS = { chaud:'#7030A0', repar:'#C55A11', elins:'#1F4E79', mecus:'#375623' };
 
+var NC_RESOLUTIONS = {
+  'Mauvaise piece':       ['Piece echangee'],
+  'Quantite incorrecte':  ['Quantite completee', 'Surplus retourne'],
+  'Piece endommagee':     ['Piece remplacee', 'Retournee au magasin'],
+  'Erreur de livraison':  ['Retournee au magasin']
+};
+
+function getNcResolutionOptions(types) {
+  var opts = [];
+  (types||[]).forEach(function(t) {
+    (NC_RESOLUTIONS[t]||[]).forEach(function(o) {
+      if (opts.indexOf(o) === -1) opts.push(o);
+    });
+  });
+  return opts;
+}
+
+function ncIsResolved(statut) {
+  return !!statut && statut !== 'Ouvert';
+}
+
 function setNcWG(wg) {
   _ncWG = wg;
   ['chaud','repar','elins','mecus'].forEach(function(w) {
@@ -11737,6 +11699,30 @@ function setNcWG(wg) {
       el.style.borderColor = '';
     }
   });
+}
+
+var _ncEmballage = '';
+function setNcEmballage(type) {
+  _ncEmballage = type;
+  ['Carton','Palette'].forEach(function(t) {
+    var el = document.getElementById('nc-emb-' + t.toLowerCase());
+    if (!el) return;
+    if (t === type) { el.style.background = '#C00000'; el.style.color = '#fff'; el.style.borderColor = '#C00000'; }
+    else { el.style.background = ''; el.style.color = ''; el.style.borderColor = ''; }
+  });
+}
+
+function updateNcFormVisibility() {
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
+  var toggle = function(id, show) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  };
+  toggle('nc-fg-wo', !isLivraison);
+  toggle('nc-fg-tag', !isLivraison);
+  toggle('nc-cmd-section', !isLivraison);
+  toggle('nc-rec-standard', !isLivraison);
+  toggle('nc-rec-livraison', isLivraison);
 }
 
 var _ncCache = null;
@@ -11842,6 +11828,14 @@ async function initNcForm() {
     if(el2){ el2.style.background=''; el2.style.color=''; el2.style.borderColor=''; }
   });
   _ncWG = '';
+  // Reset emballage / destinataire
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el3 = document.getElementById('nc-emb-' + t);
+    if(el3){ el3.style.background=''; el3.style.color=''; el3.style.borderColor=''; }
+  });
+  var dest = document.getElementById('nc-rec-destinataire'); if (dest) dest.value = '';
+  updateNcFormVisibility();
 }
 
 async function saveNC() {
@@ -11867,6 +11861,7 @@ async function saveNC() {
   if (!types.length) { alert('Selectionnez au moins un type de non-conformite.'); return; }
 
   var wgl = NC_WG_LABELS[_ncWG] || _ncWG.toUpperCase();
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
 
   var cmdSC = document.getElementById('nc-cmd-sc') ? document.getElementById('nc-cmd-sc').value.trim() : '';
   var cmdPN = document.getElementById('nc-cmd-pn') ? document.getElementById('nc-cmd-pn').value.trim() : '';
@@ -11876,6 +11871,8 @@ async function saveNC() {
   var recPN = document.getElementById('nc-rec-pn') ? document.getElementById('nc-rec-pn').value.trim() : '';
   var recQte = document.getElementById('nc-rec-qte') ? document.getElementById('nc-rec-qte').value.trim() : '';
   var recDesc = document.getElementById('nc-rec-desc') ? document.getElementById('nc-rec-desc').value.trim() : '';
+  var recEmballage = _ncEmballage || '';
+  var recDestinataire = document.getElementById('nc-rec-destinataire') ? document.getElementById('nc-rec-destinataire').value.trim() : '';
 
   var dateRecepFR = dateRecep ? new Date(dateRecep).toLocaleDateString('fr-FR') : '--';
 
@@ -11893,7 +11890,7 @@ async function saveNC() {
     controlePar: controlePar,
     types: types,
     cmd: { sc: cmdSC, pn: cmdPN, qte: cmdQte, desc: cmdDesc },
-    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc },
+    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc, emballage: recEmballage, destinataire: recDestinataire },
     remarques: remarques,
     statut: dateRetour ? 'Retourne' : 'Ouvert',
     mois: new Date().toISOString().slice(0, 7)
@@ -11903,39 +11900,49 @@ async function saveNC() {
   // Corps du mail
   var typesTxt = types.join(' + ');
   var subj = '[' + numero + '] Non-Conformite ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
-  var body = [
+  var bodyLines = [
     'Bonjour,', '',
     'Rapport de non-conformite ' + numero,
     '',
     'Workgroup   : ' + wgl,
-    'IR/PR       : ' + ir,
-    wo ? 'WO          : ' + wo : null,
-    tag ? 'TAG         : ' + tag : null,
+    'IR/PR       : ' + ir
+  ];
+  if (!isLivraison && wo) bodyLines.push('WO          : ' + wo);
+  if (!isLivraison && tag) bodyLines.push('TAG         : ' + tag);
+  bodyLines.push(
     'Semaine     : ' + semaine,
     'Date recep. : ' + dateRecepFR,
     'Controle par: ' + controlePar,
     'Type NC     : ' + typesTxt,
-    '',
-    '--- ITEM COMMANDE ---',
-    cmdSC ? 'S/C  : ' + cmdSC : null,
-    cmdPN ? 'P/N  : ' + cmdPN : null,
-    cmdQte ? 'Qte  : ' + cmdQte : null,
-    cmdDesc ? 'Desc : ' + cmdDesc : null,
-    '',
-    '--- ITEM RECEPTIONNE ---',
-    recSC ? 'S/C  : ' + recSC : null,
-    recPN ? 'P/N  : ' + recPN : null,
-    recQte ? 'Qte  : ' + recQte : null,
-    recDesc ? 'Desc : ' + recDesc : null,
-    remarques ? '' : null,
-    remarques ? 'Remarques : ' + remarques : null,
-    '',
-    'NB : Photos a joindre separement via Outlook.',
+    ''
+  );
+  if (!isLivraison) {
+    bodyLines.push('--- ITEM COMMANDE ---');
+    if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
+    if (cmdPN) bodyLines.push('P/N  : ' + cmdPN);
+    if (cmdQte) bodyLines.push('Qte  : ' + cmdQte);
+    if (cmdDesc) bodyLines.push('Desc : ' + cmdDesc);
+    bodyLines.push('');
+  }
+  bodyLines.push('--- ITEM RECEPTIONNE ---');
+  if (isLivraison) {
+    if (recEmballage) bodyLines.push('Type emballage : ' + recEmballage);
+    if (recDestinataire) bodyLines.push('Destinataire   : ' + recDestinataire);
+    if (recQte) bodyLines.push('Qte recue      : ' + recQte);
+  } else {
+    if (recSC) bodyLines.push('S/C  : ' + recSC);
+    if (recPN) bodyLines.push('P/N  : ' + recPN);
+    if (recQte) bodyLines.push('Qte  : ' + recQte);
+    if (recDesc) bodyLines.push('Desc : ' + recDesc);
+  }
+  if (remarques) { bodyLines.push('', 'Remarques : ' + remarques); }
+  bodyLines.push(
     '',
     'Cordialement,',
     getUserName(),
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
-  ].filter(function(l){ return l !== null; }).join('\n');
+  );
+  var body = bodyLines.join('\n');
 
   var toList = NC_TO.join(',');
   var ccList = (NC_CC[_ncWG] || []).join(',');
@@ -11947,7 +11954,7 @@ async function saveNC() {
 
   // Reset formulaire
   ['nc-ir','nc-wo','nc-tag','nc-remarques','nc-cmd-sc','nc-cmd-pn','nc-cmd-qte','nc-cmd-desc',
-   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc'].forEach(function(id){
+   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc','nc-rec-destinataire'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
   ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison'].forEach(function(id){
@@ -11959,6 +11966,12 @@ async function saveNC() {
     if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
   });
   _ncWG = '';
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el = document.getElementById('nc-emb-' + t);
+    if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+  });
+  updateNcFormVisibility();
 
   show('s-nc');
   renderNC();
@@ -11992,8 +12005,8 @@ async function renderNC() {
   }
 
   list.innerHTML = filtered.map(function(d) {
-    var statColor = d.statut === 'Retourne' ? '#375623' : '#C00000';
-    var statBg = d.statut === 'Retourne' ? '#E2EFDA' : '#FCE4D6';
+    var statColor = ncIsResolved(d.statut) ? '#375623' : '#C00000';
+    var statBg = ncIsResolved(d.statut) ? '#E2EFDA' : '#FCE4D6';
     var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
     return '<div data-ncid="' + d.id + '" onclick="ouvrirDetailNC(this.dataset.ncid)" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
@@ -12020,6 +12033,31 @@ async function ouvrirDetailNC(id) {
 
   var content = document.getElementById('nc-detail-content');
   var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
+  var isLivraison = (d.types||[]).indexOf('Erreur de livraison') !== -1;
+
+  var itemsHtml = isLivraison ?
+    '<div style="background:#E3F2FD;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+      '<div style="font-size:11px">Emballage : ' + ((d.rec&&d.rec.emballage)||'--') + '</div>' +
+      '<div style="font-size:11px">Destinataire : ' + ((d.rec&&d.rec.destinataire)||'--') + '</div>' +
+      '<div style="font-size:11px">Qte reçue : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+    '</div>' :
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
+      '</div>' +
+      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
+      '</div>' +
+    '</div>';
 
   if (content) content.innerHTML =
     '<div style="background:#FCE4D6;border-radius:10px;padding:10px;margin-bottom:12px">' +
@@ -12039,35 +12077,59 @@ async function ouvrirDetailNC(id) {
       '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
-      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
-      '</div>' +
-      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
-      '</div>' +
-    '</div>' +
-    (d.dateRetour ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">Retourne au magasin le ' + d.dateRetour + '</div>' : '') +
+    itemsHtml +
+    (ncIsResolved(d.statut) ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">' + d.statut + (d.dateRetour ? ' le ' + d.dateRetour : '') + '</div>' : '') +
     (d.remarques ? '<div style="margin-top:8px;font-size:12px;color:#555;font-style:italic">' + d.remarques + '</div>' : '');
+
+  var actions = document.getElementById('nc-resolution-actions');
+  if (actions) {
+    var opts = getNcResolutionOptions(d.types);
+    actions.innerHTML = opts.map(function(label) {
+      var isActive = d.statut === label;
+      var bg = isActive ? '#375623' : '#1F4E79';
+      return '<button onclick="resoudreNC(\'' + label.replace(/'/g,"\\'") + '\')" style="background:' + bg + ';color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">' +
+        (isActive ? '✓ ' : '') + label +
+      '</button>';
+    }).join('');
+  }
 
   show('s-nc-detail');
 }
 
-async function majDateRetourNC() {
+async function resoudreNC(label) {
   var data = await ncLoad();
   var d = data.find(function(x){ return x.id === _ncCurrentId; });
   if (!d) return;
-  var date = prompt('Date de retour magasin (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
+  var date = prompt('Date (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
   if (!date) return;
-  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: 'Retourne' });
+  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: label });
+
+  var wgKey = Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k] === d.wg; }) || '';
+  var subj = '[' + (d.numero||'') + '] Non-Conformite RESOLUE - ' + label;
+  var body = [
+    'Bonjour,', '',
+    'Le rapport de non-conformite ' + (d.numero||'') + ' est resolu.',
+    '',
+    'Workgroup   : ' + (d.wg||'--'),
+    'IR/PR       : ' + (d.ir||'--'),
+    d.wo ? 'WO          : ' + d.wo : null,
+    d.tag ? 'TAG         : ' + d.tag : null,
+    'Resolution  : ' + label,
+    'Date        : ' + date,
+    '',
+    'Cordialement,',
+    getUserName(),
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].filter(function(l){ return l !== null; }).join('\n');
+
+  var toList = NC_TO.join(',');
+  var ccList = (NC_CC[wgKey] || []).join(',');
+  var mailTo = 'mailto:' + toList +
+    '?subject=' + encodeURIComponent(subj) +
+    '&body=' + encodeURIComponent(body) +
+    (ccList ? '&cc=' + ccList : '');
+  window.location.href = mailTo;
+
   ouvrirDetailNC(_ncCurrentId);
 }
 
@@ -12148,9 +12210,9 @@ function kpiNcDate(nc) {
   return kpiParseFR(nc.dateRecep);
 }
 
-// Une NC est traitée dès qu'elle a un statut de résolution (tout sauf « Ouvert »)
+// Une NC est traitée dès qu'elle a un statut de résolution (voir ncIsResolved)
 function kpiNcResolu(d) {
-  return !!d.statut && d.statut !== 'Ouvert';
+  return ncIsResolved(d.statut);
 }
 
 async function renderKPI() {
@@ -12848,13 +12910,13 @@ loadCatalog();
     </div>
 
     <!-- WO -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-wo">
       <div class="field-lbl">WO</div>
       <input class="fi" type="text" id="nc-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('nc-wo','N° WO')">
     </div>
 
     <!-- TAG -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-tag">
       <div class="field-lbl">TAG Équipement</div>
       <input class="fi" type="text" id="nc-tag" placeholder="Ex : 220-X-00315">
     </div>
@@ -12888,13 +12950,14 @@ loadCatalog();
           <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000">
+          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000" onchange="updateNcFormVisibility()">
           <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
         </label>
       </div>
     </div>
 
     <!-- Séparateur -->
+    <div id="nc-cmd-section">
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
       <div style="font-weight:700;font-size:12px;color:#C00000">ITEM COMMANDÉ</div>
     </div>
@@ -12918,6 +12981,7 @@ loadCatalog();
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-cmd-desc" placeholder="Ex : Joint torique TI Grade 12">
     </div>
+    </div>
 
     <!-- Séparateur -->
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
@@ -12925,6 +12989,11 @@ loadCatalog();
     </div>
 
     <!-- Item reçu -->
+    <div class="field-grp">
+      <div class="field-lbl">Quantité reçue</div>
+      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
+    </div>
+    <div id="nc-rec-standard">
     <div class="field-grp">
       <div class="field-lbl">S/C (Stock Code)</div>
       <input class="fi" type="text" id="nc-rec-sc" placeholder="Ex : 158660 ou 000158660"
@@ -12936,12 +13005,22 @@ loadCatalog();
       <input class="fi" type="text" id="nc-rec-pn" placeholder="Ex : ABC-124">
     </div>
     <div class="field-grp">
-      <div class="field-lbl">Quantité reçue</div>
-      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
-    </div>
-    <div class="field-grp">
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-rec-desc" placeholder="Ex : Joint torique SS Grade 2">
+    </div>
+    </div>
+    <div id="nc-rec-livraison" style="display:none">
+    <div class="field-grp">
+      <div class="field-lbl">Type d'emballage</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button type="button" class="wg-btn" id="nc-emb-carton" onclick="setNcEmballage('Carton')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">📦 Carton</button>
+        <button type="button" class="wg-btn" id="nc-emb-palette" onclick="setNcEmballage('Palette')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">🪵 Palette</button>
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Nom du destinataire</div>
+      <input class="fi" type="text" id="nc-rec-destinataire" placeholder="Ex : Jean Dupont">
+    </div>
     </div>
 
     <!-- Date retour magasin -->
@@ -12971,12 +13050,10 @@ loadCatalog();
   </div>
   <div class="form-body" style="padding:0">
     <div id="nc-detail-content" style="padding:14px"></div>
-    <div style="padding:10px 14px;display:flex;gap:8px">
-      <button onclick="majDateRetourNC()" style="flex:1;background:#1F4E79;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📅 Retour magasin
-      </button>
-      <button onclick="supprimerNC()" style="background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        🗑
+    <div id="nc-resolution-actions" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:0 14px 14px">
+      <button onclick="supprimerNC()" style="width:100%;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑 Supprimer
       </button>
     </div>
   </div>
