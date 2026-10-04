@@ -12148,6 +12148,11 @@ function kpiNcDate(nc) {
   return kpiParseFR(nc.dateRecep);
 }
 
+// Une NC est traitée dès qu'elle a un statut de résolution (tout sauf « Ouvert »)
+function kpiNcResolu(d) {
+  return !!d.statut && d.statut !== 'Ouvert';
+}
+
 async function renderKPI() {
   var content = document.getElementById('kpi-content');
   if (!content) return;
@@ -12277,12 +12282,12 @@ async function renderKPI() {
         '<div style="font-size:10px;color:#C00000">Total NC</div>' +
       '</div>' +
       '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncSel.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
-        '<div style="font-size:10px;color:#375623">Retournes</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncSel.filter(function(d){ return kpiNcResolu(d); }).length + '</div>' +
+        '<div style="font-size:10px;color:#375623">Traitees</div>' +
       '</div>' +
       '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncSel.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
-        '<div style="font-size:10px;color:#E65100">Ouverts</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncSel.filter(function(d){ return !kpiNcResolu(d); }).length + '</div>' +
+        '<div style="font-size:10px;color:#E65100">Ouvertes</div>' +
       '</div>' +
     '</div>' +
     NC_TYPES.map(function(t) {
@@ -12332,7 +12337,7 @@ async function renderKPI() {
     }).join('') +
   '</div></div>';
 
-  // Historique NC -- total, retournés, ouverts par période
+  // Historique NC -- total, traitées, ouvertes par période
   var maxNc = Math.max.apply(null, histOffsets.map(function(o){
     return (ncByPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)] || []).length;
   }).concat([1]));
@@ -12343,7 +12348,7 @@ async function renderKPI() {
     var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
     var list = ncByPeriod[p] || [];
     var isSel = o === _kpiOffset;
-    var ret = list.filter(function(d){ return d.statut === 'Retourne'; }).length;
+    var ret = list.filter(function(d){ return kpiNcResolu(d); }).length;
     var ouv = list.length - ret;
     var barPct = list.length > 0 ? Math.max(4, Math.round(list.length / maxNc * 100)) : 0;
     var retW = list.length > 0 ? Math.round(ret / list.length * 100) : 0;
@@ -12351,16 +12356,16 @@ async function renderKPI() {
       '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#C00000':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
         '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' +
-          (ret > 0 ? '<div title="Retournes : ' + ret + '" style="width:' + retW + '%;background:#375623;' + (ouv > 0 ? 'border-right:2px solid #fff;' : '') + '"></div>' : '') +
-          (ouv > 0 ? '<div title="Ouverts : ' + ouv + '" style="flex:1;background:#E65100"></div>' : '') +
+          (ret > 0 ? '<div title="Traitees : ' + ret + '" style="width:' + retW + '%;background:#375623;' + (ouv > 0 ? 'border-right:2px solid #fff;' : '') + '"></div>' : '') +
+          (ouv > 0 ? '<div title="Ouvertes : ' + ouv + '" style="flex:1;background:#E65100"></div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#C00000">' + list.length + '</div>' +
     '</div>';
   }).join('');
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
-    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#375623;display:inline-block"></span><span style="font-size:10px;color:#666">Retournes</span></div>' +
-    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouverts</span></div>' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#375623;display:inline-block"></span><span style="font-size:10px;color:#666">Traitees</span></div>' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouvertes</span></div>' +
     '<div style="font-size:10px;color:#999;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
   '</div></div>';
 
@@ -12397,7 +12402,7 @@ async function genererRapportNC() {
   var titrePeriode = kpiPeriodLabel(selKey, periode);
   var list = ncOfOffset(_kpiOffset);
   var prevCount = ncOfOffset(_kpiOffset + 1).length;
-  var nbRet = list.filter(function(d){ return d.statut === 'Retourne'; }).length;
+  var nbRet = list.filter(function(d){ return kpiNcResolu(d); }).length;
   var nbOuv = list.length - nbRet;
   var taux = list.length ? Math.round(nbRet / list.length * 100) : 0;
   var diff = list.length - prevCount;
@@ -12405,7 +12410,7 @@ async function genererRapportNC() {
 
   // Toutes les NC encore ouvertes (toutes périodes confondues) : à traiter par le magasin
   var today = new Date(); today.setHours(0,0,0,0);
-  var ouvertes = ncData.filter(function(d){ return d.statut !== 'Retourne'; }).map(function(d) {
+  var ouvertes = ncData.filter(function(d){ return !kpiNcResolu(d); }).map(function(d) {
     var dr = kpiParseFR(d.dateRecep) || kpiNcDate(d);
     return { nc: d, jours: dr ? Math.max(0, Math.round((today - dr) / 86400000)) : null };
   }).sort(function(a, b){ return (b.jours || 0) - (a.jours || 0); });
@@ -12414,14 +12419,14 @@ async function genererRapportNC() {
   var evo = [];
   for (var o = _kpiOffset + 5; o >= _kpiOffset; o--) {
     var l = ncOfOffset(o);
-    var r = l.filter(function(d){ return d.statut === 'Retourne'; }).length;
+    var r = l.filter(function(d){ return kpiNcResolu(d); }).length;
     evo.push({ key: kpiPeriodKey(kpiPeriodDate(o, periode), periode), ret: r, ouv: l.length - r, total: l.length, sel: o === _kpiOffset });
   }
   var evoMax = Math.max.apply(null, evo.map(function(e){ return e.total; }).concat([1]));
   var chartEvo = '<div class="vbars">' + evo.map(function(e) {
     var h = 140;
     var hRet = Math.round(e.ret / evoMax * h), hOuv = Math.round(e.ouv / evoMax * h);
-    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' NC (' + e.ret + ' retournees, ' + e.ouv + ' ouvertes)">' +
+    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' NC (' + e.ret + ' traitees, ' + e.ouv + ' ouvertes)">' +
       '<div class="vval">' + e.total + '</div>' +
       '<div class="vstack" style="height:' + h + 'px">' +
         (e.ouv ? '<div style="height:' + hOuv + 'px;background:' + C_OUV + ';border-radius:4px 4px 0 0' + (e.ret ? ';margin-bottom:2px' : '') + '"></div>' : '') +
@@ -12432,7 +12437,7 @@ async function genererRapportNC() {
   '<div class="vlbls">' + evo.map(function(e) {
     return '<div class="vlbl' + (e.sel ? ' sel' : '') + '">' + esc(e.key) + '</div>';
   }).join('') + '</div>' +
-  '<div class="legend"><span><i style="background:' + C_RET + '"></i>Retournees</span><span><i style="background:' + C_OUV + '"></i>Ouvertes</span></div>';
+  '<div class="legend"><span><i style="background:' + C_RET + '"></i>Traitees</span><span><i style="background:' + C_OUV + '"></i>Ouvertes</span></div>';
 
   // ── Graphiques 2 et 3 : barres horizontales (une seule couleur par graphique)
   function hbars(rows, color) {
@@ -12459,9 +12464,9 @@ async function genererRapportNC() {
     return esc(o.sc || '--') + (o.qte ? ' <span class="muted">x' + esc(o.qte) + '</span>' : '') +
       (o.desc ? '<div class="muted">' + esc(o.desc) + '</div>' : '');
   }
-  function statutBadge(s) {
-    return s === 'Retourne'
-      ? '<span class="badge ret">✔ Retournee</span>'
+  function statutBadge(d) {
+    return kpiNcResolu(d)
+      ? '<span class="badge ret">✔ ' + esc(d.statut === 'Retourne' ? 'Retournee' : d.statut) + '</span>'
       : '<span class="badge ouv">● Ouverte</span>';
   }
   var detailRows = list.slice().sort(function(a, b){ return (kpiNcDate(a) || 0) - (kpiNcDate(b) || 0); }).map(function(d) {
@@ -12469,11 +12474,11 @@ async function genererRapportNC() {
       '<td><b>' + esc(d.numero || '--') + '</b></td>' +
       '<td>' + esc(d.dateRecep || '--') + '</td>' +
       '<td>' + esc(d.wg || '--') + '</td>' +
-      '<td>' + esc(d.wo || '--') + (d.tag ? '<div class="muted">' + esc(d.tag) + '</div>' : '') + '</td>' +
+      '<td>' + esc(d.ir || '--') + (d.wo ? '<div class="muted">WO ' + esc(d.wo) + '</div>' : '') + (d.tag ? '<div class="muted">' + esc(d.tag) + '</div>' : '') + '</td>' +
       '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
       '<td>' + scCell(d.cmd) + '</td>' +
       '<td>' + scCell(d.rec) + '</td>' +
-      '<td>' + statutBadge(d.statut) + (d.dateRetour ? '<div class="muted">' + esc(d.dateRetour) + '</div>' : '') + '</td>' +
+      '<td>' + statutBadge(d) + (d.dateRetour ? '<div class="muted">' + esc(d.dateRetour) + '</div>' : '') + '</td>' +
     '</tr>' +
     (d.remarques ? '<tr class="rem"><td></td><td colspan="7">💬 ' + esc(d.remarques) + '</td></tr>' : '');
   }).join('');
@@ -12485,7 +12490,7 @@ async function genererRapportNC() {
       '<td>' + esc(d.dateRecep || '--') + '</td>' +
       '<td' + cls + '>' + (x.jours == null ? '--' : x.jours + ' j') + '</td>' +
       '<td>' + esc(d.wg || '--') + '</td>' +
-      '<td>' + esc(d.wo || '--') + '</td>' +
+      '<td>' + esc(d.ir || '--') + (d.wo ? '<div class="muted">WO ' + esc(d.wo) + '</div>' : '') + '</td>' +
       '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
       '<td>' + scCell(d.cmd) + '</td>' +
       '<td>' + scCell(d.rec) + '</td>' +
@@ -12502,7 +12507,7 @@ async function genererRapportNC() {
     '',
     'Synthese :',
     '- NC sur la periode : ' + list.length + ' (' + diffTxt + ')',
-    '- Retournees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de retour ' + taux + '%)',
+    '- Traitees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
     '- NC encore ouvertes, toutes periodes : ' + ouvertes.length,
     '',
     'Cordialement,',
@@ -12571,9 +12576,9 @@ async function genererRapportNC() {
       '<h2>1. Synthese</h2>' +
       '<div class="tiles avoid">' +
         '<div class="tile"><div class="n">' + list.length + '</div><div class="l">NC sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
-        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Retournees</div></div>' +
+        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Traitees</div></div>' +
         '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>Ouvertes</div></div>' +
-        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de retour</div></div>' +
+        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement</div></div>' +
       '</div>' +
 
       '<div class="grid2 avoid">' +
@@ -12584,13 +12589,13 @@ async function genererRapportNC() {
 
       '<h2>5. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
       (ouvertes.length
-        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>IR / WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
           '<div class="muted" style="margin-top:4px">Anciennete en orange au-dela de 14 jours, en rouge au-dela de 30 jours.</div>'
         : '<div class="empty">Aucune NC ouverte. ✔</div>') +
 
       '<h2>6. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
       (list.length
-        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>IR / WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
         : '<div class="empty">Aucune non-conformite sur cette periode.</div>') +
 
       '<footer><span>PRNC Field — Rapport genere automatiquement</span><span>' + dateEdition + '</span></footer>' +
