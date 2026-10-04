@@ -473,7 +473,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Non-Conformités</div>
       <div class="card-sub">Rapports NC magasin</div>
     </div>
-    <div class="action-card" onclick="show('s-kpi');renderKPI()">
+    <div class="action-card" onclick="show('s-kpi');_kpiOffset=0;renderKPI()">
       <div class="card-icon">📊</div>
       <div class="card-lbl">KPI</div>
       <div class="card-sub">Indicateurs de performance</div>
@@ -12079,13 +12079,73 @@ async function supprimerNC() {
 }
 
 // ══ KPI ══
+var _kpiOffset = 0; // 0 = période en cours, 1 = période précédente, etc.
+var MOIS_FR = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
 function setKpiPeriode(p) {
   _kpiPeriode = p;
+  _kpiOffset = 0;
   ['semaine','mois','trimestre'].forEach(function(k) {
     var el = document.getElementById('kpi-btn-' + k);
     if (el) el.className = 'type-btn' + (k === p ? ' on' : '');
   });
   renderKPI();
+}
+
+function kpiNav(delta) {
+  _kpiOffset = Math.max(0, _kpiOffset + delta);
+  renderKPI();
+}
+
+function kpiGoTo(offset) {
+  _kpiOffset = Math.max(0, offset);
+  renderKPI();
+}
+
+// Date (jj/mm/aaaa) -> Date
+function kpiParseFR(dateStr) {
+  if (!dateStr) return null;
+  var parts = String(dateStr).split('/');
+  if (parts.length !== 3) return null;
+  var d = new Date(parts[2], parts[1]-1, parts[0]);
+  return isNaN(d) ? null : d;
+}
+
+// Clé de période (semaine ISO, mois ou trimestre) pour une date
+function kpiPeriodKey(d, periode) {
+  if (!d) return null;
+  if (periode === 'semaine') {
+    var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7)); // jeudi de la semaine
+    var week1 = new Date(t.getFullYear(), 0, 4);
+    var week = 1 + Math.round(((t - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    return t.getFullYear() + '-S' + String(week).padStart(2,'0');
+  } else if (periode === 'mois') {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  return d.getFullYear() + '-T' + (Math.floor(d.getMonth()/3) + 1);
+}
+
+// Date de référence de la période située "offset" périodes avant aujourd'hui
+function kpiPeriodDate(offset, periode) {
+  var now = new Date();
+  if (periode === 'semaine') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7*offset);
+  if (periode === 'mois') return new Date(now.getFullYear(), now.getMonth() - offset, 1);
+  return new Date(now.getFullYear(), (Math.floor(now.getMonth()/3) - offset) * 3, 1);
+}
+
+function kpiPeriodLabel(key, periode) {
+  if (!key) return '';
+  if (periode === 'semaine') { var s = key.split('-S'); return 'Sem. ' + s[1] + ' · ' + s[0]; }
+  if (periode === 'mois') { var m = key.split('-'); return MOIS_FR[parseInt(m[1],10)-1] + ' ' + m[0]; }
+  var q = key.split('-T'); return 'T' + q[1] + ' ' + q[0];
+}
+
+// Date de création d'une NC : id = Date.now(), sinon mois, sinon date de réception
+function kpiNcDate(nc) {
+  if (nc.id && /^\d{12,}$/.test(String(nc.id))) return new Date(parseInt(nc.id, 10));
+  if (nc.mois && /^\d{4}-\d{2}$/.test(nc.mois)) return new Date(parseInt(nc.mois.slice(0,4),10), parseInt(nc.mois.slice(5,7),10)-1, 1);
+  return kpiParseFR(nc.dateRecep);
 }
 
 async function renderKPI() {
@@ -12096,55 +12156,79 @@ async function renderKPI() {
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
   var ncData = await ncLoad();
-  var now = new Date();
   var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
+  var periode = _kpiPeriode;
+  var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
+  var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
 
-  function getPeriodKey(dateStr, periode) {
-    if (!dateStr) return null;
-    var parts = dateStr.split('/');
-    if (parts.length !== 3) return null;
-    var d = new Date(parts[2], parts[1]-1, parts[0]);
-    if (isNaN(d)) return null;
-    if (periode === 'semaine') {
-      var oneJan = new Date(d.getFullYear(), 0, 1);
-      var week = Math.ceil((((d-oneJan)/86400000)+oneJan.getDay()+1)/7);
-      return d.getFullYear() + '-S' + String(week).padStart(2,'0');
-    } else if (periode === 'mois') {
-      return parts[2] + '-' + parts[1];
-    } else {
-      return parts[2] + '-T' + Math.ceil(parseInt(parts[1])/3);
-    }
-  }
+  function emptyArr() { return { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 }; }
 
-  var nowFR = now.toLocaleDateString('fr-FR');
-  var currentKey = getPeriodKey(nowFR, _kpiPeriode);
+  // Agrégation des arrivées par période
   var byPeriod = {};
   arrivees.forEach(function(r) {
-    var k = getPeriodKey(r.date, _kpiPeriode);
+    var k = kpiPeriodKey(kpiParseFR(r.date), periode);
     if (!k) return;
-    if (!byPeriod[k]) byPeriod[k] = { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
+    if (!byPeriod[k]) byPeriod[k] = emptyArr();
     byPeriod[k].total++;
     if (r.wg) byPeriod[k][r.wg] = (byPeriod[k][r.wg]||0)+1;
   });
 
-  var periods = Object.keys(byPeriod).sort().reverse();
-  var current = byPeriod[currentKey] || { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
-  var prevKey = periods[periods[0]===currentKey ? 1 : 0];
-  var prev = (prevKey && prevKey !== currentKey && byPeriod[prevKey]) || { total:0 };
+  // Agrégation des NC par période
+  var ncByPeriod = {};
+  ncData.forEach(function(nc) {
+    var k = (periode === 'mois' && nc.mois) ? nc.mois : kpiPeriodKey(kpiNcDate(nc), periode);
+    if (!k) return;
+    if (!ncByPeriod[k]) ncByPeriod[k] = [];
+    ncByPeriod[k].push(nc);
+  });
+
+  // Plus ancienne période avec des données : borne du bouton ◀
+  var currentKey0 = kpiPeriodKey(kpiPeriodDate(0, periode), periode);
+  var allKeys = Object.keys(byPeriod).concat(Object.keys(ncByPeriod)).filter(function(k){ return k <= currentKey0; }).sort();
+  var oldestKey = allKeys[0] || currentKey0;
+  var maxOffset = 0;
+  while (maxOffset < 520 && kpiPeriodKey(kpiPeriodDate(maxOffset, periode), periode) > oldestKey) maxOffset++;
+  if (_kpiOffset > maxOffset) _kpiOffset = maxOffset;
+
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var current = byPeriod[selKey] || emptyArr();
+  var prev = byPeriod[prevKey] || emptyArr();
+  var ncSel = ncByPeriod[selKey] || [];
 
   var diff = current.total - prev.total;
   var diffTxt = diff > 0 ? '+' + diff : String(diff);
   var diffColor = diff > 0 ? '#C55A11' : diff < 0 ? '#375623' : '#888';
-  var periodeLabel = _kpiPeriode === 'semaine' ? 'Cette semaine' : _kpiPeriode === 'mois' ? 'Ce mois' : 'Ce trimestre';
-  var prevLabel = _kpiPeriode === 'semaine' ? 'Sem. prec.' : _kpiPeriode === 'mois' ? 'Mois prec.' : 'Trim. prec.';
+  var isNow = _kpiOffset === 0;
+  var periodeLabel = isNow
+    ? (periode === 'semaine' ? 'Cette semaine' : periode === 'mois' ? 'Ce mois' : 'Ce trimestre')
+    : kpiPeriodLabel(selKey, periode);
+  var prevLabel = kpiPeriodLabel(prevKey, periode);
 
-  var moisCourant = now.toISOString().slice(0,7);
-  var ncMois = ncData.filter(function(d){ return d.mois === moisCourant; });
-
+  var card = 'background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)';
+  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit';
+  var navOff = 'width:40px;height:40px;border-radius:10px;border:1px solid #eee;background:#f7f7f7;font-size:16px;font-weight:700;color:#ccc;font-family:inherit';
   var html = '';
 
+  // Sélecteur de période
+  html += '<div style="' + card + ';display:flex;align-items:center;gap:8px;padding:10px">' +
+    (_kpiOffset < maxOffset
+      ? '<button onclick="kpiNav(1)" style="' + navBtn + '" aria-label="Periode precedente">◀</button>'
+      : '<button disabled style="' + navOff + '">◀</button>') +
+    '<div style="flex:1;text-align:center">' +
+      '<div style="font-size:15px;font-weight:800;color:#1F3864">' + kpiPeriodLabel(selKey, periode) + '</div>' +
+      (isNow
+        ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
+        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#2E75B6;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
+    '</div>' +
+    (_kpiOffset > 0
+      ? '<button onclick="kpiNav(-1)" style="' + navBtn + '" aria-label="Periode suivante">▶</button>'
+      : '<button disabled style="' + navOff + '">▶</button>') +
+  '</div>';
+
   // Arrivées
-  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+  html += '<div style="' + card + '">' +
     '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Equipements arrives</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:12px">' +
       '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
@@ -12160,90 +12244,125 @@ async function renderKPI() {
         '<div style="font-size:10px;color:#888">Evolution</div>' +
       '</div>' +
     '</div>' +
-    ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'].map(function(wg) {
+    WG_ORDER.map(function(wg) {
       var val = current[wg]||0;
       var pct = current.total>0 ? Math.round(val/current.total*100) : 0;
-      var colors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
       return '<div style="margin-bottom:6px">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
-          '<span style="font-size:12px;font-weight:700;color:' + colors[wg] + '">' + wg + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:' + WG_COLORS[wg] + '">' + wg + '</span>' +
           '<span style="font-size:12px">' + val + ' (' + pct + '%)</span>' +
         '</div>' +
         '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
-          '<div style="background:' + colors[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+          '<div style="background:' + WG_COLORS[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
         '</div></div>';
     }).join('') +
   '</div>';
 
-  // NC
-  var ncTypes = {'Mauvaise piece':0,'Quantite incorrecte':0,'Piece endommagee':0,'Erreur de livraison':0};
-  ncMois.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
+  // NC de la période sélectionnée
+  var ncTypes = {};
+  NC_TYPES.forEach(function(t){ ncTypes[t] = 0; });
+  ncSel.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
+  var ncPrev = (ncByPeriod[prevKey] || []).length;
+  var ncDiff = ncSel.length - ncPrev;
+  var ncDiffTxt = ncDiff > 0 ? '+' + ncDiff : String(ncDiff);
 
-  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
-    '<div style="font-weight:700;color:#C00000;margin-bottom:10px">Non-Conformites — Ce mois</div>' +
+  html += '<div style="' + card + '">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">' +
+      '<div style="font-weight:700;color:#C00000">Non-Conformites — ' + periodeLabel + '</div>' +
+      '<div style="font-size:11px;color:#888">' + ncDiffTxt + ' vs ' + prevLabel + '</div>' +
+    '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<div style="flex:1;background:#FCE4D6;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#C00000">' + ncMois.length + '</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#C00000">' + ncSel.length + '</div>' +
         '<div style="font-size:10px;color:#C00000">Total NC</div>' +
       '</div>' +
       '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncMois.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncSel.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
         '<div style="font-size:10px;color:#375623">Retournes</div>' +
       '</div>' +
       '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncMois.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncSel.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
         '<div style="font-size:10px;color:#E65100">Ouverts</div>' +
       '</div>' +
     '</div>' +
-    Object.keys(ncTypes).map(function(t) {
+    NC_TYPES.map(function(t) {
       var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥','Erreur de livraison':'📦'};
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
         '<span>' + (icons[t]||'') + ' ' + t + '</span><span style="font-weight:700">' + ncTypes[t] + '</span></div>';
     }).join('') +
   '</div>';
 
-  // Historique -- graphique en barres empilées par workgroup
-  if (periods.length > 0) {
-    var chartPeriods = periods.slice(0,6);
-    var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
-    var WG_CHART_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
-    var maxTotal = Math.max.apply(null, chartPeriods.map(function(p){ return byPeriod[p].total; }).concat([1]));
+  // Les 6 périodes se terminant sur la période sélectionnée (y compris les périodes vides)
+  var histOffsets = [];
+  for (var o = _kpiOffset; o < _kpiOffset + 6 && o <= maxOffset; o++) histOffsets.push(o);
 
-    html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
-      '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique -- Arrivées par période</div>';
+  // Historique arrivées -- barres empilées par workgroup
+  var maxTotal = Math.max.apply(null, histOffsets.map(function(o){
+    var b = byPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)];
+    return b ? b.total : 0;
+  }).concat([1]));
 
-    html += chartPeriods.map(function(p) {
-      var d = byPeriod[p];
-      var isCurrent = p === currentKey;
-      var segs = WG_ORDER.filter(function(wg){ return (d[wg]||0) > 0; });
-      var barPct = d.total > 0 ? Math.max(4, Math.round(d.total / maxTotal * 100)) : 0;
-
-      var segsHtml = segs.map(function(wg, i) {
-        var w = Math.round(d[wg] / d.total * 100);
-        return '<div onclick="alert(&quot;' + wg + ' -- ' + p + ' : ' + d[wg] + '&quot;)" title="' + wg + ' : ' + d[wg] + '" ' +
-          'style="width:' + w + '%;background:' + WG_CHART_COLORS[wg] + ';cursor:pointer;' +
-          (i < segs.length - 1 ? 'border-right:2px solid #fff;' : '') + '"></div>';
-      }).join('');
-
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
-        '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isCurrent?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isCurrent?' •':'') + '</div>' +
-        '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
-          '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' + segsHtml + '</div>' +
-        '</div>' +
-        '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#1F3864">' + d.total + '</div>' +
-      '</div>';
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique -- Arrivees par periode</div>';
+  html += histOffsets.map(function(o) {
+    var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    var d = byPeriod[p] || emptyArr();
+    var isSel = o === _kpiOffset;
+    var segs = WG_ORDER.filter(function(wg){ return (d[wg]||0) > 0; });
+    var barPct = d.total > 0 ? Math.max(4, Math.round(d.total / maxTotal * 100)) : 0;
+    var segsHtml = segs.map(function(wg, i) {
+      var w = Math.round(d[wg] / d.total * 100);
+      return '<div title="' + wg + ' : ' + d[wg] + '" ' +
+        'style="width:' + w + '%;background:' + WG_COLORS[wg] + ';' +
+        (i < segs.length - 1 ? 'border-right:2px solid #fff;' : '') + '"></div>';
     }).join('');
-
-    html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
-      WG_ORDER.map(function(wg) {
-        return '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span style="width:8px;height:8px;border-radius:50%;background:' + WG_CHART_COLORS[wg] + ';display:inline-block"></span>' +
-          '<span style="font-size:10px;color:#666">' + wg + '</span></div>';
-      }).join('') +
+    return '<div onclick="kpiGoTo(' + o + ')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
+        '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' + segsHtml + '</div>' +
+      '</div>' +
+      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#1F3864">' + d.total + '</div>' +
     '</div>';
+  }).join('');
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
+    WG_ORDER.map(function(wg) {
+      return '<div style="display:flex;align-items:center;gap:4px">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:' + WG_COLORS[wg] + ';display:inline-block"></span>' +
+        '<span style="font-size:10px;color:#666">' + wg + '</span></div>';
+    }).join('') +
+  '</div></div>';
 
-    html += '</div>';
-  }
+  // Historique NC -- total, retournés, ouverts par période
+  var maxNc = Math.max.apply(null, histOffsets.map(function(o){
+    return (ncByPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)] || []).length;
+  }).concat([1]));
+
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:#C00000;margin-bottom:10px">Historique -- Non-Conformites par periode</div>';
+  html += histOffsets.map(function(o) {
+    var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    var list = ncByPeriod[p] || [];
+    var isSel = o === _kpiOffset;
+    var ret = list.filter(function(d){ return d.statut === 'Retourne'; }).length;
+    var ouv = list.length - ret;
+    var barPct = list.length > 0 ? Math.max(4, Math.round(list.length / maxNc * 100)) : 0;
+    var retW = list.length > 0 ? Math.round(ret / list.length * 100) : 0;
+    return '<div onclick="kpiGoTo(' + o + ')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#C00000':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
+        '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' +
+          (ret > 0 ? '<div title="Retournes : ' + ret + '" style="width:' + retW + '%;background:#375623;' + (ouv > 0 ? 'border-right:2px solid #fff;' : '') + '"></div>' : '') +
+          (ouv > 0 ? '<div title="Ouverts : ' + ouv + '" style="flex:1;background:#E65100"></div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#C00000">' + list.length + '</div>' +
+    '</div>';
+  }).join('');
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#375623;display:inline-block"></span><span style="font-size:10px;color:#666">Retournes</span></div>' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouverts</span></div>' +
+    '<div style="font-size:10px;color:#999;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
+  '</div></div>';
 
   content.innerHTML = html;
 }
