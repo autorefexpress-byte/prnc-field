@@ -12367,6 +12367,240 @@ async function renderKPI() {
   content.innerHTML = html;
 }
 
+// ══ RAPPORT NC MAGASIN ══
+// Rapport imprimable (PDF) des non-conformités de la période sélectionnée dans les KPI
+async function genererRapportNC() {
+  var w = window.open('', '_blank');
+  if (!w) { alert('Autorisez les fenetres pop-up pour generer le rapport.'); return; }
+  w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Generation du rapport...</p>');
+
+  var ncData = await ncLoad();
+  var periode = _kpiPeriode;
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
+  var WG_LIST = ['MCCHAUD','MCREPAR','MCELINS','MCMECUS'];
+  var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',MCELINS:'#1F4E79',MCMECUS:'#375623'};
+  var C_RET = '#2E75B6', C_OUV = '#E65100'; // paire validée daltonisme
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
+  }
+  function keyOf(nc) {
+    return (periode === 'mois' && nc.mois) ? nc.mois : kpiPeriodKey(kpiNcDate(nc), periode);
+  }
+  function ncOfOffset(o) {
+    var k = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    return ncData.filter(function(nc){ return keyOf(nc) === k; });
+  }
+
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var titrePeriode = kpiPeriodLabel(selKey, periode);
+  var list = ncOfOffset(_kpiOffset);
+  var prevCount = ncOfOffset(_kpiOffset + 1).length;
+  var nbRet = list.filter(function(d){ return d.statut === 'Retourne'; }).length;
+  var nbOuv = list.length - nbRet;
+  var taux = list.length ? Math.round(nbRet / list.length * 100) : 0;
+  var diff = list.length - prevCount;
+  var diffTxt = (diff > 0 ? '+' : '') + diff + ' vs ' + kpiPeriodLabel(prevKey, periode);
+
+  // Toutes les NC encore ouvertes (toutes périodes confondues) : à traiter par le magasin
+  var today = new Date(); today.setHours(0,0,0,0);
+  var ouvertes = ncData.filter(function(d){ return d.statut !== 'Retourne'; }).map(function(d) {
+    var dr = kpiParseFR(d.dateRecep) || kpiNcDate(d);
+    return { nc: d, jours: dr ? Math.max(0, Math.round((today - dr) / 86400000)) : null };
+  }).sort(function(a, b){ return (b.jours || 0) - (a.jours || 0); });
+
+  // ── Graphique 1 : évolution sur 6 périodes (barres verticales empilées)
+  var evo = [];
+  for (var o = _kpiOffset + 5; o >= _kpiOffset; o--) {
+    var l = ncOfOffset(o);
+    var r = l.filter(function(d){ return d.statut === 'Retourne'; }).length;
+    evo.push({ key: kpiPeriodKey(kpiPeriodDate(o, periode), periode), ret: r, ouv: l.length - r, total: l.length, sel: o === _kpiOffset });
+  }
+  var evoMax = Math.max.apply(null, evo.map(function(e){ return e.total; }).concat([1]));
+  var chartEvo = '<div class="vbars">' + evo.map(function(e) {
+    var h = 140;
+    var hRet = Math.round(e.ret / evoMax * h), hOuv = Math.round(e.ouv / evoMax * h);
+    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' NC (' + e.ret + ' retournees, ' + e.ouv + ' ouvertes)">' +
+      '<div class="vval">' + e.total + '</div>' +
+      '<div class="vstack" style="height:' + h + 'px">' +
+        (e.ouv ? '<div style="height:' + hOuv + 'px;background:' + C_OUV + ';border-radius:4px 4px 0 0' + (e.ret ? ';margin-bottom:2px' : '') + '"></div>' : '') +
+        (e.ret ? '<div style="height:' + hRet + 'px;background:' + C_RET + ';' + (e.ouv ? '' : 'border-radius:4px 4px 0 0') + '"></div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>' +
+  '<div class="vlbls">' + evo.map(function(e) {
+    return '<div class="vlbl' + (e.sel ? ' sel' : '') + '">' + esc(e.key) + '</div>';
+  }).join('') + '</div>' +
+  '<div class="legend"><span><i style="background:' + C_RET + '"></i>Retournees</span><span><i style="background:' + C_OUV + '"></i>Ouvertes</span></div>';
+
+  // ── Graphiques 2 et 3 : barres horizontales (une seule couleur par graphique)
+  function hbars(rows, color) {
+    var max = Math.max.apply(null, rows.map(function(r){ return r.v; }).concat([1]));
+    return rows.map(function(r) {
+      var pct = list.length ? Math.round(r.v / list.length * 100) : 0;
+      return '<div class="hrow" title="' + esc(r.label) + ' : ' + r.v + '">' +
+        '<div class="hlbl">' + (r.dot ? '<i style="background:' + r.dot + '"></i>' : '') + esc(r.label) + '</div>' +
+        '<div class="htrack"><div style="width:' + (r.v ? Math.max(2, Math.round(r.v / max * 100)) : 0) + '%;background:' + color + '"></div></div>' +
+        '<div class="hval">' + r.v + ' <span>(' + pct + '%)</span></div>' +
+      '</div>';
+    }).join('');
+  }
+  var typeRows = NC_TYPES.map(function(t){
+    return { label: t, v: list.filter(function(d){ return (d.types||[]).indexOf(t) >= 0; }).length };
+  });
+  var wgRows = WG_LIST.map(function(wg){
+    return { label: wg, dot: WG_COLORS[wg], v: list.filter(function(d){ return d.wg === wg; }).length };
+  });
+
+  // ── Tableaux
+  function scCell(o) {
+    o = o || {};
+    return esc(o.sc || '--') + (o.qte ? ' <span class="muted">x' + esc(o.qte) + '</span>' : '') +
+      (o.desc ? '<div class="muted">' + esc(o.desc) + '</div>' : '');
+  }
+  function statutBadge(s) {
+    return s === 'Retourne'
+      ? '<span class="badge ret">✔ Retournee</span>'
+      : '<span class="badge ouv">● Ouverte</span>';
+  }
+  var detailRows = list.slice().sort(function(a, b){ return (kpiNcDate(a) || 0) - (kpiNcDate(b) || 0); }).map(function(d) {
+    return '<tr>' +
+      '<td><b>' + esc(d.numero || '--') + '</b></td>' +
+      '<td>' + esc(d.dateRecep || '--') + '</td>' +
+      '<td>' + esc(d.wg || '--') + '</td>' +
+      '<td>' + esc(d.wo || '--') + (d.tag ? '<div class="muted">' + esc(d.tag) + '</div>' : '') + '</td>' +
+      '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
+      '<td>' + scCell(d.cmd) + '</td>' +
+      '<td>' + scCell(d.rec) + '</td>' +
+      '<td>' + statutBadge(d.statut) + (d.dateRetour ? '<div class="muted">' + esc(d.dateRetour) + '</div>' : '') + '</td>' +
+    '</tr>' +
+    (d.remarques ? '<tr class="rem"><td></td><td colspan="7">💬 ' + esc(d.remarques) + '</td></tr>' : '');
+  }).join('');
+  var ouvRows = ouvertes.map(function(x) {
+    var d = x.nc;
+    var cls = x.jours == null ? '' : x.jours > 30 ? ' class="late"' : x.jours > 14 ? ' class="warn"' : '';
+    return '<tr>' +
+      '<td><b>' + esc(d.numero || '--') + '</b></td>' +
+      '<td>' + esc(d.dateRecep || '--') + '</td>' +
+      '<td' + cls + '>' + (x.jours == null ? '--' : x.jours + ' j') + '</td>' +
+      '<td>' + esc(d.wg || '--') + '</td>' +
+      '<td>' + esc(d.wo || '--') + '</td>' +
+      '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
+      '<td>' + scCell(d.cmd) + '</td>' +
+      '<td>' + scCell(d.rec) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var auteur = (typeof getUserName === 'function' && getUserName()) || '';
+  var dateEdition = new Date().toLocaleDateString('fr-FR');
+  var sujet = 'Rapport Non-Conformites - ' + titrePeriode + ' - PRNC P50';
+  var corps = [
+    'Bonjour,',
+    '',
+    'Veuillez trouver ci-joint le rapport des non-conformites de reception pour la periode : ' + titrePeriode + '.',
+    '',
+    'Synthese :',
+    '- NC sur la periode : ' + list.length + ' (' + diffTxt + ')',
+    '- Retournees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de retour ' + taux + '%)',
+    '- NC encore ouvertes, toutes periodes : ' + ouvertes.length,
+    '',
+    'Cordialement,',
+    auteur,
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].join('\n');
+  var mailHref = 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+
+  var css =
+    '@page{size:A4;margin:12mm}' +
+    '*{box-sizing:border-box}' +
+    'body{margin:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.page{max-width:820px;margin:0 auto;background:#fff;padding:28px 30px}' +
+    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#1F3864}' +
+    '.toolbar button,.toolbar a{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}' +
+    '.b1{background:#fff;color:#1F3864}.b2{background:#E65100;color:#fff}' +
+    '.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
+    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3864;padding-bottom:10px;margin-bottom:18px}' +
+    'header h1{margin:0;font-size:22px;color:#1F3864}header .sub{color:#5b6476;font-size:12px;margin-top:3px}' +
+    'header .meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
+    'h2{font-size:14px;color:#1F3864;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #dde2ea}' +
+    '.tiles{display:flex;gap:10px}.tile{flex:1;border:1px solid #dde2ea;border-radius:10px;padding:12px;text-align:center}' +
+    '.tile .n{font-size:26px;font-weight:800;color:#1d2433}.tile .l{font-size:11px;color:#5b6476;margin-top:2px}' +
+    '.tile .l i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}' +
+    '.grid2{display:flex;gap:24px}.grid2>div{flex:1;min-width:0}' +
+    '.vbars{display:flex;gap:12px;align-items:flex-end;padding:0 4px;border-bottom:1px solid #c9cfd9}' +
+    '.vcol{flex:1;display:flex;flex-direction:column;align-items:stretch}' +
+    '.vval{text-align:center;font-size:12px;font-weight:700;margin-bottom:3px}' +
+    '.vstack{display:flex;flex-direction:column;justify-content:flex-end;max-width:56px;width:100%;margin:0 auto}' +
+    '.vlbls{display:flex;gap:12px;padding:0 4px}.vlbl{flex:1;text-align:center;font-size:10px;color:#5b6476;margin-top:4px}' +
+    '.vlbl.sel{font-weight:700;color:#1d2433}' +
+    '.legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:#5b6476}' +
+    '.legend i,.hlbl i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}' +
+    '.hrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}' +
+    '.hlbl{width:130px;flex-shrink:0;font-size:11px}' +
+    '.htrack{flex:1;background:#f0f2f6;border-radius:4px;height:10px}.htrack div{height:10px;border-radius:0 4px 4px 0}' +
+    '.hval{width:62px;flex-shrink:0;text-align:right;font-weight:700;font-size:12px}.hval span{font-weight:400;color:#5b6476;font-size:10px}' +
+    '.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:10.5px}' +
+    'th{background:#1F3864;color:#fff;text-align:left;padding:6px 5px;font-weight:700}' +
+    'td{padding:6px 5px;border-bottom:1px solid #e6e9ef;vertical-align:top}td:first-child{white-space:nowrap}' +
+    'tr:nth-child(even) td{background:#f8f9fb}tr.rem td{background:#fff;color:#5b6476;font-style:italic;padding-top:0}' +
+    '.muted{color:#5b6476;font-size:9.5px}' +
+    '.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:9.5px;font-weight:700;white-space:nowrap}' +
+    '.badge.ret{background:#E3EEF8;color:#1F4E79}.badge.ouv{background:#FDEBDD;color:#A33A00}' +
+    'td.warn{color:#A33A00;font-weight:700}td.late{color:#B00020;font-weight:800}' +
+    '.empty{padding:14px;text-align:center;color:#5b6476;background:#f8f9fb;border-radius:8px}' +
+    'footer{margin-top:24px;padding-top:8px;border-top:1px solid #dde2ea;font-size:10px;color:#5b6476;display:flex;justify-content:space-between}' +
+    '.avoid{break-inside:avoid}thead{display:table-header-group}tr{break-inside:avoid}' +
+    '@media (max-width:640px){.page{padding:16px}.tiles{flex-wrap:wrap}.tile{flex:1 1 40%}.grid2{flex-direction:column;gap:0}header{flex-direction:column;align-items:flex-start;gap:6px}header .meta{text-align:left}table{font-size:9.5px;min-width:600px}}' +
+    '@media print{body{background:#fff}.toolbar{display:none}.page{max-width:none;padding:0}}';
+
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Rapport NC ' + esc(titrePeriode) + '</title><style>' + css + '</style></head><body>' +
+    '<div class="toolbar">' +
+      '<button class="b1" onclick="window.print()">🖨 Imprimer / PDF</button>' +
+      '<a class="b2" href="' + esc(mailHref) + '">📧 Envoyer au magasin</a>' +
+      '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div>' +
+    '</div>' +
+    '<div class="page">' +
+      '<header><div><h1>Rapport des non-conformites</h1>' +
+        '<div class="sub">Receptions pieces — PRNC Maintenance Centrale P50</div></div>' +
+        '<div class="meta"><b style="font-size:14px;color:#1F3864">' + esc(titrePeriode) + '</b><br>' +
+        'Edite le ' + dateEdition + (auteur ? '<br>par ' + esc(auteur) : '') + '<br>Destinataire : Magasin</div></header>' +
+
+      '<h2>1. Synthese</h2>' +
+      '<div class="tiles avoid">' +
+        '<div class="tile"><div class="n">' + list.length + '</div><div class="l">NC sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
+        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Retournees</div></div>' +
+        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>Ouvertes</div></div>' +
+        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de retour</div></div>' +
+      '</div>' +
+
+      '<div class="grid2 avoid">' +
+        '<div><h2>2. Evolution sur 6 periodes</h2>' + chartEvo + '</div>' +
+        '<div><h2>3. Repartition par type</h2>' + hbars(typeRows, '#1F4E79') +
+          '<h2>4. Repartition par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
+      '</div>' +
+
+      '<h2>5. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
+      (ouvertes.length
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
+          '<div class="muted" style="margin-top:4px">Anciennete en orange au-dela de 14 jours, en rouge au-dela de 30 jours.</div>'
+        : '<div class="empty">Aucune NC ouverte. ✔</div>') +
+
+      '<h2>6. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
+      (list.length
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
+        : '<div class="empty">Aucune non-conformite sur cette periode.</div>') +
+
+      '<footer><span>PRNC Field — Rapport genere automatiquement</span><span>' + dateEdition + '</span></footer>' +
+    '</div></body></html>';
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
 async function exportKpiExcel() {
   if (typeof XLSX === 'undefined') { alert('Librairie Excel en chargement, reessayez.'); return; }
   var records = [];
@@ -12761,7 +12995,12 @@ loadCatalog();
     </div>
     <!-- Contenu KPI -->
     <div id="kpi-content" style="padding:12px 14px"></div>
-    <!-- Bouton export -->
+    <!-- Boutons rapport / export -->
+    <div style="padding:10px 14px 0">
+      <button onclick="genererRapportNC()" style="width:100%;background:#C00000;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        📄 Rapport NC pour le magasin
+      </button>
+    </div>
     <div style="padding:10px 14px">
       <button onclick="exportKpiExcel()" style="width:100%;background:#375623;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         📥 Exporter Excel
