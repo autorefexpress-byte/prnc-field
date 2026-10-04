@@ -473,7 +473,7 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Non-Conformités</div>
       <div class="card-sub">Rapports NC magasin</div>
     </div>
-    <div class="action-card" onclick="show('s-kpi');renderKPI()">
+    <div class="action-card" onclick="show('s-kpi');_kpiOffset=0;renderKPI()">
       <div class="card-icon">📊</div>
       <div class="card-lbl">KPI</div>
       <div class="card-sub">Indicateurs de performance</div>
@@ -643,71 +643,14 @@ function _initLocSel(selId, inpId, val) {
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Statut / Dépôt</div>
       <div class="type-grp" id="eq-statut-grp">
-        <div class="type-btn" id="eq-st-demandeur"  onclick="setEqStatut('demandeur')">Retour demandeur</div>
         <div class="type-btn" id="eq-st-p99fabric"  onclick="setEqStatut('p99fabric')">P99 Zone fabric.</div>
         <div class="type-btn" id="eq-st-p99vanne"   onclick="setEqStatut('p99vanne')">P99 Zone vanne</div>
-        <div class="type-btn" id="eq-st-magasin"    onclick="setEqStatut('magasin')">Retour magasin</div>
-        <div class="type-btn" id="eq-st-p50"        onclick="setEqStatut('p50')">Dock P50</div>
-        <div class="type-btn" id="eq-st-attinfo"    onclick="setEqStatut('attinfo')" style="color:var(--navy2);border-color:var(--navy2)">EN ATT INFO</div>
+        <div class="type-btn" id="eq-st-p99caisse1" onclick="setEqStatut('p99caisse1')">Dock P99 Caisse 1</div>
+        <div class="type-btn" id="eq-st-p99caisse2" onclick="setEqStatut('p99caisse2')">Dock P99 Caisse 2</div>
+        <div class="type-btn" id="eq-st-p99caisse3" onclick="setEqStatut('p99caisse3')">Dock P99 Caisse 3</div>
+        <div class="type-btn" id="eq-st-p99etagere" onclick="setEqStatut('p99etagere')">Dock P99 Étagère</div>
+        <div class="type-btn" id="eq-st-demandeurdl3" onclick="setEqStatut('demandeurdl3')">Retour demandeur pour DL3</div>
       </div>
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Localisation</div>
-      <select class="fi" id="eq-zone-sel" onchange="_locChange('eq-zone-sel','eq-zone')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-zone" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
-    </div>
-    <div class="field-grp">
-      <div class="field-lbl">Zone à déposer</div>
-      <input class="fi" type="text" id="eq-zone-depot" placeholder="Ex : Rack 3 / Benne B / Allée 4...">
-    </div>
-    <div class="field-grp" id="eq-loc-p50-grp" style="display:none">
-      <div class="field-lbl">&#128230; Localisation Dock P50 <span style="color:var(--navy2);font-size:10px">(rangé où exactement ?)</span></div>
-      <select class="fi" id="eq-loc-p50-sel" onchange="_locChange('eq-loc-p50-sel','eq-loc-p50')" style="font-size:15px;color:#1a2332">
-        <option value="">-- Sélectionner --</option>
-        <option value="A-cal">A-cal</option>
-        <option value="Atelier P17">Atelier P17</option>
-        <option value="CLN">CLN</option>
-        <option value="Dalle de lavage">Dalle de lavage</option>
-        <option value="Devant MCCHAUD">Devant MCCHAUD</option>
-        <option value="Devant P50">Devant P50</option>
-        <option value="Etagere Callidus P17">Etagere Callidus P17</option>
-        <option value="ETNA">ETNA</option>
-        <option value="Parking P02">Parking P02</option>
-        <option value="R10">R10</option>
-        <option value="R9">R9</option>
-        <option value="Retour demandeur">Retour demandeur</option>
-        <option value="Retour magasin">Retour magasin</option>
-        <option value="Zone A1">Zone A1</option>
-        <option value="Zone départ Callidus">Zone départ Callidus</option>
-        <option value="Zone fer">Zone fer</option>
-        <option value="Zone fin de travaux P17">Zone fin de travaux P17</option>
-        <option value="Zone depart ETNA">Zone depart ETNA</option>
-        <option value="Zone planifier P17">Zone planifier P17</option>
-        <option value="__autre__">✏️ Autre...</option>
-      </select>
-      <input class="fi" type="text" id="eq-loc-p50" style="display:none;margin-top:6px" placeholder="Saisir la localisation...">
     </div>
 
     <!-- Destinataires auto par workgroup -->
@@ -1821,6 +1764,7 @@ function show(id) {
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
   if (id === 's-nc-nouveau') {
+    initNcForm();
     var ncCp = document.getElementById('nc-controle-par');
     if (ncCp && !ncCp.value) ncCp.value = getUserName();
   }
@@ -2657,12 +2601,13 @@ function sendArrive() {
 }
 
 const EQ_STATUT_LABELS = {
-  demandeur : 'DÉPOSER -- Retour demandeur',
   p99fabric  : 'DÉPOSER -- P99 Zone fabrication',
   p99vanne   : 'DÉPOSER -- P99 Zone vanne',
-  magasin    : 'PRÊT À ENLEVER -- Retour magasin',
-  p50        : 'RANGÉ -- Dock P50',
-  attinfo    : 'EN ATTENTE INFO'
+  p99caisse1 : 'RANGÉ -- Dock P99 Caisse 1',
+  p99caisse2 : 'RANGÉ -- Dock P99 Caisse 2',
+  p99caisse3 : 'RANGÉ -- Dock P99 Caisse 3',
+  p99etagere : 'RANGÉ -- Dock P99 Étagère',
+  demandeurdl3 : 'DÉPOSER -- Retour demandeur pour DL3'
 };
 function setEqStatut(s) {
   state.eq = state.eq || {};
@@ -2672,21 +2617,25 @@ function setEqStatut(s) {
     if (!el) return;
     if (k === s) {
       el.className = 'type-btn on';
-      if (k === 'attinfo') { el.style.background='var(--llblue)'; el.style.color='var(--navy2)'; el.style.borderColor='var(--navy2)'; }
-      else { el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+      el.style.background=''; el.style.color=''; el.style.borderColor='';
     } else {
       el.className = 'type-btn';
       el.style.background=''; el.style.color=''; el.style.borderColor='';
     }
   });
-  var p50grp = document.getElementById('eq-loc-p50-grp');
-  if (p50grp) p50grp.style.display = s === 'p50' ? '' : 'none';
   renderEqContacts(state.eq.wg || '', s);
 }
 
 function renderEqContacts(wg, statut) {
-  const key = wg + '_' + statut;
-  const data = EQ_CONTACTS[key];
+  const isP99Caisse = statut === 'p99caisse1' || statut === 'p99caisse2' || statut === 'p99caisse3';
+  const isP99Etagere = statut === 'p99etagere';
+  const isDemandeurDL3 = statut === 'demandeurdl3';
+  const lookupWg = isP99Etagere ? 'repar' : wg;
+  const key = lookupWg + '_' + ((isP99Caisse || isP99Etagere) ? 'p99vanne' : statut);
+  const data = isDemandeurDL3
+    ? { to: [{name:'Freddy SIS', mail:'freddy.sis@pronyresources.com', self:false}],
+        cc: (EQ_CONTACTS.repar_p99vanne && EQ_CONTACTS.repar_p99vanne.cc) || [] }
+    : EQ_CONTACTS[key];
   const box  = document.getElementById('eq-contacts');
   if (!box) return;
 
@@ -2755,8 +2704,7 @@ function sendEquip() {
   if (checkConsultMode()) return;
   const wo   = v('eq-wo'), woMtc = v('eq-wo-mtc'), wr = v('eq-wr'), sc = v('eq-sc');
   const tag  = v('eq-tag'), desc = v('eq-desc'), serie = v('eq-serie');
-  const zone = v('eq-zone'), rem  = v('eq-rem'), zoneDepot = v('eq-zone-depot');
-  const locP50 = v('eq-loc-p50');
+  const rem  = v('eq-rem');
   const manual = getEmails('eq-manual'), cc = getEmails('eq-cc');
 
   if (!tag) { alert('Le TAG est obligatoire.'); return; }
@@ -2783,25 +2731,22 @@ function sendEquip() {
   if (desc)  body += '  Désignation    : ' + desc + '\n';
   body += '  Workgroup      : ' + wgl + '\n';
   body += '  Statut         : ' + statutTxt + '\n';
-  if (zone)  body += '  Zone précise   : ' + zone + '\n';
-  if (locP50) body += '  Dock P50       : ' + locP50 + '\n';
   if (rem)   body += '\nRemarques :\n' + rem + '\n';
-  const isRetourDemandeur = state.eq.statut === 'demandeur';
-  const msgFin = isRetourDemandeur
-    ? 'Merci de procéder à la récupération de votre équipement.'
+  var msgFin = state.eq.statut === 'demandeurdl3'
+    ? 'Merci de venir la récupérer à la maintenance centrale.'
     : 'Merci de confirmer la réception.';
   body += '\n' + msgFin + '\n';
   body += '\nCordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC -- Maintenance Centrale';
 
   confirmEnvoi('Confirmer équipement terminé', [
     {label:'TAG', value:tag}, {label:'Workgroup', value:wgl},
-    {label:'Statut', value:statutTxt}, {label:'Zone', value:zone||'--'}, {label:'À', value:allTo.join(', ')}
+    {label:'Statut', value:statutTxt}, {label:'À', value:allTo.join(', ')}
   ], () => {
     const ccEq   = state.selectedCC && state.selectedCC.eq ? [...state.selectedCC.eq] : [];
     var _jacquesMail = 'jacques.trimari@pronyresources.com';
     var _eqWg = (state.eq && state.eq.wg || '').toLowerCase().replace('mc','');
     var _jacquesWG = ['chaud','repar','strob'].includes(_eqWg);
-    var _jacquesStatut = ['demandeur','p99fabric','p99vanne'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
+    var _jacquesStatut = ['p99fabric','p99vanne','p99caisse1','p99caisse2','p99caisse3','p99etagere'].includes(state.eq && state.eq.statut ? state.eq.statut : '');
     var _jacquesCc = (_jacquesWG && _jacquesStatut) ? [_jacquesMail] : [];
     const ccFinalEq = [...allTo.slice(1), ...ccEq, ...cc, ..._jacquesCc].filter(Boolean);
     const ccUniqueEq = [...new Set(ccFinalEq)].join(';');
@@ -2812,16 +2757,12 @@ function sendEquip() {
                  (eqManualInputs.length > 0 ? eqManualInputs[0].value.trim() : '');
   if (hiddenEmail) hiddenEmail.value = '';
   var nomDem   = document.getElementById('eq-nom-dem') ? document.getElementById('eq-nom-dem').value.trim() : '';
-  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt, zone, zoneDepot, zoneDepot, zoneDepot, zoneDepot,
+  dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
-    var p50g = document.getElementById('eq-loc-p50-grp'); if(p50g) p50g.style.display='none';
-    var p50i = document.getElementById('eq-loc-p50'); if(p50i) p50i.value='';
-    var s1=document.getElementById('eq-zone-sel'); if(s1) s1.value='';
-    var s2=document.getElementById('eq-loc-p50-sel'); if(s2) s2.value='';
-    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-zone','eq-zone-depot','eq-rem'], [], 'eq');
+    resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'], [], 'eq');
     showSuccess('&#9989;','si-green','Mail ouvert dans Outlook !','Vérifie et appuie sur Envoyer.',
       `${wo?'<strong>WO Usine :<\/strong> '+wo+'<br>':''}${woMtc?'<strong>WO MTC :<\/strong> '+woMtc+'<br>':''}<strong>TAG :<\/strong> ${tag}<br>` +
       `<strong>Workgroup :<\/strong> <span style="${WG_C[eqWG]||''};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}<\/span><br>` +
@@ -5594,10 +5535,10 @@ async function renderEtnaHistorique() {
         (r.statut||'').toUpperCase() === 'RETOUR ETNA'
       ));
     if (!isEtna) return false;
-    var done = r.etna_statut && (
-      r.etna_statut.includes('Terminé') ||
-      r.etna_statut.includes('Livré') ||
-      r.etna_statut.includes('Réceptionné')
+    var done = r.etnaStatut && (
+      r.etnaStatut.includes('Terminé') ||
+      r.etnaStatut.includes('Livré') ||
+      r.etnaStatut.includes('Réceptionné')
     );
     if (!done) return false;
     if (!search) return true;
@@ -5618,7 +5559,7 @@ async function renderEtnaHistorique() {
   var html = '';
   histoRecs.forEach(function(r) {
     var photos = (r.photos || []).filter(Boolean);
-    var statut = r.etna_statut || '--';
+    var statut = r.etnaStatut || '--';
     var statColor = '#375623';
     var statBg = '#E2EFDA';
     if (statut.includes('Livré')) { statColor = '#0F6E56'; statBg = '#E1F5EE'; }
@@ -5644,11 +5585,11 @@ async function renderEtnaHistorique() {
     if (r.wo) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WO</div><div style="font-size:13px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>';
     if (r.wr) html += '<div><div style="font-size:9px;color:#999;font-weight:700">WR</div><div style="font-size:13px;font-weight:700;color:#C55A11">' + r.wr + '</div></div>';
     if (r.date) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE ARRIVÉE</div><div style="font-size:12px;font-weight:600">' + r.date + '</div></div>';
-    if (r.etna_date_retour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etna_date_retour + '</div></div>';
+    if (r.etnaDateRetour) html += '<div><div style="font-size:9px;color:#999;font-weight:700">DATE RETOUR</div><div style="font-size:12px;font-weight:600">' + r.etnaDateRetour + '</div></div>';
     html += '</div>';
 
-    if (r.etna_commentaire) {
-      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etna_commentaire + '</div>';
+    if (r.etnaCommentaire) {
+      html += '<div style="background:#FFF8E1;border-radius:8px;padding:8px;font-size:12px;color:#555;margin-bottom:8px">💬 ' + r.etnaCommentaire + '</div>';
     }
 
     if (photos.length > 1) {
@@ -11722,6 +11663,27 @@ var NC_CC = {
 var NC_WG_LABELS = { chaud:'MCCHAUD', repar:'MCREPAR', elins:'MCELINS', mecus:'MCMECUS' };
 var NC_WG_COLORS = { chaud:'#7030A0', repar:'#C55A11', elins:'#1F4E79', mecus:'#375623' };
 
+var NC_RESOLUTIONS = {
+  'Mauvaise piece':       ['Piece echangee'],
+  'Quantite incorrecte':  ['Quantite completee', 'Surplus retourne'],
+  'Piece endommagee':     ['Piece remplacee', 'Retournee au magasin'],
+  'Erreur de livraison':  ['Retournee au magasin']
+};
+
+function getNcResolutionOptions(types) {
+  var opts = [];
+  (types||[]).forEach(function(t) {
+    (NC_RESOLUTIONS[t]||[]).forEach(function(o) {
+      if (opts.indexOf(o) === -1) opts.push(o);
+    });
+  });
+  return opts;
+}
+
+function ncIsResolved(statut) {
+  return !!statut && statut !== 'Ouvert';
+}
+
 function setNcWG(wg) {
   _ncWG = wg;
   ['chaud','repar','elins','mecus'].forEach(function(w) {
@@ -11737,6 +11699,30 @@ function setNcWG(wg) {
       el.style.borderColor = '';
     }
   });
+}
+
+var _ncEmballage = '';
+function setNcEmballage(type) {
+  _ncEmballage = type;
+  ['Carton','Palette'].forEach(function(t) {
+    var el = document.getElementById('nc-emb-' + t.toLowerCase());
+    if (!el) return;
+    if (t === type) { el.style.background = '#C00000'; el.style.color = '#fff'; el.style.borderColor = '#C00000'; }
+    else { el.style.background = ''; el.style.color = ''; el.style.borderColor = ''; }
+  });
+}
+
+function updateNcFormVisibility() {
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
+  var toggle = function(id, show) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  };
+  toggle('nc-fg-wo', !isLivraison);
+  toggle('nc-fg-tag', !isLivraison);
+  toggle('nc-cmd-section', !isLivraison);
+  toggle('nc-rec-standard', !isLivraison);
+  toggle('nc-rec-livraison', isLivraison);
 }
 
 var _ncCache = null;
@@ -11842,6 +11828,14 @@ async function initNcForm() {
     if(el2){ el2.style.background=''; el2.style.color=''; el2.style.borderColor=''; }
   });
   _ncWG = '';
+  // Reset emballage / destinataire
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el3 = document.getElementById('nc-emb-' + t);
+    if(el3){ el3.style.background=''; el3.style.color=''; el3.style.borderColor=''; }
+  });
+  var dest = document.getElementById('nc-rec-destinataire'); if (dest) dest.value = '';
+  updateNcFormVisibility();
 }
 
 async function saveNC() {
@@ -11867,6 +11861,7 @@ async function saveNC() {
   if (!types.length) { alert('Selectionnez au moins un type de non-conformite.'); return; }
 
   var wgl = NC_WG_LABELS[_ncWG] || _ncWG.toUpperCase();
+  var isLivraison = document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked;
 
   var cmdSC = document.getElementById('nc-cmd-sc') ? document.getElementById('nc-cmd-sc').value.trim() : '';
   var cmdPN = document.getElementById('nc-cmd-pn') ? document.getElementById('nc-cmd-pn').value.trim() : '';
@@ -11876,6 +11871,8 @@ async function saveNC() {
   var recPN = document.getElementById('nc-rec-pn') ? document.getElementById('nc-rec-pn').value.trim() : '';
   var recQte = document.getElementById('nc-rec-qte') ? document.getElementById('nc-rec-qte').value.trim() : '';
   var recDesc = document.getElementById('nc-rec-desc') ? document.getElementById('nc-rec-desc').value.trim() : '';
+  var recEmballage = _ncEmballage || '';
+  var recDestinataire = document.getElementById('nc-rec-destinataire') ? document.getElementById('nc-rec-destinataire').value.trim() : '';
 
   var dateRecepFR = dateRecep ? new Date(dateRecep).toLocaleDateString('fr-FR') : '--';
 
@@ -11893,7 +11890,7 @@ async function saveNC() {
     controlePar: controlePar,
     types: types,
     cmd: { sc: cmdSC, pn: cmdPN, qte: cmdQte, desc: cmdDesc },
-    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc },
+    rec: { sc: recSC, pn: recPN, qte: recQte, desc: recDesc, emballage: recEmballage, destinataire: recDestinataire },
     remarques: remarques,
     statut: dateRetour ? 'Retourne' : 'Ouvert',
     mois: new Date().toISOString().slice(0, 7)
@@ -11903,39 +11900,49 @@ async function saveNC() {
   // Corps du mail
   var typesTxt = types.join(' + ');
   var subj = '[' + numero + '] Non-Conformite ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
-  var body = [
+  var bodyLines = [
     'Bonjour,', '',
     'Rapport de non-conformite ' + numero,
     '',
     'Workgroup   : ' + wgl,
-    'IR/PR       : ' + ir,
-    wo ? 'WO          : ' + wo : null,
-    tag ? 'TAG         : ' + tag : null,
+    'IR/PR       : ' + ir
+  ];
+  if (!isLivraison && wo) bodyLines.push('WO          : ' + wo);
+  if (!isLivraison && tag) bodyLines.push('TAG         : ' + tag);
+  bodyLines.push(
     'Semaine     : ' + semaine,
     'Date recep. : ' + dateRecepFR,
     'Controle par: ' + controlePar,
     'Type NC     : ' + typesTxt,
-    '',
-    '--- ITEM COMMANDE ---',
-    cmdSC ? 'S/C  : ' + cmdSC : null,
-    cmdPN ? 'P/N  : ' + cmdPN : null,
-    cmdQte ? 'Qte  : ' + cmdQte : null,
-    cmdDesc ? 'Desc : ' + cmdDesc : null,
-    '',
-    '--- ITEM RECEPTIONNE ---',
-    recSC ? 'S/C  : ' + recSC : null,
-    recPN ? 'P/N  : ' + recPN : null,
-    recQte ? 'Qte  : ' + recQte : null,
-    recDesc ? 'Desc : ' + recDesc : null,
-    remarques ? '' : null,
-    remarques ? 'Remarques : ' + remarques : null,
-    '',
-    'NB : Photos a joindre separement via Outlook.',
+    ''
+  );
+  if (!isLivraison) {
+    bodyLines.push('--- ITEM COMMANDE ---');
+    if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
+    if (cmdPN) bodyLines.push('P/N  : ' + cmdPN);
+    if (cmdQte) bodyLines.push('Qte  : ' + cmdQte);
+    if (cmdDesc) bodyLines.push('Desc : ' + cmdDesc);
+    bodyLines.push('');
+  }
+  bodyLines.push('--- ITEM RECEPTIONNE ---');
+  if (isLivraison) {
+    if (recEmballage) bodyLines.push('Type emballage : ' + recEmballage);
+    if (recDestinataire) bodyLines.push('Destinataire   : ' + recDestinataire);
+    if (recQte) bodyLines.push('Qte recue      : ' + recQte);
+  } else {
+    if (recSC) bodyLines.push('S/C  : ' + recSC);
+    if (recPN) bodyLines.push('P/N  : ' + recPN);
+    if (recQte) bodyLines.push('Qte  : ' + recQte);
+    if (recDesc) bodyLines.push('Desc : ' + recDesc);
+  }
+  if (remarques) { bodyLines.push('', 'Remarques : ' + remarques); }
+  bodyLines.push(
     '',
     'Cordialement,',
     getUserName(),
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
-  ].filter(function(l){ return l !== null; }).join('\n');
+  );
+  var body = bodyLines.join('\n');
 
   var toList = NC_TO.join(',');
   var ccList = (NC_CC[_ncWG] || []).join(',');
@@ -11947,7 +11954,7 @@ async function saveNC() {
 
   // Reset formulaire
   ['nc-ir','nc-wo','nc-tag','nc-remarques','nc-cmd-sc','nc-cmd-pn','nc-cmd-qte','nc-cmd-desc',
-   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc'].forEach(function(id){
+   'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc','nc-rec-destinataire'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
   ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison'].forEach(function(id){
@@ -11959,6 +11966,12 @@ async function saveNC() {
     if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
   });
   _ncWG = '';
+  _ncEmballage = '';
+  ['carton','palette'].forEach(function(t){
+    var el = document.getElementById('nc-emb-' + t);
+    if(el){ el.style.background=''; el.style.color=''; el.style.borderColor=''; }
+  });
+  updateNcFormVisibility();
 
   show('s-nc');
   renderNC();
@@ -11992,8 +12005,8 @@ async function renderNC() {
   }
 
   list.innerHTML = filtered.map(function(d) {
-    var statColor = d.statut === 'Retourne' ? '#375623' : '#C00000';
-    var statBg = d.statut === 'Retourne' ? '#E2EFDA' : '#FCE4D6';
+    var statColor = ncIsResolved(d.statut) ? '#375623' : '#C00000';
+    var statBg = ncIsResolved(d.statut) ? '#E2EFDA' : '#FCE4D6';
     var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
     return '<div data-ncid="' + d.id + '" onclick="ouvrirDetailNC(this.dataset.ncid)" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
@@ -12020,6 +12033,31 @@ async function ouvrirDetailNC(id) {
 
   var content = document.getElementById('nc-detail-content');
   var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
+  var isLivraison = (d.types||[]).indexOf('Erreur de livraison') !== -1;
+
+  var itemsHtml = isLivraison ?
+    '<div style="background:#E3F2FD;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+      '<div style="font-size:11px">Emballage : ' + ((d.rec&&d.rec.emballage)||'--') + '</div>' +
+      '<div style="font-size:11px">Destinataire : ' + ((d.rec&&d.rec.destinataire)||'--') + '</div>' +
+      '<div style="font-size:11px">Qte reçue : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+    '</div>' :
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
+      '</div>' +
+      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
+        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
+        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
+        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
+      '</div>' +
+    '</div>';
 
   if (content) content.innerHTML =
     '<div style="background:#FCE4D6;border-radius:10px;padding:10px;margin-bottom:12px">' +
@@ -12039,35 +12077,59 @@ async function ouvrirDetailNC(id) {
       '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
-      '<div style="background:#FFF3E0;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#C00000;margin-bottom:4px">COMMANDE</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.cmd&&d.cmd.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.cmd&&d.cmd.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
-      '</div>' +
-      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
-        '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
-        '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
-        '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
-        '<div style="font-size:10px;color:#777">' + ((d.rec&&d.rec.desc)||'') + '</div>' +
-      '</div>' +
-    '</div>' +
-    (d.dateRetour ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">Retourne au magasin le ' + d.dateRetour + '</div>' : '') +
+    itemsHtml +
+    (ncIsResolved(d.statut) ? '<div style="background:#E2EFDA;border-radius:10px;padding:10px;font-size:12px;color:#375623;font-weight:700">' + d.statut + (d.dateRetour ? ' le ' + d.dateRetour : '') + '</div>' : '') +
     (d.remarques ? '<div style="margin-top:8px;font-size:12px;color:#555;font-style:italic">' + d.remarques + '</div>' : '');
+
+  var actions = document.getElementById('nc-resolution-actions');
+  if (actions) {
+    var opts = getNcResolutionOptions(d.types);
+    actions.innerHTML = opts.map(function(label) {
+      var isActive = d.statut === label;
+      var bg = isActive ? '#375623' : '#1F4E79';
+      return '<button onclick="resoudreNC(\'' + label.replace(/'/g,"\\'") + '\')" style="background:' + bg + ';color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">' +
+        (isActive ? '✓ ' : '') + label +
+      '</button>';
+    }).join('');
+  }
 
   show('s-nc-detail');
 }
 
-async function majDateRetourNC() {
+async function resoudreNC(label) {
   var data = await ncLoad();
   var d = data.find(function(x){ return x.id === _ncCurrentId; });
   if (!d) return;
-  var date = prompt('Date de retour magasin (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
+  var date = prompt('Date (JJ/MM/AAAA) :', new Date().toLocaleDateString('fr-FR'));
   if (!date) return;
-  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: 'Retourne' });
+  await ncUpdate(_ncCurrentId, { dateRetour: date, statut: label });
+
+  var wgKey = Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k] === d.wg; }) || '';
+  var subj = '[' + (d.numero||'') + '] Non-Conformite RESOLUE - ' + label;
+  var body = [
+    'Bonjour,', '',
+    'Le rapport de non-conformite ' + (d.numero||'') + ' est resolu.',
+    '',
+    'Workgroup   : ' + (d.wg||'--'),
+    'IR/PR       : ' + (d.ir||'--'),
+    d.wo ? 'WO          : ' + d.wo : null,
+    d.tag ? 'TAG         : ' + d.tag : null,
+    'Resolution  : ' + label,
+    'Date        : ' + date,
+    '',
+    'Cordialement,',
+    getUserName(),
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].filter(function(l){ return l !== null; }).join('\n');
+
+  var toList = NC_TO.join(',');
+  var ccList = (NC_CC[wgKey] || []).join(',');
+  var mailTo = 'mailto:' + toList +
+    '?subject=' + encodeURIComponent(subj) +
+    '&body=' + encodeURIComponent(body) +
+    (ccList ? '&cc=' + ccList : '');
+  window.location.href = mailTo;
+
   ouvrirDetailNC(_ncCurrentId);
 }
 
@@ -12079,13 +12141,78 @@ async function supprimerNC() {
 }
 
 // ══ KPI ══
+var _kpiOffset = 0; // 0 = période en cours, 1 = période précédente, etc.
+var MOIS_FR = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
 function setKpiPeriode(p) {
   _kpiPeriode = p;
+  _kpiOffset = 0;
   ['semaine','mois','trimestre'].forEach(function(k) {
     var el = document.getElementById('kpi-btn-' + k);
     if (el) el.className = 'type-btn' + (k === p ? ' on' : '');
   });
   renderKPI();
+}
+
+function kpiNav(delta) {
+  _kpiOffset = Math.max(0, _kpiOffset + delta);
+  renderKPI();
+}
+
+function kpiGoTo(offset) {
+  _kpiOffset = Math.max(0, offset);
+  renderKPI();
+}
+
+// Date (jj/mm/aaaa) -> Date
+function kpiParseFR(dateStr) {
+  if (!dateStr) return null;
+  var parts = String(dateStr).split('/');
+  if (parts.length !== 3) return null;
+  var d = new Date(parts[2], parts[1]-1, parts[0]);
+  return isNaN(d) ? null : d;
+}
+
+// Clé de période (semaine ISO, mois ou trimestre) pour une date
+function kpiPeriodKey(d, periode) {
+  if (!d) return null;
+  if (periode === 'semaine') {
+    var t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7)); // jeudi de la semaine
+    var week1 = new Date(t.getFullYear(), 0, 4);
+    var week = 1 + Math.round(((t - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    return t.getFullYear() + '-S' + String(week).padStart(2,'0');
+  } else if (periode === 'mois') {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  return d.getFullYear() + '-T' + (Math.floor(d.getMonth()/3) + 1);
+}
+
+// Date de référence de la période située "offset" périodes avant aujourd'hui
+function kpiPeriodDate(offset, periode) {
+  var now = new Date();
+  if (periode === 'semaine') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7*offset);
+  if (periode === 'mois') return new Date(now.getFullYear(), now.getMonth() - offset, 1);
+  return new Date(now.getFullYear(), (Math.floor(now.getMonth()/3) - offset) * 3, 1);
+}
+
+function kpiPeriodLabel(key, periode) {
+  if (!key) return '';
+  if (periode === 'semaine') { var s = key.split('-S'); return 'Sem. ' + s[1] + ' · ' + s[0]; }
+  if (periode === 'mois') { var m = key.split('-'); return MOIS_FR[parseInt(m[1],10)-1] + ' ' + m[0]; }
+  var q = key.split('-T'); return 'T' + q[1] + ' ' + q[0];
+}
+
+// Date de création d'une NC : id = Date.now(), sinon mois, sinon date de réception
+function kpiNcDate(nc) {
+  if (nc.id && /^\d{12,}$/.test(String(nc.id))) return new Date(parseInt(nc.id, 10));
+  if (nc.mois && /^\d{4}-\d{2}$/.test(nc.mois)) return new Date(parseInt(nc.mois.slice(0,4),10), parseInt(nc.mois.slice(5,7),10)-1, 1);
+  return kpiParseFR(nc.dateRecep);
+}
+
+// Une NC est traitée dès qu'elle a un statut de résolution (voir ncIsResolved)
+function kpiNcResolu(d) {
+  return ncIsResolved(d.statut);
 }
 
 async function renderKPI() {
@@ -12096,55 +12223,79 @@ async function renderKPI() {
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
   var ncData = await ncLoad();
-  var now = new Date();
   var arrivees = records.filter(function(r){ return r.type === 'ARRIVEE'; });
+  var periode = _kpiPeriode;
+  var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
+  var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
 
-  function getPeriodKey(dateStr, periode) {
-    if (!dateStr) return null;
-    var parts = dateStr.split('/');
-    if (parts.length !== 3) return null;
-    var d = new Date(parts[2], parts[1]-1, parts[0]);
-    if (isNaN(d)) return null;
-    if (periode === 'semaine') {
-      var oneJan = new Date(d.getFullYear(), 0, 1);
-      var week = Math.ceil((((d-oneJan)/86400000)+oneJan.getDay()+1)/7);
-      return d.getFullYear() + '-S' + String(week).padStart(2,'0');
-    } else if (periode === 'mois') {
-      return parts[2] + '-' + parts[1];
-    } else {
-      return parts[2] + '-T' + Math.ceil(parseInt(parts[1])/3);
-    }
-  }
+  function emptyArr() { return { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 }; }
 
-  var nowFR = now.toLocaleDateString('fr-FR');
-  var currentKey = getPeriodKey(nowFR, _kpiPeriode);
+  // Agrégation des arrivées par période
   var byPeriod = {};
   arrivees.forEach(function(r) {
-    var k = getPeriodKey(r.date, _kpiPeriode);
+    var k = kpiPeriodKey(kpiParseFR(r.date), periode);
     if (!k) return;
-    if (!byPeriod[k]) byPeriod[k] = { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
+    if (!byPeriod[k]) byPeriod[k] = emptyArr();
     byPeriod[k].total++;
     if (r.wg) byPeriod[k][r.wg] = (byPeriod[k][r.wg]||0)+1;
   });
 
-  var periods = Object.keys(byPeriod).sort().reverse();
-  var current = byPeriod[currentKey] || { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 };
-  var prevKey = periods[periods[0]===currentKey ? 1 : 0];
-  var prev = (prevKey && prevKey !== currentKey && byPeriod[prevKey]) || { total:0 };
+  // Agrégation des NC par période
+  var ncByPeriod = {};
+  ncData.forEach(function(nc) {
+    var k = (periode === 'mois' && nc.mois) ? nc.mois : kpiPeriodKey(kpiNcDate(nc), periode);
+    if (!k) return;
+    if (!ncByPeriod[k]) ncByPeriod[k] = [];
+    ncByPeriod[k].push(nc);
+  });
+
+  // Plus ancienne période avec des données : borne du bouton ◀
+  var currentKey0 = kpiPeriodKey(kpiPeriodDate(0, periode), periode);
+  var allKeys = Object.keys(byPeriod).concat(Object.keys(ncByPeriod)).filter(function(k){ return k <= currentKey0; }).sort();
+  var oldestKey = allKeys[0] || currentKey0;
+  var maxOffset = 0;
+  while (maxOffset < 520 && kpiPeriodKey(kpiPeriodDate(maxOffset, periode), periode) > oldestKey) maxOffset++;
+  if (_kpiOffset > maxOffset) _kpiOffset = maxOffset;
+
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var current = byPeriod[selKey] || emptyArr();
+  var prev = byPeriod[prevKey] || emptyArr();
+  var ncSel = ncByPeriod[selKey] || [];
 
   var diff = current.total - prev.total;
   var diffTxt = diff > 0 ? '+' + diff : String(diff);
   var diffColor = diff > 0 ? '#C55A11' : diff < 0 ? '#375623' : '#888';
-  var periodeLabel = _kpiPeriode === 'semaine' ? 'Cette semaine' : _kpiPeriode === 'mois' ? 'Ce mois' : 'Ce trimestre';
-  var prevLabel = _kpiPeriode === 'semaine' ? 'Sem. prec.' : _kpiPeriode === 'mois' ? 'Mois prec.' : 'Trim. prec.';
+  var isNow = _kpiOffset === 0;
+  var periodeLabel = isNow
+    ? (periode === 'semaine' ? 'Cette semaine' : periode === 'mois' ? 'Ce mois' : 'Ce trimestre')
+    : kpiPeriodLabel(selKey, periode);
+  var prevLabel = kpiPeriodLabel(prevKey, periode);
 
-  var moisCourant = now.toISOString().slice(0,7);
-  var ncMois = ncData.filter(function(d){ return d.mois === moisCourant; });
-
+  var card = 'background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)';
+  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit';
+  var navOff = 'width:40px;height:40px;border-radius:10px;border:1px solid #eee;background:#f7f7f7;font-size:16px;font-weight:700;color:#ccc;font-family:inherit';
   var html = '';
 
+  // Sélecteur de période
+  html += '<div style="' + card + ';display:flex;align-items:center;gap:8px;padding:10px">' +
+    (_kpiOffset < maxOffset
+      ? '<button onclick="kpiNav(1)" style="' + navBtn + '" aria-label="Periode precedente">◀</button>'
+      : '<button disabled style="' + navOff + '">◀</button>') +
+    '<div style="flex:1;text-align:center">' +
+      '<div style="font-size:15px;font-weight:800;color:#1F3864">' + kpiPeriodLabel(selKey, periode) + '</div>' +
+      (isNow
+        ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
+        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#2E75B6;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
+    '</div>' +
+    (_kpiOffset > 0
+      ? '<button onclick="kpiNav(-1)" style="' + navBtn + '" aria-label="Periode suivante">▶</button>'
+      : '<button disabled style="' + navOff + '">▶</button>') +
+  '</div>';
+
   // Arrivées
-  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+  html += '<div style="' + card + '">' +
     '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Equipements arrives</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:12px">' +
       '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
@@ -12160,92 +12311,361 @@ async function renderKPI() {
         '<div style="font-size:10px;color:#888">Evolution</div>' +
       '</div>' +
     '</div>' +
-    ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'].map(function(wg) {
+    WG_ORDER.map(function(wg) {
       var val = current[wg]||0;
       var pct = current.total>0 ? Math.round(val/current.total*100) : 0;
-      var colors = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
       return '<div style="margin-bottom:6px">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
-          '<span style="font-size:12px;font-weight:700;color:' + colors[wg] + '">' + wg + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:' + WG_COLORS[wg] + '">' + wg + '</span>' +
           '<span style="font-size:12px">' + val + ' (' + pct + '%)</span>' +
         '</div>' +
         '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
-          '<div style="background:' + colors[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+          '<div style="background:' + WG_COLORS[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
         '</div></div>';
     }).join('') +
   '</div>';
 
-  // NC
-  var ncTypes = {'Mauvaise piece':0,'Quantite incorrecte':0,'Piece endommagee':0,'Erreur de livraison':0};
-  ncMois.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
+  // NC de la période sélectionnée
+  var ncTypes = {};
+  NC_TYPES.forEach(function(t){ ncTypes[t] = 0; });
+  ncSel.forEach(function(d){ (d.types||[]).forEach(function(t){ if(ncTypes[t]!==undefined) ncTypes[t]++; }); });
+  var ncPrev = (ncByPeriod[prevKey] || []).length;
+  var ncDiff = ncSel.length - ncPrev;
+  var ncDiffTxt = ncDiff > 0 ? '+' + ncDiff : String(ncDiff);
 
-  html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
-    '<div style="font-weight:700;color:#C00000;margin-bottom:10px">Non-Conformites — Ce mois</div>' +
+  html += '<div style="' + card + '">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">' +
+      '<div style="font-weight:700;color:#C00000">Non-Conformites — ' + periodeLabel + '</div>' +
+      '<div style="font-size:11px;color:#888">' + ncDiffTxt + ' vs ' + prevLabel + '</div>' +
+    '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<div style="flex:1;background:#FCE4D6;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#C00000">' + ncMois.length + '</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#C00000">' + ncSel.length + '</div>' +
         '<div style="font-size:10px;color:#C00000">Total NC</div>' +
       '</div>' +
       '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncMois.filter(function(d){ return d.statut==='Retourne'; }).length + '</div>' +
-        '<div style="font-size:10px;color:#375623">Retournes</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#375623">' + ncSel.filter(function(d){ return kpiNcResolu(d); }).length + '</div>' +
+        '<div style="font-size:10px;color:#375623">Traitees</div>' +
       '</div>' +
       '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncMois.filter(function(d){ return d.statut==='Ouvert'; }).length + '</div>' +
-        '<div style="font-size:10px;color:#E65100">Ouverts</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#E65100">' + ncSel.filter(function(d){ return !kpiNcResolu(d); }).length + '</div>' +
+        '<div style="font-size:10px;color:#E65100">Ouvertes</div>' +
       '</div>' +
     '</div>' +
-    Object.keys(ncTypes).map(function(t) {
+    NC_TYPES.map(function(t) {
       var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥','Erreur de livraison':'📦'};
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
         '<span>' + (icons[t]||'') + ' ' + t + '</span><span style="font-weight:700">' + ncTypes[t] + '</span></div>';
     }).join('') +
   '</div>';
 
-  // Historique -- graphique en barres empilées par workgroup
-  if (periods.length > 0) {
-    var chartPeriods = periods.slice(0,6);
-    var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
-    var WG_CHART_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
-    var maxTotal = Math.max.apply(null, chartPeriods.map(function(p){ return byPeriod[p].total; }).concat([1]));
+  // Les 6 périodes se terminant sur la période sélectionnée (y compris les périodes vides)
+  var histOffsets = [];
+  for (var o = _kpiOffset; o < _kpiOffset + 6 && o <= maxOffset; o++) histOffsets.push(o);
 
-    html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
-      '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique -- Arrivées par période</div>';
+  // Historique arrivées -- barres empilées par workgroup
+  var maxTotal = Math.max.apply(null, histOffsets.map(function(o){
+    var b = byPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)];
+    return b ? b.total : 0;
+  }).concat([1]));
 
-    html += chartPeriods.map(function(p) {
-      var d = byPeriod[p];
-      var isCurrent = p === currentKey;
-      var segs = WG_ORDER.filter(function(wg){ return (d[wg]||0) > 0; });
-      var barPct = d.total > 0 ? Math.max(4, Math.round(d.total / maxTotal * 100)) : 0;
-
-      var segsHtml = segs.map(function(wg, i) {
-        var w = Math.round(d[wg] / d.total * 100);
-        return '<div onclick="alert(&quot;' + wg + ' -- ' + p + ' : ' + d[wg] + '&quot;)" title="' + wg + ' : ' + d[wg] + '" ' +
-          'style="width:' + w + '%;background:' + WG_CHART_COLORS[wg] + ';cursor:pointer;' +
-          (i < segs.length - 1 ? 'border-right:2px solid #fff;' : '') + '"></div>';
-      }).join('');
-
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
-        '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isCurrent?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isCurrent?' •':'') + '</div>' +
-        '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
-          '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' + segsHtml + '</div>' +
-        '</div>' +
-        '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#1F3864">' + d.total + '</div>' +
-      '</div>';
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique -- Arrivees par periode</div>';
+  html += histOffsets.map(function(o) {
+    var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    var d = byPeriod[p] || emptyArr();
+    var isSel = o === _kpiOffset;
+    var segs = WG_ORDER.filter(function(wg){ return (d[wg]||0) > 0; });
+    var barPct = d.total > 0 ? Math.max(4, Math.round(d.total / maxTotal * 100)) : 0;
+    var segsHtml = segs.map(function(wg, i) {
+      var w = Math.round(d[wg] / d.total * 100);
+      return '<div title="' + wg + ' : ' + d[wg] + '" ' +
+        'style="width:' + w + '%;background:' + WG_COLORS[wg] + ';' +
+        (i < segs.length - 1 ? 'border-right:2px solid #fff;' : '') + '"></div>';
     }).join('');
-
-    html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
-      WG_ORDER.map(function(wg) {
-        return '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span style="width:8px;height:8px;border-radius:50%;background:' + WG_CHART_COLORS[wg] + ';display:inline-block"></span>' +
-          '<span style="font-size:10px;color:#666">' + wg + '</span></div>';
-      }).join('') +
+    return '<div onclick="kpiGoTo(' + o + ')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
+        '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' + segsHtml + '</div>' +
+      '</div>' +
+      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#1F3864">' + d.total + '</div>' +
     '</div>';
+  }).join('');
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
+    WG_ORDER.map(function(wg) {
+      return '<div style="display:flex;align-items:center;gap:4px">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:' + WG_COLORS[wg] + ';display:inline-block"></span>' +
+        '<span style="font-size:10px;color:#666">' + wg + '</span></div>';
+    }).join('') +
+  '</div></div>';
 
-    html += '</div>';
-  }
+  // Historique NC -- total, traitées, ouvertes par période
+  var maxNc = Math.max.apply(null, histOffsets.map(function(o){
+    return (ncByPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)] || []).length;
+  }).concat([1]));
+
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:#C00000;margin-bottom:10px">Historique -- Non-Conformites par periode</div>';
+  html += histOffsets.map(function(o) {
+    var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    var list = ncByPeriod[p] || [];
+    var isSel = o === _kpiOffset;
+    var ret = list.filter(function(d){ return kpiNcResolu(d); }).length;
+    var ouv = list.length - ret;
+    var barPct = list.length > 0 ? Math.max(4, Math.round(list.length / maxNc * 100)) : 0;
+    var retW = list.length > 0 ? Math.round(ret / list.length * 100) : 0;
+    return '<div onclick="kpiGoTo(' + o + ')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#C00000':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
+        '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' +
+          (ret > 0 ? '<div title="Traitees : ' + ret + '" style="width:' + retW + '%;background:#375623;' + (ouv > 0 ? 'border-right:2px solid #fff;' : '') + '"></div>' : '') +
+          (ouv > 0 ? '<div title="Ouvertes : ' + ouv + '" style="flex:1;background:#E65100"></div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#C00000">' + list.length + '</div>' +
+    '</div>';
+  }).join('');
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#375623;display:inline-block"></span><span style="font-size:10px;color:#666">Traitees</span></div>' +
+    '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouvertes</span></div>' +
+    '<div style="font-size:10px;color:#999;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
+  '</div></div>';
 
   content.innerHTML = html;
+}
+
+// ══ RAPPORT NC MAGASIN ══
+// Rapport imprimable (PDF) des non-conformités de la période sélectionnée dans les KPI
+async function genererRapportNC() {
+  var w = window.open('', '_blank');
+  if (!w) { alert('Autorisez les fenetres pop-up pour generer le rapport.'); return; }
+  w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Generation du rapport...</p>');
+
+  var ncData = await ncLoad();
+  var periode = _kpiPeriode;
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
+  var WG_LIST = ['MCCHAUD','MCREPAR','MCELINS','MCMECUS'];
+  var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',MCELINS:'#1F4E79',MCMECUS:'#375623'};
+  var C_RET = '#2E75B6', C_OUV = '#E65100'; // paire validée daltonisme
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
+  }
+  function keyOf(nc) {
+    return (periode === 'mois' && nc.mois) ? nc.mois : kpiPeriodKey(kpiNcDate(nc), periode);
+  }
+  function ncOfOffset(o) {
+    var k = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    return ncData.filter(function(nc){ return keyOf(nc) === k; });
+  }
+
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var titrePeriode = kpiPeriodLabel(selKey, periode);
+  var list = ncOfOffset(_kpiOffset);
+  var prevCount = ncOfOffset(_kpiOffset + 1).length;
+  var nbRet = list.filter(function(d){ return kpiNcResolu(d); }).length;
+  var nbOuv = list.length - nbRet;
+  var taux = list.length ? Math.round(nbRet / list.length * 100) : 0;
+  var diff = list.length - prevCount;
+  var diffTxt = (diff > 0 ? '+' : '') + diff + ' vs ' + kpiPeriodLabel(prevKey, periode);
+
+  // Toutes les NC encore ouvertes (toutes périodes confondues) : à traiter par le magasin
+  var today = new Date(); today.setHours(0,0,0,0);
+  var ouvertes = ncData.filter(function(d){ return !kpiNcResolu(d); }).map(function(d) {
+    var dr = kpiParseFR(d.dateRecep) || kpiNcDate(d);
+    return { nc: d, jours: dr ? Math.max(0, Math.round((today - dr) / 86400000)) : null };
+  }).sort(function(a, b){ return (b.jours || 0) - (a.jours || 0); });
+
+  // ── Graphique 1 : évolution sur 6 périodes (barres verticales empilées)
+  var evo = [];
+  for (var o = _kpiOffset + 5; o >= _kpiOffset; o--) {
+    var l = ncOfOffset(o);
+    var r = l.filter(function(d){ return kpiNcResolu(d); }).length;
+    evo.push({ key: kpiPeriodKey(kpiPeriodDate(o, periode), periode), ret: r, ouv: l.length - r, total: l.length, sel: o === _kpiOffset });
+  }
+  var evoMax = Math.max.apply(null, evo.map(function(e){ return e.total; }).concat([1]));
+  var chartEvo = '<div class="vbars">' + evo.map(function(e) {
+    var h = 140;
+    var hRet = Math.round(e.ret / evoMax * h), hOuv = Math.round(e.ouv / evoMax * h);
+    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' NC (' + e.ret + ' traitees, ' + e.ouv + ' ouvertes)">' +
+      '<div class="vval">' + e.total + '</div>' +
+      '<div class="vstack" style="height:' + h + 'px">' +
+        (e.ouv ? '<div style="height:' + hOuv + 'px;background:' + C_OUV + ';border-radius:4px 4px 0 0' + (e.ret ? ';margin-bottom:2px' : '') + '"></div>' : '') +
+        (e.ret ? '<div style="height:' + hRet + 'px;background:' + C_RET + ';' + (e.ouv ? '' : 'border-radius:4px 4px 0 0') + '"></div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>' +
+  '<div class="vlbls">' + evo.map(function(e) {
+    return '<div class="vlbl' + (e.sel ? ' sel' : '') + '">' + esc(e.key) + '</div>';
+  }).join('') + '</div>' +
+  '<div class="legend"><span><i style="background:' + C_RET + '"></i>Traitees</span><span><i style="background:' + C_OUV + '"></i>Ouvertes</span></div>';
+
+  // ── Graphiques 2 et 3 : barres horizontales (une seule couleur par graphique)
+  function hbars(rows, color) {
+    var max = Math.max.apply(null, rows.map(function(r){ return r.v; }).concat([1]));
+    return rows.map(function(r) {
+      var pct = list.length ? Math.round(r.v / list.length * 100) : 0;
+      return '<div class="hrow" title="' + esc(r.label) + ' : ' + r.v + '">' +
+        '<div class="hlbl">' + (r.dot ? '<i style="background:' + r.dot + '"></i>' : '') + esc(r.label) + '</div>' +
+        '<div class="htrack"><div style="width:' + (r.v ? Math.max(2, Math.round(r.v / max * 100)) : 0) + '%;background:' + color + '"></div></div>' +
+        '<div class="hval">' + r.v + ' <span>(' + pct + '%)</span></div>' +
+      '</div>';
+    }).join('');
+  }
+  var typeRows = NC_TYPES.map(function(t){
+    return { label: t, v: list.filter(function(d){ return (d.types||[]).indexOf(t) >= 0; }).length };
+  });
+  var wgRows = WG_LIST.map(function(wg){
+    return { label: wg, dot: WG_COLORS[wg], v: list.filter(function(d){ return d.wg === wg; }).length };
+  });
+
+  // ── Tableaux
+  function scCell(o) {
+    o = o || {};
+    return esc(o.sc || '--') + (o.qte ? ' <span class="muted">x' + esc(o.qte) + '</span>' : '') +
+      (o.desc ? '<div class="muted">' + esc(o.desc) + '</div>' : '');
+  }
+  function statutBadge(d) {
+    return kpiNcResolu(d)
+      ? '<span class="badge ret">✔ ' + esc(d.statut === 'Retourne' ? 'Retournee' : d.statut) + '</span>'
+      : '<span class="badge ouv">● Ouverte</span>';
+  }
+  var detailRows = list.slice().sort(function(a, b){ return (kpiNcDate(a) || 0) - (kpiNcDate(b) || 0); }).map(function(d) {
+    return '<tr>' +
+      '<td><b>' + esc(d.numero || '--') + '</b></td>' +
+      '<td>' + esc(d.dateRecep || '--') + '</td>' +
+      '<td>' + esc(d.wg || '--') + '</td>' +
+      '<td>' + esc(d.ir || '--') + (d.wo ? '<div class="muted">WO ' + esc(d.wo) + '</div>' : '') + (d.tag ? '<div class="muted">' + esc(d.tag) + '</div>' : '') + '</td>' +
+      '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
+      '<td>' + scCell(d.cmd) + '</td>' +
+      '<td>' + scCell(d.rec) + '</td>' +
+      '<td>' + statutBadge(d) + (d.dateRetour ? '<div class="muted">' + esc(d.dateRetour) + '</div>' : '') + '</td>' +
+    '</tr>' +
+    (d.remarques ? '<tr class="rem"><td></td><td colspan="7">💬 ' + esc(d.remarques) + '</td></tr>' : '');
+  }).join('');
+  var ouvRows = ouvertes.map(function(x) {
+    var d = x.nc;
+    var cls = x.jours == null ? '' : x.jours > 30 ? ' class="late"' : x.jours > 14 ? ' class="warn"' : '';
+    return '<tr>' +
+      '<td><b>' + esc(d.numero || '--') + '</b></td>' +
+      '<td>' + esc(d.dateRecep || '--') + '</td>' +
+      '<td' + cls + '>' + (x.jours == null ? '--' : x.jours + ' j') + '</td>' +
+      '<td>' + esc(d.wg || '--') + '</td>' +
+      '<td>' + esc(d.ir || '--') + (d.wo ? '<div class="muted">WO ' + esc(d.wo) + '</div>' : '') + '</td>' +
+      '<td>' + esc((d.types || []).join(', ') || '--') + '</td>' +
+      '<td>' + scCell(d.cmd) + '</td>' +
+      '<td>' + scCell(d.rec) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var auteur = (typeof getUserName === 'function' && getUserName()) || '';
+  var dateEdition = new Date().toLocaleDateString('fr-FR');
+  var sujet = 'Rapport Non-Conformites - ' + titrePeriode + ' - PRNC P50';
+  var corps = [
+    'Bonjour,',
+    '',
+    'Veuillez trouver ci-joint le rapport des non-conformites de reception pour la periode : ' + titrePeriode + '.',
+    '',
+    'Synthese :',
+    '- NC sur la periode : ' + list.length + ' (' + diffTxt + ')',
+    '- Traitees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
+    '- NC encore ouvertes, toutes periodes : ' + ouvertes.length,
+    '',
+    'Cordialement,',
+    auteur,
+    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+  ].join('\n');
+  var mailHref = 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+
+  var css =
+    '@page{size:A4;margin:12mm}' +
+    '*{box-sizing:border-box}' +
+    'body{margin:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.page{max-width:820px;margin:0 auto;background:#fff;padding:28px 30px}' +
+    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#1F3864}' +
+    '.toolbar button,.toolbar a{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}' +
+    '.b1{background:#fff;color:#1F3864}.b2{background:#E65100;color:#fff}' +
+    '.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
+    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3864;padding-bottom:10px;margin-bottom:18px}' +
+    'header h1{margin:0;font-size:22px;color:#1F3864}header .sub{color:#5b6476;font-size:12px;margin-top:3px}' +
+    'header .meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
+    'h2{font-size:14px;color:#1F3864;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #dde2ea}' +
+    '.tiles{display:flex;gap:10px}.tile{flex:1;border:1px solid #dde2ea;border-radius:10px;padding:12px;text-align:center}' +
+    '.tile .n{font-size:26px;font-weight:800;color:#1d2433}.tile .l{font-size:11px;color:#5b6476;margin-top:2px}' +
+    '.tile .l i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}' +
+    '.grid2{display:flex;gap:24px}.grid2>div{flex:1;min-width:0}' +
+    '.vbars{display:flex;gap:12px;align-items:flex-end;padding:0 4px;border-bottom:1px solid #c9cfd9}' +
+    '.vcol{flex:1;display:flex;flex-direction:column;align-items:stretch}' +
+    '.vval{text-align:center;font-size:12px;font-weight:700;margin-bottom:3px}' +
+    '.vstack{display:flex;flex-direction:column;justify-content:flex-end;max-width:56px;width:100%;margin:0 auto}' +
+    '.vlbls{display:flex;gap:12px;padding:0 4px}.vlbl{flex:1;text-align:center;font-size:10px;color:#5b6476;margin-top:4px}' +
+    '.vlbl.sel{font-weight:700;color:#1d2433}' +
+    '.legend{display:flex;gap:16px;margin-top:10px;font-size:11px;color:#5b6476}' +
+    '.legend i,.hlbl i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}' +
+    '.hrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}' +
+    '.hlbl{width:130px;flex-shrink:0;font-size:11px}' +
+    '.htrack{flex:1;background:#f0f2f6;border-radius:4px;height:10px}.htrack div{height:10px;border-radius:0 4px 4px 0}' +
+    '.hval{width:62px;flex-shrink:0;text-align:right;font-weight:700;font-size:12px}.hval span{font-weight:400;color:#5b6476;font-size:10px}' +
+    '.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:10.5px}' +
+    'th{background:#1F3864;color:#fff;text-align:left;padding:6px 5px;font-weight:700}' +
+    'td{padding:6px 5px;border-bottom:1px solid #e6e9ef;vertical-align:top}td:first-child{white-space:nowrap}' +
+    'tr:nth-child(even) td{background:#f8f9fb}tr.rem td{background:#fff;color:#5b6476;font-style:italic;padding-top:0}' +
+    '.muted{color:#5b6476;font-size:9.5px}' +
+    '.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:9.5px;font-weight:700;white-space:nowrap}' +
+    '.badge.ret{background:#E3EEF8;color:#1F4E79}.badge.ouv{background:#FDEBDD;color:#A33A00}' +
+    'td.warn{color:#A33A00;font-weight:700}td.late{color:#B00020;font-weight:800}' +
+    '.empty{padding:14px;text-align:center;color:#5b6476;background:#f8f9fb;border-radius:8px}' +
+    'footer{margin-top:24px;padding-top:8px;border-top:1px solid #dde2ea;font-size:10px;color:#5b6476;display:flex;justify-content:space-between}' +
+    '.avoid{break-inside:avoid}thead{display:table-header-group}tr{break-inside:avoid}' +
+    '@media (max-width:640px){.page{padding:16px}.tiles{flex-wrap:wrap}.tile{flex:1 1 40%}.grid2{flex-direction:column;gap:0}header{flex-direction:column;align-items:flex-start;gap:6px}header .meta{text-align:left}table{font-size:9.5px;min-width:600px}}' +
+    '@media print{body{background:#fff}.toolbar{display:none}.page{max-width:none;padding:0}}';
+
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Rapport NC ' + esc(titrePeriode) + '</title><style>' + css + '</style></head><body>' +
+    '<div class="toolbar">' +
+      '<button class="b1" onclick="window.print()">🖨 Imprimer / PDF</button>' +
+      '<a class="b2" href="' + esc(mailHref) + '">📧 Envoyer au magasin</a>' +
+      '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div>' +
+    '</div>' +
+    '<div class="page">' +
+      '<header><div><h1>Rapport des non-conformites</h1>' +
+        '<div class="sub">Receptions pieces — PRNC Maintenance Centrale P50</div></div>' +
+        '<div class="meta"><b style="font-size:14px;color:#1F3864">' + esc(titrePeriode) + '</b><br>' +
+        'Edite le ' + dateEdition + (auteur ? '<br>par ' + esc(auteur) : '') + '<br>Destinataire : Magasin</div></header>' +
+
+      '<h2>1. Synthese</h2>' +
+      '<div class="tiles avoid">' +
+        '<div class="tile"><div class="n">' + list.length + '</div><div class="l">NC sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
+        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Traitees</div></div>' +
+        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>Ouvertes</div></div>' +
+        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement</div></div>' +
+      '</div>' +
+
+      '<div class="grid2 avoid">' +
+        '<div><h2>2. Evolution sur 6 periodes</h2>' + chartEvo + '</div>' +
+        '<div><h2>3. Repartition par type</h2>' + hbars(typeRows, '#1F4E79') +
+          '<h2>4. Repartition par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
+      '</div>' +
+
+      '<h2>5. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
+      (ouvertes.length
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>IR / WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
+          '<div class="muted" style="margin-top:4px">Anciennete en orange au-dela de 14 jours, en rouge au-dela de 30 jours.</div>'
+        : '<div class="empty">Aucune NC ouverte. ✔</div>') +
+
+      '<h2>6. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
+      (list.length
+        ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>IR / WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
+        : '<div class="empty">Aucune non-conformite sur cette periode.</div>') +
+
+      '<footer><span>PRNC Field — Rapport genere automatiquement</span><span>' + dateEdition + '</span></footer>' +
+    '</div></body></html>';
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
 }
 
 async function exportKpiExcel() {
@@ -12490,13 +12910,13 @@ loadCatalog();
     </div>
 
     <!-- WO -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-wo">
       <div class="field-lbl">WO</div>
       <input class="fi" type="text" id="nc-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('nc-wo','N° WO')">
     </div>
 
     <!-- TAG -->
-    <div class="field-grp">
+    <div class="field-grp" id="nc-fg-tag">
       <div class="field-lbl">TAG Équipement</div>
       <input class="fi" type="text" id="nc-tag" placeholder="Ex : 220-X-00315">
     </div>
@@ -12530,13 +12950,14 @@ loadCatalog();
           <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000">
+          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000" onchange="updateNcFormVisibility()">
           <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
         </label>
       </div>
     </div>
 
     <!-- Séparateur -->
+    <div id="nc-cmd-section">
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
       <div style="font-weight:700;font-size:12px;color:#C00000">ITEM COMMANDÉ</div>
     </div>
@@ -12560,6 +12981,7 @@ loadCatalog();
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-cmd-desc" placeholder="Ex : Joint torique TI Grade 12">
     </div>
+    </div>
 
     <!-- Séparateur -->
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
@@ -12567,6 +12989,11 @@ loadCatalog();
     </div>
 
     <!-- Item reçu -->
+    <div class="field-grp">
+      <div class="field-lbl">Quantité reçue</div>
+      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
+    </div>
+    <div id="nc-rec-standard">
     <div class="field-grp">
       <div class="field-lbl">S/C (Stock Code)</div>
       <input class="fi" type="text" id="nc-rec-sc" placeholder="Ex : 158660 ou 000158660"
@@ -12578,12 +13005,22 @@ loadCatalog();
       <input class="fi" type="text" id="nc-rec-pn" placeholder="Ex : ABC-124">
     </div>
     <div class="field-grp">
-      <div class="field-lbl">Quantité reçue</div>
-      <input class="fi" type="text" id="nc-rec-qte" placeholder="Ex : 1" onclick="ouvrirNumpad('nc-rec-qte','Qté reçue')">
-    </div>
-    <div class="field-grp">
       <div class="field-lbl">Description</div>
       <input class="fi" type="text" id="nc-rec-desc" placeholder="Ex : Joint torique SS Grade 2">
+    </div>
+    </div>
+    <div id="nc-rec-livraison" style="display:none">
+    <div class="field-grp">
+      <div class="field-lbl">Type d'emballage</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button type="button" class="wg-btn" id="nc-emb-carton" onclick="setNcEmballage('Carton')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">📦 Carton</button>
+        <button type="button" class="wg-btn" id="nc-emb-palette" onclick="setNcEmballage('Palette')" style="padding:12px;font-size:13px;font-weight:700;border-radius:12px">🪵 Palette</button>
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Nom du destinataire</div>
+      <input class="fi" type="text" id="nc-rec-destinataire" placeholder="Ex : Jean Dupont">
+    </div>
     </div>
 
     <!-- Date retour magasin -->
@@ -12613,12 +13050,10 @@ loadCatalog();
   </div>
   <div class="form-body" style="padding:0">
     <div id="nc-detail-content" style="padding:14px"></div>
-    <div style="padding:10px 14px;display:flex;gap:8px">
-      <button onclick="majDateRetourNC()" style="flex:1;background:#1F4E79;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📅 Retour magasin
-      </button>
-      <button onclick="supprimerNC()" style="background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        🗑
+    <div id="nc-resolution-actions" style="padding:0 14px 10px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:0 14px 14px">
+      <button onclick="supprimerNC()" style="width:100%;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🗑 Supprimer
       </button>
     </div>
   </div>
@@ -12642,7 +13077,12 @@ loadCatalog();
     </div>
     <!-- Contenu KPI -->
     <div id="kpi-content" style="padding:12px 14px"></div>
-    <!-- Bouton export -->
+    <!-- Boutons rapport / export -->
+    <div style="padding:10px 14px 0">
+      <button onclick="genererRapportNC()" style="width:100%;background:#C00000;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        📄 Rapport NC pour le magasin
+      </button>
+    </div>
     <div style="padding:10px 14px">
       <button onclick="exportKpiExcel()" style="width:100%;background:#375623;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         📥 Exporter Excel
