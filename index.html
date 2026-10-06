@@ -12622,11 +12622,11 @@ async function ouvrirDetailBL(id) {
         '<div style="width:22px">#</div><div style="flex:1">N° BDS / PO</div><div style="width:38px;text-align:center">Qté</div><div style="flex:1">Client</div><div style="width:72px;text-align:right">WG</div></div>' +
       (lignes.length ? lignes.map(function(l, i) {
         return '<div style="display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid #f0f0f0">' +
-          '<div style="width:22px;color:#999;font-size:11px">' + (i+1) + '</div>' +
-          '<div style="flex:1;font-weight:800;color:#1F3864">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) + '</div>' +
-          '<div style="width:38px;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
-          '<div style="flex:1;font-size:12px">' + blEsc(l.client || '--') + '</div>' +
-          '<div style="width:72px;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
+          '<div style="width:22px;flex-shrink:0;color:#999;font-size:11px">' + (i+1) + '</div>' +
+          '<div style="flex:1;min-width:0;font-weight:800;color:#1F3864;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) + '</div>' +
+          '<div style="width:38px;flex-shrink:0;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
+          '<div style="flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere">' + blEsc(l.client || '--') + '</div>' +
+          '<div style="width:72px;flex-shrink:0;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
         '</div>';
       }).join('') : '<div style="padding:14px 0;color:#888;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
     '</div>' +
