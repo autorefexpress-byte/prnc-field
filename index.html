@@ -705,7 +705,7 @@ function _initLocSel(selId, inpId, val) {
     </div>
 
     <!-- WO + WR -->
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="pt-wo" placeholder="Ex : 837669"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="pt-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('pt-wo','N° WO')" style="cursor:pointer"></div>
     <div class="row2">
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="pt-wr" placeholder="Ex : 118466"></div>
       <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="pt-sc" placeholder="Ex : 35378"></div>
@@ -896,7 +896,7 @@ function _initLocSel(selId, inpId, val) {
     </div>
 
     <!-- WO + TAG -->
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="ud-wo" placeholder="Ex : 855376"></div>
+    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="ud-wo" placeholder="Ex : 855376" onclick="ouvrirNumpad('ud-wo','N° WO')" style="cursor:pointer"></div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> TAG Équipement</div><input class="fi" type="text" id="ud-tag" placeholder="Ex : 220-X-00315"></div>
 
     <!-- QTY -->
@@ -4338,7 +4338,7 @@ function addCallidusEqt() {
       '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">TAG *</div>' +
         '<input class="fi" id="cal-tag-' + idx + '" type="text" placeholder="Ex : 220-X-00315" style="width:100%"></div>' +
       '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WO</div>' +
-        '<input class="fi" id="cal-wo-' + idx + '" type="text" placeholder="Ex : 837669" style="width:100%"></div>' +
+        '<input class="fi" id="cal-wo-' + idx + '" type="text" placeholder="Ex : 837669" onclick="ouvrirNumpad(this.id,\'N° WO\')" style="width:100%;cursor:pointer"></div>' +
     '</div>' +
     '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WR</div>' +
       '<input class="fi" id="cal-wr-' + idx + '" type="text" placeholder="Ex : 118466" style="width:100%"></div>' +
@@ -4700,7 +4700,7 @@ async function modifierTransport(id) {
       + '</select>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="tr-edit-wo" value="' + (r.wo||r.ref||'') + '" placeholder="Ex: 886483"></div>'
+    + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="tr-edit-wo" value="' + (r.wo||r.ref||'') + '" placeholder="Ex: 886483" onclick="ouvrirNumpad(\'tr-edit-wo\',\'N° WO\')" style="cursor:pointer"></div>'
     + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="tr-edit-tag" value="' + (r.tag||'') + '" placeholder="Ex: 220-PPD-201"></div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
@@ -6605,7 +6605,7 @@ function editRecord(id) {
             </div>
             <div>
               <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO MTC</div>
-              <input class="fi" id="edit-wo" value="${r.wo||''}" style="width:100%;box-sizing:border-box">
+              <input class="fi" id="edit-wo" value="${r.wo||''}" onclick="ouvrirNumpad('edit-wo','WO MTC')" style="width:100%;box-sizing:border-box;cursor:pointer">
             </div>
           </div>
 
@@ -6639,7 +6639,7 @@ function editRecord(id) {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
               <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">WO Usine</div>
-              <input class="fi" id="edit-wo-usine" value="${r.woUsine||''}" style="width:100%;box-sizing:border-box" placeholder="Ex : 876230">
+              <input class="fi" id="edit-wo-usine" value="${r.woUsine||''}" onclick="ouvrirNumpad('edit-wo-usine','WO Usine')" style="width:100%;box-sizing:border-box;cursor:pointer" placeholder="Ex : 876230">
             </div>
             <div>
               <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Numéro de WSO</div>
