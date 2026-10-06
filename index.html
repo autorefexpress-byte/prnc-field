@@ -12185,7 +12185,8 @@ function blSortKey(b) { return blFrToIso(b.dateLivraison) + '|' + b.id; }
 
 // Dernier workgroup connu pour chaque client (appris des BL déjà saisis)
 function blClientWG(list) {
-  var map = {};
+  // Point de départ : clients présents dans les contacts NC (NC_CC) ; les BL saisis l'emportent ensuite
+  var map = { 'VENDEGOU.A': 'MCCHAUD', 'KASOVIMOIN.K': 'MCREPAR', 'PIERUCCI.M': 'MCELINS', 'ZEOULA.P': 'MCMECUS' };
   list.slice().sort(function(a, b){ return blSortKey(a) < blSortKey(b) ? -1 : 1; }).forEach(function(b) {
     (b.lignes || []).forEach(function(l) { if (l.client && l.wg) map[l.client.toUpperCase()] = l.wg; });
   });
@@ -12258,6 +12259,7 @@ async function nouveauBL() {
     dateLivraison: new Date().toLocaleDateString('fr-FR'),
     preparateur: '', livreur: '', lieu: 'P02', lignes: [], photos: [], remarques: ''
   });
+  blPhotoFacultative(false);
   document.getElementById('bl-form-title').textContent = 'Nouveau bon de livraison';
   show('s-bl-nouveau');
 }
@@ -12267,6 +12269,7 @@ async function modifierBL() {
   if (!b) return;
   _blEditId = b.id;
   await blRemplirFormulaire(b);
+  blPhotoFacultative(!(b.photos || []).length);
   document.getElementById('bl-form-title').textContent = 'Modifier le bon de livraison';
   show('s-bl-nouveau');
 }
@@ -12395,7 +12398,7 @@ async function enregistrerBL() {
   if (_blUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
   var date = document.getElementById('bl-date').value;
   if (!date) { alert('Indiquez la date de livraison.'); return; }
-  if (!_blPhotos.length) { alert('Ajoutez au moins une photo du bon de livraison : c\'est votre preuve.'); return; }
+  if (!_blPhotos.length && !_blPhotoFacultative) { alert('Ajoutez au moins une photo du bon de livraison : c\'est votre preuve.'); return; }
   var lignes = blLireLignes();
   var sansNum = lignes.filter(function(l){ return !l.bds; }).length;
   if (sansNum && !confirm(sansNum + ' ligne(s) sans N° BDS / PO. Enregistrer quand même ?')) return;
@@ -12633,6 +12636,140 @@ async function ouvrirDetailBL(id) {
     (b.remarques ? '<div style="background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:10px">💬 ' + blEsc(b.remarques) + '</div>' : '') +
     '<div style="font-size:10px;color:#999;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
   show('s-bl-detail');
+}
+
+// ── Import d'un BLI Excel envoyé par le magasin ────────
+var _blPhotoFacultative = false;   // vrai pour un BLI importé d'Excel (le fichier fait foi)
+
+function blNorm(v) {
+  return String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+}
+
+function blDateCellule(v) {
+  if (v instanceof Date && !isNaN(v)) {
+    // SheetJS renvoie la date à minuit UTC : on lit les composantes UTC pour ne pas décaler d'un jour
+    return String(v.getUTCDate()).padStart(2, '0') + '/' + String(v.getUTCMonth() + 1).padStart(2, '0') + '/' + v.getUTCFullYear();
+  }
+  if (typeof v === 'number' && v > 20000 && v < 80000) {
+    return blDateCellule(new Date(Math.round((v - 25569) * 86400000)));
+  }
+  var s = String(v || '').trim();
+  var m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+  if (m) return m[1].padStart(2, '0') + '/' + m[2].padStart(2, '0') + '/' + (m[3].length === 2 ? '20' + m[3] : m[3]);
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+}
+
+// Lit un classeur BLI (modèle magasin, ou export de l'app) ; renvoie { entete, lignes } ou lève une erreur lisible
+function blLireClasseur(wb) {
+  var noms = wb.SheetNames.slice();
+  noms.sort(function(a, b){ return (blNorm(b) === 'BLI') - (blNorm(a) === 'BLI'); });
+  for (var s = 0; s < noms.length; s++) {
+    var rows = XLSX.utils.sheet_to_json(wb.Sheets[noms[s]], { header: 1, raw: true, defval: '' });
+    var hr = rows.findIndex(function(r){ return r.some(function(c){ return /BDS/.test(blNorm(c)); }); });
+    if (hr < 0) continue;
+
+    var col = {};
+    rows[hr].forEach(function(c, i) {
+      var n = blNorm(c);
+      if (/BDS|N. ?PO/.test(n) && col.bds == null) col.bds = i;
+      else if (/^(QUANTITE|QTY|QTE)/.test(n)) col.qte = i;
+      else if (/^LIEU/.test(n)) col.lieu = i;
+      else if (/^CLIENT|NOM & PRENOM DU CLIENT/.test(n)) col.client = i;
+      else if (/^WORKGROUP|^WG$/.test(n)) col.wg = i;
+    });
+
+    // En-tête : la valeur est la première case non vide à droite du libellé
+    var entete = {};
+    var libelles = { preparateur: /PREPARATEUR/, livreur: /LIVREUR/, dateLiv: /DATE DE LIVRAISON/, datePrep: /DATE DE PREPARATION/, lieu: /^LIEU DE LIVRAISON/ };
+    rows.slice(0, hr).forEach(function(r) {
+      r.forEach(function(c, i) {
+        var n = blNorm(c);
+        Object.keys(libelles).forEach(function(k) {
+          if (entete[k] !== undefined || !libelles[k].test(n) || /^TOTAL/.test(n)) return;
+          for (var j = i + 1; j < r.length; j++) {
+            if (r[j] !== '' && r[j] != null) {
+              if (Object.keys(libelles).some(function(k2){ return libelles[k2].test(blNorm(r[j])); })) break;
+              entete[k] = r[j]; break;
+            }
+          }
+        });
+      });
+    });
+
+    var lignes = [], prev = { client: '', lieu: '' };
+    for (var r = hr + 1; r < rows.length; r++) {
+      var row = rows[r];
+      // fin du tableau : ligne Total, bloc de signatures ou légende, quelle que soit la colonne
+      var premiere = blNorm(row.find(function(c){ return String(c).trim() !== ''; }) || '');
+      if (/^(TOTAL|PREPARATEUR|\(NOM|LEGENDE)/.test(premiere)) break;
+      var bds = blNormBds(row[col.bds]);
+      var client = col.client != null ? String(row[col.client] || '').trim().toUpperCase() : '';
+      var lieu = col.lieu != null ? String(row[col.lieu] || '').trim().toUpperCase() : '';
+      if (!bds && !client) continue;
+      if (BL_DITTO.test(client)) client = prev.client;
+      if (BL_DITTO.test(lieu)) lieu = prev.lieu;
+      prev = { client: client, lieu: lieu };
+      lignes.push({
+        bds: bds,
+        qte: Math.max(1, parseInt(col.qte != null ? row[col.qte] : 1, 10) || 1),
+        client: client, lieu: lieu,
+        wg: col.wg != null && BL_WGS.indexOf(String(row[col.wg]).trim().toUpperCase()) >= 0 ? String(row[col.wg]).trim().toUpperCase() : ''
+      });
+    }
+    return { entete: entete, lignes: lignes, onglet: noms[s] };
+  }
+  throw new Error('Aucun tableau « N° BDS / N° PO » trouvé dans ce fichier.');
+}
+
+async function blImporterExcel(input) {
+  var file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { alert('Librairie Excel en chargement, réessayez dans quelques secondes.'); return; }
+  var res;
+  try {
+    var wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+    res = blLireClasseur(wb);
+  } catch(e) {
+    alert('Import impossible : ' + (e && e.message ? e.message : 'fichier illisible') + '\nUtilisez le modèle « BLI numérique » fourni au magasin.');
+    return;
+  }
+  if (!res.lignes.length) { alert('Le fichier ne contient aucune ligne remplie (N° BDS ou client).'); return; }
+
+  var e = res.entete;
+  var date = blDateCellule(e.dateLiv) || blDateCellule(e.datePrep) || new Date().toLocaleDateString('fr-FR');
+  var prep = String(e.preparateur || '').trim().toUpperCase();
+  var compte = {};
+  res.lignes.forEach(function(l){ if (l.lieu) compte[l.lieu] = (compte[l.lieu] || 0) + 1; });
+  var lieu = String(e.lieu || '').trim().toUpperCase() || Object.keys(compte).sort(function(a, b){ return compte[b] - compte[a]; })[0] || 'P02';
+
+  var data = await blLoad();
+  var deja = data.find(function(b) {
+    return b.dateLivraison === date && b.preparateur === prep && (b.lignes || []).length === res.lignes.length &&
+      blCleRef((b.lignes[0] || {}).bds) === blCleRef(res.lignes[0].bds);
+  });
+  if (deja && !confirm('Un bon du ' + date + ' (' + (prep || 'préparateur inconnu') + ', ' + res.lignes.length + ' lignes) existe déjà. Importer quand même ?')) return;
+
+  var wgMap = blClientWG(data);
+  _blEditId = null;
+  await blRemplirFormulaire({
+    dateLivraison: date, preparateur: prep, livreur: String(e.livreur || '').trim().toUpperCase(), lieu: lieu,
+    lignes: res.lignes.map(function(l){ return { bds: l.bds, qte: l.qte, client: l.client, wg: l.wg || wgMap[l.client] || '' }; }),
+    photos: [], remarques: 'Importé du fichier ' + file.name
+  });
+  blPhotoFacultative(true);
+  document.getElementById('bl-form-title').textContent = 'BLI importé d\'Excel';
+  var n = res.lignes.length, colis = res.lignes.reduce(function(s, l){ return s + l.qte; }, 0);
+  blMessageLecture('✅ ' + n + ' ligne' + (n > 1 ? 's' : '') + ' (' + colis + ' colis) importée' + (n > 1 ? 's' : '') + ' de « ' + file.name + ' ». Vérifiez puis enregistrez. La photo est facultative.', '#E1F5EE', '#0F6E56');
+  show('s-bl-nouveau');
+}
+
+function blPhotoFacultative(oui) {
+  _blPhotoFacultative = !!oui;
+  var lbl = document.getElementById('bl-photo-lbl');
+  if (lbl) lbl.innerHTML = oui ? 'Photo(s) du bon de livraison <span style="font-weight:400;text-transform:none;color:var(--muted)">(facultatif : BLI reçu en Excel)</span>'
+                               : '<span class="req">*</span> Photo(s) du bon de livraison';
 }
 
 // ── Lecture automatique de la photo ────────────────────
@@ -13720,6 +13857,13 @@ loadCatalog();
         ➕ Nouveau
       </button>
     </div>
+    <div style="padding:10px 14px 0;display:flex;gap:8px;align-items:center">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#E2EFDA;color:#375623;border:1.5px dashed #375623;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">
+        📥 Importer un BLI Excel
+        <input type="file" accept=".xlsx,.xlsm,.xls" style="display:none" onchange="blImporterExcel(this)">
+      </label>
+      <a href="modeles/Modele_BLI_numerique.xlsx" download style="font-size:11px;color:#0F6E56;font-weight:700;text-align:center;line-height:1.3;text-decoration:underline">📄 Modèle Excel<br>pour le magasin</a>
+    </div>
     <div id="bl-list" style="padding:12px 14px"></div>
   </div>
 </div>
@@ -13732,7 +13876,7 @@ loadCatalog();
   </div>
   <div class="form-body">
     <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Photo(s) du bon de livraison</div>
+      <div class="field-lbl" id="bl-photo-lbl"><span class="req">*</span> Photo(s) du bon de livraison</div>
       <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#E1F5EE;color:#0F6E56;border:1.5px dashed #0F6E56;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;box-sizing:border-box">
         📷 Photographier le bon de livraison
         <input type="file" accept="image/*" capture="environment" style="display:none" onchange="blAjouterPhotos(this)">
