@@ -12433,6 +12433,158 @@ async function enregistrerBL() {
   ouvrirDetailBL(d.id);
 }
 
+// ── Export Excel du bon (mise en page du « Manifeste de Livraison ») ──
+var BL_EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+function blChargerExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = BL_EXCELJS_URL;
+    s.onload = function(){ window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error('ExcelJS absent')); };
+    s.onerror = function(){ reject(new Error('Chargement ExcelJS impossible')); };
+    document.head.appendChild(s);
+  });
+}
+
+async function blExporterExcel() {
+  var b = (_blCache || []).find(function(x){ return x.id === _blDetailId; });
+  if (!b) return;
+  var btn = document.getElementById('bl-excel-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Excel…'; }
+  try {
+    var ExcelJS = await blChargerExcelJS();
+    try { await ncLoad(); } catch(e) {}
+    var buf = await blConstruireExcel(ExcelJS, b);
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var nom = 'BLI_' + blFrToIso(b.dateLivraison || '') + (b.preparateur ? '_' + b.preparateur.replace(/[^A-Za-z0-9]+/g, '') : '') + '.xlsx';
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nom;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+  } catch(e) {
+    console.warn('BL excel err', e);
+    alert('Export Excel impossible (connexion ?). Réessayez.');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '📥 Excel'; }
+}
+
+async function blConstruireExcel(ExcelJS, b) {
+  var F = 'Calibri', NAVY = 'FF1F3864', LBL = 'FFDCE3EF', ORANGE = 'FFFCE4D6';
+  var thin = { style: 'thin', color: { argb: 'FF808080' } };
+  var box = { top: thin, left: thin, bottom: thin, right: thin };
+  var fill = function(c){ return { type: 'pattern', pattern: 'solid', fgColor: { argb: c } }; };
+  function st(cell, o) {
+    o = o || {};
+    cell.font = { name: F, size: o.size || 12, bold: !!o.bold, color: { argb: o.color || 'FF000000' } };
+    cell.alignment = { horizontal: o.h || 'left', vertical: o.v || 'middle', wrapText: !!o.wrap };
+    if (o.fill) cell.fill = fill(o.fill);
+    if (o.border !== false) cell.border = box;
+  }
+  function dateFr(fr) { var p = (fr || '').split('/'); return p.length === 3 ? new Date(Date.UTC(+p[2], +p[1] - 1, +p[0])) : (fr || ''); }
+
+  var wb = new ExcelJS.Workbook();
+  wb.creator = 'PRNC Field';
+  var ws = wb.addWorksheet('Bon de Livraison', {
+    views: [{ state: 'frozen', ySplit: 5 }],
+    pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printTitlesRow: '5:5' }
+  });
+  [6, 20, 14, 16, 16, 22, 17, 44].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+
+  ws.mergeCells('A1:H1');
+  ws.getCell('A1').value = 'Bon de Livraison Interne - PRONY RESOURCES NC';
+  st(ws.getCell('A1'), { size: 20, bold: true, color: NAVY, h: 'center', border: false });
+  ws.getRow(1).height = 34;
+
+  var photo = b.photos && b.photos[0] ? { text: 'Photo du BLI' + (b.photos.length > 1 ? ' (' + b.photos.length + ')' : ''), hyperlink: b.photos[0] } : 'Photo du BLI';
+  [
+    ['A2:B2', 'Nom du préparateur', 'C2', b.preparateur || ''], ['D2:E2', 'Lieu de livraison', 'F2', b.lieu || ''], ['G2', 'Réf. formulaire', 'H2', 'G-CA-FM-25 V1'],
+    ['A3:B3', 'Nom du livreur', 'C3', b.livreur || ''], ['D3:E3', 'Date de livraison', 'F3', dateFr(b.dateLivraison)], ['G3', 'Source', 'H3', photo]
+  ].forEach(function(x) {
+    if (x[0].indexOf(':') > 0) ws.mergeCells(x[0]);
+    // la case fusionnée partage le style de la première : la styler d'abord
+    if (x[0].indexOf(':') > 0) st(ws.getCell(x[0].split(':')[1]), { fill: LBL });
+    var lc = ws.getCell(x[0].split(':')[0]);
+    lc.value = x[1]; st(lc, { bold: true, color: NAVY, fill: LBL });
+    var vc = ws.getCell(x[2]);
+    vc.value = x[3]; st(vc, { bold: true, color: (x[3] && x[3].hyperlink) ? 'FF0563C1' : 'FF000000' });
+    if (x[3] instanceof Date) vc.numFmt = 'dd/mm/yyyy';
+  });
+  ws.getRow(2).height = 22; ws.getRow(3).height = 22;
+
+  var HR = 5, lignes = b.lignes || [];
+  var rows = lignes.map(function(l, i) {
+    var cle = blCleRef(l.bds);
+    var nc = cle && Array.isArray(_ncCache) ? _ncCache.filter(function(n){ return blCleRef(n.ir) === cle; }) : [];
+    var obs = nc.map(function(n){ return (n.numero || 'NC') + ' (' + (n.statut || 'Ouvert') + ')'; }).join(', ');
+    return [i + 1, l.bds || '', +l.qte || 1, 'Colis/palette', b.lieu || '', l.client || '', l.wg || '', obs];
+  });
+  if (!rows.length) rows.push(['', '', null, '', '', '', '', 'Aucune ligne saisie : voir la photo du BLI']);
+  ws.addTable({
+    name: 'BLI', ref: 'A' + HR, headerRow: true,
+    style: { theme: 'TableStyleLight9', showRowStripes: true },
+    columns: ['N°', 'N° BDS / N° PO', 'Quantité chargée', 'Colisage', 'Lieu de livraison', 'Client', 'Workgroup', 'Observation'].map(function(n){ return { name: n }; }),
+    rows: rows
+  });
+  for (var c = 1; c <= 8; c++) st(ws.getRow(HR).getCell(c), { bold: true, color: 'FFFFFFFF', fill: NAVY, h: 'center', wrap: true });
+  ws.getRow(HR).height = 32;
+  var first = HR + 1, last = HR + rows.length;
+  for (var r = first; r <= last; r++) {
+    for (c = 1; c <= 8; c++) st(ws.getRow(r).getCell(c), { bold: c === 2 || c === 3, h: [1, 3, 4, 5, 7].indexOf(c) >= 0 ? 'center' : 'left', wrap: c === 8 });
+    if (ws.getRow(r).getCell(8).value && lignes.length) [2, 8].forEach(function(cc){ ws.getRow(r).getCell(cc).fill = fill(ORANGE); });
+  }
+
+  // Total sous le tableau (comme le manifeste)
+  var tr = last + 1, total = lignes.reduce(function(s, l){ return s + (+l.qte || 1); }, 0);
+  ws.getCell('A' + tr).value = 'Total';
+  ws.getCell('B' + tr).value = { formula: 'COUNTA(B' + first + ':B' + last + ')&" lignes"', result: lignes.length + ' lignes' };
+  ws.getCell('C' + tr).value = { formula: 'SUBTOTAL(109,C' + first + ':C' + last + ')', result: total };
+  ws.getCell('C' + tr).numFmt = '0" colis"';
+  for (c = 1; c <= 8; c++) st(ws.getRow(tr).getCell(c), { bold: true, color: NAVY, fill: LBL, h: c === 3 ? 'center' : 'left' });
+
+  // Signatures
+  var sr = tr + 3;
+  [['A', 'B', 'Préparateur'], ['C', 'E', 'Livreur'], ['F', 'H', 'Client / Destinataire']].forEach(function(x) {
+    ws.mergeCells(x[0] + sr + ':' + x[1] + sr);
+    ws.getCell(x[0] + sr).value = x[2]; st(ws.getCell(x[0] + sr), { size: 16, bold: true, color: NAVY, fill: LBL, h: 'center' });
+    ws.mergeCells(x[0] + (sr + 1) + ':' + x[1] + (sr + 1));
+    ws.getCell(x[0] + (sr + 1)).value = '(Nom / Prénom / Signature)';
+    st(ws.getCell(x[0] + (sr + 1)), { size: 11, color: 'FF595959', h: 'center', v: 'top' });
+  });
+  ws.getRow(sr + 1).height = 60;
+
+  // Légende
+  var notes = [
+    'Légende : Observation = non-conformités enregistrées dans PRNC Field pour ce N° BDS / PO (en orange).',
+    'Saisi par ' + (b.saisiPar || '--') + (b.remarques ? ' — Remarques : ' + b.remarques : '') + '.',
+    'Colonnes Colisage, Lieu et Workgroup : listes déroulantes (onglet caché _Données).'
+  ];
+  if ((b.photos || []).length > 1) notes.push('Photos du BLI : ' + b.photos.join('  '));
+  notes.forEach(function(t, i) {
+    var r = sr + 3 + i;
+    ws.mergeCells('A' + r + ':H' + r);
+    ws.getCell('A' + r).value = t;
+    st(ws.getCell('A' + r), { size: 10, bold: i === 0, color: 'FF595959', border: false, wrap: true });
+  });
+
+  // Listes déroulantes (onglet caché, comme le manifeste)
+  var dl = wb.addWorksheet('_Données', { state: 'hidden' });
+  var lieux = ['P02', 'MAGASIN CENTRAL', 'P50', 'P99'];
+  if (b.lieu && lieux.indexOf(b.lieu) < 0) lieux.unshift(b.lieu);
+  var listes = { Colisage: ['Colis/palette', 'Caisse', 'Carton', 'Colis', 'Palette', 'Rack', 'Fardeau', 'Panier', 'Pneu'], Lieu_Livraison: lieux, Workgroup: BL_WGS };
+  Object.keys(listes).forEach(function(nom, j) {
+    var col = String.fromCharCode(65 + j * 2), vals = listes[nom];
+    dl.getCell(col + '1').value = nom; dl.getCell(col + '1').font = { name: F, bold: true };
+    vals.forEach(function(v, k){ dl.getCell(col + (k + 2)).value = v; });
+    dl.getColumn(j * 2 + 1).width = 20;
+    wb.definedNames.add("'_Données'!$" + col + '$2:$' + col + '$' + (vals.length + 1), nom);
+  });
+  if (lignes.length) [['D', 'Colisage'], ['E', 'Lieu_Livraison'], ['G', 'Workgroup']].forEach(function(x) {
+    for (var r = first; r <= last; r++) ws.getCell(x[0] + r).dataValidation = { type: 'list', allowBlank: true, formulae: [x[1]] };
+  });
+
+  return wb.xlsx.writeBuffer();
+}
+
 // ── Détail ─────────────────────────────────────────────
 // Pastille ⚠️ NC sur une ligne du BL si une non-conformité porte ce N° (IR)
 function blBadgeNC(bds) {
@@ -13633,6 +13785,7 @@ loadCatalog();
   <div class="form-body" style="padding:12px 14px">
     <div id="bl-detail-content"></div>
     <div style="display:flex;gap:8px">
+      <button id="bl-excel-btn" onclick="blExporterExcel()" style="flex:1;background:#E2EFDA;color:#375623;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 Excel</button>
       <button onclick="modifierBL()" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✏️ Modifier</button>
       <button onclick="supprimerBL()" style="flex:1;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🗑 Supprimer</button>
     </div>
