@@ -473,6 +473,11 @@ function _initLocSel(selId, inpId, val) {
       <div class="card-lbl">Non-Conformités</div>
       <div class="card-sub">Rapports NC magasin</div>
     </div>
+    <div class="action-card" onclick="ouvrirBL()">
+      <div class="card-icon" style="background:#E1F5EE;color:#0F6E56">📑</div>
+      <div class="card-lbl">Bons de livraison</div>
+      <div class="card-sub">Archive BL magasin</div>
+    </div>
     <div class="action-card" onclick="show('s-kpi');_kpiOffset=0;renderKPI()">
       <div class="card-icon">📊</div>
       <div class="card-lbl">KPI</div>
@@ -1709,7 +1714,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi'];
+const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi','s-bl','s-bl-nouveau','s-bl-detail'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist'};
 
 function show(id) {
@@ -12140,6 +12145,339 @@ async function supprimerNC() {
   renderNC();
 }
 
+// ══ BONS DE LIVRAISON (archive des BL papier du magasin) ══
+var _blCache = null;
+var _blEditId = null;      // id du BL en cours de modification (null = nouveau)
+var _blPhotos = [];        // URLs des photos du formulaire
+var _blUploads = 0;        // photos en cours d'envoi
+var _blDetailId = null;
+var BL_WGS = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
+
+function blEsc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+}
+
+async function blLoad(force) {
+  if (_blCache && !force) return _blCache;
+  try {
+    var r = await fetch(DB_API + '?table=bl');
+    var data = await r.json();
+    _blCache = Array.isArray(data) ? data.map(function(d) {
+      return {
+        id: d.id, dateLivraison: d.date_livraison || '', preparateur: d.preparateur || '',
+        livreur: d.livreur || '', lieu: d.lieu || '', lignes: d.lignes || [], photos: d.photos || [],
+        remarques: d.remarques || '', saisiPar: d.saisi_par || ''
+      };
+    }) : [];
+  } catch(e) {
+    console.warn('BL load err', e);
+    _blCache = _blCache || [];
+  }
+  return _blCache;
+}
+
+// jj/mm/aaaa -> aaaa-mm-jj (et inverse) pour le champ date
+function blIsoToFr(iso) { if (!iso) return ''; var p = iso.split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso; }
+function blFrToIso(fr) { if (!fr) return ''; var p = fr.split('/'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : ''; }
+function blSortKey(b) { return blFrToIso(b.dateLivraison) + '|' + b.id; }
+
+// Dernier workgroup connu pour chaque client (appris des BL déjà saisis)
+function blClientWG(list) {
+  var map = {};
+  list.slice().sort(function(a, b){ return blSortKey(a) < blSortKey(b) ? -1 : 1; }).forEach(function(b) {
+    (b.lignes || []).forEach(function(l) { if (l.client && l.wg) map[l.client.toUpperCase()] = l.wg; });
+  });
+  return map;
+}
+
+function blNormBds(v) { return String(v || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+
+// ── Liste ──────────────────────────────────────────────
+async function ouvrirBL() {
+  show('s-bl');
+  await renderBL(true);
+}
+
+async function renderBL(force) {
+  var listEl = document.getElementById('bl-list');
+  if (!listEl) return;
+  if (force || !_blCache) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+  var data = await blLoad(force);
+  var q = blNormBds((document.getElementById('bl-search') || {value:''}).value);
+
+  var moisFr = new Date().toLocaleDateString('fr-FR').slice(3);
+  var nbLignesMois = 0;
+  data.forEach(function(b){ if ((b.dateLivraison || '').slice(3) === moisFr) nbLignesMois += (b.lignes || []).length; });
+  document.getElementById('bl-count-total').textContent = data.length;
+  document.getElementById('bl-count-lignes').textContent = nbLignesMois;
+
+  var rows = data.slice().sort(function(a, b){ return blSortKey(a) < blSortKey(b) ? 1 : -1; });
+  if (q) {
+    rows = rows.filter(function(b) {
+      var hay = [b.dateLivraison, b.preparateur, b.livreur, b.lieu, b.remarques].join(' ').toUpperCase();
+      if (hay.indexOf(q) >= 0) return true;
+      return (b.lignes || []).some(function(l){ return (blNormBds(l.bds) + ' ' + (l.client||'') + ' ' + (l.wg||'')).toUpperCase().indexOf(q) >= 0; });
+    });
+  }
+
+  if (!rows.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#888;font-size:13px">' +
+      (q ? 'Aucun bon de livraison ne contient « ' + blEsc(q) + ' ».' : 'Aucun bon de livraison archivé.<br>Appuyez sur ➕ Nouveau pour photographier le premier.') + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(function(b) {
+    var lignes = b.lignes || [];
+    var hits = q ? lignes.filter(function(l){ return (blNormBds(l.bds) + ' ' + (l.client||'') + ' ' + (l.wg||'')).toUpperCase().indexOf(q) >= 0; }) : [];
+    var apercu = (hits.length ? hits : lignes).slice(0, 4).map(function(l) {
+      return '<span style="display:inline-block;background:' + (hits.length ? '#FFF3C4' : '#F0F4FF') + ';color:#1F3864;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;margin:2px 4px 0 0">' + blEsc(blNormBds(l.bds) || '--') + '</span>';
+    }).join('') + ((hits.length ? hits : lignes).length > 4 ? '<span style="font-size:11px;color:#888">+' + ((hits.length ? hits : lignes).length - 4) + '</span>' : '');
+    var thumb = b.photos && b.photos[0]
+      ? '<img src="' + blEsc(b.photos[0]) + '" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)">'
+      : '<div style="width:56px;height:56px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">📄</div>';
+    return '<div data-blid="' + blEsc(b.id) + '" onclick="ouvrirDetailBL(this.dataset.blid)" style="background:#fff;border-radius:14px;padding:12px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer;display:flex;gap:12px;align-items:center">' +
+      thumb +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px">' +
+          '<div style="font-weight:800;color:#1F3864;font-size:14px">' + blEsc(b.dateLivraison || '--') + '</div>' +
+          '<div style="font-size:11px;font-weight:700;color:#0F6E56;background:#E1F5EE;border-radius:10px;padding:2px 8px;white-space:nowrap">' + lignes.length + ' ligne' + (lignes.length > 1 ? 's' : '') + '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#666;margin-top:2px">Préparé par ' + blEsc(b.preparateur || '--') + (b.lieu ? ' · ' + blEsc(b.lieu) : '') + '</div>' +
+        '<div style="margin-top:2px">' + apercu + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Formulaire (nouveau / modification) ────────────────
+async function nouveauBL() {
+  _blEditId = null;
+  await blRemplirFormulaire({
+    dateLivraison: new Date().toLocaleDateString('fr-FR'),
+    preparateur: '', livreur: '', lieu: 'P02', lignes: [], photos: [], remarques: ''
+  });
+  document.getElementById('bl-form-title').textContent = 'Nouveau bon de livraison';
+  show('s-bl-nouveau');
+}
+
+async function modifierBL() {
+  var b = (_blCache || []).find(function(x){ return x.id === _blDetailId; });
+  if (!b) return;
+  _blEditId = b.id;
+  await blRemplirFormulaire(b);
+  document.getElementById('bl-form-title').textContent = 'Modifier le bon de livraison';
+  show('s-bl-nouveau');
+}
+
+async function blRemplirFormulaire(b) {
+  var data = await blLoad();
+  document.getElementById('bl-date').value = blFrToIso(b.dateLivraison);
+  document.getElementById('bl-preparateur').value = b.preparateur || '';
+  document.getElementById('bl-livreur').value = b.livreur || '';
+  document.getElementById('bl-lieu').value = b.lieu || '';
+  document.getElementById('bl-remarques').value = b.remarques || '';
+
+  // Listes de suggestions apprises des BL déjà saisis
+  function uniq(arr) { var s = {}; return arr.filter(function(x){ x = (x||'').trim(); if (!x || s[x.toUpperCase()]) return false; s[x.toUpperCase()] = 1; return true; }); }
+  var clients = [], preps = [], lieux = ['P02'];
+  data.forEach(function(x) {
+    preps.push(x.preparateur); preps.push(x.livreur); lieux.push(x.lieu);
+    (x.lignes || []).forEach(function(l){ clients.push(l.client); });
+  });
+  document.getElementById('bl-dl-clients').innerHTML = uniq(clients).sort().map(function(c){ return '<option value="' + blEsc(c) + '">'; }).join('');
+  document.getElementById('bl-dl-personnes').innerHTML = uniq(preps).sort().map(function(c){ return '<option value="' + blEsc(c) + '">'; }).join('');
+  document.getElementById('bl-dl-lieux').innerHTML = uniq(lieux).map(function(c){ return '<option value="' + blEsc(c) + '">'; }).join('');
+
+  _blPhotos = (b.photos || []).slice();
+  _blUploads = 0;
+  blRenderPhotos();
+
+  var cont = document.getElementById('bl-lignes');
+  cont.innerHTML = '';
+  (b.lignes && b.lignes.length ? b.lignes : [{}]).forEach(function(l){ blAjouterLigne(l, true); });
+  blMajCompteur();
+}
+
+function blRenderPhotos() {
+  var prev = document.getElementById('bl-photos-preview');
+  prev.innerHTML = _blPhotos.map(function(u, i) {
+    return '<div class="photo-thumb"><img src="' + blEsc(u) + '" alt="Photo ' + (i+1) + '">' +
+      '<div class="photo-thumb-del" onclick="blRetirerPhoto(' + i + ')">×</div></div>';
+  }).join('') + (_blUploads ? '<div style="width:72px;height:72px;border-radius:8px;background:#F0F4FF;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1F3864;text-align:center">Envoi…</div>' : '');
+}
+
+function blRetirerPhoto(i) {
+  _blPhotos.splice(i, 1);
+  blRenderPhotos();
+}
+
+// Photo en haute définition : le BL est manuscrit, il doit rester lisible
+async function blAjouterPhotos(input) {
+  var files = Array.from(input.files || []);
+  input.value = '';
+  for (var i = 0; i < files.length; i++) {
+    _blUploads++;
+    blRenderPhotos();
+    var blob = await compressImage(files[i], 2000, 0.8).catch(function(){ return null; }) || files[i];
+    var url = blob ? await uploadToCloudinary(blob) : null;
+    _blUploads--;
+    if (url) _blPhotos.push(url);
+    else alert('La photo n\'a pas pu être envoyée. Vérifiez la connexion et réessayez.');
+    blRenderPhotos();
+  }
+}
+
+function blAjouterLigne(l, sansFocus) {
+  l = l || {};
+  var cont = document.getElementById('bl-lignes');
+  var row = document.createElement('div');
+  row.className = 'bl-ligne';
+  row.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px';
+  row.innerHTML =
+    '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);width:20px" class="bl-num"></div>' +
+      '<input class="fi bl-bds" type="text" placeholder="N° BDS / PO (ex : C38346)" autocapitalize="characters" autocomplete="off" style="flex:1;margin:0;text-transform:uppercase;font-weight:700" value="' + blEsc(l.bds || '') + '">' +
+      '<span onclick="this.closest(\'.bl-ligne\').remove();blMajCompteur()" title="Supprimer la ligne" style="color:var(--red);font-size:20px;cursor:pointer;font-weight:700;padding:0 6px">×</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:6px;align-items:center">' +
+      '<div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0">' +
+        '<button type="button" onclick="blQte(this,-1)" style="border:none;background:#f5f5f5;width:30px;height:38px;font-size:16px;cursor:pointer">−</button>' +
+        '<input class="bl-qte" type="text" inputmode="numeric" value="' + blEsc(l.qte || 1) + '" style="width:30px;border:none;text-align:center;font-weight:700;font-size:14px;font-family:inherit">' +
+        '<button type="button" onclick="blQte(this,1)" style="border:none;background:#f5f5f5;width:30px;height:38px;font-size:16px;cursor:pointer">+</button>' +
+      '</div>' +
+      '<input class="fi bl-client" type="text" list="bl-dl-clients" placeholder="Client" autocapitalize="characters" style="flex:1;min-width:0;margin:0" value="' + blEsc(l.client || '') + '" onchange="blClientChange(this)">' +
+      '<select class="fi bl-wg" style="width:auto;margin:0;padding-left:6px;padding-right:6px;font-size:12px">' +
+        '<option value="">WG</option>' + BL_WGS.map(function(w){ return '<option' + (l.wg === w ? ' selected' : '') + '>' + w + '</option>'; }).join('') +
+      '</select>' +
+    '</div>';
+  cont.appendChild(row);
+  blMajCompteur();
+  if (!sansFocus) row.querySelector('.bl-bds').focus();
+}
+
+function blQte(btn, d) {
+  var inp = btn.parentElement.querySelector('.bl-qte');
+  inp.value = Math.max(1, (parseInt(inp.value, 10) || 1) + d);
+}
+
+// Le workgroup se remplit tout seul quand le client est déjà connu
+function blClientChange(inp) {
+  var wg = blClientWG(_blCache || [])[inp.value.trim().toUpperCase()];
+  var sel = inp.closest('.bl-ligne').querySelector('.bl-wg');
+  if (wg && !sel.value) sel.value = wg;
+}
+
+function blMajCompteur() {
+  var rows = document.querySelectorAll('#bl-lignes .bl-ligne');
+  rows.forEach(function(r, i){ r.querySelector('.bl-num').textContent = i + 1; });
+  var c = document.getElementById('bl-nb-lignes');
+  if (c) c.textContent = rows.length;
+}
+
+function blLireLignes() {
+  return Array.from(document.querySelectorAll('#bl-lignes .bl-ligne')).map(function(r) {
+    return {
+      bds: blNormBds(r.querySelector('.bl-bds').value),
+      qte: Math.max(1, parseInt(r.querySelector('.bl-qte').value, 10) || 1),
+      client: r.querySelector('.bl-client').value.trim().toUpperCase(),
+      wg: r.querySelector('.bl-wg').value
+    };
+  }).filter(function(l){ return l.bds || l.client; });
+}
+
+async function enregistrerBL() {
+  if (checkConsultMode()) return;
+  if (_blUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
+  var date = document.getElementById('bl-date').value;
+  if (!date) { alert('Indiquez la date de livraison.'); return; }
+  if (!_blPhotos.length) { alert('Ajoutez au moins une photo du bon de livraison : c\'est votre preuve.'); return; }
+  var lignes = blLireLignes();
+  var sansNum = lignes.filter(function(l){ return !l.bds; }).length;
+  if (sansNum && !confirm(sansNum + ' ligne(s) sans N° BDS / PO. Enregistrer quand même ?')) return;
+
+  var d = {
+    id: _blEditId || Date.now().toString(),
+    dateLivraison: blIsoToFr(date),
+    preparateur: document.getElementById('bl-preparateur').value.trim().toUpperCase(),
+    livreur: document.getElementById('bl-livreur').value.trim().toUpperCase(),
+    lieu: document.getElementById('bl-lieu').value.trim().toUpperCase(),
+    lignes: lignes,
+    photos: _blPhotos.slice(),
+    remarques: document.getElementById('bl-remarques').value.trim(),
+    saisiPar: getUserName()
+  };
+
+  var btn = document.getElementById('bl-save-btn');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  try {
+    var r = await fetch(DB_API + '?table=bl' + (_blEditId ? '&id=' + encodeURIComponent(_blEditId) : ''), {
+      method: _blEditId ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch(e) {
+    console.warn('BL save err', e);
+    alert('Enregistrement impossible. Vérifiez la connexion et réessayez.');
+    btn.disabled = false; btn.textContent = '💾 Enregistrer le bon de livraison';
+    return;
+  }
+  btn.disabled = false; btn.textContent = '💾 Enregistrer le bon de livraison';
+  _blCache = null;
+  await blLoad(true);
+  ouvrirDetailBL(d.id);
+}
+
+// ── Détail ─────────────────────────────────────────────
+function ouvrirDetailBL(id) {
+  var b = (_blCache || []).find(function(x){ return x.id === id; });
+  if (!b) return;
+  _blDetailId = id;
+  var lignes = b.lignes || [];
+  var info = function(lbl, val) {
+    return '<div style="flex:1 1 45%"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase">' + lbl + '</div>' +
+      '<div style="font-size:14px;font-weight:700;color:#1F3864">' + blEsc(val || '--') + '</div></div>';
+  };
+  document.getElementById('bl-detail-content').innerHTML =
+    '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:10px">' +
+      info('Date de livraison', b.dateLivraison) + info('Lieu', b.lieu) +
+      info('Préparateur', b.preparateur) + info('Livreur', b.livreur) +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:4px 2px 6px">📷 Bon de livraison (' + b.photos.length + ' photo' + (b.photos.length > 1 ? 's' : '') + ') — touchez pour agrandir</div>' +
+    '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch">' +
+      b.photos.map(function(u) {
+        return '<a href="' + blEsc(u) + '" target="_blank" rel="noopener"><img src="' + blEsc(u) + '" alt="Photo du bon de livraison" style="height:180px;border-radius:10px;border:1px solid var(--border)"></a>';
+      }).join('') +
+    '</div>' +
+    '<div style="background:#fff;border-radius:14px;padding:6px 12px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+      '<div style="display:flex;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:8px 0 6px;border-bottom:1px solid var(--border)">' +
+        '<div style="width:22px">#</div><div style="flex:1">N° BDS / PO</div><div style="width:38px;text-align:center">Qté</div><div style="flex:1">Client</div><div style="width:72px;text-align:right">WG</div></div>' +
+      (lignes.length ? lignes.map(function(l, i) {
+        return '<div style="display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid #f0f0f0">' +
+          '<div style="width:22px;color:#999;font-size:11px">' + (i+1) + '</div>' +
+          '<div style="flex:1;font-weight:800;color:#1F3864">' + blEsc(l.bds || '--') + '</div>' +
+          '<div style="width:38px;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
+          '<div style="flex:1;font-size:12px">' + blEsc(l.client || '--') + '</div>' +
+          '<div style="width:72px;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
+        '</div>';
+      }).join('') : '<div style="padding:14px 0;color:#888;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
+    '</div>' +
+    (b.remarques ? '<div style="background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:10px">💬 ' + blEsc(b.remarques) + '</div>' : '') +
+    '<div style="font-size:10px;color:#999;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
+  show('s-bl-detail');
+}
+
+async function supprimerBL() {
+  if (checkConsultMode()) return;
+  if (!_blDetailId || !confirm('Supprimer ce bon de livraison et ses photos ? Cette action est définitive.')) return;
+  try {
+    var r = await fetch(DB_API + '?table=bl&id=' + encodeURIComponent(_blDetailId), { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch(e) { alert('Suppression impossible. Vérifiez la connexion.'); return; }
+  _blCache = null;
+  ouvrirBL();
+}
+
 // ══ KPI ══
 var _kpiOffset = 0; // 0 = période en cours, 1 = période précédente, etc.
 var MOIS_FR = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
@@ -13055,6 +13393,102 @@ loadCatalog();
       <button onclick="supprimerNC()" style="width:100%;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
         🗑 Supprimer
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BONS DE LIVRAISON ═══════════════ -->
+<div class="screen" id="s-bl">
+  <div class="form-header" style="background:linear-gradient(135deg,#0F6E56,#1A9C7A);color:#fff;border-bottom:none">
+    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
+    <div style="flex:1">
+      <div class="form-title" style="color:#fff;font-size:17px">📑 Bons de livraison</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.75)">Archive des BL du magasin</div>
+    </div>
+  </div>
+  <div class="form-body" style="padding:0">
+    <div style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#0F6E56,#1A9C7A)">
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bl-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📑 BL archivés</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
+        <div id="bl-count-lignes" style="font-size:24px;font-weight:800;color:#fff">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📦 Lignes ce mois</div>
+      </div>
+    </div>
+    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <input class="fi" type="text" id="bl-search" placeholder="🔍 N° BDS / PO, client, date..."
+        oninput="renderBL()" style="flex:1;margin:0" autocomplete="off">
+      <button onclick="nouveauBL()" style="background:#0F6E56;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+        ➕ Nouveau
+      </button>
+    </div>
+    <div id="bl-list" style="padding:12px 14px"></div>
+  </div>
+</div>
+
+<div class="screen" id="s-bl-nouveau">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bl')">←</div>
+    <div class="form-title" id="bl-form-title">Nouveau bon de livraison</div>
+    <div class="form-badge" style="background:#E1F5EE;color:#0F6E56">📑 BL</div>
+  </div>
+  <div class="form-body">
+    <div class="field-grp">
+      <div class="field-lbl"><span class="req">*</span> Photo(s) du bon de livraison</div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#E1F5EE;color:#0F6E56;border:1.5px dashed #0F6E56;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;box-sizing:border-box">
+        📷 Photographier le bon de livraison
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="blAjouterPhotos(this)">
+      </label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Une photo par page, bien à plat et lisible : c'est votre preuve de livraison.</div>
+      <div id="bl-photos-preview" class="photo-thumbs"></div>
+    </div>
+
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Date de livraison</div>
+        <input class="fi" type="date" id="bl-date"></div>
+      <div class="field-grp"><div class="field-lbl">Lieu de livraison</div>
+        <input class="fi" type="text" id="bl-lieu" list="bl-dl-lieux" placeholder="Ex : P02" autocapitalize="characters"></div>
+    </div>
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl">Préparateur</div>
+        <input class="fi" type="text" id="bl-preparateur" list="bl-dl-personnes" placeholder="Ex : QUETCHO.A" autocapitalize="characters"></div>
+      <div class="field-grp"><div class="field-lbl">Livreur</div>
+        <input class="fi" type="text" id="bl-livreur" list="bl-dl-personnes" placeholder="Optionnel" autocapitalize="characters"></div>
+    </div>
+
+    <div class="field-grp">
+      <div class="field-lbl" style="display:flex;justify-content:space-between">
+        <span>Lignes du bon (<span id="bl-nb-lignes">0</span>)</span>
+        <span style="font-weight:400;font-size:10px;color:var(--muted)">Optionnel : pour retrouver un N° BDS</span>
+      </div>
+      <div id="bl-lignes" style="margin-top:6px"></div>
+      <button type="button" onclick="blAjouterLigne()" style="width:100%;padding:11px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #1F3864;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">➕ Ajouter une ligne</button>
+    </div>
+
+    <div class="field-grp"><div class="field-lbl">Remarques</div>
+      <textarea class="fi" id="bl-remarques" placeholder="Optionnel..."></textarea></div>
+
+    <datalist id="bl-dl-clients"></datalist>
+    <datalist id="bl-dl-personnes"></datalist>
+    <datalist id="bl-dl-lieux"></datalist>
+
+    <button class="send-btn btn-green" id="bl-save-btn" onclick="enregistrerBL()">💾 Enregistrer le bon de livraison</button>
+  </div>
+</div>
+
+<div class="screen" id="s-bl-detail">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-bl');renderBL()">←</div>
+    <div class="form-title">Bon de livraison</div>
+    <div class="form-badge" style="background:#E1F5EE;color:#0F6E56">📑 BL</div>
+  </div>
+  <div class="form-body" style="padding:12px 14px">
+    <div id="bl-detail-content"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="modifierBL()" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✏️ Modifier</button>
+      <button onclick="supprimerBL()" style="flex:1;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🗑 Supprimer</button>
     </div>
   </div>
 </div>
