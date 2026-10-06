@@ -12078,6 +12078,7 @@ async function ouvrirDetailNC(id) {
       (d.tag ? 'TAG : <strong>' + d.tag + '</strong><br>' : '') +
       'Controlé par : ' + (d.controlePar||'--') +
     '</div>' +
+    '<div id="nc-bl-link"></div>' +
     '<div style="margin-bottom:10px">' +
       '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
@@ -12098,6 +12099,7 @@ async function ouvrirDetailNC(id) {
     }).join('');
   }
 
+  blAfficherLienNC(d.ir);
   show('s-nc-detail');
 }
 
@@ -12290,6 +12292,7 @@ async function blRemplirFormulaire(b) {
 
   _blPhotos = (b.photos || []).slice();
   _blUploads = 0;
+  document.getElementById('bl-lire-msg').style.display = 'none';
   blRenderPhotos();
 
   var cont = document.getElementById('bl-lignes');
@@ -12299,6 +12302,8 @@ async function blRemplirFormulaire(b) {
 }
 
 function blRenderPhotos() {
+  var lire = document.getElementById('bl-lire-btn');
+  if (lire) lire.style.display = _blPhotos.length && !_blUploads ? 'block' : 'none';
   var prev = document.getElementById('bl-photos-preview');
   prev.innerHTML = _blPhotos.map(function(u, i) {
     return '<div class="photo-thumb"><img src="' + blEsc(u) + '" alt="Photo ' + (i+1) + '">' +
@@ -12429,7 +12434,18 @@ async function enregistrerBL() {
 }
 
 // ── Détail ─────────────────────────────────────────────
-function ouvrirDetailBL(id) {
+// Pastille ⚠️ NC sur une ligne du BL si une non-conformité porte ce N° (IR)
+function blBadgeNC(bds) {
+  var cle = blCleRef(bds);
+  if (!cle || !Array.isArray(_ncCache)) return '';
+  var nc = _ncCache.filter(function(n){ return blCleRef(n.ir) === cle; });
+  return nc.map(function(n) {
+    return '<span data-ncid="' + blEsc(n.id) + '" onclick="event.stopPropagation();ouvrirDetailNC(this.dataset.ncid)" style="display:inline-block;margin-left:6px;background:#FCE4D6;color:#C00000;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;cursor:pointer;vertical-align:1px">⚠️ ' + blEsc(n.numero || 'NC') + '</span>';
+  }).join('');
+}
+
+async function ouvrirDetailBL(id) {
+  try { await ncLoad(); } catch(e) {}
   var b = (_blCache || []).find(function(x){ return x.id === id; });
   if (!b) return;
   _blDetailId = id;
@@ -12455,7 +12471,7 @@ function ouvrirDetailBL(id) {
       (lignes.length ? lignes.map(function(l, i) {
         return '<div style="display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid #f0f0f0">' +
           '<div style="width:22px;color:#999;font-size:11px">' + (i+1) + '</div>' +
-          '<div style="flex:1;font-weight:800;color:#1F3864">' + blEsc(l.bds || '--') + '</div>' +
+          '<div style="flex:1;font-weight:800;color:#1F3864">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) + '</div>' +
           '<div style="width:38px;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
           '<div style="flex:1;font-size:12px">' + blEsc(l.client || '--') + '</div>' +
           '<div style="width:72px;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
@@ -12465,6 +12481,134 @@ function ouvrirDetailBL(id) {
     (b.remarques ? '<div style="background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:10px">💬 ' + blEsc(b.remarques) + '</div>' : '') +
     '<div style="font-size:10px;color:#999;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
   show('s-bl-detail');
+}
+
+// ── Lecture automatique de la photo ────────────────────
+var BL_DITTO = /^["“”„〃'‘’‚,`/\s]*$/;   // case remplie de guillemets = « idem ligne au-dessus »
+
+async function blLirePhoto() {
+  if (_blUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
+  if (!_blPhotos.length) { alert('Prenez d\'abord la photo du bon de livraison.'); return; }
+  var existantes = blLireLignes();
+  if (existantes.length && !confirm('Remplacer les ' + existantes.length + ' ligne(s) déjà saisie(s) par la lecture de la photo ?')) return;
+
+  var btn = document.getElementById('bl-lire-btn');
+  var msg = document.getElementById('bl-lire-msg');
+  btn.disabled = true; btn.textContent = '⏳ Lecture en cours… (jusqu\'à 1 minute)';
+  msg.style.display = 'none';
+
+  var clients = Object.keys(blClientWG(_blCache || []));
+  (_blCache || []).forEach(function(b){ (b.lignes || []).forEach(function(l){ if (l.client && clients.indexOf(l.client) < 0) clients.push(l.client); }); });
+
+  var data = null, erreur = '';
+  try {
+    var r = await fetch('/api/lire-bl', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: _blPhotos, clients: clients })
+    });
+    var j = await r.json().catch(function(){ return {}; });
+    if (r.ok) data = j; else erreur = j.message || ('Erreur ' + r.status);
+  } catch(e) { erreur = 'Pas de connexion au serveur.'; }
+  btn.disabled = false; btn.textContent = '✨ Lire la photo automatiquement';
+
+  if (!data) {
+    blMessageLecture('❌ Lecture impossible : ' + erreur + ' Vous pouvez saisir les lignes à la main.', '#FCE4D6', '#C00000');
+    return;
+  }
+  var n = blAppliquerLecture(data);
+  var douteuses = document.querySelectorAll('#bl-lignes .bl-ligne.bl-douteuse').length;
+  blMessageLecture('✅ ' + n + ' ligne' + (n > 1 ? 's' : '') + ' lue' + (n > 1 ? 's' : '') + '. ' +
+    (douteuses ? douteuses + ' ligne' + (douteuses > 1 ? 's' : '') + ' en jaune à vérifier en priorité. ' : '') +
+    'Comparez avec la photo avant d\'enregistrer : l\'écriture manuscrite peut être mal lue.', '#E1F5EE', '#0F6E56');
+}
+
+function blMessageLecture(txt, bg, color) {
+  var msg = document.getElementById('bl-lire-msg');
+  msg.textContent = txt;
+  msg.style.background = bg; msg.style.color = color; msg.style.display = 'block';
+}
+
+// Remplit le formulaire avec le résultat de la lecture ; renvoie le nombre de lignes
+function blAppliquerLecture(data) {
+  var dateFr = /^\d{2}\/\d{2}\/\d{4}$/.test(data.date_livraison || '') ? data.date_livraison
+    : (/^\d{2}\/\d{2}\/\d{4}$/.test(data.date_preparation || '') ? data.date_preparation : '');
+  if (dateFr) document.getElementById('bl-date').value = blFrToIso(dateFr);
+  var prep = document.getElementById('bl-preparateur');
+  if (!prep.value.trim() && data.preparateur) prep.value = String(data.preparateur).toUpperCase();
+  var livr = document.getElementById('bl-livreur');
+  if (!livr.value.trim() && data.livreur) livr.value = String(data.livreur).toUpperCase();
+
+  // Guillemets « idem » : on recopie la valeur de la ligne au-dessus (sécurité si la lecture les a laissés)
+  var prev = { client: '', lieu: '' };
+  var lignes = (data.lignes || []).map(function(l) {
+    var client = String(l.client || '').trim().toUpperCase();
+    var lieu = String(l.lieu || '').trim().toUpperCase();
+    if (BL_DITTO.test(client)) client = prev.client;
+    if (BL_DITTO.test(lieu)) lieu = prev.lieu;
+    prev = { client: client, lieu: lieu };
+    return { bds: blNormBds(l.bds).replace(/\s+/g, ''), qte: Math.max(1, parseInt(l.qte, 10) || 1), client: client, lieu: lieu, incertain: !!l.incertain };
+  }).filter(function(l){ return l.bds || l.client; });
+
+  // Lieu du bon = lieu le plus fréquent des lignes
+  var compte = {};
+  lignes.forEach(function(l){ if (l.lieu) compte[l.lieu] = (compte[l.lieu] || 0) + 1; });
+  var lieu = Object.keys(compte).sort(function(a, b){ return compte[b] - compte[a]; })[0];
+  if (lieu) document.getElementById('bl-lieu').value = lieu;
+
+  var wgMap = blClientWG(_blCache || []);
+  var cont = document.getElementById('bl-lignes');
+  cont.innerHTML = '';
+  lignes.forEach(function(l) {
+    blAjouterLigne({ bds: l.bds, qte: l.qte, client: l.client, wg: wgMap[l.client] || '' }, true);
+    if (l.incertain) {
+      var row = cont.lastElementChild;
+      row.classList.add('bl-douteuse');
+      row.style.borderColor = '#F2B705'; row.style.background = '#FFFBEA';
+      row.insertAdjacentHTML('beforeend', '<div class="bl-douteuse-lbl" style="font-size:10px;font-weight:700;color:#9A6B00;margin-top:6px">⚠️ Lecture incertaine : vérifiez avec la photo</div>');
+      row.addEventListener('input', function onEdit() {
+        row.classList.remove('bl-douteuse'); row.style.borderColor = ''; row.style.background = '#fff';
+        var lbl = row.querySelector('.bl-douteuse-lbl'); if (lbl) lbl.remove();
+        row.removeEventListener('input', onEdit);
+      });
+    }
+  });
+  if (!lignes.length) blAjouterLigne({}, true);
+  blMajCompteur();
+  return lignes.length;
+}
+
+// ── Lien entre NC et bons de livraison ─────────────────
+// « PO L80452 », « l80452 » et « L 80452 » désignent la même référence
+function blCleRef(v) {
+  return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^PO(?=[A-Z]\d)/, '');
+}
+
+function blTrouverLivraisons(ref) {
+  var cle = blCleRef(ref);
+  if (!cle) return [];
+  var res = [];
+  (_blCache || []).forEach(function(b) {
+    (b.lignes || []).forEach(function(l) { if (blCleRef(l.bds) === cle) res.push({ bl: b, ligne: l }); });
+  });
+  return res.sort(function(a, b){ return blSortKey(a.bl) < blSortKey(b.bl) ? 1 : -1; });
+}
+
+// Dans le détail d'une NC : « Livré le … » si l'IR figure sur un bon de livraison
+async function blAfficherLienNC(ir) {
+  var el = document.getElementById('nc-bl-link');
+  if (!el || !blCleRef(ir)) return;
+  await blLoad();
+  var trouves = blTrouverLivraisons(ir);
+  if (document.getElementById('nc-bl-link') !== el) return;   // l'utilisateur a ouvert une autre NC entre-temps
+  el.innerHTML = trouves.length
+    ? trouves.map(function(t) {
+        return '<div data-blid="' + blEsc(t.bl.id) + '" onclick="ouvrirDetailBL(this.dataset.blid)" style="background:#E1F5EE;border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:#0F6E56;cursor:pointer">' +
+          '📑 <strong>Livré le ' + blEsc(t.bl.dateLivraison || '--') + '</strong>' +
+          ' · ' + blEsc(t.ligne.qte || 1) + ' colis' + (t.ligne.client ? ' · client ' + blEsc(t.ligne.client) : '') +
+          '<div style="font-size:11px;color:#3c7d69;margin-top:2px">Bon préparé par ' + blEsc(t.bl.preparateur || '--') + ' — touchez pour voir la photo ›</div>' +
+        '</div>';
+      }).join('')
+    : '<div style="font-size:11px;color:#999;margin-bottom:10px">📑 Aucun bon de livraison archivé pour cet IR.</div>';
 }
 
 async function supprimerBL() {
@@ -13443,6 +13587,8 @@ loadCatalog();
       </label>
       <div style="font-size:11px;color:var(--muted);margin-top:4px">Une photo par page, bien à plat et lisible : c'est votre preuve de livraison.</div>
       <div id="bl-photos-preview" class="photo-thumbs"></div>
+      <button type="button" id="bl-lire-btn" onclick="blLirePhoto()" style="display:none;margin-top:10px;width:100%;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✨ Lire la photo automatiquement</button>
+      <div id="bl-lire-msg" style="display:none;margin-top:8px;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:600"></div>
     </div>
 
     <div class="row2">
