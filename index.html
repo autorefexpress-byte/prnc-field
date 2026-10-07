@@ -12901,6 +12901,25 @@ function blMailReception() {
   if (url) window.location.href = url;
 }
 
+// Personnes en copie de l'accusé de réception (le magasin reste le destinataire principal)
+var BL_CC_RECEPTION = [
+  'pascal.bafue@pronyresources.com',
+  'abel.vendegou@pronyresources.com',
+  'regis.eurimindia@pronyresources.com',
+  'Pierre.Zeoula@pronyresources.com',
+  'Michel.Pierucci@pronyresources.com',
+  'kendji.kasovimoin.EXT@pronyresources.com',
+  'ryan.qapitro.EXT@pronyresources.com'
+];
+
+function blCopieReception() {
+  var liste = BL_CC_RECEPTION.slice();
+  var moi = typeof getUserEmail === 'function' ? getUserEmail() : '';
+  if (moi) liste.push(moi);                       // le préposé lui-même, s'il a renseigné son email
+  var vus = {};
+  return liste.filter(function(m){ var k = m.toLowerCase(); if (vus[k] || k === MAIL_MAGASIN.toLowerCase()) return false; vus[k] = 1; return true; });
+}
+
 function blUrlMailReception() {
   var b = blBLCourant(); if (!b) return '';
   var lignes = b.lignes || [], s = blStatsRecu(lignes);
@@ -12922,7 +12941,8 @@ function blUrlMailReception() {
   corps.push('', 'Le détail ligne par ligne figure dans l\'accusé de réception joint (PDF).');
   corps.push('', 'Réception vérifiée par ' + ((b.reception && b.reception.par) || getUserName()) + ' le ' + ((b.reception && b.reception.date) || new Date().toLocaleDateString('fr-FR')) + '.',
     '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50');
-  return 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
+  return 'mailto:' + MAIL_MAGASIN + '?cc=' + blCopieReception().join(',') +
+    '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
 }
 
 // NC pré-remplie depuis une ligne manquante ou abîmée
