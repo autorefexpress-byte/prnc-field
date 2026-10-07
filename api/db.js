@@ -155,6 +155,15 @@ async function handlePlanningP17(req, res, id, method) {
     const rows = semaine
       ? await sql`SELECT * FROM planning WHERE semaine=${semaine} ORDER BY wo ASC`
       : await sql`SELECT * FROM planning ORDER BY updated_at DESC LIMIT 200`;
+    // Les photos appartiennent au WO, pas à la semaine : un WO replanifié reprend
+    // les photos les plus récentes enregistrées pour lui, quelle que soit la semaine.
+    if (rows.some(r => !(r.photos && r.photos.length))) {
+      const avecPhotos = await sql`SELECT wo, photos FROM planning
+        WHERE photos IS NOT NULL AND jsonb_array_length(photos) > 0 ORDER BY updated_at DESC`;
+      const parWo = {};
+      avecPhotos.forEach(r => { if (r.wo && !parWo[r.wo]) parWo[r.wo] = r.photos; });
+      rows.forEach(r => { if (!(r.photos && r.photos.length) && parWo[r.wo]) r.photos = parWo[r.wo]; });
+    }
     return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
   }
   if (method === 'POST') {
@@ -162,12 +171,15 @@ async function handlePlanningP17(req, res, id, method) {
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
       if (d.first !== false) await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+        await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
-                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+                  ${item.statut||'PLANIFIE'},${d.semaine},
+                  COALESCE((SELECT p2.photos FROM planning p2 WHERE p2.wo=${item.wo||null}
+                    AND p2.photos IS NOT NULL AND jsonb_array_length(p2.photos) > 0
+                    ORDER BY p2.updated_at DESC LIMIT 1), '[]'::jsonb))`;
       }
       await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active',${d.semaine})
         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
@@ -189,7 +201,8 @@ async function handlePlanningP17(req, res, id, method) {
     }
     if (d.wo && d.semaine) {
       if (d.statut !== undefined) await sql`UPDATE planning SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-      if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      // Photos rattachées au WO : la mise à jour vaut pour toutes les semaines où il est planifié
+      if (d.photos !== undefined) await sql`UPDATE planning SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo}`;
       if (d.remarque !== undefined) await sql`UPDATE planning SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
       return res.status(200).json({ ok: true });
     }

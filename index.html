@@ -9157,7 +9157,7 @@ function ouvrirPlanningModal(wo, semaine) {
   // Photos existantes (depuis mémoire)
   var photos = (item._photos || []).filter(Boolean);
   var photosExistHtml = '<div id="planning-photos-exist-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + planPhotosHtmlP17(wo, photos)
     + '</div>';
   // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
   setTimeout(function() {
@@ -9179,9 +9179,7 @@ function ouvrirPlanningModal(wo, semaine) {
         // Mettre à jour la zone photos dans la modal
         var zone = document.getElementById('planning-photos-exist-' + wo);
         if (!zone) return;
-        zone.innerHTML = freshPhotos.map(function(p){
-          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-        }).join('');
+        zone.innerHTML = planPhotosHtmlP17(wo, freshPhotos);
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-' + wo);
         if (prev) prev.innerHTML = '';
@@ -9338,6 +9336,41 @@ function pChip(l,v) {
 
 var _planningPhotosCache = {};
 
+// Vignettes des photos d'un WO du planning MCREPAR, avec bouton de suppression
+function planPhotosHtmlP17(wo, photos) {
+  return (photos || []).filter(Boolean).map(function(p, i) {
+    return '<div style="position:relative;width:72px;height:72px">'
+      + '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">'
+      + '<button type="button" title="Supprimer la photo" aria-label="Supprimer la photo" data-wo="' + wo + '" data-i="' + i + '" '
+      + 'onclick="event.stopPropagation();supprimerPhotoPlanning(this.dataset.wo, +this.dataset.i)" '
+      + 'style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:#e74c3c;color:#fff;font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0">✕</button>'
+    + '</div>';
+  }).join('');
+}
+
+// Retire une photo du WO (toutes semaines). Le fichier reste sur Cloudinary :
+// la même photo peut aussi figurer dans l'historique de l'équipement.
+async function supprimerPhotoPlanning(wo, i) {
+  if (typeof checkConsultMode === 'function' && checkConsultMode()) return;
+  var item = _planningData.find(function(x){ return x.wo === wo; });
+  if (!item || !item._photos || !item._photos[i]) return;
+  if (!confirm('Supprimer cette photo du WO ' + wo + ' ?\nElle disparaîtra de toutes les semaines du planning.')) return;
+  var avant = item._photos.slice();
+  item._photos.splice(i, 1);
+  var zone = document.getElementById('planning-photos-exist-' + wo);
+  if (zone) zone.innerHTML = planPhotosHtmlP17(wo, item._photos);
+  try {
+    var res = await fetch(DB_API + '?table=planning', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wo: item.wo, semaine: item.semaine || _semaineActive || '', photos: item._photos }) }).then(function(r){ return r.json(); });
+    if (!res || !res.ok) throw new Error(JSON.stringify(res));
+    _allPlanningCache = null;
+  } catch(e) {
+    item._photos = avant;
+    if (zone) zone.innerHTML = planPhotosHtmlP17(wo, item._photos);
+    alert('Suppression impossible : ' + e.message);
+  }
+}
+
 async function ajouterPhotoPlanning(wo, input) {
   var files=Array.from(input.files); if(!files.length) return;
   var preview=document.getElementById('planning-photos-preview-'+wo);
@@ -9379,9 +9412,7 @@ async function ajouterPhotoPlanning(wo, input) {
       body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
     if(res&&res.ok){
       var zone=document.getElementById('planning-photos-exist-'+wo);
-      if(zone) zone.innerHTML=item._photos.map(function(p){
-        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-      }).join('');
+      if(zone) zone.innerHTML=planPhotosHtmlP17(wo, item._photos);
       var prev2=document.getElementById('planning-photos-preview-'+wo);
       if(prev2) prev2.innerHTML='';
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
