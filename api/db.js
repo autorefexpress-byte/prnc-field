@@ -99,6 +99,13 @@ async function ensureTables() {
       statut TEXT DEFAULT 'Ouvert', mois TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
 
+    await sql`CREATE TABLE IF NOT EXISTS bl (
+      id TEXT PRIMARY KEY, date_livraison TEXT, preparateur TEXT, livreur TEXT,
+      lieu TEXT, lignes JSONB DEFAULT '[]', photos JSONB DEFAULT '[]',
+      remarques TEXT, saisi_par TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+    await sql`ALTER TABLE bl ADD COLUMN IF NOT EXISTS reception JSONB`;
+
     _tablesReady = true;
   } catch(e) {
     console.error('ensureTables err:', e);
@@ -633,6 +640,49 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown nc request' });
+    }
+
+    // ── BONS DE LIVRAISON (archive des BL papier du magasin) ──
+    if (table === 'bl') {
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM bl ORDER BY created_at DESC`);
+      if (method === 'POST') {
+        const d = req.body || {};
+        if (!d.id) return res.status(400).json({ error: 'id manquant' });
+        await sql`INSERT INTO bl (id,date_livraison,preparateur,livreur,lieu,lignes,photos,remarques,saisi_par)
+          VALUES (${d.id},${d.dateLivraison||null},${d.preparateur||null},${d.livreur||null},
+            ${d.lieu||null},${JSON.stringify(d.lignes||[])}::jsonb,${JSON.stringify(d.photos||[])}::jsonb,
+            ${d.remarques||null},${d.saisiPar||null})`;
+        return res.status(201).json({ ok: true });
+      }
+      // Réception : statut de chaque ligne (reçu / manquant / abîmé) et validation globale
+      if (method === 'PATCH' && id && req.query?.action === 'reception') {
+        const d = req.body || {};
+        const r = await sql`UPDATE bl SET lignes=${JSON.stringify(d.lignes||[])}::jsonb,
+          reception=${d.reception ? JSON.stringify(d.reception) : null}::jsonb WHERE id=${id} RETURNING id`;
+        if (!r.length) return res.status(404).json({ error: 'BL introuvable' });
+        return res.status(200).json({ ok: true });
+      }
+      if (method === 'PATCH' && id) {
+        const d = req.body || {};
+        const old = await sql`SELECT photos FROM bl WHERE id=${id}`;
+        if (!old.length) return res.status(404).json({ error: 'BL introuvable' });
+        await sql`UPDATE bl SET date_livraison=${d.dateLivraison||null}, preparateur=${d.preparateur||null},
+          livreur=${d.livreur||null}, lieu=${d.lieu||null},
+          lignes=${JSON.stringify(d.lignes||[])}::jsonb, photos=${JSON.stringify(d.photos||[])}::jsonb,
+          remarques=${d.remarques||null} WHERE id=${id}`;
+        // Supprimer sur Cloudinary les photos retirées du BL
+        const kept = new Set(d.photos || []);
+        const removed = (old[0].photos || []).filter(u => !kept.has(u));
+        if (removed.length) await deleteCloudinaryPhotos(removed);
+        return res.status(200).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        const old = await sql`SELECT photos FROM bl WHERE id=${id}`;
+        await sql`DELETE FROM bl WHERE id=${id}`;
+        if (old.length && (old[0].photos || []).length) await deleteCloudinaryPhotos(old[0].photos);
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown bl request' });
     }
 
     // ── HISTORIQUE GET ───────────────────────────────
