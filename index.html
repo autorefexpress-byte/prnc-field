@@ -13829,7 +13829,9 @@ async function genererRapportNC() {
     auteur,
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
   ].join('\n');
-  var mailHref = 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+  // Mêmes personnes en copie que l'accusé de réception
+  var cc = typeof blCopieReception === 'function' ? blCopieReception().join(',') : '';
+  var mailHref = 'mailto:' + MAIL_MAGASIN + '?' + (cc ? 'cc=' + cc + '&' : '') + 'subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
 
   var css =
     '@page{size:A4;margin:12mm}' +
