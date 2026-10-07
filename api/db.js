@@ -241,6 +241,14 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
     const rows = semaine
       ? await sql`SELECT * FROM planning_mcchaud WHERE semaine=${semaine} ORDER BY wo ASC`
       : await sql`SELECT * FROM planning_mcchaud ORDER BY updated_at DESC LIMIT 200`;
+    // Photos rattachées au WO (voir handlePlanningP17)
+    if (rows.some(r => !(r.photos && r.photos.length))) {
+      const avecPhotos = await sql`SELECT wo, photos FROM planning_mcchaud
+        WHERE photos IS NOT NULL AND jsonb_array_length(photos) > 0 ORDER BY updated_at DESC`;
+      const parWo = {};
+      avecPhotos.forEach(r => { if (r.wo && !parWo[r.wo]) parWo[r.wo] = r.photos; });
+      rows.forEach(r => { if (!(r.photos && r.photos.length) && parWo[r.wo]) r.photos = parWo[r.wo]; });
+    }
     return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
   }
   if (method === 'POST') {
@@ -248,12 +256,15 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
       if (d.first !== false) await sql`DELETE FROM planning_mcchaud WHERE semaine=${d.semaine}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning_mcchaud (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+        await sql`INSERT INTO planning_mcchaud (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
-                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+                  ${item.statut||'PLANIFIE'},${d.semaine},
+                  COALESCE((SELECT p2.photos FROM planning_mcchaud p2 WHERE p2.wo=${item.wo||null}
+                    AND p2.photos IS NOT NULL AND jsonb_array_length(p2.photos) > 0
+                    ORDER BY p2.updated_at DESC LIMIT 1), '[]'::jsonb))`;
       }
       await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcchaud',${d.semaine})
         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
@@ -270,7 +281,8 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
     const d = req.body || {};
     if (d.wo && d.semaine) {
       if (d.statut !== undefined) await sql`UPDATE planning_mcchaud SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-      if (d.photos !== undefined) await sql`UPDATE planning_mcchaud SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      // Photos rattachées au WO : valent pour toutes les semaines où il est planifié
+      if (d.photos !== undefined) await sql`UPDATE planning_mcchaud SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo}`;
       if (d.remarque !== undefined) await sql`UPDATE planning_mcchaud SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
       return res.status(200).json({ ok: true });
     }
@@ -309,6 +321,14 @@ async function handlePlanningMCELINS(req, res, id, method) {
     const rows = semaine
       ? await sql`SELECT * FROM planning_mcelins WHERE semaine=${semaine} ORDER BY wo ASC`
       : await sql`SELECT * FROM planning_mcelins ORDER BY updated_at DESC LIMIT 200`;
+    // Photos rattachées au WO (voir handlePlanningP17)
+    if (rows.some(r => !(r.photos && r.photos.length))) {
+      const avecPhotos = await sql`SELECT wo, photos FROM planning_mcelins
+        WHERE photos IS NOT NULL AND jsonb_array_length(photos) > 0 ORDER BY updated_at DESC`;
+      const parWo = {};
+      avecPhotos.forEach(r => { if (r.wo && !parWo[r.wo]) parWo[r.wo] = r.photos; });
+      rows.forEach(r => { if (!(r.photos && r.photos.length) && parWo[r.wo]) r.photos = parWo[r.wo]; });
+    }
     return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
   }
   if (method === 'POST') {
@@ -316,12 +336,15 @@ async function handlePlanningMCELINS(req, res, id, method) {
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
       if (d.first !== false) await sql`DELETE FROM planning_mcelins WHERE semaine=${d.semaine}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning_mcelins (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine)
+        await sql`INSERT INTO planning_mcelins (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
-                  ${item.statut||'PLANIFIE'},${d.semaine})`;
+                  ${item.statut||'PLANIFIE'},${d.semaine},
+                  COALESCE((SELECT p2.photos FROM planning_mcelins p2 WHERE p2.wo=${item.wo||null}
+                    AND p2.photos IS NOT NULL AND jsonb_array_length(p2.photos) > 0
+                    ORDER BY p2.updated_at DESC LIMIT 1), '[]'::jsonb))`;
       }
       await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcelins',${d.semaine})
         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
@@ -338,7 +361,8 @@ async function handlePlanningMCELINS(req, res, id, method) {
     const d = req.body || {};
     if (d.wo && d.semaine) {
       if (d.statut !== undefined) await sql`UPDATE planning_mcelins SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
-      if (d.photos !== undefined) await sql`UPDATE planning_mcelins SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
+      // Photos rattachées au WO : valent pour toutes les semaines où il est planifié
+      if (d.photos !== undefined) await sql`UPDATE planning_mcelins SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo}`;
       if (d.remarque !== undefined) await sql`UPDATE planning_mcelins SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine}`;
       return res.status(200).json({ ok: true });
     }
@@ -377,6 +401,14 @@ async function handlePlanningMCMECUS(req, res, id, method) {
     const rows = semaine
       ? await sql`SELECT * FROM planning_mcmecus WHERE semaine=${semaine} ORDER BY wo ASC`
       : await sql`SELECT * FROM planning_mcmecus ORDER BY updated_at DESC LIMIT 200`;
+    // Photos rattachées au WO (voir handlePlanningP17)
+    if (rows.some(r => !(r.photos && r.photos.length))) {
+      const avecPhotos = await sql`SELECT wo, photos FROM planning_mcmecus
+        WHERE photos IS NOT NULL AND jsonb_array_length(photos) > 0 ORDER BY updated_at DESC`;
+      const parWo = {};
+      avecPhotos.forEach(r => { if (r.wo && !parWo[r.wo]) parWo[r.wo] = r.photos; });
+      rows.forEach(r => { if (!(r.photos && r.photos.length) && parWo[r.wo]) r.photos = parWo[r.wo]; });
+    }
     return res.status(200).json({ rows, semaine_active: semaine, semaines: semaines.map(s => s.semaine) });
   }
   if (method === 'POST') {
@@ -385,12 +417,15 @@ async function handlePlanningMCMECUS(req, res, id, method) {
       const categorie = d.categorie || null;
       if (d.first !== false) await sql`DELETE FROM planning_mcmecus WHERE semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning_mcmecus (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,categorie)
+        await sql`INSERT INTO planning_mcmecus (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,categorie,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
-                  ${item.statut||'PLANIFIE'},${d.semaine},${categorie})`;
+                  ${item.statut||'PLANIFIE'},${d.semaine},${categorie},
+                  COALESCE((SELECT p2.photos FROM planning_mcmecus p2 WHERE p2.wo=${item.wo||null}
+                    AND p2.photos IS NOT NULL AND jsonb_array_length(p2.photos) > 0
+                    ORDER BY p2.updated_at DESC LIMIT 1), '[]'::jsonb))`;
       }
       await sql`INSERT INTO planning_config (key,value) VALUES ('semaine_active_mcmecus',${d.semaine})
         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`;
@@ -408,7 +443,8 @@ async function handlePlanningMCMECUS(req, res, id, method) {
     if (d.wo && d.semaine) {
       const categorie = d.categorie || null;
       if (d.statut !== undefined) await sql`UPDATE planning_mcmecus SET statut=${d.statut}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
-      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
+      // Photos rattachées au WO : valent pour toutes les semaines où il est planifié
+      if (d.photos !== undefined) await sql`UPDATE planning_mcmecus SET photos=${JSON.stringify(d.photos||[])}::jsonb, updated_at=NOW() WHERE wo=${d.wo}`;
       if (d.remarque !== undefined) await sql`UPDATE planning_mcmecus SET remarque=${d.remarque||null}, updated_at=NOW() WHERE wo=${d.wo} AND semaine=${d.semaine} AND categorie IS NOT DISTINCT FROM ${categorie}`;
       return res.status(200).json({ ok: true });
     }

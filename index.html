@@ -9336,37 +9336,50 @@ function pChip(l,v) {
 
 var _planningPhotosCache = {};
 
-// Vignettes des photos d'un WO du planning MCREPAR, avec bouton de suppression
-function planPhotosHtmlP17(wo, photos) {
+// Plannings ayant des photos par WO : '' = MCREPAR, mc = MCCHAUD, mcel = MCELINS, mcmec = MCMECUS
+var PLAN_PHOTO_CFG = {
+  '':    { table: 'planning',          zone: 'planning-photos-exist-',       item: function(wo){ return _planningData.find(function(x){ return x.wo === wo; }); },     semaine: function(){ return _semaineActive; },      cache: function(){ _allPlanningCache = null; } },
+  mc:    { table: 'planning_mcchaud',  zone: 'planning-photos-exist-mc-',    item: function(wo){ return _planningDataMC.find(function(x){ return x.wo === wo; }); },   semaine: function(){ return _semaineActiveMC; },    cache: function(){ _allPlanningCacheMC = null; } },
+  mcel:  { table: 'planning_mcelins',  zone: 'planning-photos-exist-mcel-',  item: function(wo){ return _planningDataMCEL.find(function(x){ return x.wo === wo; }); }, semaine: function(){ return _semaineActiveMCEL; },  cache: function(){ _allPlanningCacheMCEL = null; } },
+  mcmec: { table: 'planning_mcmecus',  zone: 'planning-photos-exist-mcmec-', item: function(wo, cat){ return _findPlanItemMCMEC(wo, cat); },                           semaine: function(){ return _semaineActiveMCMEC; }, cache: function(){ _allPlanningCacheMCMEC = null; } }
+};
+
+// Vignettes des photos d'un WO du planning, avec bouton de suppression
+function planPhotosHtml(wo, photos, plan, categorie) {
   return (photos || []).filter(Boolean).map(function(p, i) {
     return '<div style="position:relative;width:72px;height:72px">'
       + '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">'
-      + '<button type="button" title="Supprimer la photo" aria-label="Supprimer la photo" data-wo="' + wo + '" data-i="' + i + '" '
-      + 'onclick="event.stopPropagation();supprimerPhotoPlanning(this.dataset.wo, +this.dataset.i)" '
+      + '<button type="button" title="Supprimer la photo" aria-label="Supprimer la photo" data-wo="' + wo + '" data-i="' + i + '" data-plan="' + (plan || '') + '" data-cat="' + (categorie || '') + '" '
+      + 'onclick="event.stopPropagation();supprimerPhotoPlanning(this.dataset.wo, +this.dataset.i, this.dataset.plan, this.dataset.cat)" '
       + 'style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:#e74c3c;color:#fff;font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0">✕</button>'
     + '</div>';
   }).join('');
 }
+function planPhotosHtmlP17(wo, photos) { return planPhotosHtml(wo, photos, ''); }
 
 // Retire une photo du WO (toutes semaines). Le fichier reste sur Cloudinary :
 // la même photo peut aussi figurer dans l'historique de l'équipement.
-async function supprimerPhotoPlanning(wo, i) {
+async function supprimerPhotoPlanning(wo, i, plan, categorie) {
   if (typeof checkConsultMode === 'function' && checkConsultMode()) return;
-  var item = _planningData.find(function(x){ return x.wo === wo; });
+  var cfg = PLAN_PHOTO_CFG[plan || ''];
+  if (!cfg) return;
+  var item = cfg.item(wo, categorie || null);
   if (!item || !item._photos || !item._photos[i]) return;
   if (!confirm('Supprimer cette photo du WO ' + wo + ' ?\nElle disparaîtra de toutes les semaines du planning.')) return;
   var avant = item._photos.slice();
   item._photos.splice(i, 1);
-  var zone = document.getElementById('planning-photos-exist-' + wo);
-  if (zone) zone.innerHTML = planPhotosHtmlP17(wo, item._photos);
+  var zone = document.getElementById(cfg.zone + wo);
+  if (zone) zone.innerHTML = planPhotosHtml(wo, item._photos, plan, item.categorie);
   try {
-    var res = await fetch(DB_API + '?table=planning', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wo: item.wo, semaine: item.semaine || _semaineActive || '', photos: item._photos }) }).then(function(r){ return r.json(); });
+    var body = { wo: item.wo, semaine: item.semaine || cfg.semaine() || '', photos: item._photos };
+    if (plan === 'mcmec') body.categorie = item.categorie;
+    var res = await fetch(DB_API + '?table=' + cfg.table, { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body) }).then(function(r){ return r.json(); });
     if (!res || !res.ok) throw new Error(JSON.stringify(res));
-    _allPlanningCache = null;
+    cfg.cache();
   } catch(e) {
     item._photos = avant;
-    if (zone) zone.innerHTML = planPhotosHtmlP17(wo, item._photos);
+    if (zone) zone.innerHTML = planPhotosHtml(wo, item._photos, plan, item.categorie);
     alert('Suppression impossible : ' + e.message);
   }
 }
@@ -10210,7 +10223,7 @@ function ouvrirPlanningModalMC(wo, semaine) {
   // Photos existantes (depuis mémoire)
   var photos = (item._photos || []).filter(Boolean);
   var photosExistHtml = '<div id="planning-photos-exist-mc-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + planPhotosHtml(wo, photos, 'mc')
     + '</div>';
   // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
   setTimeout(function() {
@@ -10232,9 +10245,7 @@ function ouvrirPlanningModalMC(wo, semaine) {
         // Mettre à jour la zone photos dans la modal
         var zone = document.getElementById('planning-photos-exist-mc-' + wo);
         if (!zone) return;
-        zone.innerHTML = freshPhotos.map(function(p){
-          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-        }).join('');
+        zone.innerHTML = planPhotosHtml(wo, freshPhotos, 'mc');
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mc-' + wo);
         if (prev) prev.innerHTML = '';
@@ -10428,9 +10439,7 @@ async function ajouterPhotoPlanningMC(wo, input) {
       body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
     if(res&&res.ok){
       var zone=document.getElementById('planning-photos-exist-mc-'+wo);
-      if(zone) zone.innerHTML=item._photos.map(function(p){
-        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-      }).join('');
+      if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mc');
       var prev2=document.getElementById('planning-photos-preview-mc-'+wo);
       if(prev2) prev2.innerHTML='';
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
@@ -10810,7 +10819,7 @@ function ouvrirPlanningModalMCEL(wo, semaine) {
   // Photos existantes (depuis mémoire)
   var photos = (item._photos || []).filter(Boolean);
   var photosExistHtml = '<div id="planning-photos-exist-mcel-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + planPhotosHtml(wo, photos, 'mcel')
     + '</div>';
   // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
   setTimeout(function() {
@@ -10832,9 +10841,7 @@ function ouvrirPlanningModalMCEL(wo, semaine) {
         // Mettre à jour la zone photos dans la modal
         var zone = document.getElementById('planning-photos-exist-mcel-' + wo);
         if (!zone) return;
-        zone.innerHTML = freshPhotos.map(function(p){
-          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-        }).join('');
+        zone.innerHTML = planPhotosHtml(wo, freshPhotos, 'mcel');
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mcel-' + wo);
         if (prev) prev.innerHTML = '';
@@ -11009,9 +11016,7 @@ async function ajouterPhotoPlanningMCEL(wo, input) {
       body:JSON.stringify({wo:item.wo,semaine:semaineSave,photos:item._photos})}).then(r=>r.json());
     if(res&&res.ok){
       var zone=document.getElementById('planning-photos-exist-mcel-'+wo);
-      if(zone) zone.innerHTML=item._photos.map(function(p){
-        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-      }).join('');
+      if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mcel');
       var prev2=document.getElementById('planning-photos-preview-mcel-'+wo);
       if(prev2) prev2.innerHTML='';
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
@@ -11430,7 +11435,7 @@ function ouvrirPlanningModalMCMEC(wo, semaine, categorie) {
   // Photos existantes (depuis mémoire)
   var photos = (item._photos || []).filter(Boolean);
   var photosExistHtml = '<div id="planning-photos-exist-mcmec-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    + photos.map(function(p){ return '<img src="' + p + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer">'; }).join('')
+    + planPhotosHtml(wo, photos, 'mcmec', item.categorie)
     + '</div>';
   // Fetch live depuis Neon pour s'assurer d'avoir les photos à jour
   setTimeout(function() {
@@ -11452,9 +11457,7 @@ function ouvrirPlanningModalMCMEC(wo, semaine, categorie) {
         // Mettre à jour la zone photos dans la modal
         var zone = document.getElementById('planning-photos-exist-mcmec-' + wo);
         if (!zone) return;
-        zone.innerHTML = freshPhotos.map(function(p){
-          return '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-        }).join('');
+        zone.innerHTML = planPhotosHtml(wo, freshPhotos, 'mcmec', item.categorie);
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mcmec-' + wo);
         if (prev) prev.innerHTML = '';
@@ -11638,9 +11641,7 @@ async function ajouterPhotoPlanningMCMEC(wo, input, categorie) {
       body:JSON.stringify({wo:item.wo,semaine:semaineSave,categorie:item.categorie,photos:item._photos})}).then(r=>r.json());
     if(res&&res.ok){
       var zone=document.getElementById('planning-photos-exist-mcmec-'+wo);
-      if(zone) zone.innerHTML=item._photos.map(function(p){
-        return '<img src="'+p+'" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">';
-      }).join('');
+      if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mcmec', item.categorie);
       var prev2=document.getElementById('planning-photos-preview-mcmec-'+wo);
       if(prev2) prev2.innerHTML='';
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
