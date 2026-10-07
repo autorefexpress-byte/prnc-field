@@ -13224,6 +13224,26 @@ async function renderKPI() {
     if (r.wg) byPeriod[k][r.wg] = (byPeriod[k][r.wg]||0)+1;
   });
 
+  // Agrégation des colis livrés (bons de livraison) par période
+  var blData = [];
+  try { blData = typeof blLoad === 'function' ? await blLoad(true) : []; } catch(e) {}
+  var colisByPeriod = {};
+  blData.forEach(function(bl) {
+    var k = kpiPeriodKey(kpiParseFR(bl.dateLivraison), periode);
+    if (!k) return;
+    var c = colisByPeriod[k] || (colisByPeriod[k] = { colis: 0, lignes: 0, bons: 0, colisOk: 0, anomalies: 0, aRecep: 0, wg: {} });
+    c.bons++;
+    (bl.lignes || []).forEach(function(l) {
+      var q = +l.qte || 1;
+      c.colis += q; c.lignes++;
+      if (l.recu === 'ok') c.colisOk += q;
+      else if (l.recu === 'manquant' || l.recu === 'abime') c.anomalies++;
+      var w = WG_ORDER.indexOf(l.wg) >= 0 ? l.wg : 'AUTRE';
+      c.wg[w] = (c.wg[w] || 0) + q;
+    });
+    if (!bl.reception && (bl.lignes || []).length) c.aRecep++;
+  });
+
   // Agrégation des NC par période
   var ncByPeriod = {};
   ncData.forEach(function(nc) {
@@ -13235,7 +13255,7 @@ async function renderKPI() {
 
   // Plus ancienne période avec des données : borne du bouton ◀
   var currentKey0 = kpiPeriodKey(kpiPeriodDate(0, periode), periode);
-  var allKeys = Object.keys(byPeriod).concat(Object.keys(ncByPeriod)).filter(function(k){ return k <= currentKey0; }).sort();
+  var allKeys = Object.keys(byPeriod).concat(Object.keys(ncByPeriod), Object.keys(colisByPeriod)).filter(function(k){ return k <= currentKey0; }).sort();
   var oldestKey = allKeys[0] || currentKey0;
   var maxOffset = 0;
   while (maxOffset < 520 && kpiPeriodKey(kpiPeriodDate(maxOffset, periode), periode) > oldestKey) maxOffset++;
@@ -13304,6 +13324,48 @@ async function renderKPI() {
         '</div>' +
         '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
           '<div style="background:' + WG_COLORS[wg] + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+        '</div></div>';
+    }).join('') +
+  '</div>';
+
+  // Colis livrés (bons de livraison) de la période sélectionnée
+  var cSel = colisByPeriod[selKey] || { colis: 0, lignes: 0, bons: 0, colisOk: 0, anomalies: 0, aRecep: 0, wg: {} };
+  var cPrev = colisByPeriod[prevKey] || { colis: 0 };
+  var cDiff = cSel.colis - cPrev.colis;
+  var C_BL = '#0F6E56';
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:' + C_BL + ';margin-bottom:10px">📑 Colis livres (bons de livraison)</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="flex:1;background:#E1F5EE;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:' + C_BL + '">' + cSel.colis + '</div>' +
+        '<div style="font-size:10px;color:' + C_BL + '">' + periodeLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#555">' + cPrev.colis + '</div>' +
+        '<div style="font-size:10px;color:#888">' + prevLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
+        '<div style="font-size:24px;font-weight:800;color:#555">' + (cDiff > 0 ? '+' : '') + cDiff + '</div>' +
+        '<div style="font-size:10px;color:#888">Evolution</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:11px">' +
+      '<span style="background:#F0F4FF;color:#1F3864;border-radius:10px;padding:3px 8px;font-weight:700">' + cSel.bons + ' bon' + (cSel.bons > 1 ? 's' : '') + ' · ' + cSel.lignes + ' ligne' + (cSel.lignes > 1 ? 's' : '') + '</span>' +
+      '<span style="background:#E2EFDA;color:#375623;border-radius:10px;padding:3px 8px;font-weight:700">✅ ' + cSel.colisOk + '/' + cSel.colis + ' colis receptionnes</span>' +
+      (cSel.anomalies ? '<span style="background:#FCE4D6;color:#C00000;border-radius:10px;padding:3px 8px;font-weight:700">⚠️ ' + cSel.anomalies + ' anomalie' + (cSel.anomalies > 1 ? 's' : '') + '</span>' : '') +
+      (cSel.aRecep ? '<span style="background:#FFF8E1;color:#9A6B00;border-radius:10px;padding:3px 8px;font-weight:700">⏳ ' + cSel.aRecep + ' bon' + (cSel.aRecep > 1 ? 's' : '') + ' a receptionner</span>' : '') +
+    '</div>' +
+    WG_ORDER.concat(['AUTRE']).filter(function(wg){ return wg !== 'AUTRE' || cSel.wg.AUTRE; }).map(function(wg) {
+      var val = cSel.wg[wg] || 0;
+      var pct = cSel.colis > 0 ? Math.round(val / cSel.colis * 100) : 0;
+      var col = WG_COLORS[wg] || '#888';
+      return '<div style="margin-bottom:6px">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+          '<span style="font-size:12px;font-weight:700;color:' + col + '">' + (wg === 'AUTRE' ? 'Sans workgroup' : wg) + '</span>' +
+          '<span style="font-size:12px">' + val + ' colis (' + pct + '%)</span>' +
+        '</div>' +
+        '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
+          '<div style="background:' + col + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
         '</div></div>';
     }).join('') +
   '</div>';
@@ -13381,6 +13443,28 @@ async function renderKPI() {
         '<span style="font-size:10px;color:#666">' + wg + '</span></div>';
     }).join('') +
   '</div></div>';
+
+  // Historique colis livrés -- une barre par période
+  var maxColis = Math.max.apply(null, histOffsets.map(function(o){
+    var c = colisByPeriod[kpiPeriodKey(kpiPeriodDate(o, periode), periode)];
+    return c ? c.colis : 0;
+  }).concat([1]));
+  html += '<div style="' + card + '">' +
+    '<div style="font-weight:700;color:' + C_BL + ';margin-bottom:10px">Historique -- Colis livres par periode</div>';
+  html += histOffsets.map(function(o) {
+    var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    var c = colisByPeriod[p] || { colis: 0, bons: 0 };
+    var isSel = o === _kpiOffset;
+    var barPct = c.colis > 0 ? Math.max(4, Math.round(c.colis / maxColis * 100)) : 0;
+    return '<div onclick="kpiGoTo(' + o + ')" title="' + p + ' : ' + c.colis + ' colis, ' + c.bons + ' bon(s)" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel ? 'font-weight:700;color:' + C_BL : 'color:#555') + '">' + p + (isSel ? ' •' : '') + '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
+        '<div style="width:' + barPct + '%;height:8px;border-radius:8px;background:' + C_BL + '"></div>' +
+      '</div>' +
+      '<div style="width:34px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:' + C_BL + '">' + c.colis + '</div>' +
+    '</div>';
+  }).join('');
+  html += '<div style="font-size:10px;color:#999;text-align:right;padding-top:6px;border-top:1px solid #f0f0f0">Colis = total des quantites des bons de livraison · touchez une ligne pour l\'afficher</div></div>';
 
   // Historique NC -- total, traitées, ouvertes par période
   var maxNc = Math.max.apply(null, histOffsets.map(function(o){
@@ -13678,14 +13762,31 @@ async function exportKpiExcel() {
     byMois[m].total++;
     if(r.wg) byMois[m][r.wg]=(byMois[m][r.wg]||0)+1;
   });
-  var ws3 = XLSX.utils.aoa_to_sheet([['Mois','Total Arrivees','MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS','NC Total']].concat(
+  var blData = [];
+  try { blData = typeof blLoad === 'function' ? await blLoad(true) : []; } catch(e) {}
+  var colisMois = {};
+  blData.forEach(function(bl) {
+    var p = (bl.dateLivraison || '').split('/'); if (p.length !== 3) return;
+    var m = p[2] + '-' + p[1];
+    colisMois[m] = (colisMois[m] || 0) + (bl.lignes || []).reduce(function(s, l){ return s + (+l.qte || 1); }, 0);
+    if (!byMois[m]) byMois[m] = {total:0,MCCHAUD:0,MCREPAR:0,STROB:0,MCELINS:0,MCMECUS:0};
+  });
+  var ws3 = XLSX.utils.aoa_to_sheet([['Mois','Total Arrivees','MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS','NC Total','Colis livres (BL)']].concat(
     Object.keys(byMois).sort().reverse().map(function(m){
       var d=byMois[m];
       var nc=ncData.filter(function(n){ return n.mois===m; }).length;
-      return [m,d.total,d.MCCHAUD||0,d.MCREPAR||0,d.STROB||0,d.MCELINS||0,d.MCMECUS||0,nc];
+      return [m,d.total,d.MCCHAUD||0,d.MCREPAR||0,d.STROB||0,d.MCELINS||0,d.MCMECUS||0,nc,colisMois[m]||0];
     })
   ));
   XLSX.utils.book_append_sheet(wb, ws3, 'KPI par mois');
+
+  var ws4 = XLSX.utils.aoa_to_sheet([['Date livraison','Preparateur','Lieu','Lignes','Colis','Colis recus','Anomalies','Reception validee le']].concat(
+    blData.slice().sort(function(a, b){ return blSortKey(a) < blSortKey(b) ? 1 : -1; }).map(function(bl) {
+      var s = blStatsRecu(bl.lignes || []);
+      return [bl.dateLivraison || '', bl.preparateur || '', bl.lieu || '', s.total, s.colis, s.colisOk, s.manquant + s.abime, bl.reception ? bl.reception.date : ''];
+    })
+  ));
+  XLSX.utils.book_append_sheet(wb, ws4, 'Bons de livraison');
 
   var today = new Date().toLocaleDateString('fr-FR').replace(/[/]/g,'-');
   XLSX.writeFile(wb, 'PRNC_KPI_' + today + '.xlsx');
