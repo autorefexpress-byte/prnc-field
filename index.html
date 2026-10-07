@@ -11841,6 +11841,7 @@ async function initNcForm() {
   });
   var dest = document.getElementById('nc-rec-destinataire'); if (dest) dest.value = '';
   updateNcFormVisibility();
+  if (typeof blAppliquerPrefillNC === 'function') blAppliquerPrefillNC();   // NC créée depuis une ligne de BL
 }
 
 async function saveNC() {
@@ -12168,7 +12169,7 @@ async function blLoad(force) {
       return {
         id: d.id, dateLivraison: d.date_livraison || '', preparateur: d.preparateur || '',
         livreur: d.livreur || '', lieu: d.lieu || '', lignes: d.lignes || [], photos: d.photos || [],
-        remarques: d.remarques || '', saisiPar: d.saisi_par || ''
+        remarques: d.remarques || '', saisiPar: d.saisi_par || '', reception: d.reception || null
       };
     }) : [];
   } catch(e) {
@@ -12243,7 +12244,8 @@ async function renderBL(force) {
       '<div style="flex:1;min-width:0">' +
         '<div style="display:flex;justify-content:space-between;gap:8px">' +
           '<div style="font-weight:800;color:#1F3864;font-size:14px">' + blEsc(b.dateLivraison || '--') + '</div>' +
-          '<div style="font-size:11px;font-weight:700;color:#0F6E56;background:#E1F5EE;border-radius:10px;padding:2px 8px;white-space:nowrap">' + lignes.length + ' ligne' + (lignes.length > 1 ? 's' : '') + '</div>' +
+          '<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">' + blBadgeReception(b) +
+            '<div style="font-size:11px;font-weight:700;color:#0F6E56;background:#E1F5EE;border-radius:10px;padding:2px 8px;white-space:nowrap">' + lignes.length + ' ligne' + (lignes.length > 1 ? 's' : '') + '</div></div>' +
         '</div>' +
         '<div style="font-size:11px;color:#666;margin-top:2px">Préparé par ' + blEsc(b.preparateur || '--') + (b.lieu ? ' · ' + blEsc(b.lieu) : '') + '</div>' +
         '<div style="margin-top:2px">' + apercu + '</div>' +
@@ -12340,6 +12342,7 @@ function blAjouterLigne(l, sansFocus) {
   var cont = document.getElementById('bl-lignes');
   var row = document.createElement('div');
   row.className = 'bl-ligne';
+  if (l.recu) row.dataset.recu = l.recu;   // statut de réception conservé lors d'une modification
   row.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px';
   row.innerHTML =
     '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
@@ -12388,7 +12391,8 @@ function blLireLignes() {
       bds: blNormBds(r.querySelector('.bl-bds').value),
       qte: Math.max(1, parseInt(r.querySelector('.bl-qte').value, 10) || 1),
       client: r.querySelector('.bl-client').value.trim().toUpperCase(),
-      wg: r.querySelector('.bl-wg').value
+      wg: r.querySelector('.bl-wg').value,
+      recu: r.dataset.recu || undefined
     };
   }).filter(function(l){ return l.bds || l.client; });
 }
@@ -12518,7 +12522,7 @@ async function blConstruireExcel(ExcelJS, b) {
   var rows = lignes.map(function(l, i) {
     var cle = blCleRef(l.bds);
     var nc = cle && Array.isArray(_ncCache) ? _ncCache.filter(function(n){ return blCleRef(n.ir) === cle; }) : [];
-    var obs = nc.map(function(n){ return (n.numero || 'NC') + ' (' + (n.statut || 'Ouvert') + ')'; }).join(', ');
+    var obs = (l.recu ? [BL_RECU[l.recu].lbl] : []).concat(nc.map(function(n){ return (n.numero || 'NC') + ' (' + (n.statut || 'Ouvert') + ')'; })).join(', ');
     return [i + 1, l.bds || '', +l.qte || 1, 'Colis/palette', b.lieu || '', l.client || '', l.wg || '', obs];
   });
   if (!rows.length) rows.push(['', '', null, '', '', '', '', 'Aucune ligne saisie : voir la photo du BLI']);
@@ -12533,7 +12537,8 @@ async function blConstruireExcel(ExcelJS, b) {
   var first = HR + 1, last = HR + rows.length;
   for (var r = first; r <= last; r++) {
     for (c = 1; c <= 8; c++) st(ws.getRow(r).getCell(c), { bold: c === 2 || c === 3, h: [1, 3, 4, 5, 7].indexOf(c) >= 0 ? 'center' : 'left', wrap: c === 8 });
-    if (ws.getRow(r).getCell(8).value && lignes.length) [2, 8].forEach(function(cc){ ws.getRow(r).getCell(cc).fill = fill(ORANGE); });
+    var lr = lignes[r - first] || {};
+    if (lignes.length && (lr.recu === 'manquant' || lr.recu === 'abime' || /NC/.test(ws.getRow(r).getCell(8).value || ''))) [2, 8].forEach(function(cc){ ws.getRow(r).getCell(cc).fill = fill(ORANGE); });
   }
 
   // Total sous le tableau (comme le manifeste)
@@ -12557,7 +12562,8 @@ async function blConstruireExcel(ExcelJS, b) {
 
   // Légende
   var notes = [
-    'Légende : Observation = non-conformités enregistrées dans PRNC Field pour ce N° BDS / PO (en orange).',
+    'Légende : Observation = statut de réception (Reçu / Manquant / Abîmé) et NC enregistrées dans PRNC Field ; en orange = anomalie.',
+    b.reception ? 'Réception validée le ' + b.reception.date + ' par ' + b.reception.par + ' : ' + blStatsRecu(lignes).ok + '/' + lignes.length + ' lignes reçues.' : 'Réception non encore validée.',
     'Saisi par ' + (b.saisiPar || '--') + (b.remarques ? ' — Remarques : ' + b.remarques : '') + '.',
     'Colonnes Colisage, Lieu et Workgroup : listes déroulantes (onglet caché _Données).'
   ];
@@ -12600,6 +12606,7 @@ function blBadgeNC(bds) {
 }
 
 async function ouvrirDetailBL(id) {
+  if (id !== _blDetailId) _blRecepEdit = false;
   try { await ncLoad(); } catch(e) {}
   var b = (_blCache || []).find(function(x){ return x.id === id; });
   if (!b) return;
@@ -12614,28 +12621,233 @@ async function ouvrirDetailBL(id) {
       info('Date de livraison', b.dateLivraison) + info('Lieu', b.lieu) +
       info('Préparateur', b.preparateur) + info('Livreur', b.livreur) +
     '</div>' +
+    (b.photos.length ? (
     '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:4px 2px 6px">📷 Bon de livraison (' + b.photos.length + ' photo' + (b.photos.length > 1 ? 's' : '') + ') — touchez pour agrandir</div>' +
     '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch">' +
       b.photos.map(function(u) {
         return '<a href="' + blEsc(u) + '" target="_blank" rel="noopener"><img src="' + blEsc(u) + '" alt="Photo du bon de livraison" style="height:180px;border-radius:10px;border:1px solid var(--border)"></a>';
       }).join('') +
-    '</div>' +
-    '<div style="background:#fff;border-radius:14px;padding:6px 12px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
-      '<div style="display:flex;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:8px 0 6px;border-bottom:1px solid var(--border)">' +
-        '<div style="width:22px">#</div><div style="flex:1">N° BDS / PO</div><div style="width:38px;text-align:center">Qté</div><div style="flex:1">Client</div><div style="width:72px;text-align:right">WG</div></div>' +
-      (lignes.length ? lignes.map(function(l, i) {
-        return '<div style="display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid #f0f0f0">' +
-          '<div style="width:22px;flex-shrink:0;color:#999;font-size:11px">' + (i+1) + '</div>' +
-          '<div style="flex:1;min-width:0;font-weight:800;color:#1F3864;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) + '</div>' +
-          '<div style="width:38px;flex-shrink:0;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
-          '<div style="flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere">' + blEsc(l.client || '--') + '</div>' +
-          '<div style="width:72px;flex-shrink:0;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
-        '</div>';
-      }).join('') : '<div style="padding:14px 0;color:#888;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
-    '</div>' +
+    '</div>'
+    ) : '') +
+    blHtmlReception(b) + blHtmlLignes(b) +
     (b.remarques ? '<div style="background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:10px">💬 ' + blEsc(b.remarques) + '</div>' : '') +
     '<div style="font-size:10px;color:#999;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
   show('s-bl-detail');
+}
+
+// ── Réception : vérifier chaque ligne puis prévenir le magasin ──
+var BL_RECU = {
+  '':       { ico: '⬜', lbl: 'À vérifier', bg: '#fff',    fg: '#888' },
+  ok:       { ico: '✅', lbl: 'Reçu',       bg: '#E2EFDA', fg: '#375623' },
+  manquant: { ico: '❌', lbl: 'Manquant',   bg: '#FCE4D6', fg: '#C00000' },
+  abime:    { ico: '⚠️', lbl: 'Abîmé',      bg: '#FFF3E0', fg: '#E65100' }
+};
+var BL_RECU_ORDRE = ['', 'ok', 'manquant', 'abime'];
+var _blRecepEdit = false;      // réception validée mais rouverte pour correction
+var _blRecuTimer = null;
+
+function blStatsRecu(lignes) {
+  var s = { total: lignes.length, ok: 0, manquant: 0, abime: 0, aVerifier: 0, colis: 0, colisOk: 0 };
+  lignes.forEach(function(l) {
+    var q = +l.qte || 1; s.colis += q;
+    if (l.recu === 'ok') { s.ok++; s.colisOk += q; }
+    else if (l.recu === 'manquant') s.manquant++;
+    else if (l.recu === 'abime') s.abime++;
+    else s.aVerifier++;
+  });
+  return s;
+}
+
+function blRecuVerrouille(b) { return !!b.reception && !_blRecepEdit; }
+
+function blBadgeReception(b) {
+  var lignes = b.lignes || [];
+  if (!lignes.length) return '';
+  var s = blStatsRecu(lignes), t, bg, fg;
+  if (b.reception) {
+    var n = s.manquant + s.abime;
+    if (n) { t = '⚠️ ' + n + ' anomalie' + (n > 1 ? 's' : ''); bg = '#FFF3E0'; fg = '#E65100'; }
+    else if (s.aVerifier) { t = '✅ Validé (' + s.ok + '/' + s.total + ')'; bg = '#E2EFDA'; fg = '#375623'; }
+    else { t = '✅ Tout reçu'; bg = '#E2EFDA'; fg = '#375623'; }
+  } else if (s.aVerifier < s.total) { t = '⏳ ' + (s.total - s.aVerifier) + '/' + s.total; bg = '#FFF8E1'; fg = '#9A6B00'; }
+  else { t = '📦 À réceptionner'; bg = '#F0F4FF'; fg = '#1F3864'; }
+  return '<div style="font-size:11px;font-weight:700;color:' + fg + ';background:' + bg + ';border-radius:10px;padding:2px 8px;white-space:nowrap">' + t + '</div>';
+}
+
+function blHtmlReception(b) {
+  var lignes = b.lignes || [];
+  if (!lignes.length) return '';
+  var s = blStatsRecu(lignes);
+  var carte = 'border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)';
+  var btn = 'border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit';
+  if (blRecuVerrouille(b)) {
+    var r = b.reception, ok = !s.manquant && !s.abime && !s.aVerifier;
+    return '<div style="' + carte + ';background:' + (ok ? '#E2EFDA' : '#FFF3E0') + '">' +
+      '<div style="font-weight:800;color:' + (ok ? '#375623' : '#E65100') + ';font-size:14px">' +
+        (ok ? '✅ Tout reçu' : '⚠️ Réception avec anomalies') + '</div>' +
+      '<div style="font-size:12px;color:#444;margin-top:4px">' + s.ok + '/' + s.total + ' lignes reçues (' + s.colisOk + '/' + s.colis + ' colis)' +
+        (s.manquant ? ' · ❌ ' + s.manquant + ' manquante' + (s.manquant > 1 ? 's' : '') : '') +
+        (s.abime ? ' · ⚠️ ' + s.abime + ' abîmée' + (s.abime > 1 ? 's' : '') : '') +
+        (s.aVerifier ? ' · ⬜ ' + s.aVerifier + ' non vérifiée' + (s.aVerifier > 1 ? 's' : '') : '') + '</div>' +
+      '<div style="font-size:11px;color:#666;margin-top:2px">Validée le ' + blEsc(r.date || '--') + ' par ' + blEsc(r.par || '--') +
+        (r.mailEnvoye ? ' · magasin prévenu' : '') + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+        '<button onclick="blMailReception()" style="' + btn + ';flex:2;background:#1F3864;color:#fff">📧 Renvoyer au magasin</button>' +
+        '<button onclick="blModifierReception()" style="' + btn + ';flex:1;background:#fff;color:#1F3864">✏️ Corriger</button>' +
+      '</div></div>';
+  }
+  var pct = Math.round((s.total - s.aVerifier) / s.total * 100);
+  return '<div style="' + carte + ';background:#fff">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+      '<div style="font-weight:800;color:#1F3864;font-size:14px">📦 Réception</div>' +
+      '<div style="font-size:12px;color:#555"><b>' + (s.total - s.aVerifier) + '/' + s.total + '</b> vérifiées</div>' +
+    '</div>' +
+    '<div style="background:#eee;border-radius:4px;height:6px;margin:8px 0 6px"><div style="width:' + pct + '%;height:6px;border-radius:4px;background:#375623"></div></div>' +
+    '<div style="font-size:11px;color:#666">Touchez la case d\'une ligne : ⬜ → ✅ reçu → ❌ manquant → ⚠️ abîmé.' +
+      (s.manquant || s.abime ? ' <b style="color:#C00000">' + (s.manquant + s.abime) + ' anomalie' + (s.manquant + s.abime > 1 ? 's' : '') + '</b>' : '') + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button onclick="blToutRecu()" style="' + btn + ';flex:1;background:#E2EFDA;color:#375623">✅ Tout reçu</button>' +
+      '<button onclick="blValiderReception()" style="' + btn + ';flex:2;background:#375623;color:#fff">📧 Valider et prévenir le magasin</button>' +
+    '</div></div>';
+}
+
+function blHtmlLignes(b) {
+  var lignes = b.lignes || [], verrou = blRecuVerrouille(b);
+  return '<div style="background:#fff;border-radius:14px;padding:6px 12px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">' +
+    '<div style="display:flex;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:8px 0 6px;border-bottom:1px solid var(--border)">' +
+      '<div style="width:44px;flex-shrink:0">Reçu</div><div style="flex:1">N° BDS / PO</div><div style="width:38px;flex-shrink:0;text-align:center">Qté</div><div style="flex:1">Client</div><div style="width:72px;flex-shrink:0;text-align:right">WG</div></div>' +
+    (lignes.length ? lignes.map(function(l, i) {
+      var st = BL_RECU[l.recu || ''] || BL_RECU[''];
+      var anomalie = l.recu === 'manquant' || l.recu === 'abime';
+      return '<div style="display:flex;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid #f0f0f0' + (anomalie ? ';background:' + st.bg : '') + '">' +
+        '<div style="width:44px;flex-shrink:0;text-align:center">' +
+          '<button ' + (verrou ? 'disabled ' : 'onclick="blCycleRecu(' + i + ')" ') + 'title="' + st.lbl + '" aria-label="Ligne ' + (i+1) + ' : ' + st.lbl + '" ' +
+            'style="width:34px;height:34px;border-radius:8px;border:1.5px solid ' + (l.recu ? st.fg : '#ccc') + ';background:' + st.bg + ';font-size:16px;cursor:' + (verrou ? 'default' : 'pointer') + ';padding:0">' + st.ico + '</button>' +
+          '<div style="font-size:9px;color:#999">' + (i+1) + '</div></div>' +
+        '<div style="flex:1;min-width:0;font-weight:800;color:#1F3864;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) +
+          (anomalie ? '<div style="font-size:10px;font-weight:700;color:' + st.fg + '">' + st.lbl +
+            ' · <span onclick="blCreerNCDepuisLigne(' + i + ')" style="text-decoration:underline;cursor:pointer">➕ créer une NC</span></div>' : '') + '</div>' +
+        '<div style="width:38px;flex-shrink:0;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
+        '<div style="flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere">' + blEsc(l.client || '--') + '</div>' +
+        '<div style="width:72px;flex-shrink:0;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
+      '</div>';
+    }).join('') : '<div style="padding:14px 0;color:#888;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
+  '</div>';
+}
+
+function blBLCourant() { return (_blCache || []).find(function(x){ return x.id === _blDetailId; }); }
+
+function blRafraichirDetail() {
+  var y = window.scrollY;
+  ouvrirDetailBL(_blDetailId).then(function(){ window.scrollTo(0, y); });
+}
+
+// Enregistre les statuts de ligne (et la validation) ; regroupe les appuis rapprochés
+function blSauverRecu(b, immediat) {
+  clearTimeout(_blRecuTimer);
+  var envoi = function() {
+    return fetch(DB_API + '?table=bl&action=reception&id=' + encodeURIComponent(b.id), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lignes: b.lignes, reception: b.reception || null })
+    }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); })
+      .catch(function(e){ console.warn('BL reception save err', e); alert('Réception non enregistrée (connexion ?). Réessayez.'); });
+  };
+  if (immediat) return envoi();
+  _blRecuTimer = setTimeout(envoi, 700);
+  return Promise.resolve();
+}
+
+function blCycleRecu(i) {
+  if (checkConsultMode()) return;
+  var b = blBLCourant(); if (!b || blRecuVerrouille(b)) return;
+  var l = b.lignes[i];
+  l.recu = BL_RECU_ORDRE[(BL_RECU_ORDRE.indexOf(l.recu || '') + 1) % BL_RECU_ORDRE.length];
+  if (!l.recu) delete l.recu;
+  blSauverRecu(b);
+  blRafraichirDetail();
+}
+
+function blToutRecu() {
+  if (checkConsultMode()) return;
+  var b = blBLCourant(); if (!b || blRecuVerrouille(b)) return;
+  b.lignes.forEach(function(l){ if (!l.recu) l.recu = 'ok'; });   // garde les anomalies déjà marquées
+  blSauverRecu(b);
+  blRafraichirDetail();
+}
+
+async function blValiderReception() {
+  if (checkConsultMode()) return;
+  var b = blBLCourant(); if (!b) return;
+  var s = blStatsRecu(b.lignes || []);
+  if (s.aVerifier && !confirm(s.aVerifier + ' ligne(s) ne sont pas vérifiées. Elles seront signalées « non vérifiées » au magasin. Continuer ?')) return;
+  b.reception = { date: new Date().toLocaleDateString('fr-FR'), heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), par: getUserName(), mailEnvoye: true };
+  _blRecepEdit = false;
+  await blSauverRecu(b, true);
+  blRafraichirDetail();
+  blMailReception();
+}
+
+function blModifierReception() {
+  _blRecepEdit = true;
+  blRafraichirDetail();
+}
+
+function blMailReception() {
+  var url = blUrlMailReception();
+  if (url) window.location.href = url;
+}
+
+function blUrlMailReception() {
+  var b = blBLCourant(); if (!b) return '';
+  var lignes = b.lignes || [], s = blStatsRecu(lignes);
+  var ok = !s.manquant && !s.abime && !s.aVerifier;
+  var sujet = 'Accusé de réception BLI du ' + (b.dateLivraison || '') + (b.preparateur ? ' (' + b.preparateur + ')' : '') +
+    ' - ' + (ok ? 'TOUT REÇU' : (s.manquant + s.abime) + ' anomalie(s)');
+  var corps = ['Bonjour,', '',
+    'Réception du bon de livraison interne du ' + (b.dateLivraison || '--') + (b.preparateur ? ', préparé par ' + b.preparateur : '') + (b.lieu ? ', livré à ' + b.lieu : '') + ' :', '',
+    (ok ? '✅ Tout a bien été reçu : ' : 'Reçu : ') + s.ok + '/' + s.total + ' lignes, ' + s.colisOk + '/' + s.colis + ' colis.'];
+  var groupe = function(code, titre) {
+    var l2 = lignes.map(function(l, i){ return { l: l, i: i }; }).filter(function(x){ return (x.l.recu || '') === code; });
+    if (!l2.length) return;
+    corps.push('', titre + ' (' + l2.length + ') :');
+    l2.forEach(function(x){ corps.push('- Ligne ' + (x.i + 1) + ' : ' + (x.l.bds || '--') + ' x' + (x.l.qte || 1) + (x.l.client ? ' (' + x.l.client + ')' : '')); });
+  };
+  groupe('manquant', '❌ Manquant');
+  groupe('abime', '⚠️ Abîmé');
+  groupe('', '⬜ Non vérifié');
+  corps.push('', 'Réception vérifiée par ' + ((b.reception && b.reception.par) || getUserName()) + ' le ' + ((b.reception && b.reception.date) || new Date().toLocaleDateString('fr-FR')) + '.',
+    '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50');
+  return 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
+}
+
+// NC pré-remplie depuis une ligne manquante ou abîmée
+var _blPrefillNC = null;
+var BL_WG_NC = { MCCHAUD: 'chaud', MCREPAR: 'repar', MCELINS: 'elins', MCMECUS: 'mecus' };
+
+function blCreerNCDepuisLigne(i) {
+  var b = blBLCourant(); if (!b) return;
+  var l = b.lignes[i];
+  _blPrefillNC = {
+    ir: String(l.bds || '').split('/')[0].trim(),
+    wg: BL_WG_NC[l.wg] || '',
+    type: l.recu === 'abime' ? 'nc-type-endommage' : 'nc-type-quantite',
+    date: blFrToIso(b.dateLivraison || ''),
+    remarques: (l.recu === 'abime' ? 'Colis abîmé' : 'Colis manquant') + ' — ligne ' + (i + 1) + ' du BLI du ' + (b.dateLivraison || '--') +
+      (b.preparateur ? ' (préparé par ' + b.preparateur + ')' : '') + ' : ' + (l.bds || '--') + ' x' + (l.qte || 1) + (l.client ? ', client ' + l.client : '') + '.'
+  };
+  show('s-nc-nouveau');
+}
+
+// Appelée à la fin de initNcForm()
+function blAppliquerPrefillNC() {
+  var p = _blPrefillNC; _blPrefillNC = null;
+  if (!p) return;
+  var set = function(id, v){ var el = document.getElementById(id); if (el && v) el.value = v; };
+  set('nc-ir', p.ir); set('nc-remarques', p.remarques);
+  if (p.date) { set('nc-date-recep', p.date); if (typeof calcSemaineFromDate === 'function') calcSemaineFromDate(p.date); }
+  if (p.wg) setNcWG(p.wg);
+  var t = document.getElementById(p.type); if (t) t.checked = true;
+  if (typeof updateNcFormVisibility === 'function') updateNcFormVisibility();
 }
 
 // ── Import d'un BLI Excel envoyé par le magasin ────────

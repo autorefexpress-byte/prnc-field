@@ -104,6 +104,7 @@ async function ensureTables() {
       lieu TEXT, lignes JSONB DEFAULT '[]', photos JSONB DEFAULT '[]',
       remarques TEXT, saisi_par TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
+    await sql`ALTER TABLE bl ADD COLUMN IF NOT EXISTS reception JSONB`;
 
     _tablesReady = true;
   } catch(e) {
@@ -652,6 +653,14 @@ module.exports = async function handler(req, res) {
             ${d.lieu||null},${JSON.stringify(d.lignes||[])}::jsonb,${JSON.stringify(d.photos||[])}::jsonb,
             ${d.remarques||null},${d.saisiPar||null})`;
         return res.status(201).json({ ok: true });
+      }
+      // Réception : statut de chaque ligne (reçu / manquant / abîmé) et validation globale
+      if (method === 'PATCH' && id && req.query?.action === 'reception') {
+        const d = req.body || {};
+        const r = await sql`UPDATE bl SET lignes=${JSON.stringify(d.lignes||[])}::jsonb,
+          reception=${d.reception ? JSON.stringify(d.reception) : null}::jsonb WHERE id=${id} RETURNING id`;
+        if (!r.length) return res.status(404).json({ error: 'BL introuvable' });
+        return res.status(200).json({ ok: true });
       }
       if (method === 'PATCH' && id) {
         const d = req.body || {};
