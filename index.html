@@ -13606,7 +13606,7 @@ async function genererRapportNC() {
   var chartEvo = '<div class="vbars">' + evo.map(function(e) {
     var h = 140;
     var hRet = Math.round(e.ret / evoMax * h), hOuv = Math.round(e.ouv / evoMax * h);
-    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' NC (' + e.ret + ' traitees, ' + e.ouv + ' ouvertes)">' +
+    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' non-conformite(s) (' + e.ret + ' traitee(s), ' + e.ouv + ' ouverte(s))">' +
       '<div class="vval">' + e.total + '</div>' +
       '<div class="vstack" style="height:' + h + 'px">' +
         (e.ouv ? '<div style="height:' + hOuv + 'px;background:' + C_OUV + ';border-radius:4px 4px 0 0' + (e.ret ? ';margin-bottom:2px' : '') + '"></div>' : '') +
@@ -13710,7 +13710,7 @@ async function genererRapportNC() {
 
   var auteur = (typeof getUserName === 'function' && getUserName()) || '';
   var dateEdition = new Date().toLocaleDateString('fr-FR');
-  var sujet = 'Rapport magasin (livraisons et NC) - ' + titrePeriode + ' - PRNC P50';
+  var sujet = 'Rapport magasin (livraisons et non-conformites) - ' + titrePeriode + ' - PRNC P50';
   var corps = [
     'Bonjour,',
     '',
@@ -13721,9 +13721,9 @@ async function genererRapportNC() {
     '- Colis receptionnes : ' + colisOk + '/' + colis + (anomaliesRecep.length ? ', ' + anomaliesRecep.length + ' anomalie(s) de reception' : ''),
     '',
     'Non-conformites :',
-    '- NC sur la periode : ' + list.length + ' (' + diffTxt + '), soit ' + tauxNC + ' NC pour 100 colis livres',
+    '- Non-conformites sur la periode : ' + list.length + ' (' + diffTxt + '), soit ' + tauxNC + ' non-conformite(s) pour 100 colis livres',
     '- Traitees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
-    '- NC encore ouvertes, toutes periodes : ' + ouvertes.length,
+    '- Non-conformites encore ouvertes, toutes periodes : ' + ouvertes.length,
     '',
     'Cordialement,',
     auteur,
@@ -13783,7 +13783,7 @@ async function genererRapportNC() {
       '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div>' +
     '</div>' +
     '<div class="page">' +
-      '<header><div><h1>Rapport magasin : livraisons et NC</h1>' +
+      '<header><div><h1>Rapport magasin : livraisons et non-conformites</h1>' +
         '<div class="sub">Receptions pieces — PRNC Maintenance Centrale P50</div></div>' +
         '<div class="meta"><b style="font-size:14px;color:#1F3864">' + esc(titrePeriode) + '</b><br>' +
         'Edite le ' + dateEdition + (auteur ? '<br>par ' + esc(auteur) : '') + '<br>Destinataire : Magasin</div></header>' +
@@ -13792,14 +13792,14 @@ async function genererRapportNC() {
       '<div class="tiles avoid">' +
         '<div class="tile"><div class="n" style="color:' + C_BL + '">' + colis + '</div><div class="l">Colis livres</div><div class="l">' + esc(colisDiffTxt) + '</div></div>' +
         '<div class="tile"><div class="n">' + blSel.length + '</div><div class="l">Bon' + (blSel.length > 1 ? 's' : '') + ' de livraison</div><div class="l">' + nbLignesBL + ' ligne' + (nbLignesBL > 1 ? 's' : '') + '</div></div>' +
-        '<div class="tile"><div class="n">' + list.length + '</div><div class="l">NC sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
-        '<div class="tile"><div class="n">' + tauxNC + '</div><div class="l">NC pour 100 colis</div></div>' +
+        '<div class="tile"><div class="n">' + list.length + '</div><div class="l">Non-conformites sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
+        '<div class="tile"><div class="n">' + tauxNC + '</div><div class="l">Non-conformites pour 100 colis</div></div>' +
       '</div>' +
       '<div class="tiles avoid" style="margin-top:10px">' +
         '<div class="tile"><div class="n">' + colisOk + '<span style="font-size:14px;color:#5b6476">/' + colis + '</span></div><div class="l">Colis receptionnes</div>' + (blARecep ? '<div class="l">' + blARecep + ' bon(s) a receptionner</div>' : '') + '</div>' +
-        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>NC traitees</div></div>' +
-        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>NC ouvertes</div></div>' +
-        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement NC</div></div>' +
+        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Non-conformites traitees</div></div>' +
+        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>Non-conformites ouvertes</div></div>' +
+        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement des non-conformites</div></div>' +
       '</div>' +
 
       '<div class="grid2 avoid">' +
@@ -13813,18 +13813,18 @@ async function genererRapportNC() {
         : '<div class="empty">' + (colis ? 'Aucun colis manquant ou abime signale. ✔' : 'Aucun bon de livraison sur cette periode.') + '</div>') +
 
       '<div class="grid2 avoid">' +
-        '<div><h2>5. NC sur 6 periodes</h2>' + chartEvo + '</div>' +
-        '<div><h2>6. NC par type</h2>' + hbars(typeRows, '#1F4E79') +
-          '<h2>7. NC par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
+        '<div><h2>5. Non-conformites sur 6 periodes</h2>' + chartEvo + '</div>' +
+        '<div><h2>6. Non-conformites par type</h2>' + hbars(typeRows, '#1F4E79') +
+          '<h2>7. Non-conformites par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
       '</div>' +
 
-      '<h2>8. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
+      '<h2>8. Non-conformites ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
       (ouvertes.length
         ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>IR / WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
           '<div class="muted" style="margin-top:4px">Anciennete en orange au-dela de 14 jours, en rouge au-dela de 30 jours.</div>'
-        : '<div class="empty">Aucune NC ouverte. ✔</div>') +
+        : '<div class="empty">Aucune non-conformite ouverte. ✔</div>') +
 
-      '<h2>9. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
+      '<h2>9. Detail des non-conformites — ' + esc(titrePeriode) + '</h2>' +
       (list.length
         ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>IR / WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
         : '<div class="empty">Aucune non-conformite sur cette periode.</div>') +
@@ -14372,7 +14372,7 @@ loadCatalog();
     <!-- Boutons rapport / export -->
     <div style="padding:10px 14px 0">
       <button onclick="genererRapportNC()" style="width:100%;background:#C00000;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-        📄 Rapport magasin (colis + NC)
+        📄 Rapport magasin (colis + non-conformités)
       </button>
     </div>
     <div style="padding:10px 14px">
