@@ -2227,7 +2227,7 @@ function mailto(to, subj, body, cc) {
 
   const bodyTrimmed = body.length > 600 ? body.substring(0, 597) + '...' : body;
 
-  const toStr = allDests.join(',');
+  const toStr = allDests.join(';');   // Outlook attend des points-virgules
   let url = 'mailto:' + toStr;
   url += '?subject=' + encodeURIComponent(subj);
   url += '&body='    + encodeURIComponent(bodyTrimmed);
@@ -4541,7 +4541,7 @@ async function sendCreditMagasin() {
   if (!ir)  { alert('Le N° IR est obligatoire.'); return; }
   if (!date){ alert('La date de dépôt est obligatoire.'); return; }
 
-  var cc = (WG_CC_CREDIT[wg] || []).join(',');
+  var cc = (WG_CC_CREDIT[wg] || []).join(';');
   var subj = '[CREDIT MAGASIN] Retour piece -- IR ' + ir + (wo ? ' -- WO ' + wo : '');
   var bodyParts = [
     'Bonjour,', '',
@@ -8424,7 +8424,7 @@ function renderRelanceCard(r, urgent) {
   var wgContacts = WG_RELANCE[wg] || [];
   var toAddr  = emailDem || (wgContacts.length ? wgContacts[0] : '');
   var ccList  = emailDem ? wgContacts : wgContacts.slice(1);
-  var ccAddrs = ccList.join(',');
+  var ccAddrs = ccList.join(';');
 
   var mailTo = 'mailto:' + toAddr +
     '?subject=' + encodeURIComponent(sujet) +
@@ -11950,8 +11950,8 @@ async function saveNC() {
   );
   var body = bodyLines.join('\n');
 
-  var toList = NC_TO.join(',');
-  var ccList = (NC_CC[_ncWG] || []).join(',');
+  var toList = NC_TO.join(';');
+  var ccList = (NC_CC[_ncWG] || []).join(';');
   var mailTo = 'mailto:' + toList +
     '?subject=' + encodeURIComponent(subj) +
     '&body=' + encodeURIComponent(body) +
@@ -12130,8 +12130,8 @@ async function resoudreNC(label) {
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; }).join('\n');
 
-  var toList = NC_TO.join(',');
-  var ccList = (NC_CC[wgKey] || []).join(',');
+  var toList = NC_TO.join(';');
+  var ccList = (NC_CC[wgKey] || []).join(';');
   var mailTo = 'mailto:' + toList +
     '?subject=' + encodeURIComponent(subj) +
     '&body=' + encodeURIComponent(body) +
@@ -12941,7 +12941,7 @@ function blUrlMailReception() {
   corps.push('', 'Le détail ligne par ligne figure dans l\'accusé de réception joint (PDF).');
   corps.push('', 'Réception vérifiée par ' + ((b.reception && b.reception.par) || getUserName()) + ' le ' + ((b.reception && b.reception.date) || new Date().toLocaleDateString('fr-FR')) + '.',
     '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50');
-  return 'mailto:' + MAIL_MAGASIN + '?cc=' + blCopieReception().join(',') +
+  return 'mailto:' + MAIL_MAGASIN + '?cc=' + blCopieReception().join(';') +
     '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
 }
 
@@ -13830,7 +13830,7 @@ async function genererRapportNC() {
     'Prepose aux pieces | PRNC - Maintenance Centrale P50'
   ].join('\n');
   // Mêmes personnes en copie que l'accusé de réception
-  var cc = typeof blCopieReception === 'function' ? blCopieReception().join(',') : '';
+  var cc = typeof blCopieReception === 'function' ? blCopieReception().join(';') : '';
   var mailHref = 'mailto:' + MAIL_MAGASIN + '?' + (cc ? 'cc=' + cc + '&' : '') + 'subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
 
   var css =
