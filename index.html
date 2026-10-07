@@ -12717,7 +12717,8 @@ function blHtmlReception(b) {
       '<div style="font-size:11px;color:#666;margin-top:2px">Validée le ' + blEsc(r.date || '--') + ' par ' + blEsc(r.par || '--') +
         (r.mailEnvoye ? ' · magasin prévenu' : '') + '</div>' +
       '<div style="display:flex;gap:8px;margin-top:10px">' +
-        '<button onclick="blMailReception()" style="' + btn + ';flex:2;background:#1F3864;color:#fff">📧 Renvoyer au magasin</button>' +
+        '<button onclick="blAccuseReception()" style="' + btn + ';flex:2;background:#1F3864;color:#fff">📄 Accusé de réception</button>' +
+        '<button onclick="blMailReception()" style="' + btn + ';flex:1;background:#fff;color:#1F3864">📧 Mail</button>' +
         '<button onclick="blModifierReception()" style="' + btn + ';flex:1;background:#fff;color:#1F3864">✏️ Corriger</button>' +
       '</div></div>';
   }
@@ -12732,7 +12733,7 @@ function blHtmlReception(b) {
       (s.manquant || s.abime ? ' <b style="color:#C00000">' + (s.manquant + s.abime) + ' anomalie' + (s.manquant + s.abime > 1 ? 's' : '') + '</b>' : '') + '</div>' +
     '<div style="display:flex;gap:8px;margin-top:10px">' +
       '<button onclick="blToutRecu()" style="' + btn + ';flex:1;background:#E2EFDA;color:#375623">✅ Tout reçu</button>' +
-      '<button onclick="blValiderReception()" style="' + btn + ';flex:2;background:#375623;color:#fff">📧 Valider et prévenir le magasin</button>' +
+      '<button onclick="blValiderReception()" style="' + btn + ';flex:2;background:#375623;color:#fff">📧 Valider et envoyer l\'accusé au magasin</button>' +
     '</div></div>';
 }
 
@@ -12805,11 +12806,89 @@ async function blValiderReception() {
   var b = blBLCourant(); if (!b) return;
   var s = blStatsRecu(b.lignes || []);
   if (s.aVerifier && !confirm(s.aVerifier + ' ligne(s) ne sont pas vérifiées. Elles seront signalées « non vérifiées » au magasin. Continuer ?')) return;
+  var w = window.open('', '_blank');   // ouverte pendant l'appui, sinon le navigateur bloque la fenêtre
+  if (w) w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Préparation de l\'accusé de réception…</p>');
   b.reception = { date: new Date().toLocaleDateString('fr-FR'), heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), par: getUserName(), mailEnvoye: true };
   _blRecepEdit = false;
   await blSauverRecu(b, true);
   blRafraichirDetail();
-  blMailReception();
+  if (w) blAccuseReception(w); else blMailReception();
+}
+
+// ── Accusé de réception imprimable (visuel ligne par ligne pour le magasin) ──
+function blAccuseReception(win) {
+  var b = blBLCourant(); if (!b) return;
+  var w = win || window.open('', '_blank');
+  if (!w) { alert('Autorisez les fenêtres pop-up pour afficher l\'accusé de réception.'); return; }
+  var lignes = b.lignes || [], s = blStatsRecu(lignes), r = b.reception || {};
+  var ok = !s.manquant && !s.abime && !s.aVerifier;
+  var ST = {
+    ok:       { t: '✔ Reçu',      cls: 'ok' },
+    manquant: { t: '✖ Manquant',  cls: 'ko' },
+    abime:    { t: '⚠ Abîmé',     cls: 'ab' },
+    '':       { t: '○ Non vérifié', cls: 'nv' }
+  };
+  var rows = lignes.map(function(l, i) {
+    var st = ST[l.recu || ''] || ST[''];
+    return '<tr class="' + (st.cls === 'ok' ? '' : 'r-' + st.cls) + '">' +
+      '<td class="c">' + (i + 1) + '</td>' +
+      '<td><b>' + blEsc(l.bds || '--') + '</b></td>' +
+      '<td class="c">' + blEsc(l.qte || 1) + '</td>' +
+      '<td>' + blEsc(l.client || '--') + '</td>' +
+      '<td class="c">' + blEsc(l.wg || '') + '</td>' +
+      '<td><span class="st ' + st.cls + '">' + st.t + '</span></td>' +
+    '</tr>';
+  }).join('');
+  var titre = 'Accusé de réception — BLI du ' + (b.dateLivraison || '--');
+  var url = blUrlMailReception();
+  var css =
+    '@page{size:A4;margin:12mm}*{box-sizing:border-box}' +
+    'body{margin:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.page{max-width:820px;margin:0 auto;background:#fff;padding:26px 30px}' +
+    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#1F3864}' +
+    '.toolbar button,.toolbar a{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}' +
+    '.b1{background:#fff;color:#1F3864}.b2{background:#E65100;color:#fff}.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
+    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3864;padding-bottom:10px;margin-bottom:14px;gap:12px}' +
+    'h1{margin:0;font-size:21px;color:#1F3864}.sub{color:#5b6476;font-size:12px;margin-top:3px}.meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
+    '.verdict{border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:15px;font-weight:800}' +
+    '.verdict.ok{background:#E2EFDA;color:#2E5A1C}.verdict.ko{background:#FDEBDD;color:#A33A00}' +
+    '.tiles{display:flex;gap:10px;margin-bottom:14px}.tile{flex:1;border:1px solid #dde2ea;border-radius:10px;padding:10px;text-align:center}' +
+    '.tile .n{font-size:24px;font-weight:800}.tile .l{font-size:11px;color:#5b6476;margin-top:2px}' +
+    'table{width:100%;border-collapse:collapse;font-size:11px}th{background:#1F3864;color:#fff;text-align:left;padding:6px 5px}' +
+    'td{padding:5px;border-bottom:1px solid #e6e9ef}td.c,th.c{text-align:center}tr{break-inside:avoid}thead{display:table-header-group}' +
+    'tr.r-ko td{background:#FDEBDD}tr.r-ab td{background:#FFF3E0}tr.r-nv td{background:#F4F5F8}' +
+    '.st{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}' +
+    '.st.ok{background:#E2EFDA;color:#2E5A1C}.st.ko{background:#F8D3C5;color:#A30000}.st.ab{background:#FFE0B2;color:#8A4500}.st.nv{background:#E6E9EF;color:#5b6476}' +
+    '.sign{display:flex;gap:16px;margin-top:22px}.sign div{flex:1;border:1px solid #c9cfd9;border-radius:8px;padding:8px 10px;min-height:70px;font-size:11px;color:#5b6476}' +
+    '.sign b{display:block;color:#1F3864;font-size:12px;margin-bottom:4px}' +
+    'footer{margin-top:16px;padding-top:6px;border-top:1px solid #dde2ea;font-size:10px;color:#5b6476;display:flex;justify-content:space-between}' +
+    '@media (max-width:640px){.page{padding:14px}.tiles{flex-wrap:wrap}.tile{flex:1 1 40%}header{flex-direction:column;align-items:flex-start}.meta{text-align:left}table{font-size:10px}}' +
+    '@media print{body{background:#fff}.toolbar{display:none}.page{max-width:none;padding:0}}';
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + blEsc(titre) + '</title><style>' + css + '</style></head><body>' +
+    '<div class="toolbar"><button class="b1" onclick="window.print()">🖨 Imprimer / PDF</button>' +
+      (url ? '<a class="b2" href="' + blEsc(url) + '">📧 Envoyer au magasin</a>' : '') +
+      '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div></div>' +
+    '<div class="page">' +
+      '<header><div><h1>Accusé de réception</h1><div class="sub">Bon de livraison interne — PRNC Maintenance Centrale P50</div></div>' +
+        '<div class="meta"><b style="font-size:14px;color:#1F3864">BLI du ' + blEsc(b.dateLivraison || '--') + '</b><br>' +
+        'Préparé par ' + blEsc(b.preparateur || '--') + (b.livreur ? ' · livré par ' + blEsc(b.livreur) : '') + '<br>Lieu : ' + blEsc(b.lieu || '--') + '<br>' +
+        (b.reception ? 'Réceptionné le ' + blEsc(r.date) + (r.heure ? ' à ' + blEsc(r.heure) : '') + '<br>par ' + blEsc(r.par || '--') : 'Réception non encore validée') + '</div></header>' +
+      '<div class="verdict ' + (ok ? 'ok' : 'ko') + '">' + (ok ? '✔ Tout a bien été reçu' : '⚠ Réception avec anomalies : ' +
+        [s.manquant ? s.manquant + ' manquant' + (s.manquant > 1 ? 's' : '') : '', s.abime ? s.abime + ' abîmé' + (s.abime > 1 ? 's' : '') : '', s.aVerifier ? s.aVerifier + ' non vérifié' + (s.aVerifier > 1 ? 's' : '') : '']
+          .filter(Boolean).join(', ')) + '</div>' +
+      '<div class="tiles">' +
+        '<div class="tile"><div class="n">' + s.ok + '<span style="font-size:13px;color:#5b6476">/' + s.total + '</span></div><div class="l">Lignes reçues</div></div>' +
+        '<div class="tile"><div class="n">' + s.colisOk + '<span style="font-size:13px;color:#5b6476">/' + s.colis + '</span></div><div class="l">Colis reçus</div></div>' +
+        '<div class="tile"><div class="n">' + s.manquant + '</div><div class="l">✖ Manquants</div></div>' +
+        '<div class="tile"><div class="n">' + s.abime + '</div><div class="l">⚠ Abîmés</div></div>' +
+      '</div>' +
+      '<table><thead><tr><th class="c">#</th><th>N° BDS / PO</th><th class="c">Colis</th><th>Client</th><th class="c">WG</th><th>Réception</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="sign"><div><b>Réceptionné par</b>' + blEsc(r.par || getUserName()) + '<br>Préposé aux pièces — Maintenance Centrale P50</div>' +
+        '<div><b>Magasin</b>' + blEsc(b.preparateur || '') + '</div></div>' +
+      '<footer><span>PRNC Field — accusé de réception généré automatiquement</span><span>' + new Date().toLocaleDateString('fr-FR') + '</span></footer>' +
+    '</div></body></html>';
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 function blModifierReception() {
@@ -12840,6 +12919,7 @@ function blUrlMailReception() {
   groupe('manquant', '❌ Manquant');
   groupe('abime', '⚠️ Abîmé');
   groupe('', '⬜ Non vérifié');
+  corps.push('', 'Le détail ligne par ligne figure dans l\'accusé de réception joint (PDF).');
   corps.push('', 'Réception vérifiée par ' + ((b.reception && b.reception.par) || getUserName()) + ' le ' + ((b.reception && b.reception.date) || new Date().toLocaleDateString('fr-FR')) + '.',
     '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50');
   return 'mailto:' + MAIL_MAGASIN + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
