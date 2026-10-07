@@ -13534,9 +13534,12 @@ async function genererRapportNC() {
   w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Generation du rapport...</p>');
 
   var ncData = await ncLoad();
+  var blData = [];
+  try { blData = typeof blLoad === 'function' ? await blLoad(true) : []; } catch(e) {}
   var periode = _kpiPeriode;
   var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
   var WG_LIST = ['MCCHAUD','MCREPAR','MCELINS','MCMECUS'];
+  var C_BL = '#0F6E56';
   var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',MCELINS:'#1F4E79',MCMECUS:'#375623'};
   var C_RET = '#2E75B6', C_OUV = '#E65100'; // paire validée daltonisme
 
@@ -13554,6 +13557,28 @@ async function genererRapportNC() {
   var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
   var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
   var titrePeriode = kpiPeriodLabel(selKey, periode);
+
+  // ── Livraisons (bons de livraison) de la période
+  function blOfOffset(o) {
+    var k = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
+    return blData.filter(function(bl){ return kpiPeriodKey(kpiParseFR(bl.dateLivraison), periode) === k; });
+  }
+  function colisDe(bls) { return bls.reduce(function(s, bl){ return s + (bl.lignes || []).reduce(function(t, l){ return t + (+l.qte || 1); }, 0); }, 0); }
+  var blSel = blOfOffset(_kpiOffset);
+  var colis = colisDe(blSel), colisPrev = colisDe(blOfOffset(_kpiOffset + 1));
+  var colisDiff = colis - colisPrev;
+  var colisDiffTxt = (colisDiff > 0 ? '+' : '') + colisDiff + ' vs ' + kpiPeriodLabel(prevKey, periode);
+  var nbLignesBL = 0, colisOk = 0, blARecep = 0, anomaliesRecep = [], colisWG = {};
+  blSel.forEach(function(bl) {
+    if (!bl.reception && (bl.lignes || []).length) blARecep++;
+    (bl.lignes || []).forEach(function(lg, i) {
+      var q = +lg.qte || 1; nbLignesBL++;
+      if (lg.recu === 'ok') colisOk += q;
+      if (lg.recu === 'manquant' || lg.recu === 'abime') anomaliesRecep.push({ bl: bl, l: lg, i: i });
+      var wgk = WG_LIST.indexOf(lg.wg) >= 0 || lg.wg === 'STROB' ? lg.wg : 'Sans workgroup';
+      colisWG[wgk] = (colisWG[wgk] || 0) + q;
+    });
+  });
   var list = ncOfOffset(_kpiOffset);
   var prevCount = ncOfOffset(_kpiOffset + 1).length;
   var nbRet = list.filter(function(d){ return kpiNcResolu(d); }).length;
@@ -13561,6 +13586,7 @@ async function genererRapportNC() {
   var taux = list.length ? Math.round(nbRet / list.length * 100) : 0;
   var diff = list.length - prevCount;
   var diffTxt = (diff > 0 ? '+' : '') + diff + ' vs ' + kpiPeriodLabel(prevKey, periode);
+  var tauxNC = colis ? (Math.round(list.length / colis * 1000) / 10).toString().replace('.', ',') : '--';
 
   // Toutes les NC encore ouvertes (toutes périodes confondues) : à traiter par le magasin
   var today = new Date(); today.setHours(0,0,0,0);
@@ -13593,11 +13619,29 @@ async function genererRapportNC() {
   }).join('') + '</div>' +
   '<div class="legend"><span><i style="background:' + C_RET + '"></i>Traitees</span><span><i style="background:' + C_OUV + '"></i>Ouvertes</span></div>';
 
-  // ── Graphiques 2 et 3 : barres horizontales (une seule couleur par graphique)
-  function hbars(rows, color) {
+  // ── Évolution des colis livrés sur 6 périodes (une seule série)
+  var evoC = [];
+  for (var oc = _kpiOffset + 5; oc >= _kpiOffset; oc--) {
+    evoC.push({ key: kpiPeriodKey(kpiPeriodDate(oc, periode), periode), total: colisDe(blOfOffset(oc)), sel: oc === _kpiOffset });
+  }
+  var evoCMax = Math.max.apply(null, evoC.map(function(e){ return e.total; }).concat([1]));
+  var chartColis = '<div class="vbars">' + evoC.map(function(e) {
+    var h = 140, hc = Math.round(e.total / evoCMax * h);
+    return '<div class="vcol" title="' + esc(kpiPeriodLabel(e.key, periode)) + ' : ' + e.total + ' colis">' +
+      '<div class="vval">' + e.total + '</div>' +
+      '<div class="vstack" style="height:' + h + 'px">' + (e.total ? '<div style="height:' + hc + 'px;background:' + C_BL + ';border-radius:4px 4px 0 0"></div>' : '') + '</div>' +
+    '</div>';
+  }).join('') + '</div>' +
+  '<div class="vlbls">' + evoC.map(function(e) {
+    return '<div class="vlbl' + (e.sel ? ' sel' : '') + '">' + esc(e.key) + '</div>';
+  }).join('') + '</div>';
+
+  // ── Graphiques en barres horizontales (une seule couleur par graphique)
+  function hbars(rows, color, total) {
+    total = total == null ? list.length : total;
     var max = Math.max.apply(null, rows.map(function(r){ return r.v; }).concat([1]));
     return rows.map(function(r) {
-      var pct = list.length ? Math.round(r.v / list.length * 100) : 0;
+      var pct = total ? Math.round(r.v / total * 100) : 0;
       return '<div class="hrow" title="' + esc(r.label) + ' : ' + r.v + '">' +
         '<div class="hlbl">' + (r.dot ? '<i style="background:' + r.dot + '"></i>' : '') + esc(r.label) + '</div>' +
         '<div class="htrack"><div style="width:' + (r.v ? Math.max(2, Math.round(r.v / max * 100)) : 0) + '%;background:' + color + '"></div></div>' +
@@ -13611,6 +13655,19 @@ async function genererRapportNC() {
   var wgRows = WG_LIST.map(function(wg){
     return { label: wg, dot: WG_COLORS[wg], v: list.filter(function(d){ return d.wg === wg; }).length };
   });
+  var colisWGRows = WG_LIST.concat(['STROB', 'Sans workgroup']).filter(function(wg){ return WG_LIST.indexOf(wg) >= 0 || colisWG[wg]; }).map(function(wg){
+    return { label: wg, dot: WG_COLORS[wg] || (wg === 'STROB' ? '#0F6E56' : '#9aa3b2'), v: colisWG[wg] || 0 };
+  });
+  var anomRows = anomaliesRecep.map(function(x) {
+    return '<tr>' +
+      '<td><b>' + esc(x.l.bds || '--') + '</b></td>' +
+      '<td>' + esc(x.bl.dateLivraison || '--') + '<div class="muted">ligne ' + (x.i + 1) + (x.bl.preparateur ? ' · ' + esc(x.bl.preparateur) : '') + '</div></td>' +
+      '<td>' + esc(x.l.qte || 1) + '</td>' +
+      '<td>' + esc(x.l.client || '--') + '</td>' +
+      '<td>' + esc(x.l.wg || '--') + '</td>' +
+      '<td>' + (x.l.recu === 'abime' ? '<span class="badge ouv">⚠️ Abime</span>' : '<span class="badge ouv">❌ Manquant</span>') + '</td>' +
+    '</tr>';
+  }).join('');
 
   // ── Tableaux
   function scCell(o) {
@@ -13653,14 +13710,18 @@ async function genererRapportNC() {
 
   var auteur = (typeof getUserName === 'function' && getUserName()) || '';
   var dateEdition = new Date().toLocaleDateString('fr-FR');
-  var sujet = 'Rapport Non-Conformites - ' + titrePeriode + ' - PRNC P50';
+  var sujet = 'Rapport magasin (livraisons et NC) - ' + titrePeriode + ' - PRNC P50';
   var corps = [
     'Bonjour,',
     '',
-    'Veuillez trouver ci-joint le rapport des non-conformites de reception pour la periode : ' + titrePeriode + '.',
+    'Veuillez trouver ci-joint le rapport des livraisons et des non-conformites pour la periode : ' + titrePeriode + '.',
     '',
-    'Synthese :',
-    '- NC sur la periode : ' + list.length + ' (' + diffTxt + ')',
+    'Livraisons :',
+    '- Colis livres : ' + colis + ' (' + colisDiffTxt + '), ' + blSel.length + ' bon(s) de livraison, ' + nbLignesBL + ' ligne(s)',
+    '- Colis receptionnes : ' + colisOk + '/' + colis + (anomaliesRecep.length ? ', ' + anomaliesRecep.length + ' anomalie(s) de reception' : ''),
+    '',
+    'Non-conformites :',
+    '- NC sur la periode : ' + list.length + ' (' + diffTxt + '), soit ' + tauxNC + ' NC pour 100 colis livres',
     '- Traitees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
     '- NC encore ouvertes, toutes periodes : ' + ouvertes.length,
     '',
@@ -13715,39 +13776,55 @@ async function genererRapportNC() {
 
   var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Rapport NC ' + esc(titrePeriode) + '</title><style>' + css + '</style></head><body>' +
+    '<title>Rapport magasin ' + esc(titrePeriode) + '</title><style>' + css + '</style></head><body>' +
     '<div class="toolbar">' +
       '<button class="b1" onclick="window.print()">🖨 Imprimer / PDF</button>' +
       '<a class="b2" href="' + esc(mailHref) + '">📧 Envoyer au magasin</a>' +
       '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div>' +
     '</div>' +
     '<div class="page">' +
-      '<header><div><h1>Rapport des non-conformites</h1>' +
+      '<header><div><h1>Rapport magasin : livraisons et NC</h1>' +
         '<div class="sub">Receptions pieces — PRNC Maintenance Centrale P50</div></div>' +
         '<div class="meta"><b style="font-size:14px;color:#1F3864">' + esc(titrePeriode) + '</b><br>' +
         'Edite le ' + dateEdition + (auteur ? '<br>par ' + esc(auteur) : '') + '<br>Destinataire : Magasin</div></header>' +
 
       '<h2>1. Synthese</h2>' +
       '<div class="tiles avoid">' +
+        '<div class="tile"><div class="n" style="color:' + C_BL + '">' + colis + '</div><div class="l">Colis livres</div><div class="l">' + esc(colisDiffTxt) + '</div></div>' +
+        '<div class="tile"><div class="n">' + blSel.length + '</div><div class="l">Bon' + (blSel.length > 1 ? 's' : '') + ' de livraison</div><div class="l">' + nbLignesBL + ' ligne' + (nbLignesBL > 1 ? 's' : '') + '</div></div>' +
         '<div class="tile"><div class="n">' + list.length + '</div><div class="l">NC sur la periode</div><div class="l">' + esc(diffTxt) + '</div></div>' +
-        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>Traitees</div></div>' +
-        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>Ouvertes</div></div>' +
-        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement</div></div>' +
+        '<div class="tile"><div class="n">' + tauxNC + '</div><div class="l">NC pour 100 colis</div></div>' +
+      '</div>' +
+      '<div class="tiles avoid" style="margin-top:10px">' +
+        '<div class="tile"><div class="n">' + colisOk + '<span style="font-size:14px;color:#5b6476">/' + colis + '</span></div><div class="l">Colis receptionnes</div>' + (blARecep ? '<div class="l">' + blARecep + ' bon(s) a receptionner</div>' : '') + '</div>' +
+        '<div class="tile"><div class="n">' + nbRet + '</div><div class="l"><i style="background:' + C_RET + '"></i>NC traitees</div></div>' +
+        '<div class="tile"><div class="n">' + nbOuv + '</div><div class="l"><i style="background:' + C_OUV + '"></i>NC ouvertes</div></div>' +
+        '<div class="tile"><div class="n">' + taux + '%</div><div class="l">Taux de traitement NC</div></div>' +
       '</div>' +
 
       '<div class="grid2 avoid">' +
-        '<div><h2>2. Evolution sur 6 periodes</h2>' + chartEvo + '</div>' +
-        '<div><h2>3. Repartition par type</h2>' + hbars(typeRows, '#1F4E79') +
-          '<h2>4. Repartition par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
+        '<div><h2>2. Colis livres sur 6 periodes</h2>' + chartColis + '</div>' +
+        '<div><h2>3. Colis livres par workgroup</h2>' + hbars(colisWGRows, C_BL, colis) + '</div>' +
       '</div>' +
 
-      '<h2>5. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
+      '<h2>4. Anomalies de reception (' + anomaliesRecep.length + ')</h2>' +
+      (anomaliesRecep.length
+        ? '<div class="tw"><table><thead><tr><th>N° BDS / PO</th><th>Livre le</th><th>Colis</th><th>Client</th><th>WG</th><th>Anomalie</th></tr></thead><tbody>' + anomRows + '</tbody></table></div>'
+        : '<div class="empty">' + (colis ? 'Aucun colis manquant ou abime signale. ✔' : 'Aucun bon de livraison sur cette periode.') + '</div>') +
+
+      '<div class="grid2 avoid">' +
+        '<div><h2>5. NC sur 6 periodes</h2>' + chartEvo + '</div>' +
+        '<div><h2>6. NC par type</h2>' + hbars(typeRows, '#1F4E79') +
+          '<h2>7. NC par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
+      '</div>' +
+
+      '<h2>8. NC ouvertes a traiter (' + ouvertes.length + ', toutes periodes)</h2>' +
       (ouvertes.length
         ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>Anciennete</th><th>WG</th><th>IR / WO</th><th>Type</th><th>Commande</th><th>Recu</th></tr></thead><tbody>' + ouvRows + '</tbody></table></div>' +
           '<div class="muted" style="margin-top:4px">Anciennete en orange au-dela de 14 jours, en rouge au-dela de 30 jours.</div>'
         : '<div class="empty">Aucune NC ouverte. ✔</div>') +
 
-      '<h2>6. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
+      '<h2>9. Detail des NC — ' + esc(titrePeriode) + '</h2>' +
       (list.length
         ? '<div class="tw"><table><thead><tr><th>N°</th><th>Recue le</th><th>WG</th><th>IR / WO / TAG</th><th>Type</th><th>Commande</th><th>Recu</th><th>Statut</th></tr></thead><tbody>' + detailRows + '</tbody></table></div>'
         : '<div class="empty">Aucune non-conformite sur cette periode.</div>') +
@@ -14295,7 +14372,7 @@ loadCatalog();
     <!-- Boutons rapport / export -->
     <div style="padding:10px 14px 0">
       <button onclick="genererRapportNC()" style="width:100%;background:#C00000;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-        📄 Rapport NC pour le magasin
+        📄 Rapport magasin (colis + NC)
       </button>
     </div>
     <div style="padding:10px 14px">
