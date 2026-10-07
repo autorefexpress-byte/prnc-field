@@ -1,4 +1,4 @@
-const CACHE = 'prnc-v5';
+const CACHE = 'prnc-v6';
 const FILES = [
   './',
   './index.html',
