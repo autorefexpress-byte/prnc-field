@@ -12168,7 +12168,7 @@ async function blLoad(force) {
     _blCache = Array.isArray(data) ? data.map(function(d) {
       return {
         id: d.id, dateLivraison: d.date_livraison || '', preparateur: d.preparateur || '',
-        livreur: d.livreur || '', lieu: d.lieu || '', lignes: d.lignes || [], photos: d.photos || [],
+        livreur: d.livreur || '', lieu: d.lieu || '', lignes: blCompleterWG(d.lignes || []), photos: d.photos || [],
         remarques: d.remarques || '', saisiPar: d.saisi_par || '', reception: d.reception || null
       };
     }) : [];
@@ -12185,13 +12185,38 @@ function blFrToIso(fr) { if (!fr) return ''; var p = fr.split('/'); return p.len
 function blSortKey(b) { return blFrToIso(b.dateLivraison) + '|' + b.id; }
 
 // Dernier workgroup connu pour chaque client (appris des BL déjà saisis)
+// Workgroup de chaque client, donné par le préposé (fait foi sur les choix faits dans les BL)
+var BL_WG_CLIENTS = {
+  'VENDEGOU.A': 'MCCHAUD',
+  'PIERUCCI.M': 'MCELINS',
+  'ZEOULA.P': 'MCMECUS', 'PREVOT.S': 'MCMECUS', 'WATU ALBERT': 'MCMECUS', 'HUGO BAERT': 'MCMECUS', 'NATOLIS.R': 'MCMECUS',
+  'KASOVIMOIN.K': 'MCREPAR', 'SANTACROCE SONNY': 'MCREPAR', 'DELLAC.J-F': 'MCREPAR'
+};
+
+// « BAERT HUGO », « Hugo.Baert » et « HUGO BAERT » donnent la même clé
+function blCleClient(n) {
+  return String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ').trim().split(' ').filter(Boolean).sort().join(' ');
+}
+
+// Table clé client -> workgroup : choix faits dans les BL, puis la liste ci-dessus qui l'emporte
 function blClientWG(list) {
-  // Point de départ : clients présents dans les contacts NC (NC_CC) ; les BL saisis l'emportent ensuite
-  var map = { 'VENDEGOU.A': 'MCCHAUD', 'KASOVIMOIN.K': 'MCREPAR', 'PIERUCCI.M': 'MCELINS', 'ZEOULA.P': 'MCMECUS' };
+  var map = {};
   list.slice().sort(function(a, b){ return blSortKey(a) < blSortKey(b) ? -1 : 1; }).forEach(function(b) {
-    (b.lignes || []).forEach(function(l) { if (l.client && l.wg) map[l.client.toUpperCase()] = l.wg; });
+    (b.lignes || []).forEach(function(l) { if (l.client && l.wg) map[blCleClient(l.client)] = l.wg; });
   });
+  Object.keys(BL_WG_CLIENTS).forEach(function(c){ map[blCleClient(c)] = BL_WG_CLIENTS[c]; });
   return map;
+}
+
+function blWGClient(map, client) { return map[blCleClient(client)] || ''; }
+
+// Lignes déjà enregistrées sans workgroup : complétées avec la liste des clients (en mémoire)
+function blCompleterWG(lignes) {
+  var map = {};
+  Object.keys(BL_WG_CLIENTS).forEach(function(c){ map[blCleClient(c)] = BL_WG_CLIENTS[c]; });
+  lignes.forEach(function(l){ if (!l.wg && l.client) l.wg = blWGClient(map, l.client); });
+  return lignes;
 }
 
 function blNormBds(v) { return String(v || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
@@ -12373,7 +12398,7 @@ function blQte(btn, d) {
 
 // Le workgroup se remplit tout seul quand le client est déjà connu
 function blClientChange(inp) {
-  var wg = blClientWG(_blCache || [])[inp.value.trim().toUpperCase()];
+  var wg = blWGClient(blClientWG(_blCache || []), inp.value);
   var sel = inp.closest('.bl-ligne').querySelector('.bl-wg');
   if (wg && !sel.value) sel.value = wg;
 }
@@ -12854,7 +12879,7 @@ function blAppliquerPrefillNC() {
 var _blPhotoFacultative = false;   // vrai pour un BLI importé d'Excel (le fichier fait foi)
 
 function blNorm(v) {
-  return String(v == null ? '' : v).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+  return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
 }
 
 function blDateCellule(v) {
@@ -12967,7 +12992,7 @@ async function blImporterExcel(input) {
   _blEditId = null;
   await blRemplirFormulaire({
     dateLivraison: date, preparateur: prep, livreur: String(e.livreur || '').trim().toUpperCase(), lieu: lieu,
-    lignes: res.lignes.map(function(l){ return { bds: l.bds, qte: l.qte, client: l.client, wg: l.wg || wgMap[l.client] || '' }; }),
+    lignes: res.lignes.map(function(l){ return { bds: l.bds, qte: l.qte, client: l.client, wg: l.wg || blWGClient(wgMap, l.client) }; }),
     photos: [], remarques: 'Importé du fichier ' + file.name
   });
   blPhotoFacultative(true);
@@ -12998,7 +13023,7 @@ async function blLirePhoto() {
   btn.disabled = true; btn.textContent = '⏳ Lecture en cours… (jusqu\'à 1 minute)';
   msg.style.display = 'none';
 
-  var clients = Object.keys(blClientWG(_blCache || []));
+  var clients = Object.keys(BL_WG_CLIENTS);
   (_blCache || []).forEach(function(b){ (b.lignes || []).forEach(function(l){ if (l.client && clients.indexOf(l.client) < 0) clients.push(l.client); }); });
 
   var data = null, erreur = '';
@@ -13060,7 +13085,7 @@ function blAppliquerLecture(data) {
   var cont = document.getElementById('bl-lignes');
   cont.innerHTML = '';
   lignes.forEach(function(l) {
-    blAjouterLigne({ bds: l.bds, qte: l.qte, client: l.client, wg: wgMap[l.client] || '' }, true);
+    blAjouterLigne({ bds: l.bds, qte: l.qte, client: l.client, wg: blWGClient(wgMap, l.client) }, true);
     if (l.incertain) {
       var row = cont.lastElementChild;
       row.classList.add('bl-douteuse');
