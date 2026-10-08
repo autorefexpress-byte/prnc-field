@@ -2210,6 +2210,19 @@ function renderUserName() {
   if (topbarEl) topbarEl.textContent = name;
 }
 
+// Séparateur d'adresses dans un lien mailto : l'app Outlook du téléphone attend des virgules
+// (avec des points-virgules tout passe en rouge), Outlook sur PC attend des points-virgules.
+function mailSep() {
+  var ua = navigator.userAgent || '';
+  var mobile = /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return mobile ? ',' : ';';
+}
+// Liste d'adresses (tableau ou texte séparé par ; ou ,) prête pour un lien mailto sur cet appareil
+function mailListe(x) {
+  return (Array.isArray(x) ? x : String(x || '').split(/[;,]/))
+    .map(function(a){ return String(a || '').trim(); }).filter(Boolean).join(mailSep());
+}
+
 function mailto(to, subj, body, cc) {
   const toList = (to  || '').split(';').map(s=>s.trim()).filter(Boolean);
   const ccList = (cc  || '').split(';').map(s=>s.trim()).filter(Boolean);
@@ -2217,9 +2230,7 @@ function mailto(to, subj, body, cc) {
 
   const bodyTrimmed = body.length > 600 ? body.substring(0, 597) + '...' : body;
 
-  // Virgules dans le chemin du lien : avec des points-virgules l'app Outlook du téléphone
-  // prend toute la liste pour une seule adresse invalide (en rouge, envoi bloqué)
-  const toStr = allDests.join(',');
+  const toStr = allDests.join(mailSep());
   let url = 'mailto:' + toStr;
   url += '?subject=' + encodeURIComponent(subj);
   url += '&body='    + encodeURIComponent(bodyTrimmed);
@@ -4555,7 +4566,7 @@ async function sendCreditMagasin() {
   var mailTo = 'mailto:' + MAIL_MAGASIN +
     '?subject=' + encodeURIComponent(subj) +
     '&body='    + encodeURIComponent(bodyParts) +
-    (cc ? '&cc=' + cc : '');
+    (cc ? '&cc=' + mailListe(cc) : '');
   window.location.href = mailTo;
 
   await dbAdd({
@@ -8421,7 +8432,7 @@ function renderRelanceCard(r, urgent) {
   var mailTo = 'mailto:' + toAddr +
     '?subject=' + encodeURIComponent(sujet) +
     '&body='    + encodeURIComponent(corps_txt) +
-    (ccAddrs ? '&cc=' + ccAddrs : '');
+    (ccAddrs ? '&cc=' + mailListe(ccAddrs) : '');
 
   return '<div class="relance-card" style="background:#fff;border:2px solid ' + borderColor + ';border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:8px">' +
     photoHtml +
@@ -8640,7 +8651,7 @@ async function marquerRecupere(id, btn) {
       var mailUrl = 'mailto:' + EMMANUEL +
         '?subject=' + encodeURIComponent(subj) +
         '&body='    + encodeURIComponent(body) +
-        (ccStr ? '&cc=' + encodeURIComponent(ccStr) : '');
+        (ccStr ? '&cc=' + mailListe(ccStr) : '');
       window.location.href = mailUrl;
     }
 
@@ -11976,10 +11987,10 @@ async function saveNC() {
 
   var toList = NC_TO.join(';');
   var ccList = (NC_CC[_ncWG] || []).join(';');
-  var mailTo = 'mailto:' + toList +
+  var mailTo = 'mailto:' + mailListe(toList) +
     '?subject=' + encodeURIComponent(subj) +
     '&body=' + encodeURIComponent(body) +
-    (ccList ? '&cc=' + ccList : '');
+    (ccList ? '&cc=' + mailListe(ccList) : '');
   window.location.href = mailTo;
 
   // Reset formulaire
@@ -12156,10 +12167,10 @@ async function resoudreNC(label) {
 
   var toList = NC_TO.join(';');
   var ccList = (NC_CC[wgKey] || []).join(';');
-  var mailTo = 'mailto:' + toList +
+  var mailTo = 'mailto:' + mailListe(toList) +
     '?subject=' + encodeURIComponent(subj) +
     '&body=' + encodeURIComponent(body) +
-    (ccList ? '&cc=' + ccList : '');
+    (ccList ? '&cc=' + mailListe(ccList) : '');
   window.location.href = mailTo;
 
   ouvrirDetailNC(_ncCurrentId);
@@ -12965,7 +12976,7 @@ function blUrlMailReception() {
   corps.push('', 'Le détail ligne par ligne figure dans l\'accusé de réception joint (PDF).');
   corps.push('', 'Réception vérifiée par ' + ((b.reception && b.reception.par) || getUserName()) + ' le ' + ((b.reception && b.reception.date) || new Date().toLocaleDateString('fr-FR')) + '.',
     '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50');
-  return 'mailto:' + MAIL_MAGASIN + '?cc=' + blCopieReception().join(';') +
+  return 'mailto:' + MAIL_MAGASIN + '?cc=' + mailListe(blCopieReception()) +
     '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
 }
 
@@ -13855,7 +13866,7 @@ async function genererRapportNC() {
   ].join('\n');
   // Mêmes personnes en copie que l'accusé de réception
   var cc = typeof blCopieReception === 'function' ? blCopieReception().join(';') : '';
-  var mailHref = 'mailto:' + MAIL_MAGASIN + '?' + (cc ? 'cc=' + cc + '&' : '') + 'subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
+  var mailHref = 'mailto:' + MAIL_MAGASIN + '?' + (cc ? 'cc=' + mailListe(cc) + '&' : '') + 'subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps);
 
   var css =
     '@page{size:A4;margin:12mm}' +
