@@ -2217,7 +2217,9 @@ function mailto(to, subj, body, cc) {
 
   const bodyTrimmed = body.length > 600 ? body.substring(0, 597) + '...' : body;
 
-  const toStr = allDests.join(';');   // Outlook attend des points-virgules
+  // Virgules dans le chemin du lien : avec des points-virgules l'app Outlook du téléphone
+  // prend toute la liste pour une seule adresse invalide (en rouge, envoi bloqué)
+  const toStr = allDests.join(',');
   let url = 'mailto:' + toStr;
   url += '?subject=' + encodeURIComponent(subj);
   url += '&body='    + encodeURIComponent(bodyTrimmed);
