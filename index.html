@@ -11707,8 +11707,12 @@ var NC_RESOLUTIONS = {
   'Mauvaise piece':       ['Piece echangee'],
   'Quantite incorrecte':  ['Quantite completee', 'Surplus retourne'],
   'Piece endommagee':     ['Piece remplacee', 'Retournee au magasin'],
-  'Erreur de livraison':  ['Retournee au magasin']
+  'Erreur de livraison':  ['Retournee au magasin'],
+  'Piece non identifiee': ['Piece identifiee', 'Retournee au magasin']
 };
+// Pièce reçue sans stock code ni étiquette
+var NC_TYPE_NON_IDENT = 'Piece non identifiee';
+var NC_TYPE_NON_IDENT_TXT = 'Pas de stock code ni d\'etiquette sur la piece : identification et credit magasin impossibles';
 
 function getNcResolutionOptions(types) {
   var opts = [];
@@ -11895,6 +11899,7 @@ async function saveNC() {
   if (document.getElementById('nc-type-quantite') && document.getElementById('nc-type-quantite').checked) types.push('Quantite incorrecte');
   if (document.getElementById('nc-type-endommage') && document.getElementById('nc-type-endommage').checked) types.push('Piece endommagee');
   if (document.getElementById('nc-type-livraison') && document.getElementById('nc-type-livraison').checked) types.push('Erreur de livraison');
+  if (document.getElementById('nc-type-nonident') && document.getElementById('nc-type-nonident').checked) types.push(NC_TYPE_NON_IDENT);
 
   if (!_ncWG) { alert('Selectionnez un Workgroup.'); return; }
   if (!ir) { alert('Le N° IR/PR est obligatoire.'); return; }
@@ -11957,6 +11962,7 @@ async function saveNC() {
     'Type NC     : ' + typesTxt,
     ''
   );
+  if (types.indexOf(NC_TYPE_NON_IDENT) !== -1) bodyLines.push('/!\\ ' + NC_TYPE_NON_IDENT_TXT + '.', '');
   if (!isLivraison) {
     bodyLines.push('--- ITEM COMMANDE ---');
     if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
@@ -11998,7 +12004,7 @@ async function saveNC() {
    'nc-rec-sc','nc-rec-pn','nc-rec-qte','nc-rec-desc','nc-rec-destinataire'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
-  ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison'].forEach(function(id){
+  ['nc-type-mauvaise','nc-type-quantite','nc-type-endommage','nc-type-livraison','nc-type-nonident'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.checked = false;
   });
   var dr2 = document.getElementById('nc-date-retour'); if(dr2) dr2.value = '';
@@ -13370,7 +13376,7 @@ async function renderKPI() {
   var periode = _kpiPeriode;
   var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
   var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
-  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison','Piece non identifiee'];
 
   function emptyArr() { return { total:0, MCCHAUD:0, MCREPAR:0, STROB:0, MCELINS:0, MCMECUS:0 }; }
 
@@ -13558,7 +13564,7 @@ async function renderKPI() {
       '</div>' +
     '</div>' +
     NC_TYPES.map(function(t) {
-      var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥','Erreur de livraison':'📦'};
+      var icons = {'Mauvaise piece':'🔄','Quantite incorrecte':'🔢','Piece endommagee':'💥','Erreur de livraison':'📦','Piece non identifiee':'🏷️'};
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
         '<span>' + (icons[t]||'') + ' ' + t + '</span><span style="font-weight:700">' + ncTypes[t] + '</span></div>';
     }).join('') +
@@ -13672,7 +13678,7 @@ async function genererRapportNC() {
   var blData = [];
   try { blData = typeof blLoad === 'function' ? await blLoad(true) : []; } catch(e) {}
   var periode = _kpiPeriode;
-  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison'];
+  var NC_TYPES = ['Mauvaise piece','Quantite incorrecte','Piece endommagee','Erreur de livraison','Piece non identifiee'];
   var WG_LIST = ['MCCHAUD','MCREPAR','MCELINS','MCMECUS'];
   var C_BL = '#0F6E56';
   var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',MCELINS:'#1F4E79',MCMECUS:'#375623'};
@@ -13952,6 +13958,7 @@ async function genererRapportNC() {
       '<div class="grid2 avoid">' +
         '<div><h2>5. Non-conformites sur 6 periodes</h2>' + chartEvo + '</div>' +
         '<div><h2>6. Non-conformites par type</h2>' + hbars(typeRows, '#1F4E79') +
+          (typeRows.some(function(r){ return r.label === NC_TYPE_NON_IDENT && r.v; }) ? '<p style="font-size:9pt;color:#5b6476;margin:4px 0 0">Piece non identifiee : ' + esc(NC_TYPE_NON_IDENT_TXT.replace(/^Pas/, 'pas')) + '.</p>' : '') +
           '<h2>7. Non-conformites par workgroup</h2>' + hbars(wgRows, '#5b6476') + '</div>' +
       '</div>' +
 
@@ -14275,6 +14282,13 @@ loadCatalog();
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
           <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000" onchange="updateNcFormVisibility()">
           <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" id="nc-type-nonident" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
+          <span style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600">🏷️ Pièce non identifiée</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.35">Pas de stock code ni d'étiquette sur la pièce : identification et crédit magasin impossibles</span>
+          </span>
         </label>
       </div>
     </div>
