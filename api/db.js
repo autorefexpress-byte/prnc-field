@@ -736,13 +736,19 @@ module.exports = async function handler(req, res) {
 
     // ── HISTORIQUE GET ───────────────────────────────
     if (method === 'GET') {
+      // Tout l'historique. Avec ?page=N, renvoyé par pages (taille ?limit=, 1000 par défaut)
+      // pour que la réponse reste sous la limite de taille de Vercel quand l'historique grossit.
+      const page = parseInt(req.query?.page, 10);
+      const parPage = Math.min(Math.max(parseInt(req.query?.limit, 10) || 1000, 1), 2000);
+      const pagine = Number.isInteger(page) && page >= 0;
       const rows = await sql`
         SELECT id,type,tag,wo,wo_usine,wso,wr,wg,sc,loc,statut,date,heure,description,
                serie,type_eqt,qty,shutdown,motif,zone,from_fiche,email_demandeur,
                etna_statut,etna_date_retour,etna_commentaire,
                callidus_statut,callidus_date_retour,callidus_commentaire,
                dest,photos,created_at
-        FROM historique ORDER BY created_at DESC LIMIT 500`;
+        FROM historique ORDER BY created_at DESC, id DESC
+        LIMIT ${pagine ? parPage : null} OFFSET ${pagine ? page * parPage : 0}`;
       return res.status(200).json(rows);
     }
 
