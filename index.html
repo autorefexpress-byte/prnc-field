@@ -3264,17 +3264,28 @@ var _dbCache = null;
 var _dbCacheTs = 0;
 const DB_CACHE_TTL = 600000;
 
+// Tout l'historique, page par page (avant : seulement les 500 derniers mouvements)
+var DB_PAGE = 1000;
+async function dbFetchHistorique() {
+  var tout = [], vus = {};
+  for (var page = 0; page < 200; page++) {
+    var resp = await fetch(DB_API + '?page=' + page + '&limit=' + DB_PAGE);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var lot = await resp.json();
+    if (!Array.isArray(lot)) throw new Error('Réponse inattendue du serveur');
+    var nouveaux = 0;
+    lot.forEach(function(r) { if (!vus[r.id]) { vus[r.id] = 1; tout.push(r); nouveaux++; } });
+    if (lot.length < DB_PAGE || !nouveaux) break;
+  }
+  return tout;
+}
+
 async function dbLoad() {
   if (_dbCache && (Date.now() - _dbCacheTs) < DB_CACHE_TTL) {
     return _dbCache;
   }
   try {
-    const resp = await fetch(DB_API);
-    if (!resp.ok) {
-      console.warn('DB GET failed:', resp.status, resp.statusText);
-      throw new Error('HTTP ' + resp.status);
-    }
-    const data = await resp.json();
+    const data = await dbFetchHistorique();
     if (Array.isArray(data) && data.length >= 0) {
       const records = data.map(function(r) {
         return {
@@ -3394,8 +3405,7 @@ async function renderHist() {
 
   let all = [];
   try {
-    const resp = await fetch(DB_API);
-    const raw = await resp.json();
+    const raw = await dbFetchHistorique();
     if (Array.isArray(raw)) {
       all = raw.map(function(r) {
         return {
