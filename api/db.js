@@ -75,17 +75,6 @@ async function ensureTables() {
       record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
     )`;
 
-    await sql`CREATE TABLE IF NOT EXISTS transport (
-      id TEXT PRIMARY KEY, date TEXT, type TEXT, statut TEXT, ref TEXT,
-      dest TEXT, notes TEXT, wo TEXT, tag TEXT, sc TEXT, serie TEXT,
-      photos JSONB DEFAULT '[]', created_at TIMESTAMP DEFAULT NOW()
-    )`;
-    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS wo TEXT`;
-    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS tag TEXT`;
-    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS sc TEXT`;
-    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS serie TEXT`;
-    await sql`ALTER TABLE transport ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
-
     await sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
       id TEXT PRIMARY KEY, wo TEXT, tag TEXT, serie TEXT, qty TEXT,
       remarques TEXT, photos JSONB DEFAULT '[]',
@@ -563,41 +552,10 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unknown loc_mouvements request' });
     }
 
-    // ── TRANSPORT ────────────────────────────────────
-    if (table === 'transport') {
-      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM transport ORDER BY date ASC, created_at DESC`);
-      if (method === 'POST') {
-        const d = req.body || {};
-        await sql`INSERT INTO transport (id,date,type,statut,ref,dest,notes,wo,tag,sc,serie,photos)
-          VALUES (${d.id||null},${d.date||null},${d.type||null},${d.statut||null},
-                  ${d.ref||null},${d.dest||null},${d.notes||null},
-                  ${d.wo||null},${d.tag||null},${d.sc||null},${d.serie||null},
-                  ${JSON.stringify(d.photos||[])}::jsonb)`;
-        return res.status(201).json({ ok: true });
-      }
-      if (method === 'PATCH' && id) {
-        const d = req.body || {};
-        await sql`UPDATE transport SET statut=${d.statut||null},date=${d.date||null},type=${d.type||null},
-          ref=${d.ref||null},dest=${d.dest||null},notes=${d.notes||null},wo=${d.wo||null},
-          tag=${d.tag||null},sc=${d.sc||null},serie=${d.serie||null},
-          photos=${JSON.stringify(d.photos||[])}::jsonb WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
-      if (method === 'DELETE' && id) {
-        const trRows = await sql`SELECT photos,wo FROM transport WHERE id=${id}`;
-        if (trRows.length) {
-          if (trRows[0].photos?.length) await deleteCloudinaryPhotos(trRows[0].photos);
-          if (trRows[0].wo) {
-            const h = await sql`SELECT photos FROM historique WHERE wo=${trRows[0].wo}`;
-            const hp = h.flatMap(r => r.photos||[]).filter(Boolean);
-            if (hp.length) await deleteCloudinaryPhotos(hp);
-            await sql`DELETE FROM historique WHERE wo=${trRows[0].wo}`;
-          }
-        }
-        await sql`DELETE FROM transport WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
-      return res.status(400).json({ error: 'Unknown transport request' });
+    // ── TRANSPORT et PI SUIVI : fonctions retirées de l'app (données conservées dans la base) ──
+    // Refus explicite : sans ce garde-fou, la requête tomberait sur le code de l'historique.
+    if (table === 'transport' || table === 'pi_suivi') {
+      return res.status(410).json({ error: 'Fonction retirée' });
     }
 
     // ── CALLIDUS PRNC ────────────────────────────────
@@ -632,36 +590,6 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown callidus_prnc request' });
-    }
-
-    // ── PI SUIVI ─────────────────────────────────────
-    if (table === 'pi_suivi') {
-      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM pi_suivi ORDER BY created_at DESC`);
-      if (method === 'POST') {
-        const d = req.body || {};
-        await sql`INSERT INTO pi_suivi (id,wo,wg,tag,loc,date,statut,pieces)
-          VALUES (${d.id},${d.wo},${d.wg},${d.tag||null},${d.loc||null},
-                  ${d.date||null},${d.statut||'En cours'},${JSON.stringify(d.pieces||[])}::jsonb)`;
-        return res.status(201).json({ ok: true });
-      }
-      if (method === 'PATCH' && id) {
-        const d = req.body || {};
-        await sql`UPDATE pi_suivi SET statut=${d.statut||'En cours'},
-          pieces=${JSON.stringify(d.pieces||[])}::jsonb,loc=${d.loc||null},tag=${d.tag||null} WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
-      if (method === 'DELETE' && id) {
-        const piRows = await sql`SELECT wo FROM pi_suivi WHERE id=${id}`;
-        if (piRows.length && piRows[0].wo) {
-          const h = await sql`SELECT photos FROM historique WHERE wo=${piRows[0].wo}`;
-          const ap = h.flatMap(r => r.photos||[]).filter(Boolean);
-          if (ap.length) await deleteCloudinaryPhotos(ap);
-          await sql`DELETE FROM historique WHERE wo=${piRows[0].wo}`;
-        }
-        await sql`DELETE FROM pi_suivi WHERE id=${id}`;
-        return res.status(200).json({ ok: true });
-      }
-      return res.status(400).json({ error: 'Unknown request' });
     }
 
     // ── NON-CONFORMITES (NC) ─────────────────────────

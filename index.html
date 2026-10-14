@@ -219,15 +219,6 @@ function _locChange(selId, inpId) {
   if(s.value==='__autre__'){ i.style.display='block'; i.value=''; i.focus(); }
   else { i.style.display='none'; i.value=s.value; }
 }
-function _initLocSel(selId, inpId, val) {
-  var s=document.getElementById(selId), i=document.getElementById(inpId);
-  if(!s||!i) return;
-  s.innerHTML = _locOpts(val);
-  if(val && _LOC_LIST.indexOf(val)===-1){ i.style.display='block'; }
-  else { i.style.display='none'; i.value=val||''; }
-}
-
-
 </script>
 </head>
 <body>
@@ -1359,131 +1350,6 @@ function _initLocSel(selId, inpId, val) {
   </div>
 </div>
 
-<!-- ═══════════════ RELANCES CRÉDIT MAGASIN ═══════════════ -->
-<div class="screen" id="s-transport">
-  <div class="form-header" style="background:linear-gradient(135deg,#0F6E56,#1a9e7a);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">🚛 Planning Transport</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Interventions camion & expéditions</div>
-    </div>
-    <div onclick="ouvrirFormulaireTransport()" style="background:rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;color:#fff;cursor:pointer">+ Ajouter</div>
-  </div>
-
-  <!-- Stats transport -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--border)">
-    <div style="background:#E1F5EE;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#0F6E56" id="tr-cnt-total">0</div>
-      <div style="font-size:10px;color:#0F6E56;font-weight:600">Total</div>
-    </div>
-    <div style="background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#E65100" id="tr-cnt-encours">0</div>
-      <div style="font-size:10px;color:#E65100;font-weight:600">En cours</div>
-    </div>
-    <div style="background:#f0f4ff;border-radius:10px;padding:10px;text-align:center">
-      <div style="font-size:20px;font-weight:800;color:#1F3864" id="tr-cnt-planifier">0</div>
-      <div style="font-size:10px;color:#1F3864;font-weight:600">À planifier</div>
-    </div>
-  </div>
-
-  <!-- Filtres type -->
-  <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:7px;overflow-x:auto">
-    <button onclick="setTransportFilter('all')" id="tr-f-all"
-      style="padding:6px 14px;border-radius:20px;border:2px solid #0F6E56;background:#0F6E56;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
-      Tous
-    </button>
-    <button onclick="setTransportFilter('intransit')" id="tr-f-intransit"
-      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
-      🔄 Intransit
-    </button>
-    <button onclick="setTransportFilter('local')" id="tr-f-local"
-      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
-      📍 Local
-    </button>
-    <button onclick="setTransportFilter('international')" id="tr-f-international"
-      style="padding:6px 14px;border-radius:20px;border:2px solid var(--border);background:var(--grey);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">
-      ✈️ International
-    </button>
-  </div>
-
-  <div id="tr-list" style="padding:10px 14px 80px;display:flex;flex-direction:column;gap:10px"></div>
-</div>
-
-<!-- MODAL Formulaire Transport -->
-<div id="modal-transport" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:5000;align-items:flex-end">
-  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,0);width:100%;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--border)">
-      <div style="font-size:16px;font-weight:700;color:#0F6E56">🚛 Nouvelle intervention</div>
-      <div onclick="fermerFormulaireTransport()" style="width:30px;height:30px;border-radius:50%;background:var(--grey);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--muted)">×</div>
-    </div>
-    <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
-
-      <!-- Date -->
-      <div class="field-grp">
-        <div class="field-lbl">Date intervention <span class="req">*</span></div>
-        <input class="fi" type="date" id="tr-date">
-      </div>
-
-      <!-- Type de transport -->
-      <div class="field-grp">
-        <div class="field-lbl">Type de transport <span class="req">*</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div onclick="selectTypeTransport('intransit')" id="tr-type-intransit"
-            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
-            <div style="font-size:20px">🔄</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">Intransit</div>
-          </div>
-          <div onclick="selectTypeTransport('local')" id="tr-type-local"
-            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
-            <div style="font-size:20px">📍</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">Local</div>
-          </div>
-          <div onclick="selectTypeTransport('international')" id="tr-type-international"
-            style="padding:12px 6px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s">
-            <div style="font-size:20px">✈️</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">International</div>
-          </div>
-        </div>
-        <input type="hidden" id="tr-type-val">
-      </div>
-
-      <!-- Statut -->
-      <div class="field-grp">
-        <div class="field-lbl">Statut <span class="req">*</span></div>
-        <select class="fi" id="tr-statut">
-          <option value="">— Sélectionner —</option>
-          <option value="a_planifier">📋 À planifier</option>
-          <option value="en_cours">🔄 En cours</option>
-          <option value="expedie">📦 Expédié</option>
-          <option value="livre">✅ Livré</option>
-        </select>
-      </div>
-
-      <!-- Description / Reference -->
-      <div class="field-grp">
-        <div class="field-lbl">Référence / Description</div>
-        <input class="fi" type="text" id="tr-ref" placeholder="N° WO, référence, description...">
-      </div>
-
-      <!-- Destination -->
-      <div class="field-grp">
-        <div class="field-lbl">Destination</div>
-        <input class="fi" type="text" id="tr-dest" placeholder="Lieu de livraison...">
-      </div>
-
-      <!-- Notes -->
-      <div class="field-grp">
-        <div class="field-lbl">Notes / Remarques</div>
-        <textarea class="fi" id="tr-notes" placeholder="Informations complémentaires..."></textarea>
-      </div>
-
-      <button onclick="sauvegarderTransport()"
-        style="width:100%;background:linear-gradient(135deg,#0F6E56,#1a9e7a);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
-        💾 Enregistrer
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
@@ -1704,7 +1570,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-transport','s-bons-sortie','s-bs-nouveau','s-bs-detail','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi','s-bl','s-bl-nouveau','s-bl-detail'];
+const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-etna-suivi','s-etna-update','s-etna-prestataire','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi','s-bl','s-bl-nouveau','s-bl-detail'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist'};
 
 function show(id) {
@@ -1746,7 +1612,6 @@ function show(id) {
   if (id === 's-callidus-suivi')   renderCallidusSuivi();
   if (id === 's-callidus-prestataire') renderCallidusPrestataire();
   if (id === 's-callidus-prnc') { renderCallidusPrnc(); }
-  if (id === 's-transport') renderTransport();
   if (id !== 's-scanner') { arreterCamera(); }
   if (id === 's-etna-prestataire') renderEtnaPrestataire();
   if (id === 's-home') {
@@ -1781,10 +1646,6 @@ function initSemaines() {
     sel.appendChild(opt);
   }
   state.pl.sem = 'S' + String(curW).padStart(2,'0');
-}
-
-function setSemaine(val) {
-  state.pl.sem = val;
 }
 
 function setWG(prefix, wg) {
@@ -2009,21 +1870,6 @@ function renderEtnaRetourContacts(wg) {
 }
 
 const TYPE_LABELS = {pcusine:'PC-USINE',demandeur:'DEMANDEUR',posinsitu:'POSE IN SITU',mcmecus:'MCMECUS',na:'N/A',magasin:'MAGASIN'};
-function setTypeWO(t) {
-  state.pl.typeWO = t;
-  ['pcusine','demandeur','posinsitu','mcmecus','na','magasin'].forEach(x => {
-    const el = document.getElementById('type-'+x);
-    if (el) el.className = 'type-btn'+(x===t?' on':'');
-  });
-}
-
-function setKit(k) {
-  state.pl.kit = k;
-  document.getElementById('kit-oui').className = 'kit-btn' + (k==='oui'?' on-oui':'');
-  document.getElementById('kit-non').className = 'kit-btn' + (k==='non'?' on-non':'');
-  document.getElementById('statut-pieces-grp').style.display = k==='non' ? 'flex' : 'none';
-}
-
 function addManual(listId) {
   const list = document.getElementById(listId);
   const div = document.createElement('div');
@@ -2052,23 +1898,6 @@ async function uploadToCloudinary(file) {
     var d = await r.json();
     return d.secure_url || null;
   } catch(e) { console.warn('Cloudinary upload err', e); return null; }
-}
-
-function compressImage(file, maxPx, quality, cb) {
-  var img = new Image();
-  var url = URL.createObjectURL(file);
-  img.onload = function() {
-    var w = img.width, h = img.height;
-    if (w > maxPx || h > maxPx) {
-      if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
-      else { w = Math.round(w * maxPx / h); h = maxPx; }
-    }
-    var c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    c.getContext('2d').drawImage(img, 0, 0, w, h);
-    c.toBlob(function(b) { URL.revokeObjectURL(url); cb(b); }, 'image/jpeg', quality);
-  };
-  img.src = url;
 }
 
 function getPhotos(id) { return _photoStore[id] || []; }
@@ -2272,112 +2101,9 @@ const WG_COLORS = {
 var _plEqtList = []; // [{wo, tag, loc, typeWO, infos, photos, prevId}]
 var _plEqtCount = 0;
 
-function addPlanEqt() {
-  var idx = _plEqtCount++;
-  var prevId = 'pl-prev-' + idx;
-  _plEqtList.push({wo:'', tag:'', loc:'', typeWO:'', infos:'', prevId:prevId});
-
-  var list = document.getElementById('pl-eqt-list');
-  var card = document.createElement('div');
-  card.id = 'pl-eqt-' + idx;
-  card.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;position:relative';
-  card.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '<span style="font-size:12px;font-weight:700;color:var(--teal)">Équipement ' + (idx+1) + '</span>' +
-      '<span onclick="removePlanEqt(' + idx + ')" style="color:var(--red);font-size:18px;cursor:pointer;font-weight:700">&times;</span>' +
-    '</div>' +
-    '<div style="display:flex;gap:8px;margin-bottom:8px">' +
-      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">WO *</div>' +
-        '<input class="fi" id="pl-wo-' + idx + '" type="text" placeholder="Ex : 855376" style="width:100%"></div>' +
-      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">TAG *</div>' +
-        '<input class="fi" id="pl-tag-' + idx + '" type="text" placeholder="Ex : 220-X-00315" style="width:100%"></div>' +
-    '</div>' +
-    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Localisation</div>' +
-      '<input class="fi" id="pl-loc-' + idx + '" type="text" placeholder="Zone A1 / P50..." style="width:100%"></div>' +
-    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Type WO</div>' +
-      '<select class="fi" id="pl-type-' + idx + '" style="width:100%">' +
-        '<option value="">-- Choisir --</option>' +
-        '<option value="PC-USINE">PC-USINE</option>' +
-        '<option value="DEMANDEUR">DEMANDEUR</option>' +
-        '<option value="POSE IN SITU">POSE IN SITU</option>' +
-        '<option value="MCMECUS">MCMECUS</option>' +
-        '<option value="MAGASIN">MAGASIN</option>' +
-        '<option value="N/A">N/A</option>' +
-      '</select></div>' +
-    '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Commentaire</div>' +
-      '<textarea class="fi" id="pl-infos-' + idx + '" placeholder="IR OK / ATT USINAGE..." style="width:100%;height:52px"></textarea></div>' +
-    '<div>' +
-      '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px">Photo</div>' +
-      '' +
-      '' +
-      '' +
-    '</div>';
-  list.appendChild(card);
-}
-
-function removePlanEqt(idx) {
-  var card = document.getElementById('pl-eqt-' + idx);
-  if (card) card.remove();
-  _plEqtList[idx] = null;
-}
-
-function collectPlanEqts() {
-  var result = [];
-  for (var i = 0; i < _plEqtCount; i++) {
-    var card = document.getElementById('pl-eqt-' + i);
-    if (!card) continue;
-    var wo    = document.getElementById('pl-wo-' + i) ? document.getElementById('pl-wo-' + i).value.trim() : '';
-    var tag   = document.getElementById('pl-tag-' + i) ? document.getElementById('pl-tag-' + i).value.trim() : '';
-    var loc   = document.getElementById('pl-loc-' + i) ? document.getElementById('pl-loc-' + i).value.trim() : '';
-    var type  = document.getElementById('pl-type-' + i) ? document.getElementById('pl-type-' + i).value : '';
-    var infos = document.getElementById('pl-infos-' + i) ? document.getElementById('pl-infos-' + i).value.trim() : '';
-    var prevId = 'pl-prev-' + i;
-    var photos = getPhotos(prevId);
-    if (wo || tag) result.push({wo, tag, loc, type, infos, photos, prevId});
-  }
-  return result;
-}
-
-function resetPlanEqts() {
-  _plEqtList = [];
-  _plEqtCount = 0;
-  var list = document.getElementById('pl-eqt-list');
-  if (list) list.innerHTML = '';
-}
-
 var _plSigCtx = null;
 var _plSigDrawing = false;
 var _plSigHasMark = false;
-
-function initPlanSig() {
-  var canvas = document.getElementById('pl-sig-canvas');
-  if (!canvas) return;
-  _plSigCtx = null; // réinitialiser à chaque ouverture
-  _plSigCtx = canvas.getContext('2d');
-  _plSigCtx.strokeStyle = '#1F3864';
-  _plSigCtx.lineWidth = 2.5;
-  _plSigCtx.lineCap = 'round';
-
-  function getPos(e) {
-    var r = canvas.getBoundingClientRect();
-    var src = e.touches ? e.touches[0] : e;
-    return { x: (src.clientX - r.left) * (canvas.width / r.width),
-             y: (src.clientY - r.top)  * (canvas.height / r.height) };
-  }
-  canvas.addEventListener('mousedown',  function(e){ _plSigDrawing=true; var p=getPos(e); _plSigCtx.beginPath(); _plSigCtx.moveTo(p.x,p.y); });
-  canvas.addEventListener('mouseup',    function(){ _plSigDrawing=false; });
-  canvas.addEventListener('mousemove',  function(e){ if(!_plSigDrawing) return; var p=getPos(e); _plSigCtx.lineTo(p.x,p.y); _plSigCtx.stroke(); _plSigHasMark=true; });
-  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); _plSigDrawing=true; var p=getPos(e); _plSigCtx.beginPath(); _plSigCtx.moveTo(p.x,p.y); }, {passive:false});
-  canvas.addEventListener('touchend',   function(){ _plSigDrawing=false; });
-  canvas.addEventListener('touchmove',  function(e){ e.preventDefault(); if(!_plSigDrawing) return; var p=getPos(e); _plSigCtx.lineTo(p.x,p.y); _plSigCtx.stroke(); _plSigHasMark=true; }, {passive:false});
-}
-
-function clearPlanSig() {
-  var canvas = document.getElementById('pl-sig-canvas');
-  if (!canvas || !_plSigCtx) return;
-  _plSigCtx.clearRect(0, 0, canvas.width, canvas.height);
-  _plSigHasMark = false;
-}
 
 const WO_CLOTURE_KEY = 'prnc-wo-clotures';
 
@@ -2408,109 +2134,11 @@ async function cloturerWO(wo, tag, wg, date, recordId) {
       await fetch(DB_API+'?table=planning_mcchaud&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
       if(typeof _planningDataMC!=='undefined') _planningDataMC=_planningDataMC.filter(i=>i.wo!==wo);
     } catch(e){}
-    try {
-      var pi=await fetch(DB_API+'?table=pi_suivi').then(r=>r.json());
-      var piRow=Array.isArray(pi)?pi.find(p=>p.wo===wo):null;
-      if(piRow){ await fetch(DB_API+'?table=pi_suivi&id='+encodeURIComponent(piRow.id),{method:'DELETE'}); _piCache=null; }
-    } catch(e){}
     _dbCache=null; _photosByWOCache=null;
     if(typeof _planningData!=='undefined') _planningData=_planningData.filter(i=>i.wo!==wo);
     try{ var l=JSON.parse(localStorage.getItem(DB_KEY)||'[]'); localStorage.setItem(DB_KEY,JSON.stringify(l.filter(r=>r.wo!==wo))); }catch(e){}
   } catch(e){ alert('Erreur cloture : '+e.message); }
   renderHist(); if(typeof updateStats==='function') updateStats();
-}
-
-function uncloturerWO(wo) {
-  var list = getWOClotures().filter(function(x){ return x.wo !== wo; });
-  saveWOClotures(list);
-  renderHist();
-}
-
-function sendPlanning() {
-  if (checkConsultMode()) return;
-  const manual = getEmails('pl-manual');
-
-  if (!state.pl.wg)  { alert('Sélectionne un Workgroup.'); return; }
-  if (!state.pl.sem) { alert('Sélectionne une semaine.'); return; }
-
-  var eqts = collectPlanEqts();
-  if (eqts.length === 0) { alert('Ajoute au moins un équipement.'); return; }
-  for (var ei = 0; ei < eqts.length; ei++) {
-    if (!eqts[ei].wo || !eqts[ei].tag) { alert('WO et TAG obligatoires pour chaque équipement.'); return; }
-  }
-
-  const supNom = v('pl-sup-nom');
-  if (!_plSigHasMark) { alert('La signature du superviseur est obligatoire.'); return; }
-  if (!supNom)        { alert('Le nom du superviseur est obligatoire.'); return; }
-
-  const allTo = [...state.selectedTo.pl, ...manual];
-  if (allTo.length === 0) { alert('Sélectionne au moins un destinataire.'); return; }
-  const ccPl = state.selectedCC && state.selectedCC.pl ? [...state.selectedCC.pl] : [];
-
-  const wgl = WG_LABELS[state.pl.wg];
-  const subj = '['+wgl+'] Planning '+state.pl.sem+' -- '+eqts.length+' équipement'+(eqts.length>1?'s':'')+' -- PRNC';
-  let body = 'Bonjour,\n\n';
-  body += eqts.length + ' équipement'+(eqts.length>1?'s':'')+' prévus au planning '+state.pl.sem+' :\n';
-  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-  var planIds = eqts.map(function() {
-    return Date.now() + '-' + Math.random().toString(36).slice(2,6);
-  });
-
-  eqts.forEach(function(e, i) {
-    var ficheUrl = window.location.origin + window.location.pathname + '?fiche=' + planIds[i];
-    body += (i+1) + '. WO : ' + e.wo + ' -- TAG : ' + e.tag + '\n';
-    if (e.loc)   body += '   Localisation : ' + e.loc + '\n';
-    if (e.type)  body += '   Type WO      : ' + e.type + '\n';
-    if (e.infos) body += '   Commentaire  : ' + e.infos + '\n';
-    if (e.photos && e.photos.length > 0) {
-      body += '   Photos (' + e.photos.length + ') : ' + ficheUrl + '\n';
-    }
-    if (i < eqts.length-1) body += '   ------\n';
-  });
-  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-  body += '\nWorkgroup : ' + wgl + '\n';
-  body += '\n------\n';
-  body += '  Validé par : ' + supNom + '\n';
-  body += '  Date       : ' + new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) + '\n';
-  body += '------\n';
-  body += '\nCordialement,\n' + getUserName() + '\nPrepose aux pieces | PRNC -- Maintenance Centrale';
-
-  mailto(allTo[0], subj, body, [...allTo.slice(1), ...ccPl].join(';'));
-
-  eqts.forEach(function(e, i) {
-    var record = {
-      type:'PLANNING', tag:e.tag, wo:e.wo, wg:wgl, statut:state.pl.sem,
-      loc:e.loc, typeWO:e.type, dest:allTo
-    };
-    record.id    = planIds[i];
-    record.ts    = new Date().toISOString();
-    record.date  = new Date().toLocaleDateString('fr-FR');
-    record.heure = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    try {
-      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-      local.unshift(record);
-      localStorage.setItem('prnc-historique', JSON.stringify(local));
-    } catch(ex) {}
-    supaFetch('/rest/v1/historique', 'POST', {
-      id: record.id, type: record.type, tag: record.tag, wo: record.wo,
-      wg: record.wg || null, loc: record.loc || null, statut: record.statut || null,
-      designation: record.desc || null, date: record.date, heure: record.heure,
-      ts: record.ts
-    }).catch(function(e){ console.warn('DB plan save err', e); });
-    clearPhotos(e.prevId);
-    invalidateDbCache();
-  });
-
-  clearPlanSig(); _plSigHasMark=false;
-  document.getElementById('pl-sup-nom').value='';
-  resetPlanEqts();
-  resetForm([], ['pl-sem-select'], 'pl');
-  showSuccess('&#128197;','si-teal','Notification planning envoyée !',
-    'Outlook ouvert. Vérifie et envoie.',
-    `<strong>WO :</strong> ${wo}<br><strong>TAG :</strong> ${tag}<br>` +
-    `<strong>Semaine :</strong> <span style="background:var(--lteal);color:var(--teal);padding:2px 8px;border-radius:20px;font-size:11px">${state.pl.sem}</span><br>` +
-    `<strong>Workgroup :</strong> <span style="${WG_COLORS[state.pl.wg]};padding:2px 8px;border-radius:20px;font-size:11px">${wgl}</span><br>` +
-    `<strong>À :</strong> ${allTo.join(', ')}<br><strong>CC :</strong> ${ccPl.length > 0 ? ccPl.join(', ') : '--'}`);
 }
 
 function sendArrive() {
@@ -3596,9 +3224,6 @@ async function renderHist() {
         ${(r.type==='TERMINE' && r.statut) ? `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:2px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;color:#375623">📍 ${r.statut}</div>` : (info ? `<div style="font-size:11px;color:var(--text);font-weight:500">${info}</div>` : '')}
         ${r.qty?`<div style="font-size:11px;color:var(--red);font-weight:700">QTY : ${r.qty}</div>`:''}
         ${r.loc?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${r.loc}</div>`:''}
-        ${(r.type==='TERMINE'&&r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">Zone dépôt : ${r.zone}</div>`:''}
-        ${(r.type==='TERMINE'&&r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">Zone depot : ${r.zone}</div>`:''}
-        ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
         ${(r.type==='TERMINE' && r.zone)?`<div style="font-size:10px;color:#375623;font-weight:700;margin-top:1px">📍 Zone dépôt : ${r.zone}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px" onclick="event.stopPropagation()">
@@ -3663,7 +3288,7 @@ async function dbSaveTermine(d) {
     wo:    d.woMtc || d.wo || '',   // WO MTC en priorité
     woUsine: d.wo  || '',            // WO Usine
     wr:d.wr, sc:d.sc,
-    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'', zone:d.zoneDepot||'', zone:d.zoneDepot||'', zone:d.zoneDepot||'',
+    wg:d.wg, statut:d.statut, loc:d.zone, zone:d.zoneDepot||'',
     desc: d.dest ? d.dest.join(', ') : '',
     emailDemandeur: d.emailDemandeur || null,
     photos: d.photos || [] });
@@ -3672,10 +3297,6 @@ async function dbSaveUsage(d) {
   await dbAdd({ type:'USAGE', tag:d.tag, wo:d.wo, sc:d.sc, qty:d.qty,
     shutdown:d.shutdown, statut:d.motif.substring(0,60)+'...', wg:d.wg, dest:d.dest,
     photos: d.photos || [] });
-}
-async function dbSaveTransport(d) {
-  await dbAdd({ type:'TRANSPORT', tag:d.tag, wo:d.wo, typeTransport:d.typeTransport,
-    loc:d.zch+' -> '+d.zdch, dest:[d.to] });
 }
 async function dbSavePeinture(d) {
   await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'],
@@ -4433,24 +4054,6 @@ async function saveCallidusUpdate() {
 
 var _calEqtCount = 0;
 
-function triggerPlFile(idx) {
-  var el = document.getElementById('pl-file-' + idx);
-  if (el) el.click();
-}
-
-function addPlPhotos(input, idx) {
-  addPhotos(input, 'pl-prev-' + idx);
-}
-
-function addCalPhotos(input, idx) {
-  addPhotos(input, 'cal-prev-' + idx);
-}
-
-function triggerCalFile(idx) {
-  var el = document.getElementById('cal-file-' + idx);
-  if (el) el.click();
-}
-
 function removeCalEqt(idx) {
   var el = document.getElementById('cal-eqt-' + idx);
   if (el) el.remove();
@@ -4721,309 +4324,6 @@ async function sendCreditMagasin() {
   show('s-home');
 }
 
-var transportFilter = 'all';
-
-function setTransportFilter(f) {
-  transportFilter = f;
-  ['all','intransit','local','international'].forEach(function(k) {
-    var btn = document.getElementById('tr-f-' + k);
-    if (!btn) return;
-    if (k === f) {
-      btn.style.background = '#0F6E56'; btn.style.color = '#fff'; btn.style.borderColor = '#0F6E56';
-    } else {
-      btn.style.background = 'var(--grey)'; btn.style.color = 'var(--muted)'; btn.style.borderColor = 'var(--border)';
-    }
-  });
-  renderTransport();
-}
-
-function selectTypeTransport(type) {
-  document.getElementById('tr-type-val').value = type;
-  ['intransit','local','international'].forEach(function(k) {
-    var el = document.getElementById('tr-type-' + k);
-    if (!el) return;
-    if (k === type) {
-      el.style.borderColor = '#0F6E56'; el.style.background = '#E1F5EE';
-    } else {
-      el.style.borderColor = 'var(--border)'; el.style.background = 'var(--grey)';
-    }
-  });
-}
-
-function ouvrirFormulaireTransport() {
-  document.getElementById('tr-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('tr-type-val').value = '';
-  document.getElementById('tr-statut').value = '';
-  document.getElementById('tr-ref').value = '';
-  document.getElementById('tr-dest').value = '';
-  document.getElementById('tr-notes').value = '';
-  ['intransit','local','international'].forEach(function(k) {
-    var el = document.getElementById('tr-type-' + k);
-    if (el) { el.style.borderColor = 'var(--border)'; el.style.background = 'var(--grey)'; }
-  });
-  document.getElementById('modal-transport').style.display = 'flex';
-}
-
-function fermerFormulaireTransport() {
-  document.getElementById('modal-transport').style.display = 'none';
-}
-
-async function sauvegarderTransport() {
-  var date   = document.getElementById('tr-date').value;
-  var type   = document.getElementById('tr-type-val').value;
-  var statut = document.getElementById('tr-statut').value;
-  var ref    = document.getElementById('tr-ref').value.trim();
-  var dest   = document.getElementById('tr-dest').value.trim();
-  var notes  = document.getElementById('tr-notes').value.trim();
-
-  if (!date) { alert('Veuillez saisir une date.'); return; }
-  if (!type) { alert('Veuillez sélectionner un type de transport.'); return; }
-  if (!statut) { alert('Veuillez sélectionner un statut.'); return; }
-
-  var btn = document.querySelector('#modal-transport button[onclick="sauvegarderTransport()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
-
-  try {
-    await fetch(DB_API + '?table=transport', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: Date.now().toString(),
-        date: date, type: type, statut: statut,
-        ref: ref || null, dest: dest || null, notes: notes || null
-      })
-    });
-    fermerFormulaireTransport();
-    renderTransport();
-  } catch(e) {
-    alert('Erreur lors de l\'enregistrement.');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '💾 Enregistrer'; }
-  }
-}
-
-async function supprimerTransport(id) {
-  if (!confirm('Supprimer cette intervention ?')) return;
-  try {
-    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), { method: 'DELETE' });
-    renderTransport();
-  } catch(e) { alert('Erreur suppression.'); }
-}
-
-async function modifierTransport(id) {
-  var resp = await fetch(DB_API + '?table=transport');
-  var records = await resp.json();
-  if (!Array.isArray(records)) records = [];
-  var r = records.find(function(x){ return String(x.id) === String(id); });
-  if (!r) { alert('Transport non trouvé'); return; }
-
-  var typeLabels = { intransit:'🔄 Intransit', local:'📍 Local', international:'✈️ International' };
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
-  ov.innerHTML = '<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 16px 36px;max-height:90vh;overflow-y:auto">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-      + '<div style="font-size:16px;font-weight:800;color:#1F3864">✏️ Modifier le transport</div>'
-      + '<button onclick="fermerOverlay(this)" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>'
-    + '</div>'
-    + '<div class="field-grp"><div class="field-lbl">Date</div><input class="fi" id="tr-edit-date" type="date" value="' + (r.date||'') + '"></div>'
-    + '<div class="field-grp"><div class="field-lbl">Type</div>'
-      + '<select class="fi" id="tr-edit-type">'
-        + '<option value="intransit"' + (r.type==='intransit'?' selected':'') + '>🔄 Intransit</option>'
-        + '<option value="local"' + (r.type==='local'?' selected':'') + '>📍 Local</option>'
-        + '<option value="international"' + (r.type==='international'?' selected':'') + '>✈️ International</option>'
-      + '</select>'
-    + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + '<div class="field-grp"><div class="field-lbl">WO</div><input class="fi" id="tr-edit-wo" value="' + (r.wo||r.ref||'') + '" placeholder="Ex: 886483" onclick="ouvrirNumpad(\'tr-edit-wo\',\'N° WO\')" style="cursor:pointer"></div>'
-    + '<div class="field-grp"><div class="field-lbl">TAG</div><input class="fi" id="tr-edit-tag" value="' + (r.tag||'') + '" placeholder="Ex: 220-PPD-201"></div>'
-    + '</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-    + '<div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" id="tr-edit-sc" value="' + (r.sc||'') + '" placeholder="Ex: 200-1234"></div>'
-    + '<div class="field-grp"><div class="field-lbl">N° Série</div><input class="fi" id="tr-edit-serie" value="' + (r.serie||'') + '" placeholder="Ex: SN-2025-001"></div>'
-    + '</div>'
-    + '<div class="field-grp"><div class="field-lbl">Destination</div><input class="fi" id="tr-edit-dest" value="' + (r.dest||'') + '" placeholder="Ex: CALLIDUS NC, Atelier..."></div>'
-    + '<div class="field-grp"><div class="field-lbl">Statut</div>'
-      + '<select class="fi" id="tr-edit-statut">'
-        + '<option value="a_planifier"' + (r.statut==='a_planifier'?' selected':'') + '>📋 À planifier</option>'
-        + '<option value="en_cours"' + (r.statut==='en_cours'?' selected':'') + '>🔄 En cours</option>'
-        + '<option value="expedie"' + (r.statut==='expedie'?' selected':'') + '>📦 Expédié</option>'
-        + '<option value="livre"' + (r.statut==='livre'?' selected':'') + '>✅ Livré</option>'
-      + '</select>'
-    + '</div>'
-    + '<div class="field-grp"><div class="field-lbl">Notes</div><textarea class="fi" id="tr-edit-notes" style="height:70px;resize:none">' + (r.notes||'') + '</textarea></div>'
-    + '<div class="field-grp"><div class="field-lbl">📷 Photos</div>'
-      + '<div id="tr-edit-photos-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
-        + (r.photos && r.photos.length ? r.photos.map(function(p,i){ return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>'; }).join('') : '')
-      + '</div>'
-      + '<label style="display:flex;align-items:center;gap:8px;background:#EEF2FF;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:12px;font-weight:700;color:#1F3864">'
-        + '📷 Ajouter des photos'
-        + '<input type="file" accept="image/*" multiple id="tr-edit-photo-input" style="display:none" onchange="trEditAjouterPhotos(this)">'
-      + '</label>'
-    + '</div>'
-    + '<button onclick="sauvegarderModifTransport(&quot;' + id + '&quot;,this)" style="width:100%;padding:14px;background:#1F3864;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Enregistrer</button>'
-  + '</div>';
-
-  document.body.appendChild(ov);
-  // Stocker les photos existantes
-  _trEditPhotos = r.photos ? r.photos.slice() : [];
-  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-}
-
-function trEditSupprimerPhoto(idx) {
-  _trEditPhotos.splice(idx, 1);
-  var prev = document.getElementById('tr-edit-photos-prev');
-  if (prev) {
-    prev.innerHTML = _trEditPhotos.map(function(p, i) {
-      return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>';
-    }).join('');
-  }
-}
-
-async function trEditAjouterPhotos(input) {
-  if (!input.files.length) return;
-  var label = input.closest('label');
-  if (label) { label.textContent = '⏳ Upload...'; label.style.pointerEvents = 'none'; }
-  try {
-    var newUrls = await uploadPhotosParallel(input.files, 'transport');
-    _trEditPhotos = _trEditPhotos.concat(newUrls);
-    var prev = document.getElementById('tr-edit-photos-prev');
-    if (prev) {
-      prev.innerHTML = _trEditPhotos.map(function(p, i) {
-        return '<div style="position:relative"><img src="' + p + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><button onclick="trEditSupprimerPhoto(' + i + ')" style="position:absolute;top:-5px;right:-5px;background:#C00;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1">✕</button></div>';
-      }).join('');
-    }
-  } catch(e) { alert('Erreur upload : ' + e.message); }
-  if (label) { label.textContent = '📷 Ajouter des photos'; label.style.pointerEvents = ''; label.style.cursor = 'pointer'; }
-}
-
-async function sauvegarderModifTransport(id, btn) {
-  var date   = document.getElementById('tr-edit-date').value;
-  var type   = document.getElementById('tr-edit-type').value;
-  var wo     = document.getElementById('tr-edit-wo') ? document.getElementById('tr-edit-wo').value.trim() : '';
-  var tag    = document.getElementById('tr-edit-tag') ? document.getElementById('tr-edit-tag').value.trim() : '';
-  var sc     = document.getElementById('tr-edit-sc') ? document.getElementById('tr-edit-sc').value.trim() : '';
-  var serie  = document.getElementById('tr-edit-serie') ? document.getElementById('tr-edit-serie').value.trim() : '';
-  var dest   = document.getElementById('tr-edit-dest').value.trim();
-  var statut = document.getElementById('tr-edit-statut').value;
-  var notes  = document.getElementById('tr-edit-notes').value.trim();
-
-  btn.textContent = '⏳ Enregistrement...';
-  btn.disabled = true;
-
-  try {
-    var photos = _trEditPhotos || [];
-    var ov = btn.closest('[style*="rgba"]') || btn.closest('[style*="fixed"]');
-    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: date, type: type, wo: wo, tag: tag, sc: sc, serie: serie, dest: dest, statut: statut, notes: notes, photos: photos })
-    });
-    invalidateDbCache();
-    if (ov) ov.remove();
-    renderTransport();
-  } catch(e) {
-    btn.textContent = '💾 Enregistrer';
-    btn.disabled = false;
-    alert('Erreur enregistrement : ' + e.message);
-  }
-}
-
-async function changerStatutTransport(id, newStatut) {
-  try {
-    await fetch(DB_API + '?table=transport&id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ statut: newStatut })
-    });
-    renderTransport();
-  } catch(e) { alert('Erreur mise à jour.'); }
-}
-
-async function renderTransport() {
-  var list = document.getElementById('tr-list');
-  if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
-
-  var data = [];
-  try {
-    var resp = await fetch(DB_API + '?table=transport');
-    data = await resp.json();
-    if (!Array.isArray(data)) data = [];
-  } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:red">Erreur de connexion</div>';
-    return;
-  }
-
-  // Parser les photos (Neon renvoie JSONB parfois en string)
-  data.forEach(function(r) {
-    if (typeof r.photos === 'string') {
-      try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; }
-    }
-    if (!Array.isArray(r.photos)) r.photos = [];
-  });
-  data.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
-  var filtered = transportFilter === 'all' ? data : data.filter(function(r){ return r.type === transportFilter; });
-
-  var total = data.length;
-  var encours = data.filter(function(r){ return r.statut === 'en_cours'; }).length;
-  var aplanifier = data.filter(function(r){ return r.statut === 'a_planifier'; }).length;
-  var el = document.getElementById('tr-cnt-total'); if (el) el.textContent = total;
-  el = document.getElementById('tr-cnt-encours'); if (el) el.textContent = encours;
-  el = document.getElementById('tr-cnt-planifier'); if (el) el.textContent = aplanifier;
-
-  var badge = document.getElementById('transport-badge-home');
-  if (badge) badge.textContent = total > 0 ? total + ' intervention(s)' : 'Camions & expéditions';
-
-  if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">'
-      + '<div style="font-size:40px">🚛</div>'
-      + '<div style="font-size:14px;font-weight:600;margin-top:10px">Aucune intervention</div>'
-      + '<div style="font-size:12px;margin-top:6px">Appuyez sur "+ Ajouter" pour planifier</div>'
-      + '</div>';
-    return;
-  }
-
-  var typeLabels  = { intransit:'🔄 Intransit', local:'📍 Local', international:'✈️ International' };
-  var statutLabels= { a_planifier:'📋 À planifier', en_cours:'🔄 En cours', expedie:'📦 Expédié', livre:'✅ Livré' };
-  var statutColors= { a_planifier:'#1F3864', en_cours:'#E65100', expedie:'#7030A0', livre:'#375623' };
-  var statutBgs   = { a_planifier:'#f0f4ff', en_cours:'#FFF3E0', expedie:'#EDE7F6', livre:'#E2EFDA' };
-
-  list.innerHTML = filtered.map(function(r) {
-    var dateStr = r.date ? new Date(r.date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'short',day:'2-digit',month:'short',year:'numeric'}) : '--';
-    var sColor = statutColors[r.statut] || '#888';
-    var sBg    = statutBgs[r.statut] || '#f0f0f0';
-    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid ' + sColor + '">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-        + '<div>'
-          + '<div style="font-size:16px;font-weight:700;color:#1F3864">' + dateStr + '</div>'
-          + '<div style="margin-top:4px">'
-            + '<span style="background:#E1F5EE;color:#0F6E56;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-right:5px">' + (typeLabels[r.type]||r.type) + '</span>'
-            + '<span style="background:' + sBg + ';color:' + sColor + ';padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">' + (statutLabels[r.statut]||r.statut) + '</span>'
-          + '</div>'
-        + '</div>'
-        + '<div style="display:flex;gap:6px">'
-        + '<button onclick="modifierTransport(\'' + r.id + '\')" style="background:#EEF2FF;color:#1F3864;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">✏️</button>'
-        + '<button onclick="supprimerTransport(\'' + r.id + '\')" style="background:#FFF2F2;color:#C00;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">🗑️</button>'
-        + '</div>'
-      + '</div>'
-      + ((r.wo||r.tag||r.sc||r.serie) ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">' : '')
-      + (r.wo ? '<div style="background:#EEF2FF;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">WO</div><div style="font-size:12px;font-weight:700;color:#1F3864">' + r.wo + '</div></div>' : '')
-      + (r.tag ? '<div style="background:#FFF8E1;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">TAG</div><div style="font-size:12px;font-weight:700;color:#E65100">' + r.tag + '</div></div>' : '')
-      + (r.sc ? '<div style="background:#E8F5E9;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">STOCK CODE</div><div style="font-size:12px;font-weight:700;color:#375623">' + r.sc + '</div></div>' : '')
-      + (r.serie ? '<div style="background:#EDE7F6;border-radius:7px;padding:5px 8px"><div style="font-size:9px;color:var(--muted);font-weight:700">N° SÉRIE</div><div style="font-size:12px;font-weight:700;color:#7030A0">' + r.serie + '</div></div>' : '')
-      + ((r.wo||r.tag||r.sc||r.serie) ? '</div>' : '')
-      + (r.dest ? '<div style="font-size:12px;color:var(--muted);margin-bottom:4px"><span style="font-weight:700">Destination :</span> ' + r.dest + '</div>' : '')
-      + (r.notes ? '<div style="font-size:12px;color:var(--muted);background:#f8f9fa;border-radius:8px;padding:7px 10px;margin-top:6px">' + r.notes + '</div>' : '')
-      + (r.photos && r.photos.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + r.photos.filter(Boolean).map(function(p){ return '<img src="' + p + '" onclick="viewPhotoFull(event)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer">'; }).join('') + '</div>' : '')
-      + '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'
-        + (r.statut !== 'a_planifier' ? '' : '<button onclick="changerStatutTransport(\'' + r.id + '\',\'en_cours\')" style="flex:1;background:#FFF3E0;color:#E65100;border:1.5px solid #E65100;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🔄 En cours</button>')
-        + (r.statut === 'en_cours' ? '<button onclick="changerStatutTransport(\'' + r.id + '\',\'expedie\')" style="flex:1;background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">📦 Expédié</button>' : '')
-        + (r.statut === 'expedie' ? '<button onclick="changerStatutTransport(\'' + r.id + '\',\'livre\')" style="flex:1;background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✅ Livré</button>' : '')
-      + '</div>'
-    + '</div>';
-  }).join('');
-}
-
 var _scanStream = null;
 var _scanInterval = null;
 
@@ -5086,28 +4386,6 @@ function afficherFallbackCamera() {
     '</div>';
 }
 
-async function lireImageQR(input) {
-  if (!input.files || !input.files[0]) return;
-  var resultEl = document.getElementById('qr-result');
-  resultEl.textContent = '&#8987; Analyse en cours...';
-  resultEl.style.display = 'block';
-
-  try {
-    if ('BarcodeDetector' in window) {
-      var img = await createImageBitmap(input.files[0]);
-      var detector = new BarcodeDetector({ formats: ['qr_code'] });
-      var codes = await detector.detect(img);
-      if (codes.length > 0) {
-        traiterQRCode(codes[0].rawValue);
-        return;
-      }
-    }
-    resultEl.textContent = 'QR non detecte. Essaie le bouton caméra.';
-  } catch(e) {
-    resultEl.textContent = 'Erreur : ' + e.message;
-  }
-}
-
 function arreterCamera() {
   if (_scanStream) {
     _scanStream.getTracks().forEach(function(t){ t.stop(); });
@@ -5149,156 +4427,6 @@ function cloudThumb(url, w, h) {
 
 
 
-async function genererQRCode(id) {
-  var records = await dbLoad();
-  var r = records.find(function(x){ return x.id === id; });
-  if (!r) return;
-
-  var url = window.location.origin + window.location.pathname + '?tag=' + encodeURIComponent(r.tag || id);
-
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;box-sizing:border-box';
-
-  var box = document.createElement('div');
-  box.style.cssText = 'background:#fff;border-radius:16px;padding:20px;width:100%;max-width:360px;text-align:center';
-  box.innerHTML = '<div style="font-size:16px;font-weight:700;color:#1F3864;margin-bottom:4px">&#128248; ' + (r.tag||'--') + '</div>' +
-    '<div style="font-size:11px;color:#888;margin-bottom:12px">' + (r.wo ? 'WO ' + r.wo + ' · ' : '') + (r.wg||'') + '</div>' +
-    '<div id="qr-canvas" style="display:flex;justify-content:center;margin-bottom:12px"></div>' +
-    '<div style="font-size:10px;color:#aaa;word-break:break-all">' + url + '</div>' +
-    '<div style="margin-top:12px;font-size:11px;color:#555;background:#f8f9fa;border-radius:8px;padding:8px;text-align:left;line-height:1.8">' +
-      (r.tag    ? '<strong>TAG :</strong> ' + r.tag + '<br>' : '') +
-      (r.wo     ? '<strong>WO MTC :</strong> ' + r.wo + '<br>' : '') +
-      (r.wr     ? '<strong>WR :</strong> ' + r.wr + '<br>' : '') +
-      (r.wg     ? '<strong>WG :</strong> ' + r.wg + '<br>' : '') +
-      (r.loc    ? '<strong>Loc :</strong> ' + r.loc + '<br>' : '') +
-      (r.statut ? '<strong>Statut :</strong> ' + r.statut + '<br>' : '') +
-      (r.date   ? '<strong>Date :</strong> ' + r.date : '') +
-    '</div>';
-
-  document.body.appendChild(ov);
-  ov.appendChild(box);
-
-  var btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex;gap:10px';
-
-  var btnPrint = document.createElement('button');
-  btnPrint.innerHTML = '&#128424; Étiquette';
-  btnPrint.style.cssText = 'padding:12px 20px;background:#375623;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit';
-  btnPrint.onclick = function(){ imprimerEtiquetteQR(r); };
-
-  var close = document.createElement('button');
-  close.innerHTML = '&#10005; Fermer';
-  close.style.cssText = 'padding:12px 20px;background:#fff;color:#1F3864;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit';
-  close.onclick = function(){ ov.remove(); };
-
-  btnRow.appendChild(btnPrint);
-  btnRow.appendChild(close);
-  ov.appendChild(btnRow);
-
-  setTimeout(function() {
-    try {
-      var qrDiv = document.getElementById('qr-canvas');
-      if (typeof QRCode === 'undefined') {
-        qrDiv.innerHTML = '<div style="font-size:11px;color:#888;padding:8px">QR lib en chargement...<br><a href="' + url + '" style="color:#1F3864;word-break:break-all;font-size:10px">' + url + '</a></div>';
-        return;
-      }
-      new QRCode(qrDiv, {
-        text: url,
-        width: 200,
-        height: 200,
-        colorDark: '#1F3864',
-        colorLight: '#ffffff',
-        correctLevel: 0
-      });
-    } catch(e) {
-      document.getElementById('qr-canvas').innerHTML = '<div style="color:#C00;font-size:12px">Erreur QR : ' + e.message + '</div>';
-    }
-  }, 300);
-
-  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-}
-
-function imprimerEtiquetteQR(r) {
-  var url = window.location.origin + window.location.pathname + '?tag=' + encodeURIComponent(r.tag || r.id);
-  var win = window.open('', '_blank', 'width=500,height=350');
-  if (!win) { alert('Autorise les popups pour imprimer'); return; }
-
-  var tag = r.tag || '--';
-  var wo = r.wo || '';
-  var wr = r.wr || '';
-  var wg = r.wg || '';
-  var date = r.date || new Date().toLocaleDateString('fr-FR');
-  var statut = r.statut || '';
-  var sc = r.sc || '';
-
-  var wgColor = wg === 'MCCHAUD' ? '#7030A0' : wg === 'MCREPAR' ? '#C55A11' : '#0F6E56';
-
-  var html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<title>Etiquette ' + tag + '</title>' +
-    '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>' +
-    '<style>' +
-      '@page { size: 62mm 29mm; margin: 0; }' +
-      'body { margin: 0; padding: 0; font-family: Arial, sans-serif; }' +
-      '.etiquette {' +
-        'width: 62mm;' +
-        'height: 29mm;' +
-        'display: flex;' +
-        'align-items: center;' +
-        'padding: 1.5mm;' +
-        'box-sizing: border-box;' +
-        'gap: 2mm;' +
-        'border: 0.5px solid #ddd;' +
-        'overflow: hidden;' +
-      '}' +
-      '#qr-print { width: 25mm; height: 25mm; flex-shrink: 0; }' +
-      '#qr-print img, #qr-print canvas { width: 25mm !important; height: 25mm !important; }' +
-      '.infos { flex: 1; overflow: hidden; }' +
-      '.tag { font-size: 8pt; font-weight: 900; color: #1F3864; line-height: 1.2; word-break: break-all; }' +
-      '.wg-badge { display: inline-block; background: ' + wgColor + '; color: #fff; font-size: 6pt; font-weight: 700; padding: 0.5mm 1.5mm; border-radius: 2mm; margin: 0.5mm 0; }' +
-      '.info-line { font-size: 6pt; color: #333; line-height: 1.4; }' +
-      '.info-line span { font-weight: 700; color: #1F3864; }' +
-      '.prnc { font-size: 5pt; color: #999; margin-top: 1mm; }' +
-      '@media print {' +
-        'body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
-        '.no-print { display: none; }' +
-      '}' +
-    '</style></head><body>' +
-    '<div class="etiquette">' +
-      '<div id="qr-print"></div>' +
-      '<div class="infos">' +
-        '<div class="tag">' + tag + '</div>' +
-        (wg ? '<div class="wg-badge">' + wg + '</div>' : '') +
-        (wo ? '<div class="info-line"><span>WO</span> ' + wo + '</div>' : '') +
-        (wr ? '<div class="info-line"><span>WR</span> ' + wr + '</div>' : '') +
-        (sc ? '<div class="info-line"><span>SC</span> ' + sc + '</div>' : '') +
-        (statut ? '<div class="info-line"><span>Statut</span> ' + statut + '</div>' : '') +
-        '<div class="prnc">PRNC — MC P50 — ' + date + '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="no-print" style="text-align:center;margin-top:10px">' +
-      '<button onclick="window.print()" style="background:#1F4E79;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">🖨 Imprimer</button>' +
-      '<button onclick="window.close()" style="background:#f0f0f0;color:#333;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✕ Fermer</button>' +
-      '<div style="font-size:11px;color:#888;margin-top:6px">Format : 62×29mm — Brother QL-1060N</div>' +
-    '</div>' +
-    '<script>' +
-      'window.onload = function() {' +
-        'new QRCode(document.getElementById("qr-print"), {' +
-          'text: "' + url + '",' +
-          'width: 95,' +
-          'height: 95,' +
-          'colorDark: "#1F3864",' +
-          'colorLight: "#ffffff",' +
-          'correctLevel: 0' +
-        '});' +
-        'setTimeout(function(){ window.print(); }, 1000);' +
-      '};' +
-    '<\/script>' +
-    '</body></html>';
-
-  win.document.write(html_content);
-  win.document.close();
-}
-
 async function ouvrirFicheQR(id) {
   show('s-qr-fiche');
   var content = document.getElementById('qr-fiche-content');
@@ -5337,26 +4465,6 @@ async function ouvrirFicheQR(id) {
       (r.statut ? '<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:8px 12px;font-size:12px"><span style="color:#888;font-weight:700">Statut :</span> <strong>' + r.statut + '</strong></div>' : '') +
       (r.desc   ? '<div style="margin-top:8px;font-size:11px;color:#555;font-style:italic">' + r.desc + '</div>' : '') +
     '</div>';
-}
-
-function activerModeConsult2() {
-  _isConsult2Mode = true;
-  _isConsultMode  = false;
-  _isEtnaMode     = false;
-  var banner = document.getElementById('consult2-banner');
-  if (banner) banner.style.display = 'block';
-  ['nav-arrive','nav-equip','nav-usage','nav-hist'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  document.querySelectorAll('.action-card').forEach(function(card) {
-    card.style.display = 'none';
-  });
-  ['s-etna-suivi','s-relances','s-hist'].forEach(function(screen) {
-    var card = document.querySelector('[onclick*="' + screen + '"]');
-    if (card) card.style.display = '';
-  });
-  show('s-home');
 }
 
 function activerModeEtna() {
@@ -5493,20 +4601,6 @@ async function saveEtnaUpdate() {
   setTimeout(function() {
     alert('Mise à jour ETNA enregistrée !\nStatut : ' + statutLabel);
   }, 300);
-}
-
-async function loadAndViewPhoto(id, startIdx) {
-  var key = 'ph_' + id;
-  window._etnaPhotosMap = window._etnaPhotosMap || {};
-  if (!window._etnaPhotosMap[key] || !window._etnaPhotosMap[key].length) {
-    try {
-      var resp = await supaFetch('/rest/v1/historique?select=photos&id=eq.' + encodeURIComponent(id), 'GET');
-      if (resp && resp[0] && resp[0].photos) {
-        window._etnaPhotosMap[key] = resp[0].photos.filter(Boolean);
-      }
-    } catch(e) { console.warn('Photo load err', e); return; }
-  }
-  viewPhotoByKey(key, startIdx || 0);
 }
 
 function viewPhotoByKey(key, startIdx) {
@@ -5925,25 +5019,6 @@ function activerModePrepose() {
   setTimeout(function() { dbLoad(); }, 2000);
 }
 
-function activerModeConsultation() {
-  _isConsultMode = true;
-  const banner = document.getElementById('consult-banner');
-  if (banner) banner.style.display = 'block';
-  ['nav-arrive','nav-equip','nav-usage','nav-hist','nav-dash'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  document.querySelectorAll('.action-card').forEach(function(card) {
-    card.style.display = 'none';
-  });
-  var arriveeCard = document.querySelector('[onclick*="s-arrive"]');
-  if (arriveeCard) {
-    arriveeCard.style.display = '';
-    arriveeCard.style.width = '100%';
-  }
-  show('s-home');
-}
-
 function checkConsultMode() {
   if (_isConsultMode) {
     return true;
@@ -5997,19 +5072,6 @@ async function deleteRecord(id) {
         for (const pp of (row.photos||[]).filter(Boolean))
           try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
         await fetch(DB_API+'?table=planning&wo='+encodeURIComponent(wo),{method:'DELETE'}).catch(()=>{});
-      }
-    } catch(e){}
-    try {
-      const pi=await fetch(DB_API+'?table=pi_suivi').then(r=>r.json());
-      const piRow=Array.isArray(pi)?pi.find(p=>p.wo===wo):null;
-      if(piRow){ await fetch(DB_API+'?table=pi_suivi&id='+encodeURIComponent(piRow.id),{method:'DELETE'}); _piCache=null; }
-    } catch(e){}
-    try {
-      const tr=await fetch(DB_API+'?table=transport').then(r=>r.json());
-      for (const row of (Array.isArray(tr)?tr:[]).filter(r=>r.wo===wo)) {
-        for (const pp of (row.photos||[]).filter(Boolean))
-          try { await fetch(DB_API+'?action=delete_photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo_url:pp})}); } catch(e){}
-        await fetch(DB_API+'?table=transport&id='+encodeURIComponent(row.id),{method:'DELETE'}).catch(()=>{});
       }
     } catch(e){}
     try {
@@ -6179,17 +5241,6 @@ function triggerWorkflowArrivee(action, wo, tag, wr, wg, sc, id, woUsine, emailD
   }
 }
 
-function prefillEtna(wo, tag, wg, woUsine) {
-  show('s-peinture');
-  setTimeout(function() {
-    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
-    if (wgKey) setPtWG(wgKey === 'chaud' ? 'chaud' : 'repar');
-    if (wo)      { var el=document.getElementById('pt-wo');  if(el) el.value=wo; }
-    if (woUsine) { var el=document.getElementById('pt-wo-usine')||document.getElementById('pt-wousine'); if(el) el.value=woUsine; }
-    if (tag)     { var el=document.getElementById('pt-tag'); if(el) el.value=tag; }
-  }, 200);
-}
-
 function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
   show('s-arrive');
   setTimeout(function() {
@@ -6201,131 +5252,6 @@ function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
     if (tag)     { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
     setTimeout(function(){ setStatut('etna'); }, 300);
   }, 200);
-}
-
-function prefillArrivee(wo, tag, wr, wg, sc) {
-  show('s-arrive');
-  setTimeout(function() {
-    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
-    if (wgKey) { setWG('ar', wgKey); }
-    if (wo)  { var el=document.getElementById('ar-wo');  if(el) el.value=wo; }
-    if (wr)  { var el=document.getElementById('ar-wr');  if(el) el.value=wr; }
-    if (sc)  { var el=document.getElementById('ar-sc');  if(el) el.value=sc; }
-    if (tag) { var el=document.getElementById('ar-tag'); if(el) el.value=tag; }
-    var dateEl = document.getElementById('ar-date');
-    if (dateEl && !dateEl.value) {
-      var n=new Date();
-      dateEl.value = n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'))+'-'+(String(n.getDate()).padStart(2,'0'));
-    }
-  }, 200);
-}
-
-function prefillTermine(wo, tag, wr, wg, sc, recordId, woUsine, emailDem) {
-  show('s-equip');
-  setTimeout(function() {
-    var wgKey = Object.keys(WG_LABELS).find(function(k){ return WG_LABELS[k]===wg; }) || '';
-    if (wgKey) { setWG('eq', wgKey); }
-    if (wo)      { var el=document.getElementById('eq-wo-mtc'); if(el) el.value=wo; }
-    if (woUsine) { var el=document.getElementById('eq-wo');     if(el) el.value=woUsine; }
-    if (wr)      { var el=document.getElementById('eq-wr');     if(el) el.value=wr; }
-    if (sc)      { var el=document.getElementById('eq-sc');     if(el) el.value=sc; }
-    if (tag)     { var el=document.getElementById('eq-tag');    if(el) el.value=tag; }
-    setTimeout(function() { setEqStatut('demandeur'); }, 150);
-    if (emailDem) {
-      var hiddenEl = document.getElementById('eq-email-dem-hidden');
-      if (hiddenEl) hiddenEl.value = emailDem;
-    }
-    if (emailDem) {
-      setTimeout(function() {
-        var manualList = document.getElementById('eq-manual');
-        if (manualList) {
-          var inputs = manualList.querySelectorAll('input');
-          var found = false;
-          inputs.forEach(function(i){ if(i.value === emailDem) found = true; });
-          if (!found) {
-            var div = document.createElement('div');
-            div.className = 'manual-item';
-            div.innerHTML = '<input class="fi" type="email" value="' + emailDem + '" style="background:#E8F5E9;color:#375623;font-weight:600">' +
-              '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
-            manualList.appendChild(div);
-          }
-        }
-      }, 300);
-    }
-
-    if (recordId) {
-      dbLoad().then(function(records) {
-        var rec = records.find(function(r){ return r.id === recordId; });
-        if (rec && rec.photos && rec.photos.length > 0) {
-          var photos = rec.photos.filter(Boolean);
-          if (!_photoStore) _photoStore = {};
-          _photoStore['eq-prev'] = photos.slice();
-          var prev = document.getElementById('eq-prev');
-          if (prev) {
-            prev.innerHTML = '';
-            photos.forEach(function(p, i) {
-              var div = document.createElement('div');
-              div.className = 'photo-thumb';
-              div.dataset.idx = i;
-              var imgEl = document.createElement('img'); imgEl.src = p;
-              var delEl = document.createElement('div'); delEl.className='photo-del'; delEl.textContent='×';
-              (function(ii){ delEl.onclick=function(){ removePhoto('eq-prev', ii, div); }; })(i);
-              div.innerHTML=''; div.appendChild(imgEl); div.appendChild(delEl);
-              prev.appendChild(div);
-            });
-          }
-        }
-      });
-    }
-  }, 200);
-}
-
-async function ajouterPhotoRecord(input, recordId) {
-  if (!input.files || !input.files[0]) return;
-  var file = input.files[0];
-  var label = input.parentElement;
-  var origHtml = label.innerHTML;
-  label.innerHTML = '⏳ Envoi en cours...';
-
-  try {
-    var compressed = await compressImage(file, 1200, 0.75);
-    var formData = new FormData();
-    formData.append('file', compressed, 'photo.jpg');
-    formData.append('upload_preset', 'prnc-field');
-    formData.append('folder', 'termine');
-    var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
-      method: 'POST', body: formData
-    });
-    var data = await resp.json();
-    if (!data.secure_url) throw new Error('Upload échoué');
-
-    var records = await dbLoad();
-    var r = records.find(function(x){ return x.id === recordId; });
-    var photos = (r && r.photos ? r.photos : []).filter(Boolean);
-    photos.push(data.secure_url);
-
-    await fetch('/api/db?id=' + encodeURIComponent(recordId), {
-      method: 'PATCH',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ photos: photos })
-    });
-
-    invalidateDbCache();
-    label.innerHTML = '✅ Photo ajoutée !';
-
-    setTimeout(function() {
-      var ov = label.closest('.overlay-view');
-      if (ov) {
-        ov.remove();
-        viewRecord(recordId);
-      }
-    }, 800);
-
-  } catch(e) {
-    label.innerHTML = origHtml;
-    alert('Erreur : ' + e.message);
-  }
-  input.value = '';
 }
 
 var _equip_photos = [];
@@ -6375,49 +5301,6 @@ async function ajouterPhotoEquip(input) {
     if (preview) preview.removeChild(loadDiv);
     alert('Erreur upload photo : ' + e.message);
   });
-  input.value = '';
-}
-
-async function ajouterPhotoRecord(input, recordId) {
-  if (!input.files || !input.files[0]) return;
-  var file = input.files[0];
-  var label = input.parentElement;
-  var origHtml = label.innerHTML;
-  label.innerHTML = '⏳ Envoi en cours...';
-
-  try {
-    var compressed = await compressImage(file, 1200, 0.75);
-    var formData = new FormData();
-    formData.append('file', compressed, 'photo.jpg');
-    formData.append('upload_preset', 'prnc-field');
-    formData.append('folder', 'termine');
-    var resp = await fetch('https://api.cloudinary.com/v1_1/dns5b6fix/image/upload', {
-      method: 'POST', body: formData
-    });
-    var data = await resp.json();
-    if (!data.secure_url) throw new Error('Upload échoué');
-
-    var records = await dbLoad();
-    var r = records.find(function(x){ return x.id === recordId; });
-    var photos = (r && r.photos ? r.photos : []).filter(Boolean);
-    photos.push(data.secure_url);
-
-    await fetch('/api/db?id=' + encodeURIComponent(recordId), {
-      method: 'PATCH',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ photos: photos })
-    });
-
-    invalidateDbCache();
-    label.innerHTML = '✅ Photo ajoutée !';
-    setTimeout(function() {
-      var ov = label.closest('.overlay-view');
-      if (ov) { ov.remove(); viewRecord(recordId); }
-    }, 800);
-  } catch(e) {
-    label.innerHTML = origHtml;
-    alert('Erreur : ' + e.message);
-  }
   input.value = '';
 }
 
@@ -6632,75 +5515,6 @@ function viewRecord(id) {
         .catch(function(e){ console.warn('plan photos fetch err', e); });
     }
   });
-}
-
-function ouvrirWorkflowArrivee(r) {
-  var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:8000;display:flex;align-items:flex-end;justify-content:center';
-
-  var wgColor = r.wg === 'MCCHAUD' ? '#C55A11' : r.wg === 'MCREPAR' ? '#1F3864' : '#0F6E56';
-  var wgBg    = r.wg === 'MCCHAUD' ? '#FCE4D6' : r.wg === 'MCREPAR' ? '#DEEAF1' : '#E1F5EE';
-
-  var photosHtml = '';
-  if (r.photos && r.photos.length > 0) {
-    photosHtml = '<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px">';
-    r.photos.forEach(function(url) {
-      photosHtml += '<img src="' + url + '" style="height:80px;width:80px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1.5px solid #eee;cursor:pointer" data-url="' + url + '">';
-    });
-    photosHtml += '</div>';
-  }
-
-  overlay.innerHTML =
-    '<div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 36px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
-        '<div>' +
-          '<div style="font-size:17px;font-weight:700;color:#1F3864">&#128230; ' + (r.tag || '--') + '</div>' +
-          '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">' +
-            (r.wg ? '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + r.wg + '</span>' : '') +
-            (r.wo ? '<span style="background:#f0f0f0;color:#555;padding:2px 8px;border-radius:10px;font-size:10px">WO ' + r.wo + '</span>' : '') +
-            (r.wr ? '<span style="background:#f0f0f0;color:#555;padding:2px 8px;border-radius:10px;font-size:10px">WR ' + r.wr + '</span>' : '') +
-          '</div>' +
-        '</div>' +
-        '<div style="font-size:11px;color:#888">' + (r.date || '') + '</div>' +
-      '</div>' +
-      photosHtml +
-      '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Suite du workflow</div>' +
-      '<div style="display:flex;flex-direction:column;gap:10px">' +
-        '<button id="btn-rebus-overlay" style="background:#FFF2F2;color:#C00;border:1.5px solid #C00;border-radius:14px;padding:16px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">' +
-          '<span style="font-size:22px">&#128465;</span>' +
-          '<div><div style="font-size:13px;font-weight:700">Rebus</div><div style="font-size:11px;opacity:.7;margin-top:2px">Équipement mis au rebus</div></div>' +
-        '</button>' +
-      '</div>' +
-      '<button id="btn-cancel-overlay" style="margin-top:14px;width:100%;background:#f5f5f5;color:#555;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Annuler</button>' +
-    '</div>';
-
-  document.body.appendChild(overlay);
-
-  overlay.querySelectorAll('img[data-url]').forEach(function(img) {
-    img.addEventListener('click', function() { window.open(this.dataset.url, '_blank'); });
-  });
-
-  overlay.querySelector('#btn-rebus-overlay').addEventListener('click', function() {
-    overlay.remove();
-    if (!confirm('Confirmer la mise au rebus de ' + (r.tag || 'cet équipement') + ' ?')) return;
-    rebusArrivee(r.id);
-  });
-
-  overlay.querySelector('#btn-cancel-overlay').addEventListener('click', function() { overlay.remove(); });
-  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-}
-
-async function rebusArrivee(id) {
-  try {
-    await supaFetch('/rest/v1/historique?id=eq.' + encodeURIComponent(id), 'PATCH', { statut: 'REBUS', type: 'REBUS' });
-    try {
-      var local = JSON.parse(localStorage.getItem('prnc-historique') || '[]');
-      var idx = local.findIndex(function(r){ return r.id === id; });
-      if (idx >= 0) { local[idx].statut = 'REBUS'; local[idx].type = 'REBUS'; localStorage.setItem('prnc-historique', JSON.stringify(local)); }
-    } catch(e) {}
-    invalidateDbCache();
-    renderHist();
-  } catch(e) { alert('Erreur : ' + e.message); }
 }
 
 function editRecord(id) {
@@ -6978,61 +5792,6 @@ function showWhatsAppPrompt(tag, statut, loc, woUsine, woMtc, zone) {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 
-async function exportTimelinePDF() {
-  const dateInput = document.getElementById('tl-date');
-  const today     = new Date().toLocaleDateString('fr-FR');
-  const selDate   = dateInput&&dateInput.value ? new Date(dateInput.value).toLocaleDateString('fr-FR') : today;
-  const records   = await dbLoad();
-  const dayRecs   = records.filter(r=>r.date===selDate).sort((a,b)=>(a.heure||'').localeCompare(b.heure||''));
-
-  const rows = dayRecs.map(r=>`<tr>
-    <td style="padding:7px 10px;font-size:12px;font-weight:700">${r.heure||'--'}</td>
-    <td style="padding:7px 10px;font-size:11px"><span style="padding:2px 7px;border-radius:4px;background:#eee;font-weight:600">${r.type}</span></td>
-    <td style="padding:7px 10px;font-size:12px;font-weight:700;color:#1F3864">${r.tag||'--'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.wo||'--'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.wg||'--'}</td>
-    <td style="padding:7px 10px;font-size:11px">${r.statut||r.shutdown||'--'}</td>
-  </tr>`).join('');
-
-  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-  <title>Activite ${selDate}</title>
-  <style>body{font-family:Arial,sans-serif;margin:20px;color:#1a1a1a}h1{font-size:18px;color:#1F3864;border-bottom:3px solid #1F3864;padding-bottom:8px}
-  table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#1F3864;color:#fff;padding:8px;font-size:11px;text-align:left}
-  tr:nth-child(even){background:#f9f9f9}td{border-bottom:1px solid #eee}
-  .footer{margin-top:20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:8px}
-  @media print{.no-print{display:none}}</style>
-</head>
-  <body>
-  <div class="no-print" style="margin-bottom:14px">
-    <button onclick="window.print()" style="background:#7030A0;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">Imprimer / PDF</button>
-    <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
-  </div>
-  <h1>Activite du ${selDate}</h1>
-  <p style="font-size:12px;color:#666">${dayRecs.length} action(s) -- ${getUserName()} -- PRNC Maintenance Centrale P50</p>
-  <table><tr><th>Heure</th><th>Type</th><th>TAG</th><th>WO</th><th>Workgroup</th><th>Statut</th></tr>${rows}</table>
-  <div class="footer">PRNC Field -- ${selDate}</div>
-  
-<!-- POPUP CONTACT PICKER -->
-<div id="contact-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="if(event.target===this)hideContactPicker()">
-  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
-    <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:#1F3864">Choisir un destinataire</div>
-      <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
-    </div>
-    <div style="padding:10px 14px 6px">
-      <input id="contact-picker-search" type="text" placeholder="Rechercher..." oninput="filterContactPicker()"
-        style="width:100%;padding:9px 12px;border:1.5px solid #dde3ef;border-radius:10px;font-size:13px;font-family:inherit;outline:none">
-    </div>
-    <div id="contact-picker-list" style="overflow-y:auto;padding:6px 14px 10px;flex:1"></div>
-  </div>
-</div>
-
-</body></html>`;
-
-  const win=window.open('','_blank');
-  if(win){win.document.write(html);win.document.close();}
-}
-
 var _ptWG    = '';
 var _ptTrait = '';
 var _ptTraitLabel = '';
@@ -7278,546 +6037,6 @@ function nouvelleInterventionTag(last) {
     var descEl = document.getElementById('ar-desc');
     if (descEl && last.desc) descEl.value = last.desc.replace('Demandeur : ', '');
   }, 300);
-}
-
-function envoyerRecapBS() {
-  var data = getBonsSortie();
-  var d = data.find(function(x) { return x.id === _bsCurrentId; });
-  if (!d) return;
-
-  var pieces = d.pieces || [];
-  var recues = pieces.filter(function(p) { return p.recu; });
-  var manquantes = pieces.filter(function(p) { return !p.recu; });
-  var today = new Date().toLocaleDateString('fr-FR');
-
-  var subj = '[PI] Récap WO ' + d.wo + ' — ' + d.wg + ' — ' + today;
-
-  var body = ['Bonjour,', '',
-    'Récapitulatif des pièces reçues pour le WO ' + d.wo + ' :',
-    '',
-    'WO          : ' + d.wo,
-    'Workgroup   : ' + (d.wg||'--'),
-    (d.tag ? 'TAG         : ' + d.tag : null),
-    (d.loc ? 'Localisation: ' + d.loc : null),
-    'Date        : ' + today,
-    '',
-    '--- PIÈCES REÇUES (' + recues.length + '/' + pieces.length + ') ---'
-  ].filter(function(l){ return l !== null; });
-
-  if (recues.length) {
-    recues.forEach(function(p) {
-      var locTxt = p.loc ? ' 📍 ' + p.loc : '';
-      body.push('✅ ' + p.ref + ' — ' + p.desc + ' — x' + p.qte + locTxt);
-    });
-  } else {
-    body.push('Aucune pièce reçue');
-  }
-
-  if (manquantes.length) {
-    body.push('');
-    body.push('--- PIÈCES MANQUANTES (' + manquantes.length + ') ---');
-    manquantes.forEach(function(p) {
-      var locTxt = p.loc ? ' 📍 ' + p.loc : '';
-      body.push('⬜ ' + p.ref + ' — ' + p.desc + ' — x' + p.qte + locTxt);
-    });
-  }
-
-  var pct = pieces.length > 0 ? Math.round(recues.length/pieces.length*100) : 0;
-  body.push('');
-  body.push(recues.length + '/' + pieces.length + ' pièces reçues (' + pct + '%)');
-  body.push('');
-  body.push('Cordialement,');
-  body.push(getUserName());
-  body.push('Préposé aux pièces | PRNC — Maintenance Centrale P50');
-
-  var mailTo = 'mailto:Emmanuel.Rosa@pronyresources.com' +
-    '?subject=' + encodeURIComponent(subj) +
-    '&body=' + encodeURIComponent(body.join('\n'));
-
-  window.location.href = mailTo;
-}
-
-const BS_KEY = 'prnc-bons-sortie'; // kept for migration only
-var _piCache = null;
-
-async function piLoad() {
-  if (_piCache) return _piCache;
-  try {
-    const r = await fetch('/api/db?table=pi_suivi');
-    const data = await r.json();
-    _piCache = Array.isArray(data) ? data.map(function(d) {
-      return {
-        id: d.id, wo: d.wo, wg: d.wg, tag: d.tag, loc: d.loc,
-        date: d.date, statut: d.statut,
-        pieces: d.pieces || []
-      };
-    }) : [];
-    return _piCache;
-  } catch(e) {
-    console.warn('PI load err', e);
-    try { return JSON.parse(localStorage.getItem(BS_KEY) || '[]'); } catch(e2) { return []; }
-  }
-}
-
-async function piAdd(item) {
-  _piCache = null;
-  try {
-    await fetch('/api/db?table=pi_suivi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item)
-    });
-  } catch(e) { console.warn('PI add err', e); }
-}
-
-async function piUpdate(id, data) {
-  _piCache = null;
-  try {
-    await fetch('/api/db?table=pi_suivi&id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-  } catch(e) { console.warn('PI update err', e); }
-}
-
-async function piDelete(id) {
-  _piCache = null;
-  try {
-    await fetch('/api/db?table=pi_suivi&id=' + encodeURIComponent(id), {
-      method: 'DELETE'
-    });
-  } catch(e) { console.warn('PI delete err', e); }
-}
-
-function getBonsSortie() { return _piCache || []; }
-function saveBonsSortieData(data) { _piCache = data; }
-
-var _bsnWG = '';
-var _bsCurrentId = null;
-
-function setBsnWG(wg) {
-  _bsnWG = wg;
-  ['chaud','repar','elins','mecus','stchaud'].forEach(function(w) {
-    var el = document.getElementById('bsn-wg-' + w);
-    if (!el) return;
-    el.className = 'wg-btn' + (w === wg ? ' on-' + w : '');
-  });
-}
-
-function getBonsSortie() {
-  try { return JSON.parse(localStorage.getItem(BS_KEY) || '[]'); } catch(e) { return []; }
-}
-
-function saveBonsSortieData(data) {
-  try { localStorage.setItem(BS_KEY, JSON.stringify(data)); } catch(e) {}
-}
-
-function previewBsnPieces() {
-  var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
-  var pieces = parsePiecesFromText(text);
-  var preview = document.getElementById('bsn-preview');
-  var previewList = document.getElementById('bsn-preview-list');
-  var previewCount = document.getElementById('bsn-preview-count');
-  if (!preview) return;
-
-  if (pieces.length === 0) {
-    preview.style.display = 'none';
-    return;
-  }
-
-  preview.style.display = 'block';
-  previewCount.textContent = pieces.length;
-  previewList.innerHTML = pieces.map(function(p) {
-    return '<div style="padding:2px 0;border-bottom:1px solid #eee">' +
-      '<span style="color:#1F3864;font-weight:700">' + p.ref + '</span> · ' +
-      p.desc + ' · <span style="color:#375623">x' + p.qte + '</span></div>';
-  }).join('');
-}
-
-function parsePiecesFromText(text) {
-  if (!text.trim()) return [];
-  var pieces = [];
-  var lines = text.split('\n');
-  lines.forEach(function(line) {
-    line = line.trim();
-    if (!line) return;
-    var parts = line.split('\t');
-    if (parts.length >= 2) {
-      var ref = parts[0].trim();
-      var desc = parts[1] ? parts[1].trim() : '';
-      var qte = parts[2] ? parts[2].trim().replace(',', '.') : '1';
-      if (ref.toLowerCase().includes('numéro') || ref.toLowerCase().includes('numero')) return;
-      if (ref) {
-        pieces.push({
-          ref: ref,
-          desc: desc,
-          qte: parseFloat(qte) || 1,
-          recu: false
-        });
-      }
-    }
-  });
-  return pieces;
-}
-
-async function saveBonsSortieWO() {
-  var wo = document.getElementById('bsn-wo') ? document.getElementById('bsn-wo').value.trim() : '';
-  var tag = document.getElementById('bsn-tag') ? document.getElementById('bsn-tag').value.trim() : '';
-  var text = document.getElementById('bsn-paste') ? document.getElementById('bsn-paste').value : '';
-
-  if (!wo) { alert('Le N° WO est obligatoire.'); return; }
-  if (!_bsnWG) { alert('Sélectionne un Workgroup.'); return; }
-
-  var pieces = parsePiecesFromText(text);
-
-  var loc = document.getElementById('bsn-loc') ? document.getElementById('bsn-loc').value.trim() : '';
-  var wgl = WG_LABELS[_bsnWG] || _bsnWG.toUpperCase();
-  var data = await piLoad();
-
-  var existing = data.findIndex(function(d) { return d.wo === wo; });
-
-  var woData = {
-    id: existing >= 0 ? data[existing].id : Date.now().toString(),
-    wo: wo,
-    wg: wgl,
-    tag: tag,
-    loc: loc,
-    date: new Date().toLocaleDateString('fr-FR'),
-    pieces: pieces,
-    statut: 'En cours',
-    created_at: new Date().toISOString()
-  };
-
-  if (existing >= 0) {
-    var oldPieces = data[existing].pieces || [];
-    woData.pieces = pieces.map(function(p) {
-      var old = oldPieces.find(function(op) { return op.ref === p.ref; });
-      return { ref: p.ref, desc: p.desc, qte: p.qte, recu: old ? old.recu : false };
-    });
-    data[existing] = woData;
-  } else {
-    data.unshift(woData);
-  }
-
-  if (existing >= 0) {
-    await piUpdate(woData.id, { statut: woData.statut, pieces: woData.pieces, loc: woData.loc, tag: woData.tag });
-  } else {
-    await piAdd(woData);
-  }
-
-  ['bsn-wo','bsn-tag','bsn-loc','bsn-paste'].forEach(function(id) {
-    var el = document.getElementById(id); if(el) el.value = '';
-  });
-  ['chaud','repar','elins','mecus','stchaud'].forEach(function(w) {
-    var el = document.getElementById('bsn-wg-' + w);
-    if(el) el.className = 'wg-btn';
-  });
-  _bsnWG = '';
-  var preview = document.getElementById('bsn-preview');
-  if(preview) preview.style.display = 'none';
-
-  show('s-bons-sortie');
-  await renderBonsSortie();
-  alert('WO ' + wo + ' enregistré !');
-}
-
-async function renderBonsSortie() {
-  var list = document.getElementById('bs-list');
-  if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:30px;color:#999">⏳ Chargement...</div>';
-  var data = await piLoad();
-  var search = (document.getElementById('bs-search')||{value:''}).value.toLowerCase();
-
-  var complets = data.filter(function(d) {
-    var pieces = d.pieces || [];
-    var total = pieces.length;
-    var recus = pieces.filter(function(p) { return p.recu; }).length;
-    return recus === total && total > 0;
-  }).length;
-  var encours = data.length - complets;
-  var el = document.getElementById('bs-count-complet'); if(el) el.textContent = complets;
-  var el2 = document.getElementById('bs-count-encours'); if(el2) el2.textContent = encours;
-  var el3 = document.getElementById('bs-count-total'); if(el3) el3.textContent = data.length;
-
-  var filtered = data.filter(function(d) {
-    if (!search) return true;
-    return (d.wo||'').toLowerCase().includes(search) ||
-           (d.wg||'').toLowerCase().includes(search) ||
-           (d.tag||'').toLowerCase().includes(search);
-  });
-
-  if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">🗂️<br>Aucun WO enregistré</div>';
-    return;
-  }
-
-  var wgOrder = ['chaud','repar','elins','mecus','stchaud'];
-  var wgLabels = { chaud:'MCCHAUD', repar:'MCREPAR', strob:'STROB', stchaud:'STCHAUD', elins:'MCELINS', mecus:'MCMECUS' };
-  var wgColors = { chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', stchaud:'#1F3864', elins:'#1F4E79', mecus:'#375623' };
-  var wgBgs    = { chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', stchaud:'#DEEAF1', elins:'#DEEAF1', mecus:'#E2EFDA' };
-  var wgPlanif = {
-    chaud:   'abel.vendegou@pronyresources.com',
-    repar:   'regis.eurimindia@pronyresources.com',
-    stchaud: 'gary.wayaridri.ext@pronyresources.com',
-    strob:   'kendji.kasovimoin.ext@pronyresources.com'
-    // TODO: elins / mecus à compléter
-  };
-  var CC_ALWAYS = 'emmanuel.rosa@pronyresources.com';
-
-  var groups = {};
-  wgOrder.forEach(function(wg) { groups[wg] = []; });
-  filtered.forEach(function(d) {
-    var wg = (d.wg||'').toLowerCase().replace('mc','');
-    if (!groups[wg]) groups[wg] = [];
-    groups[wg].push(d);
-  });
-
-  var html = '';
-  wgOrder.forEach(function(wg) {
-    var items = groups[wg];
-    if (!items.length) return;
-    var wgLabel = wgLabels[wg];
-    var wgColor = wgColors[wg];
-    var wgBg = wgBgs[wg];
-
-    html += '<div style="margin-bottom:16px">';
-    html += '<div style="background:' + wgBg + ';color:' + wgColor + ';font-weight:800;font-size:12px;padding:6px 12px;border-radius:8px;margin-bottom:6px;display:inline-block">' + wgLabel + '</div>';
-
-    items.forEach(function(d) {
-      var pieces = d.pieces || [];
-      var total = pieces.length;
-      var recus = pieces.filter(function(p) { return p.recu; }).length;
-      var complet = total > 0 && recus === total;
-      var pct = total > 0 ? Math.round(recus/total*100) : 0;
-      var statColor = complet ? '#375623' : '#E65100';
-      var statBg = complet ? '#E2EFDA' : '#FFF3E0';
-
-      html += '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid ' + statColor + ';box-shadow:0 1px 6px rgba(0,0,0,.06)">';
-      
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px" onclick="ouvrirDetailBS(\'' + d.id + '\')" style="cursor:pointer">';
-      html += '<div><div style="font-weight:800;font-size:15px">WO ' + (d.wo||'--') + '</div>';
-      if (d.tag) html += '<div style="font-size:11px;color:#666;margin-top:2px">📦 ' + d.tag + '</div>';
-      html += '</div>';
-      html += '<div style="background:' + statBg + ';color:' + statColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' +
-        (complet ? '✅ Complet' : '⏳ ' + recus + '/' + total + ' pcs') + '</div>';
-      html += '</div>';
-
-      html += '<div style="background:#e0e0e0;border-radius:4px;height:5px;margin-bottom:8px">';
-      html += '<div style="background:' + statColor + ';width:' + pct + '%;height:5px;border-radius:4px"></div></div>';
-
-      html += '<div style="display:flex;gap:6px">';
-      html += '<button onclick="ouvrirDetailBS(\'' + d.id + '\')" style="flex:1;background:#f0f4ff;color:#1F3864;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">📋 Détail</button>';
-      
-      if (complet) {
-        var planifTo = wgPlanif[wg] || '';
-        var subject = encodeURIComponent('WO ' + (d.wo||'') + ' — Pièces complètes (' + wgLabel + ')');
-        var body = encodeURIComponent(
-          'Bonjour,\n\nToutes les pièces du WO ' + (d.wo||'') + ' sont disponibles.\n' +
-          'TAG : ' + (d.tag||'--') + '\n' +
-          'Workgroup : ' + wgLabel + '\n' +
-          'Pièces : ' + recus + '/' + total + ' reçues\n\n' +
-          'Cordialement,\n' + getUserName() + '\nPréposé aux pièces | PRNC'
-        );
-        var mailtoUrl = 'mailto:' + planifTo + '?cc=' + CC_ALWAYS + '&subject=' + subject + '&body=' + body;
-        html += '<button onclick="window.location.href=\'' + mailtoUrl + '\'" style="flex:1;background:#E2EFDA;color:#375623;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">📧 Notifier planificateur</button>';
-      }
-      
-      html += '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-  });
-
-  list.innerHTML = html;
-}
-
-async function ouvrirDetailBS(id) {
-  _bsCurrentId = id;
-  var data = await piLoad();
-  var d = data.find(function(x) { return x.id === id; });
-  if (!d) { console.warn('WO not found:', id); return; }
-
-  var pieces = d.pieces || [];
-  var total = pieces.length;
-  var recus = pieces.filter(function(p) { return p.recu; }).length;
-  var complet = recus === total;
-
-  var titleEl = document.getElementById('bs-detail-title');
-  if(titleEl) titleEl.textContent = 'WO ' + d.wo;
-  var badgeEl = document.getElementById('bs-detail-badge');
-  if(badgeEl) {
-    badgeEl.textContent = complet ? '✅ Complet' : '⏳ ' + recus + '/' + total;
-    badgeEl.style.background = complet ? '#E2EFDA' : '#FFF3E0';
-    badgeEl.style.color = complet ? '#375623' : '#E65100';
-  }
-
-  var infoEl = document.getElementById('bs-detail-info');
-  if(infoEl) {
-    var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', MCELINS:'#1F4E79', MCMECUS:'#375623' };
-    var wgBgs = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
-    infoEl.innerHTML =
-      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<div style="background:' + (wgBgs[d.wg]||'#f0f0f0') + ';color:' + (wgColors[d.wg]||'#555') + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + (d.wg||'--') + '</div>' +
-        (d.tag ? '<div style="font-size:12px;color:#666">📦 ' + d.tag + '</div>' : '') +
-        '<div style="font-size:12px;color:#888;margin-left:auto">' + (d.date||'--') + '</div>' +
-      '</div>' +
-      (d.loc ? '<div style="margin-top:8px;padding:8px 10px;background:#E3F2FD;border-radius:8px;font-size:12px;color:#1565C0;font-weight:600">📍 ' + d.loc + '</div>' : '');
-  }
-
-  var planBtn = document.getElementById('bs-planning-btn');
-  if(planBtn) {
-    planBtn.style.background = complet ? '#375623' : '#aaa';
-    planBtn.textContent = complet ? '📋 Passer en planning' : '⏳ Incomplet';
-  }
-
-  var listEl = document.getElementById('bs-detail-list');
-  var countEl = document.getElementById('bs-detail-count');
-  if(countEl) countEl.textContent = recus + '/' + total + ' reçue(s)';
-
-  if(listEl) {
-    listEl.innerHTML = pieces.map(function(p, idx) {
-      return '<div style="padding:10px;background:#fff;border-radius:10px;margin-bottom:8px;border:1px solid ' + (p.recu?'#C8E6C9':'#e0e0e0') + '">' +
-        '<div style="display:flex;align-items:center;gap:10px">' +
-          '<input type="checkbox" data-woid="' + id + '" data-pidx="' + idx + '" ' + (p.recu?'checked':'') +
-            ' onchange="togglePiece(this.dataset.woid,this.dataset.pidx,this.checked)"' +
-            ' style="width:20px;height:20px;cursor:pointer;accent-color:#375623;flex-shrink:0">' +
-          '<div style="flex:1">' +
-            '<div style="font-weight:700;font-size:12px;color:' + (p.recu?'#375623':'#1F3864') + '">' + p.ref + '</div>' +
-            '<div style="font-size:11px;color:#666">' + p.desc + '</div>' +
-          '</div>' +
-          '<div style="font-size:12px;font-weight:700;color:#555;flex-shrink:0">x' + p.qte + '</div>' +
-        '</div>' +
-        '<div style="margin-top:6px;display:flex;align-items:center;gap:6px">' +
-          '<span style="font-size:11px;color:#888;flex-shrink:0">📍</span>' +
-          '<input type="text" data-woid="' + id + '" data-pidx="' + idx + '"' +
-            ' value="' + (p.loc||'') + '"' +
-            ' placeholder="Localisation de cette pièce..."' +
-            ' oninput="markPieceLocChanged(this)"' +
-            ' style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:5px 8px;font-size:11px;font-family:inherit;color:#1F4E79;background:' + (p.recu?'#F1F8E9':'#fafafa') + '">' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  show('s-bs-detail');
-}
-
-function markPieceLocChanged(input) {
-  input.style.borderColor = '#2E75B6';
-  var btn = document.getElementById('bs-save-btn');
-  if (btn) { btn.style.background = '#C55A11'; btn.textContent = '💾 Modifications non enregistrées'; }
-}
-
-async function enregistrerModifWO() {
-  var btn = document.getElementById('bs-save-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enregistrement...'; }
-  try {
-    var data = await piLoad();
-    var d = data.find(function(x) { return x.id === _bsCurrentId; });
-    if (!d) return;
-
-    var locInputs = document.querySelectorAll('#bs-detail-list input[type="text"][data-woid]');
-    locInputs.forEach(function(inp) {
-      var pidx = parseInt(inp.dataset.pidx);
-      if (!isNaN(pidx) && d.pieces[pidx]) {
-        d.pieces[pidx].loc = inp.value;
-        inp.style.borderColor = '#e0e0e0';
-      }
-    });
-
-    await piUpdate(_bsCurrentId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
-
-    if (btn) { btn.style.background = '#375623'; btn.textContent = '✅ Enregistré !'; btn.disabled = false; }
-    setTimeout(function() {
-      if (btn) { btn.style.background = '#1F3864'; btn.textContent = '💾 Enregistrer les modifications'; }
-    }, 2000);
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.style.background = '#C55A11'; btn.textContent = '❌ Erreur — Réessayer'; }
-  }
-}
-
-async function updatePieceLoc(woId, pieceIdx, loc) {
-  var data = await piLoad();
-  var d = data.find(function(x) { return x.id === woId; });
-  if (!d || !d.pieces[pieceIdx]) return;
-  d.pieces[pieceIdx].loc = loc;
-  await piUpdate(woId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
-}
-
-async function togglePiece(woId, pieceIdx, checked) {
-  var data = await piLoad();
-  var d = data.find(function(x) { return x.id === woId; });
-  if (!d || !d.pieces[pieceIdx]) return;
-
-  d.pieces[pieceIdx].recu = checked;
-
-  var total = d.pieces.length;
-  var recus = d.pieces.filter(function(p) { return p.recu; }).length;
-  var complet = recus === total;
-  d.statut = complet ? 'Complet' : 'En cours';
-
-  await piUpdate(woId, { statut: d.statut, pieces: d.pieces, loc: d.loc, tag: d.tag });
-
-  var badgeEl = document.getElementById('bs-detail-badge');
-  if(badgeEl) {
-    badgeEl.textContent = complet ? '✅ Complet' : '⏳ ' + recus + '/' + total;
-    badgeEl.style.background = complet ? '#E2EFDA' : '#FFF3E0';
-    badgeEl.style.color = complet ? '#375623' : '#E65100';
-  }
-  var planBtn = document.getElementById('bs-planning-btn');
-  if(planBtn) {
-    planBtn.style.background = complet ? '#375623' : '#aaa';
-    planBtn.textContent = complet ? '📋 Passer en planning' : '⏳ Incomplet';
-  }
-  var countEl = document.getElementById('bs-detail-count');
-  if(countEl) countEl.textContent = recus + '/' + total + ' reçue(s)';
-
-  if (complet && checked) {
-    setTimeout(function() {
-      alert('✅ WO ' + d.wo + ' — ' + d.wg + '\nToutes les pièces sont reçues !\nPrêt pour le planning.');
-    }, 300);
-  }
-}
-
-function passerEnPlanning() {
-  var data = getBonsSortie();
-  var d = data.find(function(x) { return x.id === _bsCurrentId; });
-  if (!d) return;
-
-  var recus = (d.pieces||[]).filter(function(p) { return p.recu; }).length;
-  var total = (d.pieces||[]).length;
-  if (recus < total) {
-    alert('Le WO n\'est pas encore complet (' + recus + '/' + total + ' pièces reçues).');
-    return;
-  }
-
-  if (!confirm('Passer le WO ' + d.wo + ' en planning ?\nCela archivera ce WO.')) return;
-
-  d.statut = 'Planning';
-  d.date_planning = new Date().toLocaleDateString('fr-FR');
-  saveBonsSortieData(data);
-
-  show('s-bons-sortie');
-  renderBonsSortie();
-  alert('✅ WO ' + d.wo + ' passé en planning !');
-}
-
-async function supprimerWO() {
-  var wo = document.getElementById('bs-detail-wo') ? document.getElementById('bs-detail-wo').textContent : '';
-  if (!confirm('⚠️ Supprimer le WO ' + (wo||'') + ' ?\n\nCela supprimera aussi :\n• Tout l\'historique lié à ce WO\n• Toutes les photos Cloudinary associées\n\nCette action est irréversible.')) return;
-  
-  var btn = event && event.target;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
-  
-  try {
-    await piDelete(_bsCurrentId);
-    show('s-bons-sortie');
-    await renderBonsSortie();
-  } catch(e) {
-    alert('Erreur lors de la suppression : ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '🗑'; }
-  }
 }
 
 var _numpadTarget = null;
@@ -9460,13 +7679,6 @@ function notifierRessourceP17(wo) {
   setTimeout(function(){ t.remove(); }, 3000);
 }
 
-function pChip(l,v) {
-  return '<div style="flex:1;background:#f5f7fa;border-radius:8px;padding:8px 10px">'
-    +'<div style="font-size:9px;color:#aaa;font-weight:600;text-transform:uppercase">'+l+'</div>'
-    +'<div style="font-size:11px;font-weight:700;color:#1F3864;margin-top:2px">'+v+'</div></div>';
-}
-
-
 var _planningPhotosCache = {};
 
 // Plannings ayant des photos par WO : '' = MCREPAR, mc = MCCHAUD, mcel = MCELINS, mcmec = MCMECUS
@@ -9670,58 +7882,6 @@ function _selectionnerWOGTag(wo) {
   var list=document.getElementById('ar-tag-list'); if(list) list.style.display='none';
 }
 
-function _filtrerWOGWO(val) {
-  var list=document.getElementById('ar-wo-list'),clear=document.getElementById('ar-wo-clear');
-  if(!list) return;
-  if(clear) clear.style.display=val?'block':'none';
-  if(!val||val.length<2){ list.style.display='none'; return; }
-  var q=val.toLowerCase();
-  if(_woEnGData&&_woEnGData.length){
-    var f=_woEnGData.filter(function(w){ return (w.wo||'').includes(q)||(w.wr||'').includes(q)||(w.tag||'').toLowerCase().includes(q)||(w.desc||'').toLowerCase().includes(q); }).slice(0,25);
-    _afficherListeWOGWO(f,list);
-  } else {
-    clearTimeout(_woGTimer);
-    _woGTimer=setTimeout(function(){
-      fetch(DB_API+'?table=wo_en_g&q='+encodeURIComponent(val)).then(function(r){ return r.json(); })
-        .then(function(rows){ _afficherListeWOGWO(rows.map(function(r){ return {wo:r.wo,wr:r.wr||'',tag:r.tag,desc:r.description,wg:r.wg}; }),list); }).catch(function(){});
-    },300);
-  }
-}
-function _afficherListeWOGWO(items,list){
-  if(!items||!items.length){ list.style.display='none'; return; }
-  list.style.display='block';
-  var wgColors={MCCHAUD:'#C55A11',MCREPAR:'#7030A0',STROB:'#2E75B6',MCELINS:'#1F4E79',MCMECUS:'#375623'};
-  list.innerHTML=items.map(function(w){
-    var c=wgColors[w.wg]||'#555';
-    return '<div data-wo="'+(w.wo||'')+'" onclick="_selectionnerWOGWO(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWO(this.dataset.wo)" style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        +'<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">'+(w.wo||'')+'</span>'
-        +'<span style="font-family:monospace;font-size:11px;color:#888">'+(w.wr||'')+'</span>'
-        +'<span style="font-family:monospace;font-size:11px;color:#555">'+(w.tag||'')+'</span>'
-        +'<span style="background:'+c+'33;color:'+c+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+(w.wg||'')+'</span>'
-      +'</div>'
-      +'<div style="font-size:10px;color:#666">'+(w.desc||'').slice(0,55)+'</div>'
-      +'</div>';
-  }).join('');
-}
-function _selectionnerWOGWO(wo){
-  var w=_woEnGData.find(function(x){ return x.wo===wo; }); if(!w) return;
-  var el; el=document.getElementById('ar-wo'); if(el) el.value=w.wo||'';
-  el=document.getElementById('ar-wr'); if(el&&!el.value) el.value=w.wr||'';
-  el=document.getElementById('ar-tag'); if(el&&!el.value) el.value=w.tag||'';
-  if(w.wg==='MCCHAUD') setWG('ar','chaud');
-  else if(w.wg==='MCREPAR') setWG('ar','repar');
-  else if(w.wg==='STROB') setWG('ar','strob');
-  else if(w.wg==='MCELINS') setWG('ar','elins');
-  else if(w.wg==='MCMECUS') setWG('ar','mecus');
-  var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
-  var clear=document.getElementById('ar-wo-clear'); if(clear) clear.style.display='block';
-}
-function _clearWOGWO(){
-  var el=document.getElementById('ar-wo'); if(el) el.value='';
-  var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
-  var clear=document.getElementById('ar-wo-clear'); if(clear) clear.style.display='none';
-}
 document.addEventListener('click',function(e){
   if(!e.target.closest('#ar-wo')&&!e.target.closest('#ar-wo-list')){
     var list=document.getElementById('ar-wo-list'); if(list) list.style.display='none';
@@ -9756,15 +7916,6 @@ function _filtrerWOGWR(val) {
   }
 }
 
-function _clearWOGWR() {
-  var arWr = document.getElementById('ar-wr');
-  if (arWr) arWr.value = '';
-  var list = document.getElementById('ar-wr-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('ar-wr-clear');
-  if (clear) clear.style.display = 'none';
-}
-
 function _filtrerWOGTag(val) {
   var list = document.getElementById('ar-tag-list');
   var clear = document.getElementById('ar-tag-clear');
@@ -9793,15 +7944,6 @@ function _filtrerWOGTag(val) {
         }).catch(function(){});
     }, 300);
   }
-}
-
-function _clearWOGTag() {
-  var arTag = document.getElementById('ar-tag');
-  if (arTag) arTag.value = '';
-  var list = document.getElementById('ar-tag-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('ar-tag-clear');
-  if (clear) clear.style.display = 'none';
 }
 
 function _filtrerWOGWO(val) {
@@ -9880,15 +8022,6 @@ function _selectionnerWOGWO(wo) {
   if (clear) clear.style.display = 'block';
 }
 
-function _clearWOGWO() {
-  var arWo = document.getElementById('ar-wo');
-  if (arWo) arWo.value = '';
-  var list = document.getElementById('ar-wo-list');
-  if (list) list.style.display = 'none';
-  var clear = document.getElementById('ar-wo-clear');
-  if (clear) clear.style.display = 'none';
-}
-
 async function _importerWOenG(input) {
   var file = input.files[0]; if (!file) return;
   var reader = new FileReader();
@@ -9963,59 +8096,6 @@ function ouvrirP99(btn) {
     },300); }
     window.scrollTo(0,0);
   },200);
-}
-
-function fermerP99() {
-  var ov = document.getElementById('p99-overlay');
-  if (ov) ov.style.display = 'none';
-  _p99Current = null;
-}
-
-async function envoyerP99() {
-  if (!_p99Current) return;
-  var email = document.getElementById('p99-email').value.trim();
-  if (!email) { alert('Email destinataire obligatoire'); return; }
-
-  var tag = _p99Current.tag;
-  var wo  = _p99Current.wo;
-  var id  = _p99Current.id;
-
-  // 1. Mettre à jour la localisation dans Neon
-  try {
-    await fetch(DB_API + '?id=' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ loc: 'P99 Zone Vanne' })
-    });
-  } catch(e) { console.warn('loc update err', e); }
-
-  // 2. Préparer email
-  var cc;
-  if (_p99Current.wg === 'STROB') {
-    cc = ['pascal.bafue@pronyresources.com','emmanuel.rosa@pronyresources.com','kendji.kasovimoin.EXT@pronyresources.com','regis.eurimindia@pronyresources.com','jacques.trimari@pronyresources.com'].join(';');
-  } else {
-    cc = ['regis.eurimindia@pronyresources.com','pascal.bafue@pronyresources.com','emmanuel.rosa@pronyresources.com','jacques.trimari@pronyresources.com'].join(';');
-  }
-
-  var subject = 'Équipement disponible — ' + tag + (wo ? ' · WO ' + wo : '');
-  var body = 'Bonjour,\n\n' + 'Votre equipement est disponible et peut etre recupere.\n\n' + 'TAG : ' + tag + '\n' + (wo ? 'WO MTC : ' + wo + '\n' : '') + 'Localisation : P99 Zone Vanne\n' + 'Workgroup : MCREPAR\n\n' + 'Merci de nous contacter pour organiser la recuperation.\n\n' + 'Cordialement,\nMaintenance Centrale - PRNC';
-
-  fermerP99();
-
-  // Rafraîchir la liste
-  if (typeof renderHist === 'function') setTimeout(renderHist, 500);
-
-  // 3. Ouvrir le client mail
-  mailto(email, subject, body, cc);
-}
-
-function escapeXmlVal(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
 
 // ═══════════════ PLANNINGS ATELIER MCCHAUD / MCELINS / MCMECUS ═══════════════
@@ -13637,149 +11717,10 @@ function selectionnerArticle(type, sc) {
   </div>
 </div>
 
-<!-- ═══════════════ BONS DE SORTIE P50 ═══════════════ -->
-<div class="screen" id="s-bons-sortie">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">🗂️ PI</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Planification Intégrée — Suivi pièces</div>
-    </div>
-  </div>
-  <div class="form-body" style="padding:0">
-    <!-- Stats -->
-    <div id="bs-stats" style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#1F4E79,#2E75B6)">
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center;backdrop-filter:blur(4px)">
-        <div id="bs-count-complet" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">✅ Complets</div>
-      </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bs-count-encours" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">⏳ En cours</div>
-      </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bs-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total WO</div>
-      </div>
-    </div>
-
-
-
-    <!-- Recherche + bouton -->
-    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
-      <input class="fi" type="text" id="bs-search" placeholder="🔍 Rechercher WO, WG, TAG..."
-        oninput="renderBonsSortie()" style="flex:1;margin:0">
-      <button onclick="show('s-bs-nouveau')" style="background:#1F4E79;color:#fff;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
-        ➕ Nouveau
-      </button>
-    </div>
-
-    <!-- Liste WO -->
-    <div id="bs-list" style="padding:10px 14px"></div>
-  </div>
-</div>
 
 <!-- ═══════════════ NOUVEAU WO BS ═══════════════ -->
-<div class="screen" id="s-bs-nouveau">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
-    <div class="form-title">Nouveau WO</div>
-    <div class="form-badge" style="background:#E3F2FD;color:#1565C0">📋 Créer</div>
-  </div>
-  <div class="form-body">
-    <!-- WO -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> N° WO</div>
-      <input class="fi" type="text" id="bsn-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('bsn-wo','N° WO')" style="cursor:pointer">
-    </div>
-
-    <!-- Workgroup -->
-    <div class="field-grp">
-      <div class="field-lbl"><span class="req">*</span> Workgroup</div>
-      <div class="wg-grp">
-        <div class="wg-btn" id="bsn-wg-chaud" onclick="setBsnWG('chaud')">MCCHAUD</div>
-        <div class="wg-btn" id="bsn-wg-repar" onclick="setBsnWG('repar')">MCREPAR</div>
-        <div class="wg-btn" id="bsn-wg-elins" onclick="setBsnWG('elins')">MCELINS</div>
-        <div class="wg-btn" id="bsn-wg-mecus" onclick="setBsnWG('mecus')">MCMECUS</div>
-        <div class="wg-btn" id="bsn-wg-stchaud" onclick="setBsnWG('stchaud')">STCHAUD</div>
-      </div>
-    </div>
-
-    <!-- TAG équipement -->
-    <div class="field-grp">
-      <div class="field-lbl">TAG Équipement</div>
-      <input class="fi" type="text" id="bsn-tag" placeholder="Ex : 220-X-00315">
-    </div>
-
-    <!-- Localisation pièces -->
-    <div class="field-grp">
-      <div class="field-lbl">Localisation des pièces</div>
-      <input class="fi" type="text" id="bsn-loc" placeholder="Ex : Rack A3 / Benne 12 / Étagère B2...">
-    </div>
-
-    <!-- Coller depuis Excel -->
-    <div class="field-grp">
-      <div class="field-lbl">Liste pièces — Coller depuis Ellipse <span style="font-size:11px;color:#888">(optionnel)</span></div>
-      <textarea class="fi" id="bsn-paste" rows="8"
-        placeholder="Copier depuis Ellipse (Révision demande) et coller ici :&#10;&#10;F37712/0001&#9;GASKET SET SEAT TI&#9;1,00&#10;F37712/0002&#9;GASKET SET BONNET&#9;1,00&#10;..."
-        style="font-family:monospace;font-size:12px;resize:vertical"
-        oninput="previewBsnPieces()"></textarea>
-    </div>
-
-    <!-- Aperçu -->
-    <div id="bsn-preview" style="display:none;margin-bottom:12px">
-      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:6px">APERÇU — <span id="bsn-preview-count">0</span> pièce(s) détectée(s)</div>
-      <div id="bsn-preview-list" style="background:#f8f8f8;border-radius:10px;padding:10px;font-size:12px;font-family:monospace;max-height:150px;overflow-y:auto"></div>
-    </div>
-
-    <button onclick="saveBonsSortieWO()" class="send-btn" style="background:#375623">
-      💾 Enregistrer le WO
-    </button>
-  </div>
-</div>
 
 <!-- ═══════════════ DETAIL WO BS ═══════════════ -->
-<div class="screen" id="s-bs-detail">
-  <div class="form-header">
-    <div class="back-btn" onclick="show('s-bons-sortie')">←</div>
-    <div class="form-title" id="bs-detail-title">Détail WO</div>
-    <div class="form-badge" id="bs-detail-badge" style="background:#E2EFDA;color:#375623">✅</div>
-  </div>
-  <div class="form-body" style="padding:0">
-    <!-- Infos WO -->
-    <div id="bs-detail-info" style="padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)"></div>
-
-    <!-- Actions -->
-    <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
-      <button id="bs-planning-btn" onclick="passerEnPlanning()" 
-        style="flex:1;background:#375623;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📋 Passer en planning
-      </button>
-      <button onclick="envoyerRecapBS()" 
-        style="background:#DEEAF1;color:#1F4E79;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        📧
-      </button>
-      <button onclick="supprimerWO()" 
-        style="background:#FCE4D6;color:#C55A11;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-        🗑
-      </button>
-    </div>
-
-    <!-- Bouton Enregistrer -->
-    <div style="padding:10px 14px;background:#f7f8fa;border-bottom:1px solid var(--border)">
-      <button id="bs-save-btn" onclick="enregistrerModifWO()"
-        style="width:100%;background:#1F3864;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-        💾 Enregistrer les modifications
-      </button>
-    </div>
-
-    <!-- Liste pièces -->
-    <div style="padding:10px 14px">
-      <div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:8px">PIÈCES — <span id="bs-detail-count"></span></div>
-      <div id="bs-detail-list"></div>
-    </div>
-  </div>
-</div>
 
 
 
