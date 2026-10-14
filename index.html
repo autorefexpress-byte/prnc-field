@@ -3236,6 +3236,122 @@ const DB_KEY = 'prnc-historique';
 
 const DB_API = '/api/db';
 
+// ── File d'attente hors connexion ─────────────────────────────────────────
+// Toute écriture vers /api/db (POST, PATCH, DELETE) qui échoue faute de réseau est
+// gardée dans le téléphone puis renvoyée dans l'ordre dès que le réseau revient.
+// L'écran reçoit une réponse « ok » (202) pour que la saisie ne soit pas perdue.
+var OUTBOX_KEY = 'prnc-outbox';
+var OUTBOX_MAX_ESSAIS = 5;            // erreurs serveur (5xx) avant abandon d'une saisie
+var _fetchReseau = window.fetch.bind(window);
+var _outboxEnCours = false;
+
+function outboxLire() {
+  try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); } catch(e) { return []; }
+}
+function outboxEcrire(liste) {
+  try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(liste)); } catch(e) {}
+  outboxBadge();
+}
+function _estEcritureDB(url, opts) {
+  var methode = String((opts && opts.method) || 'GET').toUpperCase();
+  if (methode === 'GET' || methode === 'HEAD') return false;
+  var u = typeof url === 'string' ? url : (url && url.url) || '';
+  if (u.indexOf(location.origin) === 0) u = u.slice(location.origin.length);
+  return u.indexOf(DB_API) === 0 && (!opts.body || typeof opts.body === 'string');
+}
+function _reponseEnAttente() {
+  return new Response(JSON.stringify({ ok: true, queued: true }),
+    { status: 202, headers: { 'Content-Type': 'application/json' } });
+}
+function outboxAjouter(url, opts) {
+  var liste = outboxLire();
+  liste.push({ url: typeof url === 'string' ? url : url.url, method: String(opts.method).toUpperCase(),
+    headers: opts.headers || { 'Content-Type': 'application/json' }, body: opts.body || null,
+    le: new Date().toISOString(), essais: 0 });
+  outboxEcrire(liste);
+  outboxToast('📴 Pas de réseau : la saisie est gardée dans le téléphone et sera envoyée automatiquement.', '#5b4a00', '#FFF3C4');
+}
+
+window.fetch = async function(url, opts) {
+  if (!_estEcritureDB(url, opts || {})) return _fetchReseau(url, opts);
+  // Des saisies attendent déjà : la nouvelle passe derrière pour garder l'ordre
+  if (outboxLire().length) { outboxAjouter(url, opts); outboxVider(); return _reponseEnAttente(); }
+  try {
+    return await _fetchReseau(url, opts);
+  } catch(e) {
+    outboxAjouter(url, opts);
+    return _reponseEnAttente();
+  }
+};
+
+async function outboxVider() {
+  if (_outboxEnCours) return;
+  var liste = outboxLire();
+  if (!liste.length) return;
+  _outboxEnCours = true;
+  var envoyees = 0, abandons = [];
+  try {
+    while (liste.length) {
+      var it = liste[0], r;
+      try {
+        r = await _fetchReseau(it.url, { method: it.method, headers: it.headers, body: it.body || undefined });
+      } catch(e) { break; }                       // toujours pas de réseau : on réessaiera
+      if (r.status >= 500) {
+        it.essais = (it.essais || 0) + 1;
+        if (it.essais < OUTBOX_MAX_ESSAIS) { outboxEcrire(liste); break; }
+        abandons.push(it);
+      } else {
+        envoyees++;
+      }
+      liste.shift();
+      outboxEcrire(liste);
+    }
+  } finally {
+    _outboxEnCours = false;
+  }
+  if (abandons.length) {
+    try {
+      var echecs = JSON.parse(localStorage.getItem(OUTBOX_KEY + '-echecs') || '[]').concat(abandons);
+      localStorage.setItem(OUTBOX_KEY + '-echecs', JSON.stringify(echecs.slice(-50)));
+    } catch(e) {}
+    console.warn('Saisies abandonnées après ' + OUTBOX_MAX_ESSAIS + ' erreurs serveur', abandons);
+  }
+  if (envoyees) {
+    if (typeof invalidateDbCache === 'function') invalidateDbCache();
+    outboxToast('✅ ' + envoyees + ' saisie' + (envoyees > 1 ? 's' : '') + ' en attente envoyée' + (envoyees > 1 ? 's' : '') + '.', '#0F6E56', '#E1F5EE');
+  }
+}
+
+function outboxToast(txt, color, bg) {
+  var t = document.createElement('div');
+  t.textContent = txt;
+  t.style.cssText = 'position:fixed;left:50%;bottom:84px;transform:translateX(-50%);max-width:340px;width:calc(100% - 32px);background:' + bg + ';color:' + color + ';border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:10050;text-align:center';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 4000);
+}
+
+function outboxBadge() {
+  if (!document.body) return;
+  var n = outboxLire().length;
+  var b = document.getElementById('outbox-badge');
+  if (!n) { if (b) b.remove(); return; }
+  if (!b) {
+    b = document.createElement('button');
+    b.id = 'outbox-badge';
+    b.type = 'button';
+    b.title = 'Saisies faites sans réseau. Appuyer pour réessayer maintenant.';
+    b.onclick = function(){ outboxVider(); };
+    b.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10040;background:#FFF3C4;color:#5b4a00;border:1.5px solid #E0B400;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)';
+    document.body.appendChild(b);
+  }
+  b.textContent = '⏳ ' + n + ' saisie' + (n > 1 ? 's' : '') + ' en attente de réseau';
+}
+
+window.addEventListener('online', function(){ outboxVider(); });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) outboxVider(); });
+setInterval(function(){ if (outboxLire().length) outboxVider(); }, 30000);
+window.addEventListener('load', function(){ outboxBadge(); setTimeout(outboxVider, 2000); });
+
 function invalidateDbCache() { _dbCache = null; _dbCacheTs = 0; }
 
 async function supaFetch(path, method, body) {
