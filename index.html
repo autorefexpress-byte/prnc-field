@@ -14200,26 +14200,11 @@ async function exportKpiExcel() {
 }
 
 
-// ══ CATALOGUE ARTICLES (chargé depuis catalog.json) ══
-var _catalog = null;
-var _catalogLoading = false;
-
-async function loadCatalog() {
-  if (_catalog) return _catalog;
-  if (_catalogLoading) return null;
-  _catalogLoading = true;
-  try {
-    var resp = await fetch('/catalog.json');
-    if (resp.ok) {
-      _catalog = await resp.json();
-      console.log('Catalogue chargé:', Object.keys(_catalog).length, 'articles');
-    }
-  } catch(e) {
-    console.warn('Catalogue non disponible:', e);
-  }
-  _catalogLoading = false;
-  return _catalog;
-}
+// ══ CATALOGUE ARTICLES ══
+// La recherche se fait sur le serveur (/api/article) : avant, le téléphone téléchargeait
+// et chargeait en mémoire tout le catalogue (14 Mo) à chaque ouverture de l'app.
+var _articlesTrouves = {};
+var _rechArticleSeq = 0;
 
 // Calculer la semaine depuis la date de réception
 function calcSemaineFromDate(dateStr) {
@@ -14243,28 +14228,15 @@ async function rechercherArticle(sc, type) {
     return;
   }
 
-  var catalog = await loadCatalog();
-  if (!catalog) return;
-
-  // Chercher avec et sans zéros leading
-  var scPadded = sc.padStart(9, '0');
-  var scNoZero = sc.replace(/^0+/, '');
-
+  var demande = ++_rechArticleSeq;
   var results = [];
-  // Cherche exacte d'abord
-  if (catalog[sc]) results.push({ sc: sc, ...catalog[sc] });
-  else if (catalog[scPadded]) results.push({ sc: scPadded, ...catalog[scPadded] });
-  else if (catalog[scNoZero]) results.push({ sc: scNoZero, ...catalog[scNoZero] });
-
-  // Si pas de résultat exact, chercher partiel (max 5)
-  if (!results.length) {
-    var keys = Object.keys(catalog);
-    for (var i = 0; i < keys.length && results.length < 5; i++) {
-      if (keys[i].includes(sc) || keys[i].replace(/^0+/,'').startsWith(scNoZero)) {
-        results.push({ sc: keys[i], ...catalog[keys[i]] });
-      }
-    }
-  }
+  try {
+    var r = await fetch('/api/article?q=' + encodeURIComponent(sc));
+    if (r.ok) results = await r.json();
+  } catch(e) { console.warn('Catalogue non disponible:', e); }
+  if (demande !== _rechArticleSeq) return;   // une frappe plus récente a pris le relais
+  if (!Array.isArray(results)) results = [];
+  results.forEach(function(a){ _articlesTrouves[a.sc] = a; });
 
   if (!results.length) {
     suggestEl.style.display = 'none';
@@ -14284,8 +14256,8 @@ async function rechercherArticle(sc, type) {
 }
 
 function selectionnerArticle(type, sc) {
-  if (!_catalog || !_catalog[sc]) return;
-  var entry = _catalog[sc];
+  var entry = _articlesTrouves[sc];
+  if (!entry) return;
 
   // Remplir les champs
   var scEl = document.getElementById('nc-' + type + '-sc');
@@ -14301,8 +14273,6 @@ function selectionnerArticle(type, sc) {
   if (suggestEl) suggestEl.style.display = 'none';
 }
 
-// Charger le catalogue au démarrage
-loadCatalog();
 
 
 </script>

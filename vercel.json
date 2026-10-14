@@ -7,6 +7,11 @@
     "api/lire-bl.js": {
       "memory": 256,
       "maxDuration": 60
+    },
+    "api/article.js": {
+      "memory": 512,
+      "maxDuration": 10,
+      "includeFiles": "catalog.json"
     }
   }
 }
