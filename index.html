@@ -9047,7 +9047,10 @@ function _renderPlanningList() {
               +(item.wso?'🔖 WSO '+item.wso:'')
             +'</div>' : '')
         +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
+          +planIndicateursHtml(item)
+        +'</div>'
       +'</div>'
     +'</div>';
     } catch(e) { console.warn('render planning item err', e, item); return ''; }
@@ -9087,7 +9090,7 @@ async function _onPlanningSearch(val) {
         }));
         rows=allRows;
       }
-      _allPlanningCache=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+      _allPlanningCache=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],_remarque:r.remarque||''}; });
     } catch(e){ console.warn('allPlanning err',e); _renderPlanningList(); return; }
   }
   _renderPlanningList();
@@ -9186,6 +9189,7 @@ function ouvrirPlanningModal(wo, semaine) {
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-' + wo);
         if (prev) prev.innerHTML = '';
+        if (typeof _renderPlanningList === 'function') _renderPlanningList();
       }).catch(function(e){ console.warn('fetch photos live err', e); });
   }, 200);
 
@@ -9341,11 +9345,21 @@ var _planningPhotosCache = {};
 
 // Plannings ayant des photos par WO : '' = MCREPAR, mc = MCCHAUD, mcel = MCELINS, mcmec = MCMECUS
 var PLAN_PHOTO_CFG = {
-  '':    { table: 'planning',          zone: 'planning-photos-exist-',       item: function(wo){ return _planningData.find(function(x){ return x.wo === wo; }); },     semaine: function(){ return _semaineActive; },      cache: function(){ _allPlanningCache = null; } },
-  mc:    { table: 'planning_mcchaud',  zone: 'planning-photos-exist-mc-',    item: function(wo){ return _planningDataMC.find(function(x){ return x.wo === wo; }); },   semaine: function(){ return _semaineActiveMC; },    cache: function(){ _allPlanningCacheMC = null; } },
-  mcel:  { table: 'planning_mcelins',  zone: 'planning-photos-exist-mcel-',  item: function(wo){ return _planningDataMCEL.find(function(x){ return x.wo === wo; }); }, semaine: function(){ return _semaineActiveMCEL; },  cache: function(){ _allPlanningCacheMCEL = null; } },
-  mcmec: { table: 'planning_mcmecus',  zone: 'planning-photos-exist-mcmec-', item: function(wo, cat){ return _findPlanItemMCMEC(wo, cat); },                           semaine: function(){ return _semaineActiveMCMEC; }, cache: function(){ _allPlanningCacheMCMEC = null; } }
+  '':    { table: 'planning',          zone: 'planning-photos-exist-',       item: function(wo){ return _planningData.find(function(x){ return x.wo === wo; }); },     semaine: function(){ return _semaineActive; },      cache: function(){ _allPlanningCache = null; }, render: function(){ _renderPlanningList(); } },
+  mc:    { table: 'planning_mcchaud',  zone: 'planning-photos-exist-mc-',    item: function(wo){ return _planningDataMC.find(function(x){ return x.wo === wo; }); },   semaine: function(){ return _semaineActiveMC; },    cache: function(){ _allPlanningCacheMC = null; }, render: function(){ _renderPlanningListMC(); } },
+  mcel:  { table: 'planning_mcelins',  zone: 'planning-photos-exist-mcel-',  item: function(wo){ return _planningDataMCEL.find(function(x){ return x.wo === wo; }); }, semaine: function(){ return _semaineActiveMCEL; },  cache: function(){ _allPlanningCacheMCEL = null; }, render: function(){ _renderPlanningListMCEL(); } },
+  mcmec: { table: 'planning_mcmecus',  zone: 'planning-photos-exist-mcmec-', item: function(wo, cat){ return _findPlanItemMCMEC(wo, cat); },                           semaine: function(){ return _semaineActiveMCMEC; }, cache: function(){ _allPlanningCacheMCMEC = null; }, render: function(){ _renderPlanningListMCMEC(); } }
 };
+
+// Pastilles 📷 / 💬 sur la carte d'un WO quand il a des photos ou une remarque
+function planIndicateursHtml(item) {
+  var nb = (item._photos || []).filter(Boolean).length;
+  var rem = String(item._remarque || item.remarque || '').trim();
+  var h = '';
+  if (nb) h += '<span title="' + nb + ' photo' + (nb > 1 ? 's' : '') + '" style="background:#E3F2FD;color:#1565C0;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">📷 ' + nb + '</span>';
+  if (rem) h += '<span title="Remarque : ' + rem.replace(/"/g, '&quot;').replace(/</g, '&lt;').slice(0, 120) + '" style="background:#FFF3E0;color:#E65100;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">💬</span>';
+  return h ? '<div style="display:flex;gap:4px">' + h + '</div>' : '';
+}
 
 // Vignettes des photos d'un WO du planning, avec bouton de suppression
 function planPhotosHtml(wo, photos, plan, categorie) {
@@ -9380,6 +9394,7 @@ async function supprimerPhotoPlanning(wo, i, plan, categorie) {
       body: JSON.stringify(body) }).then(function(r){ return r.json(); });
     if (!res || !res.ok) throw new Error(JSON.stringify(res));
     cfg.cache();
+    cfg.render();
   } catch(e) {
     item._photos = avant;
     if (zone) zone.innerHTML = planPhotosHtml(wo, item._photos, plan, item.categorie);
@@ -9431,6 +9446,7 @@ async function ajouterPhotoPlanning(wo, input) {
       if(zone) zone.innerHTML=planPhotosHtmlP17(wo, item._photos);
       var prev2=document.getElementById('planning-photos-preview-'+wo);
       if(prev2) prev2.innerHTML='';
+      if (typeof _renderPlanningList === 'function') _renderPlanningList();
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
   } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
@@ -9452,6 +9468,7 @@ function sauvegarderRemarquePlanning(wo) {
     })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+    if (typeof _renderPlanningList === 'function') _renderPlanningList();
   }).catch(function(){
     if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
   });
@@ -10119,7 +10136,10 @@ function _renderPlanningListMC() {
               +(item.wso?'🔖 WSO '+item.wso:'')
             +'</div>' : '')
         +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
+          +planIndicateursHtml(item)
+        +'</div>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -10159,7 +10179,7 @@ async function _onPlanningSearchMC(val) {
         }));
         rows=allRows;
       }
-      _allPlanningCacheMC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+      _allPlanningCacheMC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],_remarque:r.remarque||''}; });
     } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMC(); return; }
   }
   _renderPlanningListMC();
@@ -10252,6 +10272,7 @@ function ouvrirPlanningModalMC(wo, semaine) {
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mc-' + wo);
         if (prev) prev.innerHTML = '';
+        if (typeof _renderPlanningListMC === 'function') _renderPlanningListMC();
       }).catch(function(e){ console.warn('fetch photos live err', e); });
   }, 200);
 
@@ -10445,6 +10466,7 @@ async function ajouterPhotoPlanningMC(wo, input) {
       if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mc');
       var prev2=document.getElementById('planning-photos-preview-mc-'+wo);
       if(prev2) prev2.innerHTML='';
+      if (typeof _renderPlanningListMC === 'function') _renderPlanningListMC();
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
   } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
@@ -10466,6 +10488,7 @@ function sauvegarderRemarquePlanningMC(wo) {
     })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+    if (typeof _renderPlanningListMC === 'function') _renderPlanningListMC();
   }).catch(function(){
     if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
   });
@@ -10715,7 +10738,10 @@ function _renderPlanningListMCEL() {
               +(item.wso?'🔖 WSO '+item.wso:'')
             +'</div>' : '')
         +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
+          +planIndicateursHtml(item)
+        +'</div>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -10755,7 +10781,7 @@ async function _onPlanningSearchMCEL(val) {
         }));
         rows=allRows;
       }
-      _allPlanningCacheMCEL=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[]}; });
+      _allPlanningCacheMCEL=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],_remarque:r.remarque||''}; });
     } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMCEL(); return; }
   }
   _renderPlanningListMCEL();
@@ -10848,6 +10874,7 @@ function ouvrirPlanningModalMCEL(wo, semaine) {
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mcel-' + wo);
         if (prev) prev.innerHTML = '';
+        if (typeof _renderPlanningListMCEL === 'function') _renderPlanningListMCEL();
       }).catch(function(e){ console.warn('fetch photos live err', e); });
   }, 200);
 
@@ -11022,6 +11049,7 @@ async function ajouterPhotoPlanningMCEL(wo, input) {
       if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mcel');
       var prev2=document.getElementById('planning-photos-preview-mcel-'+wo);
       if(prev2) prev2.innerHTML='';
+      if (typeof _renderPlanningListMCEL === 'function') _renderPlanningListMCEL();
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
   } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
@@ -11043,6 +11071,7 @@ function sauvegarderRemarquePlanningMCEL(wo) {
     })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+    if (typeof _renderPlanningListMCEL === 'function') _renderPlanningListMCEL();
   }).catch(function(){
     if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
   });
@@ -11321,7 +11350,10 @@ function _renderPlanningListMCMEC() {
               +(item.wso?'🔖 WSO '+item.wso:'')
             +'</div>' : '')
         +'</div>'
-        +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;flex-shrink:0;white-space:nowrap">'+s.lb+'</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<span style="background:'+s.bg+';color:'+s.tx+';border:1px solid '+s.bd+';border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;white-space:nowrap">'+s.lb+'</span>'
+          +planIndicateursHtml(item)
+        +'</div>'
       +'</div>'
     +'</div>';
   }).join('');
@@ -11362,7 +11394,7 @@ async function _onPlanningSearchMCMEC(val) {
         }));
         rows=allRows;
       }
-      _allPlanningCacheMCMEC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],categorie:r.categorie||''}; });
+      _allPlanningCacheMCMEC=rows.map(function(r){ return {wo:r.wo||'',wr:r.wr||'',tag:r.tag||'',desc:r.description_wo||r.desc||'',ressource:r.ressource||'',taches:r.taches||[],jours:r.jours||[],statut:r.statut||'PLANIFIE',semaine:r.semaine||'',_photos:r.photos||[],_remarque:r.remarque||'',categorie:r.categorie||''}; });
     } catch(e){ console.warn('allPlanning err',e); _renderPlanningListMCMEC(); return; }
   }
   _renderPlanningListMCMEC();
@@ -11464,6 +11496,7 @@ function ouvrirPlanningModalMCMEC(wo, semaine, categorie) {
         // Vider le preview temporaire (éviter doublons)
         var prev = document.getElementById('planning-photos-preview-mcmec-' + wo);
         if (prev) prev.innerHTML = '';
+        if (typeof _renderPlanningListMCMEC === 'function') _renderPlanningListMCMEC();
       }).catch(function(e){ console.warn('fetch photos live err', e); });
   }, 200);
 
@@ -11647,6 +11680,7 @@ async function ajouterPhotoPlanningMCMEC(wo, input, categorie) {
       if(zone) zone.innerHTML=planPhotosHtml(wo, item._photos, 'mcmec', item.categorie);
       var prev2=document.getElementById('planning-photos-preview-mcmec-'+wo);
       if(prev2) prev2.innerHTML='';
+      if (typeof _renderPlanningListMCMEC === 'function') _renderPlanningListMCMEC();
     } else { alert('Erreur sauvegarde : '+JSON.stringify(res)); }
   } catch(e){ if(loadDiv) loadDiv.remove(); alert('Erreur : '+e.message); }
 }
@@ -11669,6 +11703,7 @@ function sauvegarderRemarquePlanningMCMEC(wo, categorie) {
     })
   }).then(function(){
     if (btn) { btn.textContent = '✅ Sauvegardé'; btn.disabled = false; setTimeout(function(){ btn.textContent = '💾 Sauvegarder'; }, 2000); }
+    if (typeof _renderPlanningListMCMEC === 'function') _renderPlanningListMCMEC();
   }).catch(function(){
     if (btn) { btn.textContent = '❌ Erreur'; btn.disabled = false; }
   });
