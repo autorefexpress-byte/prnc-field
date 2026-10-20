@@ -8954,9 +8954,12 @@ function updateNcFormVisibility() {
     var el = document.getElementById(id);
     if (el) el.style.display = show ? '' : 'none';
   };
+  // Commande non reçue : rien n'est arrivé, pas d'item commandé / réceptionné à décrire
+  var isNonRecu = document.getElementById('nc-type-nonrecu') && document.getElementById('nc-type-nonrecu').checked;
   toggle('nc-fg-wo', !isLivraison);
   toggle('nc-fg-tag', !isLivraison);
-  toggle('nc-cmd-section', !isLivraison);
+  toggle('nc-cmd-section', !isLivraison && !isNonRecu);
+  toggle('nc-rec-section', !isNonRecu);
   toggle('nc-rec-standard', !isLivraison);
   toggle('nc-rec-livraison', isLivraison);
 }
@@ -9157,7 +9160,8 @@ async function saveNC() {
   );
   if (types.indexOf(NC_TYPE_NON_IDENT) !== -1) bodyLines.push('/!\\ ' + NC_TYPE_NON_IDENT_TXT + '.', '');
   if (types.indexOf(NC_TYPE_NON_RECU) !== -1) bodyLines.push('/!\\ ' + NC_TYPE_NON_RECU_TXT + '.', '');
-  if (!isLivraison) {
+  var isNonRecu = types.indexOf(NC_TYPE_NON_RECU) !== -1;
+  if (!isLivraison && !isNonRecu) {
     bodyLines.push('--- ITEM COMMANDE ---');
     if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
     if (cmdPN) bodyLines.push('P/N  : ' + cmdPN);
@@ -9165,8 +9169,10 @@ async function saveNC() {
     if (cmdDesc) bodyLines.push('Desc : ' + cmdDesc);
     bodyLines.push('');
   }
-  bodyLines.push('--- ITEM RECEPTIONNE ---');
-  if (isLivraison) {
+  if (!isNonRecu) bodyLines.push('--- ITEM RECEPTIONNE ---');
+  if (isNonRecu) {
+    // rien de reçu : pas de bloc item
+  } else if (isLivraison) {
     if (recEmballage) bodyLines.push('Type emballage : ' + recEmballage);
     if (recDestinataire) bodyLines.push('Destinataire   : ' + recDestinataire);
     if (recQte) bodyLines.push('Qte recue      : ' + recQte);
@@ -9276,7 +9282,7 @@ async function ouvrirDetailNC(id) {
   var wgColor = NC_WG_COLORS[Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k]===d.wg; })] || '#555';
   var isLivraison = (d.types||[]).indexOf('Erreur de livraison') !== -1;
 
-  var itemsHtml = isLivraison ?
+  var itemsHtml = (d.types||[]).indexOf(NC_TYPE_NON_RECU) !== -1 ? '' : isLivraison ?
     '<div style="background:#E3F2FD;border-radius:10px;padding:10px;margin-bottom:10px">' +
       '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
       '<div style="font-size:11px">Emballage : ' + ((d.rec&&d.rec.emballage)||'--') + '</div>' +
@@ -11455,7 +11461,7 @@ function selectionnerArticle(type, sc) {
           </span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-nonrecu" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
+          <input type="checkbox" id="nc-type-nonrecu" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0" onchange="updateNcFormVisibility()">
           <span style="display:flex;flex-direction:column;gap:2px">
             <span style="font-size:13px;font-weight:600">🚫 Commande non reçue</span>
             <span style="font-size:11px;color:var(--muted);line-height:1.35">Notée sur le BLI mais absente physiquement à la réception</span>
@@ -11492,6 +11498,7 @@ function selectionnerArticle(type, sc) {
     </div>
 
     <!-- Séparateur -->
+    <div id="nc-rec-section">
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
       <div style="font-weight:700;font-size:12px;color:#1F3864">ITEM RÉCEPTIONNÉ</div>
     </div>
@@ -11528,6 +11535,7 @@ function selectionnerArticle(type, sc) {
     <div class="field-grp">
       <div class="field-lbl">Nom du destinataire</div>
       <input class="fi" type="text" id="nc-rec-destinataire" placeholder="Ex : Jean Dupont">
+    </div>
     </div>
     </div>
 
