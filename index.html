@@ -11438,20 +11438,32 @@ function selectionnerArticle(type, sc) {
       <div class="field-lbl"><span class="req">*</span> Type de non-conformité</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-mauvaise" style="width:18px;height:18px;accent-color:#C00000">
-          <span style="font-size:13px;font-weight:600">🔄 Mauvaise pièce</span>
+          <input type="checkbox" id="nc-type-mauvaise" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
+          <span style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600">🔄 Mauvaise pièce</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.35">La pièce reçue ne correspond pas au stock code ou au P/N commandé</span>
+          </span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-quantite" style="width:18px;height:18px;accent-color:#C00000">
-          <span style="font-size:13px;font-weight:600">🔢 Quantité incorrecte</span>
+          <input type="checkbox" id="nc-type-quantite" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
+          <span style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600">🔢 Quantité incorrecte</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.35">Quantité reçue différente de la quantité commandée (manque ou surplus)</span>
+          </span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-endommage" style="width:18px;height:18px;accent-color:#C00000">
-          <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
+          <input type="checkbox" id="nc-type-endommage" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
+          <span style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600">💥 Pièce endommagée</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.35">Pièce ou emballage abîmé à la réception</span>
+          </span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000" onchange="updateNcFormVisibility()">
-          <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
+          <input type="checkbox" id="nc-type-livraison" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0" onchange="updateNcFormVisibility()">
+          <span style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600">📦 Erreur de livraison</span>
+            <span style="font-size:11px;color:var(--muted);line-height:1.35">Colis livré au mauvais destinataire ou au mauvais lieu</span>
+          </span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:10px;border:1px solid var(--border);cursor:pointer">
           <input type="checkbox" id="nc-type-nonident" style="width:18px;height:18px;accent-color:#C00000;flex-shrink:0">
