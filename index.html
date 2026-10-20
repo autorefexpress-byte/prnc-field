@@ -8906,6 +8906,16 @@ var NC_TYPE_NON_IDENT_TXT = 'Pas de stock code ni d\'etiquette sur la piece : id
 var NC_TYPE_NON_RECU = 'Commande non recue';
 var NC_TYPE_NON_RECU_TXT = 'Notee sur le BLI mais absente physiquement a la reception';
 
+// Libellés accentués pour les mails (types et résolutions restent enregistrés sans accents)
+var NC_LIBELLES = {
+  'Mauvaise piece': 'Mauvaise pièce', 'Quantite incorrecte': 'Quantité incorrecte', 'Piece endommagee': 'Pièce endommagée',
+  'Piece non identifiee': 'Pièce non identifiée', 'Commande non recue': 'Commande non reçue',
+  'Piece echangee': 'Pièce échangée', 'Quantite completee': 'Quantité complétée', 'Surplus retourne': 'Surplus retourné',
+  'Piece remplacee': 'Pièce remplacée', 'Retournee au magasin': 'Retournée au magasin', 'Piece identifiee': 'Pièce identifiée',
+  'Piece recue': 'Pièce reçue', 'Annulee par le magasin': 'Annulée par le magasin'
+};
+function ncLibelle(v) { return NC_LIBELLES[v] || v; }
+
 function getNcResolutionOptions(types) {
   var opts = [];
   (types||[]).forEach(function(t) {
@@ -9140,11 +9150,11 @@ async function saveNC() {
   await ncAdd(nc);
 
   // Corps du mail
-  var typesTxt = types.join(' + ');
-  var subj = '[' + numero + '] Non-Conformite ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
+  var typesTxt = types.map(ncLibelle).join(' + ');
+  var subj = '[' + numero + '] Non-conformité ' + wgl + ' - IR ' + ir + (wo ? ' - WO ' + wo : '');
   var bodyLines = [
     'Bonjour,', '',
-    'Rapport de non-conformite ' + numero,
+    'Rapport de non-conformité ' + numero,
     '',
     'Workgroup   : ' + wgl,
     'IR/PR       : ' + ir
@@ -9153,33 +9163,33 @@ async function saveNC() {
   if (!isLivraison && tag) bodyLines.push('TAG         : ' + tag);
   bodyLines.push(
     'Semaine     : ' + semaine,
-    'Date recep. : ' + dateRecepFR,
-    'Controle par: ' + controlePar,
+    'Date récep. : ' + dateRecepFR,
+    'Contrôlé par: ' + controlePar,
     'Type NC     : ' + typesTxt,
     ''
   );
-  if (types.indexOf(NC_TYPE_NON_IDENT) !== -1) bodyLines.push('/!\\ ' + NC_TYPE_NON_IDENT_TXT + '.', '');
-  if (types.indexOf(NC_TYPE_NON_RECU) !== -1) bodyLines.push('/!\\ ' + NC_TYPE_NON_RECU_TXT + '.', '');
+  if (types.indexOf(NC_TYPE_NON_IDENT) !== -1) bodyLines.push('/!\\ Pas de stock code ni d\'étiquette sur la pièce : identification et crédit magasin impossibles.', '');
+  if (types.indexOf(NC_TYPE_NON_RECU) !== -1) bodyLines.push('/!\\ Notée sur le BLI mais absente physiquement à la réception.', '');
   var isNonRecu = types.indexOf(NC_TYPE_NON_RECU) !== -1;
   if (!isLivraison && !isNonRecu) {
-    bodyLines.push('--- ITEM COMMANDE ---');
+    bodyLines.push('--- ITEM COMMANDÉ ---');
     if (cmdSC) bodyLines.push('S/C  : ' + cmdSC);
     if (cmdPN) bodyLines.push('P/N  : ' + cmdPN);
-    if (cmdQte) bodyLines.push('Qte  : ' + cmdQte);
+    if (cmdQte) bodyLines.push('Qté  : ' + cmdQte);
     if (cmdDesc) bodyLines.push('Desc : ' + cmdDesc);
     bodyLines.push('');
   }
-  if (!isNonRecu) bodyLines.push('--- ITEM RECEPTIONNE ---');
+  if (!isNonRecu) bodyLines.push('--- ITEM RÉCEPTIONNÉ ---');
   if (isNonRecu) {
     // rien de reçu : pas de bloc item
   } else if (isLivraison) {
     if (recEmballage) bodyLines.push('Type emballage : ' + recEmballage);
     if (recDestinataire) bodyLines.push('Destinataire   : ' + recDestinataire);
-    if (recQte) bodyLines.push('Qte recue      : ' + recQte);
+    if (recQte) bodyLines.push('Qté reçue      : ' + recQte);
   } else {
     if (recSC) bodyLines.push('S/C  : ' + recSC);
     if (recPN) bodyLines.push('P/N  : ' + recPN);
-    if (recQte) bodyLines.push('Qte  : ' + recQte);
+    if (recQte) bodyLines.push('Qté  : ' + recQte);
     if (recDesc) bodyLines.push('Desc : ' + recDesc);
   }
   if (remarques) { bodyLines.push('', 'Remarques : ' + remarques); }
@@ -9187,7 +9197,7 @@ async function saveNC() {
     '',
     'Cordialement,',
     getUserName(),
-    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+    'Préposé aux pièces | PRNC - Maintenance Centrale P50'
   );
   var body = bodyLines.join('\n');
 
@@ -9354,21 +9364,21 @@ async function resoudreNC(label) {
   await ncUpdate(_ncCurrentId, { dateRetour: date, statut: label });
 
   var wgKey = Object.keys(NC_WG_LABELS).find(function(k){ return NC_WG_LABELS[k] === d.wg; }) || '';
-  var subj = '[' + (d.numero||'') + '] Non-Conformite RESOLUE - ' + label;
+  var subj = '[' + (d.numero||'') + '] Non-conformité RÉSOLUE - ' + ncLibelle(label);
   var body = [
     'Bonjour,', '',
-    'Le rapport de non-conformite ' + (d.numero||'') + ' est resolu.',
+    'Le rapport de non-conformité ' + (d.numero||'') + ' est résolu.',
     '',
     'Workgroup   : ' + (d.wg||'--'),
     'IR/PR       : ' + (d.ir||'--'),
     d.wo ? 'WO          : ' + d.wo : null,
     d.tag ? 'TAG         : ' + d.tag : null,
-    'Resolution  : ' + label,
+    'Résolution  : ' + ncLibelle(label),
     'Date        : ' + date,
     '',
     'Cordialement,',
     getUserName(),
-    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+    'Préposé aux pièces | PRNC - Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; }).join('\n');
 
   var toList = NC_TO.join(';');
@@ -11051,24 +11061,24 @@ async function genererRapportNC() {
 
   var auteur = (typeof getUserName === 'function' && getUserName()) || '';
   var dateEdition = new Date().toLocaleDateString('fr-FR');
-  var sujet = 'Rapport magasin (livraisons et non-conformites) - ' + titrePeriode + ' - PRNC P50';
+  var sujet = 'Rapport magasin (livraisons et non-conformités) - ' + titrePeriode + ' - PRNC P50';
   var corps = [
     'Bonjour,',
     '',
-    'Veuillez trouver ci-joint le rapport des livraisons et des non-conformites pour la periode : ' + titrePeriode + '.',
+    'Veuillez trouver ci-joint le rapport des livraisons et des non-conformités pour la période : ' + titrePeriode + '.',
     '',
     'Livraisons :',
-    '- Colis livres : ' + colis + ' (' + colisDiffTxt + '), ' + blSel.length + ' bon(s) de livraison, ' + nbLignesBL + ' ligne(s)',
-    '- Colis receptionnes : ' + colisOk + '/' + colis + (anomaliesRecep.length ? ', ' + anomaliesRecep.length + ' anomalie(s) de reception' : ''),
+    '- Colis livrés : ' + colis + ' (' + colisDiffTxt + '), ' + blSel.length + ' bon(s) de livraison, ' + nbLignesBL + ' ligne(s)',
+    '- Colis réceptionnés : ' + colisOk + '/' + colis + (anomaliesRecep.length ? ', ' + anomaliesRecep.length + ' anomalie(s) de réception' : ''),
     '',
-    'Non-conformites :',
-    '- Non-conformites sur la periode : ' + list.length + ' (' + diffTxt + '), soit ' + tauxNC + ' non-conformite(s) pour 100 colis livres',
-    '- Traitees : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
-    '- Non-conformites encore ouvertes, toutes periodes : ' + ouvertes.length,
+    'Non-conformités :',
+    '- Non-conformités sur la période : ' + list.length + ' (' + diffTxt + '), soit ' + tauxNC + ' non-conformité(s) pour 100 colis livrés',
+    '- Traitées : ' + nbRet + ' / Ouvertes : ' + nbOuv + ' (taux de traitement ' + taux + '%)',
+    '- Non-conformités encore ouvertes, toutes périodes : ' + ouvertes.length,
     '',
     'Cordialement,',
     auteur,
-    'Prepose aux pieces | PRNC - Maintenance Centrale P50'
+    'Préposé aux pièces | PRNC - Maintenance Centrale P50'
   ].join('\n');
   // Mêmes personnes en copie que l'accusé de réception
   var cc = typeof blCopieReception === 'function' ? blCopieReception().join(';') : '';
