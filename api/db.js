@@ -36,6 +36,7 @@ async function ensureTables() {
     await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wso TEXT`;
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`;
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`;
+    await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
     await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
@@ -675,7 +676,7 @@ module.exports = async function handler(req, res) {
                serie,type_eqt,qty,shutdown,motif,zone,from_fiche,email_demandeur,
                etna_statut,etna_date_retour,etna_commentaire,
                callidus_statut,callidus_date_retour,callidus_commentaire,
-               dest,photos,recovered_at,created_at
+               dest,photos,recovered_at,archive,created_at
         FROM historique ORDER BY created_at DESC, id DESC
         LIMIT ${pagine ? parPage : null} OFFSET ${pagine ? page * parPage : 0}`;
       return res.status(200).json(rows);
@@ -726,6 +727,7 @@ module.exports = async function handler(req, res) {
         else if (k === 'wso')                  { await sql`UPDATE historique SET wso=${v||null} WHERE id=${id}`; }
         else if (k === 'description')          { await sql`UPDATE historique SET description=${v||null} WHERE id=${id}`; }
         else if (k === 'recovered_at')         { await sql`UPDATE historique SET recovered_at=${v||null} WHERE id=${id}`; }
+        else if (k === 'archive')              { await sql`UPDATE historique SET archive=${!!v} WHERE id=${id}`; }
         else { console.warn('Unknown field:', k); }
       }
       return res.status(200).json({ ok: true });

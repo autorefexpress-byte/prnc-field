@@ -996,6 +996,10 @@ function _locChange(selId, inpId) {
     <button onclick="if(confirm('Effacer tout ?')) clearHist()" style="background:var(--lred);color:var(--red);border:1px solid var(--red);padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#128465;</button>
   </div>
   <div id="hist-relance-alert" style="display:none;margin:8px 14px 0;background:var(--lred);border:1px solid var(--red);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--red);gap:6px;align-items:center"></div>
+  <label style="display:flex;align-items:center;gap:6px;padding:8px 14px 0;font-size:11px;color:var(--muted);cursor:pointer">
+    <input type="checkbox" id="hist-voir-archives" onchange="renderHist()" style="width:15px;height:15px">
+    <span id="hist-archives-lbl">Afficher les archivés</span>
+  </label>
   <div style="padding:6px 14px 4px;font-size:11px;color:var(--muted)" id="hist-count">Chargement...</div>
   <div id="hist-list" style="padding:0 14px 80px;display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
 </div>
@@ -3053,7 +3057,7 @@ async function dbLoad() {
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
           date: r.date, heure: r.heure, dest: r.dest || [],
           photos: r.photos || [],
-          recoveredAt: r.recovered_at || null,
+          recoveredAt: r.recovered_at || null, archive: !!r.archive,
           ts: r.created_at, created_at: r.created_at
         };
       });
@@ -3103,6 +3107,7 @@ async function dbAdd(record) {
     local.unshift(record);
     localStorage.setItem(DB_KEY, JSON.stringify(local));
   } catch(e) {}
+  invalidateDbCache();   // sinon le nouvel enregistrement n'apparaît qu'après 10 min (KPI, listes)
   return record;
 }
 
@@ -3164,6 +3169,7 @@ async function renderHist() {
           desc: r.description || r.designation || r.desc || '',
           serie: r.serie, typeEqt: r.type_eqt || '', motif: r.motif, zone: r.zone,
           date: r.date, heure: r.heure, dest: r.dest || [], photos: r.photos || [],
+          recoveredAt: r.recovered_at || null, archive: !!r.archive,
           ts: r.created_at, created_at: r.created_at
         };
       });
@@ -3176,7 +3182,13 @@ async function renderHist() {
     return;
   }
 
-  let records = filtre ? all.filter(r => r.type === filtre) : all;
+  // Archivés : cachés de la liste mais gardés en base (toujours comptés dans les KPI)
+  const voirArchives = !!(document.getElementById('hist-voir-archives') || {}).checked;
+  const nbArchives = all.filter(r => r.archive).length;
+  const lblArchives = document.getElementById('hist-archives-lbl');
+  if (lblArchives) lblArchives.textContent = 'Afficher les archivés (' + nbArchives + ')';
+  let records = all.filter(r => voirArchives || !r.archive);
+  if (filtre) records = records.filter(r => r.type === filtre);
   if (wgFiltre) records = records.filter(r => (r.wg || '').toUpperCase() === wgFiltre);
   if (search) {
     records = records.filter(r =>
@@ -3194,7 +3206,8 @@ async function renderHist() {
   const searchTxt = search ? ' pour "' + search + '"' : '';
   const filtreTxt = filtre ? ' (' + filtre + ')' : '';
   countEl.textContent = records.length + ' résultat' + (records.length !== 1 ? 's' : '') +
-    searchTxt + filtreTxt + ' -- ' + all.length + ' au total';
+    searchTxt + filtreTxt + ' -- ' + (all.length - (voirArchives ? 0 : nbArchives)) + ' au total' +
+    (nbArchives && !voirArchives ? ' (+ ' + nbArchives + ' archivé' + (nbArchives > 1 ? 's' : '') + ')' : '');
 
   if (records.length === 0) {
     list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted)">' +
@@ -3210,11 +3223,11 @@ async function renderHist() {
     const wo   = r.wo   || r.woMtc || '--';
     const wg   = r.wg   || '';
     const info = r.statut || r.shutdown || r.typeWO || r.typeTransport || '';
-    return `<div style="background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer" onclick="viewRecord('${r.id}')">
+    return `<div style="background:${r.archive ? '#f4f4f4' : '#fff'};${r.archive ? 'opacity:.7;' : ''}border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;cursor:pointer" onclick="viewRecord('${r.id}')">
       <div style="background:${c.bg};color:${c.fg};border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;flex-shrink:0;min-width:36px;text-align:center">${c.icon}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-size:13px;font-weight:700;color:${c.fg}">${tag}</span>
+          <span style="font-size:13px;font-weight:700;color:${c.fg}">${tag}${r.archive ? ' <span style="background:#e0e0e0;color:#555;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">ARCHIVÉ</span>' : ''}</span>
           <span style="font-size:10px;color:var(--muted)">${r.date} ${r.heure}</span>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${r.type}${wg?' -- '+wg:''}</div>
@@ -3231,6 +3244,7 @@ async function renderHist() {
         ${_isConsultMode
           ? '<button onclick="viewRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#128065;</button>'
           : '<button onclick="editRecord(\'' + r.id + '\')" style="background:var(--llblue);color:var(--navy);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer">&#9998;</button>' +
+            '<button onclick="archiverRecord(\'' + r.id + '\',' + !r.archive + ')" title="' + (r.archive ? 'Désarchiver' : 'Archiver (reste dans les KPI)') + '" style="background:#ECEFF1;color:#455A64;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">' + (r.archive ? '&#8617;' : '&#128451;') + '</button>' +
             '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '') +
             ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wo-usine="' + (r.woUsine||'') + '" data-wr="' + (r.wr||'') + '" data-sc="' + (r.sc||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" data-desc="' + ((r.desc||'').replace(/"/g,"'")) + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
@@ -5054,12 +5068,27 @@ async function confirmEnvoi(titre, lignes, callback) {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 }
 
+// Archiver = cacher de la Gestion des flux sans supprimer : l'enregistrement reste compté dans les KPI
+async function archiverRecord(id, archiver) {
+  if (checkConsultMode()) return;
+  try {
+    var r = await fetch(DB_API + '?id=' + encodeURIComponent(id), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archive: !!archiver })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch(e) { alert('Archivage impossible. Vérifiez la connexion.'); return; }
+  invalidateDbCache();
+  renderHist();
+}
+
 async function deleteRecord(id) {
   if (checkConsultMode()) return;
   const records = await dbLoad();
   const rec = records.find(r => r.id === id);
   const wo = rec ? (rec.wo || '') : '';
-  if (!confirm(wo ? 'Supprimer tout ce qui est lie au WO ' + wo + ' ?' : 'Supprimer cet enregistrement ?')) return;
+  if (!confirm((wo ? 'Supprimer tout ce qui est lie au WO ' + wo + ' ?' : 'Supprimer cet enregistrement ?') +
+    '\n\nLa suppression est definitive et retire aussi ces donnees des KPI. Pour seulement cacher la ligne, utilisez le bouton Archiver.')) return;
   if (wo) {
     for (const h of records.filter(r => r.wo === wo)) {
       for (const p of (h.photos||[]).filter(Boolean))
