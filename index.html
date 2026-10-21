@@ -7408,8 +7408,8 @@ function _renderPlanningList() {
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
-            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
-            +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+woVal+'</span>'
+            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(woVal||'—')+'</span>'
+            +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceP17(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
@@ -8426,8 +8426,8 @@ function creerPlanningAtelier(cfg) {
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
           +'<div style="min-width:0;flex:1">'
             +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
-              +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">'+(item.tag||'—')+'</span>'
-              +'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">WO '+item.wo+'</span>'
+              +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(item.wo||'—')+'</span>'
+              +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
               +catBadge
               +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
               +(item.ressource?'<span onclick="event.stopPropagation();'+fn('notifierRessource')+'(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:'+CL+';color:'+C+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
