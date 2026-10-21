@@ -3053,6 +3053,7 @@ async function dbLoad() {
           typeWO: r.type_wo, typeTransport: r.type_transport, zone: r.zone,
           date: r.date, heure: r.heure, dest: r.dest || [],
           photos: r.photos || [],
+          recoveredAt: r.recovered_at || null,
           ts: r.created_at, created_at: r.created_at
         };
       });
@@ -10574,7 +10575,52 @@ function kpiNcResolu(d) {
   return ncIsResolved(d.statut);
 }
 
+var KPI_CARD = 'background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)';
+
+// Nombre de périodes en arrière jusqu'à la plus ancienne qui a des données : borne du bouton ◀
+function kpiMaxOffset(keys, periode) {
+  var currentKey0 = kpiPeriodKey(kpiPeriodDate(0, periode), periode);
+  var oldestKey = keys.filter(function(k){ return k && k <= currentKey0; }).sort()[0] || currentKey0;
+  var maxOffset = 0;
+  while (maxOffset < 520 && kpiPeriodKey(kpiPeriodDate(maxOffset, periode), periode) > oldestKey) maxOffset++;
+  return maxOffset;
+}
+
+function kpiSelecteurHtml(selKey, maxOffset) {
+  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit';
+  var navOff = 'width:40px;height:40px;border-radius:10px;border:1px solid #eee;background:#f7f7f7;font-size:16px;font-weight:700;color:#ccc;font-family:inherit';
+  return '<div style="' + KPI_CARD + ';display:flex;align-items:center;gap:8px;padding:10px">' +
+    (_kpiOffset < maxOffset
+      ? '<button onclick="kpiNav(1)" style="' + navBtn + '" aria-label="Periode precedente">◀</button>'
+      : '<button disabled style="' + navOff + '">◀</button>') +
+    '<div style="flex:1;text-align:center">' +
+      '<div style="font-size:15px;font-weight:800;color:#1F3864">' + kpiPeriodLabel(selKey, _kpiPeriode) + '</div>' +
+      (_kpiOffset === 0
+        ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
+        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#2E75B6;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
+    '</div>' +
+    (_kpiOffset > 0
+      ? '<button onclick="kpiNav(-1)" style="' + navBtn + '" aria-label="Periode suivante">▶</button>'
+      : '<button disabled style="' + navOff + '">▶</button>') +
+  '</div>';
+}
+
+// Onglet affiché : 'magasin' (arrivées, colis, NC) ou 'equip' (équipements déposés P99 / DL3)
+var _kpiOnglet = 'magasin';
+function setKpiOnglet(o) {
+  _kpiOnglet = o;
+  _kpiOffset = 0;
+  ['magasin','equip'].forEach(function(k) {
+    var el = document.getElementById('kpi-tab-' + k);
+    if (el) el.className = 'type-btn' + (k === o ? ' on' : '');
+  });
+  var actions = document.getElementById('kpi-actions-magasin');
+  if (actions) actions.style.display = o === 'magasin' ? '' : 'none';
+  renderKPI();
+}
+
 async function renderKPI() {
+  if (_kpiOnglet === 'equip') return renderKPIEquip();
   var content = document.getElementById('kpi-content');
   if (!content) return;
   content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
@@ -10629,12 +10675,7 @@ async function renderKPI() {
     ncByPeriod[k].push(nc);
   });
 
-  // Plus ancienne période avec des données : borne du bouton ◀
-  var currentKey0 = kpiPeriodKey(kpiPeriodDate(0, periode), periode);
-  var allKeys = Object.keys(byPeriod).concat(Object.keys(ncByPeriod), Object.keys(colisByPeriod)).filter(function(k){ return k <= currentKey0; }).sort();
-  var oldestKey = allKeys[0] || currentKey0;
-  var maxOffset = 0;
-  while (maxOffset < 520 && kpiPeriodKey(kpiPeriodDate(maxOffset, periode), periode) > oldestKey) maxOffset++;
+  var maxOffset = kpiMaxOffset(Object.keys(byPeriod).concat(Object.keys(ncByPeriod), Object.keys(colisByPeriod)), periode);
   if (_kpiOffset > maxOffset) _kpiOffset = maxOffset;
 
   var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
@@ -10652,26 +10693,11 @@ async function renderKPI() {
     : kpiPeriodLabel(selKey, periode);
   var prevLabel = kpiPeriodLabel(prevKey, periode);
 
-  var card = 'background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)';
-  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit';
-  var navOff = 'width:40px;height:40px;border-radius:10px;border:1px solid #eee;background:#f7f7f7;font-size:16px;font-weight:700;color:#ccc;font-family:inherit';
+  var card = KPI_CARD;
   var html = '';
 
   // Sélecteur de période
-  html += '<div style="' + card + ';display:flex;align-items:center;gap:8px;padding:10px">' +
-    (_kpiOffset < maxOffset
-      ? '<button onclick="kpiNav(1)" style="' + navBtn + '" aria-label="Periode precedente">◀</button>'
-      : '<button disabled style="' + navOff + '">◀</button>') +
-    '<div style="flex:1;text-align:center">' +
-      '<div style="font-size:15px;font-weight:800;color:#1F3864">' + kpiPeriodLabel(selKey, periode) + '</div>' +
-      (isNow
-        ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
-        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#2E75B6;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
-    '</div>' +
-    (_kpiOffset > 0
-      ? '<button onclick="kpiNav(-1)" style="' + navBtn + '" aria-label="Periode suivante">▶</button>'
-      : '<button disabled style="' + navOff + '">▶</button>') +
-  '</div>';
+  html += kpiSelecteurHtml(selKey, maxOffset);
 
   // Arrivées
   html += '<div style="' + card + '">' +
@@ -10873,6 +10899,150 @@ async function renderKPI() {
     '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouvertes</span></div>' +
     '<div style="font-size:10px;color:#999;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
   '</div></div>';
+
+  content.innerHTML = html;
+}
+
+// ══ KPI ÉQUIPEMENTS DÉPOSÉS (P99 / retour demandeur DL3) ══
+var KPI_EQ_DEST = [
+  { k: 'fabric', label: 'P99 Zone fabrication', color: '#C55A11' },
+  { k: 'vanne',  label: 'P99 Zone vanne',       color: '#1F4E79' },
+  { k: 'dock',   label: 'Dock P99 (caisses / étagère)', color: '#0F6E56' },
+  { k: 'dl3',    label: 'Retour demandeur DL3', color: '#7030A0' }
+];
+
+// Destination d'un équipement terminé d'après son statut ; '' = hors P99 / DL3
+// Un retour DL3 récupéré passe au statut RECUPERE (voir Relances)
+function kpiEqDestination(statut) {
+  var s = String(statut || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  if (s === 'RECUPERE' || s.indexOf('DEMANDEUR') >= 0) return 'dl3';
+  if (s.indexOf('P99') < 0) return '';
+  if (s.indexOf('FABRIC') >= 0) return 'fabric';
+  if (s.indexOf('VANNE') >= 0) return 'vanne';
+  return 'dock';
+}
+
+function kpiEqDate(r) {
+  return kpiParseFR(r.date) || (r.created_at ? new Date(r.created_at) : null);
+}
+
+async function renderKPIEquip() {
+  var content = document.getElementById('kpi-content');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+
+  var records = [];
+  try { records = await dbLoad(); } catch(e) {}
+  var periode = _kpiPeriode;
+  var WG_ORDER = ['MCCHAUD','MCREPAR','STROB','MCELINS','MCMECUS'];
+  var WG_COLORS = {MCCHAUD:'#7030A0',MCREPAR:'#C55A11',STROB:'#0F6E56',MCELINS:'#1F4E79',MCMECUS:'#375623'};
+
+  var depots = [];
+  records.forEach(function(r) {
+    if (r.type !== 'TERMINE') return;
+    var dest = kpiEqDestination(r.statut);
+    var d = kpiEqDate(r);
+    if (dest && d) depots.push({ r: r, dest: dest, d: d, key: kpiPeriodKey(d, periode) });
+  });
+
+  var byPeriod = {};
+  depots.forEach(function(x){ (byPeriod[x.key] = byPeriod[x.key] || []).push(x); });
+
+  var maxOffset = kpiMaxOffset(Object.keys(byPeriod), periode);
+  if (_kpiOffset > maxOffset) _kpiOffset = maxOffset;
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var sel = byPeriod[selKey] || [];
+  var nPrev = (byPeriod[prevKey] || []).length;
+  var diff = sel.length - nPrev;
+  var periodeLabel = _kpiOffset === 0
+    ? (periode === 'semaine' ? 'Cette semaine' : periode === 'mois' ? 'Ce mois' : 'Ce trimestre')
+    : kpiPeriodLabel(selKey, periode);
+
+  function barre(label, val, total, color) {
+    var pct = total > 0 ? Math.round(val / total * 100) : 0;
+    return '<div style="margin-bottom:6px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+        '<span style="font-size:12px;font-weight:700;color:' + color + '">' + label + '</span>' +
+        '<span style="font-size:12px">' + val + ' (' + pct + '%)</span>' +
+      '</div>' +
+      '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
+        '<div style="background:' + color + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+      '</div></div>';
+  }
+
+  var html = kpiSelecteurHtml(selKey, maxOffset);
+
+  // Total déposé sur la période et répartition par destination
+  var parDest = {};
+  sel.forEach(function(x){ parDest[x.dest] = (parDest[x.dest] || 0) + 1; });
+  html += '<div style="' + KPI_CARD + '">' +
+    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">🚚 Équipements déposés (P99 / DL3)</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:12px">' +
+      '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#1565C0">' + sel.length + '</div>' +
+        '<div style="font-size:10px;color:#1565C0">' + periodeLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#555">' + nPrev + '</div>' +
+        '<div style="font-size:10px;color:#888">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
+      '</div>' +
+      '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
+        '<div style="font-size:24px;font-weight:800;color:#555">' + (diff > 0 ? '+' : '') + diff + '</div>' +
+        '<div style="font-size:10px;color:#888">Évolution</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PAR DESTINATION</div>' +
+    KPI_EQ_DEST.map(function(g){ return barre(g.label, parDest[g.k] || 0, sel.length, g.color); }).join('') +
+  '</div>';
+
+  // Par workgroup
+  var parWG = {};
+  sel.forEach(function(x){ var w = WG_ORDER.indexOf(x.r.wg) >= 0 ? x.r.wg : 'AUTRE'; parWG[w] = (parWG[w] || 0) + 1; });
+  html += '<div style="' + KPI_CARD + '">' +
+    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Par workgroup — ' + periodeLabel + '</div>' +
+    WG_ORDER.map(function(w){ return barre(w, parWG[w] || 0, sel.length, WG_COLORS[w]); }).join('') +
+    (parWG.AUTRE ? barre('Sans workgroup', parWG.AUTRE, sel.length, '#888') : '') +
+  '</div>';
+
+  // Suivi des retours demandeur DL3 : récupérés ou toujours en attente
+  var JOUR = 86400000, now = Date.now();
+  var dl3Sel = sel.filter(function(x){ return x.dest === 'dl3'; });
+  var recupSel = dl3Sel.filter(function(x){ return x.r.statut === 'RECUPERE'; });
+  var delais = recupSel.filter(function(x){ return x.r.recoveredAt; }).map(function(x){
+    return Math.max(0, (new Date(x.r.recoveredAt) - x.d) / JOUR);
+  });
+  var delaiMoy = delais.length ? Math.round(delais.reduce(function(a, b){ return a + b; }, 0) / delais.length) : null;
+  var attente = depots.filter(function(x){ return x.dest === 'dl3' && x.r.statut !== 'RECUPERE'; })
+    .sort(function(a, b){ return a.d - b.d; });
+  html += '<div style="' + KPI_CARD + '">' +
+    '<div style="font-weight:700;color:#7030A0;margin-bottom:10px">📍 Retours demandeur DL3</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:10px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:800;color:#375623">' + recupSel.length + '<span style="font-size:13px;color:#5b6476">/' + dl3Sel.length + '</span></div>' +
+        '<div style="font-size:10px;color:#375623">Récupérés (' + periodeLabel.toLowerCase() + ')</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#F3E5F5;border-radius:10px;padding:10px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:800;color:#7030A0">' + (delaiMoy == null ? '--' : delaiMoy + ' j') + '</div>' +
+        '<div style="font-size:10px;color:#7030A0">Délai moyen de récupération</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#FFF3E0;border-radius:10px;padding:10px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:800;color:#E65100">' + attente.length + '</div>' +
+        '<div style="font-size:10px;color:#E65100">En attente (toutes périodes)</div>' +
+      '</div>' +
+    '</div>' +
+    (attente.length
+      ? '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">PLUS ANCIENS EN ATTENTE</div>' +
+        attente.slice(0, 10).map(function(x){
+          var j = Math.floor((now - x.d) / JOUR);
+          return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
+            '<span><b>' + blEsc(x.r.tag || '--') + '</b>' + (x.r.wg ? ' <span style="color:' + (WG_COLORS[x.r.wg] || '#888') + ';font-size:10px;font-weight:700">' + blEsc(x.r.wg) + '</span>' : '') + '</span>' +
+            '<span style="color:' + (j > 14 ? '#C00000' : '#555') + ';font-weight:700;white-space:nowrap">' + j + ' j</span>' +
+          '</div>';
+        }).join('') +
+        (attente.length > 10 ? '<div style="font-size:10px;color:#999;margin-top:4px">… et ' + (attente.length - 10) + ' autre(s), voir Relances</div>' : '')
+      : '<div style="font-size:12px;color:#375623">Aucun équipement en attente de récupération. ✔</div>') +
+  '</div>';
 
   content.innerHTML = html;
 }
@@ -11713,6 +11883,11 @@ function selectionnerArticle(type, sc) {
     </div>
   </div>
   <div class="form-body" style="padding:0">
+    <!-- Onglets -->
+    <div style="padding:10px 14px 0;background:#fff;display:flex;gap:6px">
+      <button onclick="setKpiOnglet('magasin')" id="kpi-tab-magasin" class="type-btn on" style="flex:1;font-size:12px">📦 Magasin</button>
+      <button onclick="setKpiOnglet('equip')" id="kpi-tab-equip" class="type-btn" style="flex:1;font-size:12px">🚚 Équipements P99 / DL3</button>
+    </div>
     <!-- Filtre période -->
     <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px">
       <button onclick="setKpiPeriode('semaine')" id="kpi-btn-semaine" class="type-btn" style="flex:1;font-size:12px">Semaine</button>
@@ -11721,7 +11896,8 @@ function selectionnerArticle(type, sc) {
     </div>
     <!-- Contenu KPI -->
     <div id="kpi-content" style="padding:12px 14px"></div>
-    <!-- Boutons rapport / export -->
+    <!-- Boutons rapport / export (onglet Magasin) -->
+    <div id="kpi-actions-magasin">
     <div style="padding:10px 14px 0">
       <button onclick="genererRapportNC()" style="width:100%;background:#C00000;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         📄 Rapport magasin (colis + non-conformités)
@@ -11731,6 +11907,7 @@ function selectionnerArticle(type, sc) {
       <button onclick="exportKpiExcel()" style="width:100%;background:#375623;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         📥 Exporter Excel
       </button>
+    </div>
     </div>
   </div>
 </div>
