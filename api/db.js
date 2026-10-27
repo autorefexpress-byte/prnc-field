@@ -37,6 +37,11 @@ async function ensureTables() {
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`;
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`;
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`;
+
+    // Pré-remplis « Équipement terminé » préparés sur ordinateur, envoyés depuis le téléphone
+    await sql`CREATE TABLE IF NOT EXISTS eq_prerempli (
+      id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
     await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
 
@@ -619,6 +624,23 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown nc request' });
+    }
+
+    // ── PRÉ-REMPLIS ÉQUIPEMENT TERMINÉ ──
+    if (table === 'eq_prerempli') {
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM eq_prerempli ORDER BY created_at DESC`);
+      if (method === 'POST') {
+        const d = req.body || {};
+        if (!d.id) return res.status(400).json({ error: 'id manquant' });
+        await sql`INSERT INTO eq_prerempli (id, data) VALUES (${d.id}, ${JSON.stringify(d.data || {})}::jsonb)
+          ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`;
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        await sql`DELETE FROM eq_prerempli WHERE id=${id}`;
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown eq_prerempli request' });
     }
 
     // ── BONS DE LIVRAISON (archive des BL papier du magasin) ──
