@@ -601,6 +601,13 @@ function _locChange(selId, inpId) {
   </div>
   <div class="form-body">
 
+    <!-- Pré-remplis préparés à l'avance (ordinateur) -->
+    <div id="eq-prerempli-box" style="display:none;background:#F0F4FF;border:1px solid #C9D6EE;border-radius:12px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#1F3864;margin-bottom:6px">📋 Pré-remplis <span id="eq-prerempli-count" style="color:#888;font-weight:600"></span></div>
+      <div id="eq-prerempli-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div id="eq-prerempli-actif" style="display:none;background:#E2EFDA;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:600"></div>
+
     <!-- WORKGROUP en premier — contacts auto -->
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Workgroup</div>
@@ -667,6 +674,7 @@ function _locChange(selId, inpId) {
     <div class="field-grp">
       </div>
     </div>
+    <button type="button" onclick="eqEnregistrerPreRempli()" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#1F3864;border:1.5px solid #1F3864;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
     <button class="send-btn btn-green" onclick="sendEquip()">&#9989; Envoyer le mail</button>
   </div>
 </div>
@@ -1591,6 +1599,8 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
+  if (id === 's-equip') eqChargerPreRemplis();
+
   if (id === 's-hist') {
     var searchEl = document.getElementById('hist-search');
     if (searchEl) { searchEl.value = ''; searchEl.blur(); }
@@ -2400,6 +2410,7 @@ function sendEquip() {
   dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
+    eqPreRempliEnvoye();
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
     resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'], [], 'eq');
@@ -5285,6 +5296,121 @@ function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
 }
 
 var _equip_photos = [];
+
+// ── Pré-remplis « Équipement terminé » ──
+// Préparés sur ordinateur (stockés en base pour être vus sur le téléphone),
+// puis chargés sur le terrain : il ne reste qu'à choisir le dépôt, prendre la photo et envoyer.
+var _eqPreRemplis = [];
+var _eqPreRempliId = null;   // pré-rempli chargé dans le formulaire (supprimé après envoi)
+var EQ_PR_CHAMPS = ['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'];
+
+async function eqChargerPreRemplis() {
+  try {
+    var r = await fetch(DB_API + '?table=eq_prerempli');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _eqPreRemplis = (await r.json()).map(function(x){ return Object.assign({ id: x.id }, x.data || {}); });
+  } catch(e) { console.warn('pré-remplis err', e); }
+  eqAfficherPreRemplis();
+}
+
+function eqAfficherPreRemplis() {
+  var box = document.getElementById('eq-prerempli-box');
+  var list = document.getElementById('eq-prerempli-list');
+  if (!box || !list) return;
+  box.style.display = _eqPreRemplis.length ? '' : 'none';
+  document.getElementById('eq-prerempli-count').textContent = '(' + _eqPreRemplis.length + ')';
+  list.innerHTML = _eqPreRemplis.map(function(p) {
+    var f = p.champs || {};
+    var actif = p.id === _eqPreRempliId;
+    return '<div style="display:flex;align-items:center;gap:8px;background:' + (actif ? '#E2EFDA' : '#fff') + ';border:1px solid ' + (actif ? '#A9D18E' : '#dde3ee') + ';border-radius:10px;padding:8px 10px">' +
+      '<div onclick="eqUtiliserPreRempli(\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
+        '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + blEsc(f['eq-tag'] || '--') +
+          (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#888">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
+        '<div style="font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+          blEsc([f['eq-wo'] ? 'WO ' + f['eq-wo'] : '', f['eq-wo-mtc'] ? 'MTC ' + f['eq-wo-mtc'] : '', f['eq-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
+        (p.statut ? '<div style="font-size:10px;color:#375623;font-weight:700">📍 ' + blEsc(EQ_STATUT_LABELS[p.statut] || p.statut) + '</div>' : '') +
+      '</div>' +
+      '<button onclick="eqSupprimerPreRempli(\'' + p.id + '\')" title="Supprimer" style="background:none;border:none;color:#C00000;font-size:16px;cursor:pointer;padding:4px">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function eqLireFormulaire() {
+  var champs = {};
+  EQ_PR_CHAMPS.forEach(function(id){ champs[id] = v(id); });
+  return {
+    champs: champs,
+    wg: (state.eq && state.eq.wg) || '',
+    statut: (state.eq && state.eq.statut) || '',
+    manual: getEmails('eq-manual'),
+    cc: getEmails('eq-cc')
+  };
+}
+
+async function eqEnregistrerPreRempli() {
+  if (checkConsultMode()) return;
+  var d = eqLireFormulaire();
+  if (!d.champs['eq-tag'] && !d.champs['eq-wo'] && !d.champs['eq-wo-mtc']) { alert('Renseigne au moins le TAG ou un WO.'); return; }
+  var id = _eqPreRempliId || ('pr' + Date.now());
+  d.creePar = getUserName();
+  d.date = new Date().toLocaleDateString('fr-FR');
+  try {
+    var r = await fetch(DB_API + '?table=eq_prerempli', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, data: d })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch(e) { alert('Enregistrement impossible. Vérifiez la connexion.'); return; }
+  eqViderFormulaire();
+  await eqChargerPreRemplis();
+  window.scrollTo(0, 0);
+  alert('Pré-rempli enregistré : ' + (d.champs['eq-tag'] || d.champs['eq-wo'] || d.champs['eq-wo-mtc']) + '.\nIl apparaît en haut de « Équipement terminé » sur tous les appareils.');
+}
+
+function eqViderFormulaire() {
+  resetForm(EQ_PR_CHAMPS, [], 'eq');
+  ['chaud','repar','elins','mecus'].forEach(function(w){ var el = document.getElementById('eq-wg-' + w); if (el) el.className = 'wg-btn'; });
+  _eqPreRempliId = null;
+  var actif = document.getElementById('eq-prerempli-actif'); if (actif) actif.style.display = 'none';
+}
+
+function eqUtiliserPreRempli(id) {
+  var p = _eqPreRemplis.find(function(x){ return x.id === id; });
+  if (!p) return;
+  eqViderFormulaire();
+  EQ_PR_CHAMPS.forEach(function(fid){ var el = document.getElementById(fid); if (el) el.value = (p.champs || {})[fid] || ''; });
+  if (p.wg) setWG('eq', p.wg);
+  if (p.statut) setEqStatut(p.statut);
+  (p.manual || []).forEach(function(m){ addManual('eq-manual'); var ins = document.querySelectorAll('#eq-manual input'); ins[ins.length - 1].value = m; });
+  (p.cc || []).forEach(function(m){ addManual('eq-cc'); var ins = document.querySelectorAll('#eq-cc input'); ins[ins.length - 1].value = m; });
+  _eqPreRempliId = id;
+  var actif = document.getElementById('eq-prerempli-actif');
+  if (actif) {
+    actif.textContent = '✅ Pré-rempli chargé : ' + ((p.champs || {})['eq-tag'] || '--') + (p.statut ? '' : ' — choisis le dépôt') + ', ajoute la photo puis envoie. Il sera retiré de la liste après envoi.';
+    actif.style.display = '';
+  }
+  eqAfficherPreRemplis();
+}
+
+async function eqSupprimerPreRempli(id) {
+  if (checkConsultMode()) return;
+  if (!confirm('Supprimer ce pré-rempli ?')) return;
+  try { await fetch(DB_API + '?table=eq_prerempli&id=' + encodeURIComponent(id), { method: 'DELETE' }); } catch(e) {}
+  if (_eqPreRempliId === id) eqViderFormulaire();
+  _eqPreRemplis = _eqPreRemplis.filter(function(x){ return x.id !== id; });
+  eqAfficherPreRemplis();
+}
+
+// Appelée après l'envoi du mail : le pré-rempli utilisé n'est plus à faire
+function eqPreRempliEnvoye() {
+  var id = _eqPreRempliId;
+  _eqPreRempliId = null;
+  var actif = document.getElementById('eq-prerempli-actif'); if (actif) actif.style.display = 'none';
+  if (!id) return;
+  _eqPreRemplis = _eqPreRemplis.filter(function(x){ return x.id !== id; });
+  eqAfficherPreRemplis();
+  fetch(DB_API + '?table=eq_prerempli&id=' + encodeURIComponent(id), { method: 'DELETE' }).catch(function(){});
+}
 
 async function ajouterPhotoEquip(input) {
   if (!input.files || !input.files[0]) return;
