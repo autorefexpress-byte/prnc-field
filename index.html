@@ -706,7 +706,10 @@ function _locChange(selId, inpId) {
     </div>
 
     <!-- WO + WR -->
-    <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Work Order (WO)</div><input class="fi" type="text" id="pt-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('pt-wo','N° WO')" style="cursor:pointer"></div>
+    <div class="row2">
+      <div class="field-grp"><div class="field-lbl">WO Usine</div><input class="fi" type="text" id="pt-wo-usine" placeholder="Ex : 876230" onclick="ouvrirNumpad('pt-wo-usine','WO Usine')" style="cursor:pointer"></div>
+      <div class="field-grp"><div class="field-lbl"><span class="req">*</span> WO MTC</div><input class="fi" type="text" id="pt-wo" placeholder="Ex : 837669" onclick="ouvrirNumpad('pt-wo','WO MTC')" style="cursor:pointer"></div>
+    </div>
     <div class="row2">
       <div class="field-grp"><div class="field-lbl">WR</div><input class="fi" type="text" id="pt-wr" placeholder="Ex : 118466"></div>
       <div class="field-grp"><div class="field-lbl">Stock Code</div><input class="fi" type="text" id="pt-sc" placeholder="Ex : 35378"></div>
@@ -2433,21 +2436,22 @@ function sendEquip() {
 
 function sendPeinture() {
   if (checkConsultMode()) return;
-  const wo=v('pt-wo'),wr=v('pt-wr'),sc=v('pt-sc'),tag=v('pt-tag'),desc=v('pt-desc');
+  const wo=v('pt-wo'),woUsine=v('pt-wo-usine'),wr=v('pt-wr'),sc=v('pt-sc'),tag=v('pt-tag'),desc=v('pt-desc');
   const prio=v('pt-prio'),date=v('pt-date'),delai=v('pt-delai'),qaqc=v('pt-qaqc'),rem=v('pt-rem');
   const trait = _ptTraitLabel;
 
   if(!_ptWG)  {alert('Sélectionne un workgroup.');return;}
-  if(!wo)     {alert('Le WO est obligatoire.');return;}
+  if(!wo)     {alert('Le WO MTC est obligatoire.');return;}
   if(!tag)    {alert('Le TAG est obligatoire.');return;}
   if(!trait)  {alert('Sélectionne un type de traitement.');return;}
 
   const wgl = WG_LABELS[_ptWG] || _ptWG.toUpperCase();
-  const subj = (prio==='URGENT'?'[URGENT] ':'') + '['+wgl+'] Demande traitement ETNA -- '+tag+' -- WO '+wo;
+  const subj = (prio==='URGENT'?'[URGENT] ':'') + '['+wgl+'] Demande traitement ETNA -- '+tag+' -- WO MTC '+wo+(woUsine?' -- WO Usine '+woUsine:'');
 
   let body = 'Bonjour,\n\nNous vous adressons une demande de traitement pour l\u0027équipement suivant :\n\n';
   body += '  Workgroup      : ' + wgl + '\n';
-  body += '  WO             : ' + wo + '\n';
+  if(woUsine) body += '  WO Usine       : ' + woUsine + '\n';
+  body += '  WO MTC         : ' + wo + '\n';
   if(wr)   body += '  WR             : ' + wr + '\n';
   if(sc)   body += '  Stock Code     : ' + sc + '\n';
   body += '  TAG            : ' + tag + '\n';
@@ -2466,11 +2470,11 @@ function sendPeinture() {
 
   const ccFinalPt = [...allTo.slice(1), ...ccList].filter(Boolean).join(';');
   mailto(allTo[0], subj, body, ccFinalPt);
-  dbSavePeinture({tag, wo, trait, photos:getPhotos('etna-prev')});
+  dbSavePeinture({tag, wo, woUsine, trait, photos:getPhotos('etna-prev')});
   prEnvoye('pt');
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
-    '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
+    '<strong>TAG :</strong> '+tag+(woUsine?'<br><strong>WO Usine :</strong> '+woUsine:'')+'<br><strong>WO MTC :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
 }
 
 function sendEqtNettoyer() {
@@ -3335,7 +3339,7 @@ async function dbSaveUsage(d) {
     photos: d.photos || [] });
 }
 async function dbSavePeinture(d) {
-  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, statut:d.trait, dest:['etna'],
+  await dbAdd({ type:'PEINTURE', tag:d.tag, wo:d.wo, woUsine:d.woUsine || '', statut:d.trait, dest:['etna'],
     photos: d.photos || [] });
 }
 
@@ -5332,12 +5336,12 @@ var PR_FORMS = {
     aCompleter: function(p) { return p.statut ? '' : ' — choisis le dépôt'; }
   },
   pt: {
-    champs: ['pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-prio','pt-date','pt-delai','pt-qaqc','pt-rem'],
+    champs: ['pt-wo-usine','pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-prio','pt-date','pt-delai','pt-qaqc','pt-rem'],
     lire: function() {
       return { wg: _ptWG || '', trait: _ptTrait || '', traitLabel: _ptTraitLabel || '', manual: getEmails('pt-manual') };
     },
     vider: function() {
-      resetForm(['pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-date','pt-delai','pt-rem'], ['pt-prio','pt-qaqc'], 'pt');
+      resetForm(['pt-wo-usine','pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-date','pt-delai','pt-rem'], ['pt-prio','pt-qaqc'], 'pt');
       document.getElementById('pt-wg-mecus').className = 'wg-btn';
       document.getElementById('pt-manual').innerHTML = '';
       clearPhotos('etna-prev');
@@ -5382,13 +5386,15 @@ function prAfficher(form) {
   list.innerHTML = items.map(function(p) {
     var f = p.champs || {};
     var actif = p.id === _prActif[form];
-    var wo = f[form + '-wo'], detail = PR_FORMS[form].detail(p);
+    var woUsine = form === 'pt' ? f['pt-wo-usine'] : f['eq-wo'];
+    var woMtc = form === 'pt' ? f['pt-wo'] : f['eq-wo-mtc'];
+    var detail = PR_FORMS[form].detail(p);
     return '<div style="display:flex;align-items:center;gap:8px;background:' + (actif ? '#E2EFDA' : '#fff') + ';border:1px solid ' + (actif ? '#A9D18E' : '#dde3ee') + ';border-radius:10px;padding:8px 10px">' +
       '<div onclick="prUtiliser(\'' + form + '\',\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
         '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + blEsc(f[form + '-tag'] || '--') +
           (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#888">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
         '<div style="font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-          blEsc([wo ? 'WO ' + wo : '', f['eq-wo-mtc'] ? 'MTC ' + f['eq-wo-mtc'] : '', f[form + '-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
+          blEsc([woUsine ? 'WO ' + woUsine : '', woMtc ? 'MTC ' + woMtc : '', f[form + '-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
         (detail ? '<div style="font-size:10px;color:#375623;font-weight:700">' + blEsc(detail) + '</div>' : '') +
       '</div>' +
       '<button onclick="prSupprimer(\'' + form + '\',\'' + p.id + '\')" title="Supprimer" style="background:none;border:none;color:#C00000;font-size:16px;cursor:pointer;padding:4px">✕</button>' +
@@ -5401,7 +5407,7 @@ async function prEnregistrer(form) {
   var cfg = PR_FORMS[form];
   var champs = {};
   cfg.champs.forEach(function(id){ champs[id] = v(id); });
-  var cle = champs[form + '-tag'] || champs[form + '-wo'] || champs['eq-wo-mtc'];
+  var cle = champs[form + '-tag'] || champs[form + '-wo'] || champs['eq-wo-mtc'] || champs['pt-wo-usine'];
   if (!cle) { alert('Renseigne au moins le TAG ou le WO.'); return; }
   var d = Object.assign({ form: form, champs: champs, creePar: getUserName(), date: new Date().toLocaleDateString('fr-FR') }, cfg.lire());
   var id = _prActif[form] || ('pr' + Date.now());
