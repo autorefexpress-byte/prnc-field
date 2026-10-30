@@ -391,7 +391,7 @@ function _locChange(selId, inpId) {
     <div class="action-card" onclick="if(!checkConsultMode())show('s-equip')">
       <div class="card-icon green">&#9989;</div>
       <div class="card-lbl">Équipement terminé</div>
-      <div class="card-sub">Notifier le demandeur</div>
+      <div class="card-sub" id="home-sub-eq">Notifier le demandeur</div>
     </div>
     <div class="action-card" onclick="show('s-arrive')">
       <div class="card-icon purple">&#128229;</div>
@@ -401,7 +401,7 @@ function _locChange(selId, inpId) {
     <div class="action-card" onclick="show('s-peinture')">
       <div class="card-icon orange">&#127912;</div>
       <div class="card-lbl">Demande peinture</div>
-      <div class="card-sub">Envoi vers ETNA</div>
+      <div class="card-sub" id="home-sub-pt">Envoi vers ETNA</div>
     </div>
     <div class="action-card" onclick="show('s-eqt-nettoyer')">
       <div class="card-icon" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
@@ -1534,6 +1534,7 @@ function show(id) {
       });
     }, 80);
     setTimeout(function() { checkRelances(); }, 300);
+    prCompterAccueil();
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
   if (id === 's-nc-nouveau') {
@@ -4448,6 +4449,7 @@ function activerModePrepose() {
     if (el) el.style.display = '';
   });
   setTimeout(function() { dbLoad(); }, 2000);
+  prCompterAccueil();
 }
 
 function checkConsultMode() {
@@ -4760,18 +4762,33 @@ async function prCharger(form) {
   try {
     var r = await fetch(DB_API + '?table=eq_prerempli');
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    _prListes[form] = (await r.json())
-      .map(function(x){ return Object.assign({ id: x.id }, x.data || {}); })
-      .filter(function(x){ return (x.form || 'eq') === form; });
+    var tous = (await r.json()).map(function(x){ return Object.assign({ id: x.id }, x.data || {}); });
+    Object.keys(PR_FORMS).forEach(function(f) {
+      _prListes[f] = tous.filter(function(x){ return (x.form || 'eq') === f; });
+      prMajAccueil(f);
+    });
   } catch(e) { console.warn('pré-remplis err', e); }
-  prAfficher(form);
+  if (form) prAfficher(form);
 }
+
+// Accueil : sous-titre des cartes Équipement terminé / Demande peinture = nombre de pré-remplis
+var PR_SOUS_TITRES = { eq: 'Notifier le demandeur', pt: 'Envoi vers ETNA' };
+function prMajAccueil(form) {
+  var el = document.getElementById('home-sub-' + form);
+  if (!el) return;
+  var n = _prListes[form].length;
+  el.textContent = n ? '📋 ' + n + ' pré-rempli' + (n > 1 ? 's' : '') : PR_SOUS_TITRES[form];
+  el.style.color = n ? '#C55A11' : '';
+  el.style.fontWeight = n ? '700' : '';
+}
+function prCompterAccueil() { prCharger(null); }
 
 function prAfficher(form) {
   var box = document.getElementById(form + '-prerempli-box');
   var list = document.getElementById(form + '-prerempli-list');
   if (!box || !list) return;
   var items = _prListes[form];
+  prMajAccueil(form);
   box.style.display = items.length ? '' : 'none';
   document.getElementById(form + '-prerempli-count').textContent = '(' + items.length + ')';
   list.innerHTML = items.map(function(p) {
