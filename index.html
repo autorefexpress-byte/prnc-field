@@ -674,7 +674,7 @@ function _locChange(selId, inpId) {
     <div class="field-grp">
       </div>
     </div>
-    <button type="button" onclick="eqEnregistrerPreRempli()" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#1F3864;border:1.5px solid #1F3864;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
+    <button type="button" onclick="prEnregistrer('eq')" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#1F3864;border:1.5px solid #1F3864;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
     <button class="send-btn btn-green" onclick="sendEquip()">&#9989; Envoyer le mail</button>
   </div>
 </div>
@@ -687,6 +687,13 @@ function _locChange(selId, inpId) {
     <div class="form-badge badge-orange">ETNA</div>
   </div>
   <div class="form-body">
+
+    <!-- Pré-remplis préparés à l'avance (ordinateur) -->
+    <div id="pt-prerempli-box" style="display:none;background:#FFF4EC;border:1px solid #F4C7A6;border-radius:12px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#C55A11;margin-bottom:6px">📋 Pré-remplis <span id="pt-prerempli-count" style="color:#888;font-weight:600"></span></div>
+      <div id="pt-prerempli-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div id="pt-prerempli-actif" style="display:none;background:#E2EFDA;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:600"></div>
 
     <!-- Workgroup — même style que équip terminé -->
     <div class="field-grp">
@@ -750,6 +757,7 @@ function _locChange(selId, inpId) {
       <div class="manual-list" id="pt-manual"></div>
     </div>
 
+    <button type="button" onclick="prEnregistrer('pt')" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#C55A11;border:1.5px solid #C55A11;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
     <button class="send-btn btn-orange" onclick="sendPeinture()">&#127912; Envoyer demande ETNA</button>
   </div>
 </div>
@@ -1599,7 +1607,8 @@ function show(id) {
   window.scrollTo(0,0);
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
-  if (id === 's-equip') eqChargerPreRemplis();
+  if (id === 's-equip') prCharger('eq');
+  if (id === 's-peinture') prCharger('pt');
 
   if (id === 's-hist') {
     var searchEl = document.getElementById('hist-search');
@@ -2410,7 +2419,7 @@ function sendEquip() {
   dbSaveTermine({tag, wo, woMtc, wr, sc, wg:wgl, statut:statutTxt,
     dest:allTo, emailDemandeur: emailDem, nomDemandeur: nomDem,
     photos: _equip_photos || []});
-    eqPreRempliEnvoye();
+    prEnvoye('eq');
 
     const WG_C = {chaud:'background:var(--lorange);color:var(--orange)',repar:'background:var(--llblue);color:var(--navy2)',strob:'background:var(--lteal);color:var(--teal)',elins:'background:var(--llblue);color:#1F4E79',mecus:'background:var(--lgreen);color:var(--green)'};
     resetForm(['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'], [], 'eq');
@@ -2458,6 +2467,7 @@ function sendPeinture() {
   const ccFinalPt = [...allTo.slice(1), ...ccList].filter(Boolean).join(';');
   mailto(allTo[0], subj, body, ccFinalPt);
   dbSavePeinture({tag, wo, trait, photos:getPhotos('etna-prev')});
+  prEnvoye('pt');
 
   showSuccess('&#127912;','si-orange','Demande ETNA ouverte !','Vérifie et envoie depuis Outlook.',
     '<strong>TAG :</strong> '+tag+'<br><strong>WO :</strong> '+wo+'<br><strong>Workgroup :</strong> '+wgl+'<br><strong>Traitement :</strong> '+trait+'<br><strong>À :</strong> '+allTo.join(', ')+'<br><strong>CC :</strong> '+ccList.length+' destinataire'+(ccList.length>1?'s':''));
@@ -5297,63 +5307,104 @@ function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
 
 var _equip_photos = [];
 
-// ── Pré-remplis « Équipement terminé » ──
+// ── Pré-remplis « Équipement terminé » et « Demande ETNA » ──
 // Préparés sur ordinateur (stockés en base pour être vus sur le téléphone),
-// puis chargés sur le terrain : il ne reste qu'à choisir le dépôt, prendre la photo et envoyer.
-var _eqPreRemplis = [];
-var _eqPreRempliId = null;   // pré-rempli chargé dans le formulaire (supprimé après envoi)
-var EQ_PR_CHAMPS = ['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'];
+// puis chargés sur le terrain : il ne reste qu'à compléter, prendre la photo et envoyer.
+// Une seule table (eq_prerempli) ; data.form = 'pt' pour l'ETNA, absent pour Équipement terminé.
+var PR_FORMS = {
+  eq: {
+    champs: ['eq-wo','eq-wo-mtc','eq-wr','eq-sc','eq-serie','eq-tag','eq-desc','eq-rem'],
+    lire: function() {
+      return { wg: (state.eq && state.eq.wg) || '', statut: (state.eq && state.eq.statut) || '',
+               manual: getEmails('eq-manual'), cc: getEmails('eq-cc') };
+    },
+    vider: function() {
+      resetForm(PR_FORMS.eq.champs, [], 'eq');
+      ['chaud','repar','elins','mecus'].forEach(function(w){ var el = document.getElementById('eq-wg-' + w); if (el) el.className = 'wg-btn'; });
+    },
+    appliquer: function(p) {
+      if (p.wg) setWG('eq', p.wg);
+      if (p.statut) setEqStatut(p.statut);
+      (p.manual || []).forEach(function(m){ prAjouterEmail('eq-manual', m); });
+      (p.cc || []).forEach(function(m){ prAjouterEmail('eq-cc', m); });
+    },
+    detail: function(p) { return p.statut ? '📍 ' + (EQ_STATUT_LABELS[p.statut] || p.statut) : ''; },
+    aCompleter: function(p) { return p.statut ? '' : ' — choisis le dépôt'; }
+  },
+  pt: {
+    champs: ['pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-prio','pt-date','pt-delai','pt-qaqc','pt-rem'],
+    lire: function() {
+      return { wg: _ptWG || '', trait: _ptTrait || '', traitLabel: _ptTraitLabel || '', manual: getEmails('pt-manual') };
+    },
+    vider: function() {
+      resetForm(['pt-wo','pt-wr','pt-sc','pt-tag','pt-desc','pt-date','pt-delai','pt-rem'], ['pt-prio','pt-qaqc'], 'pt');
+      document.getElementById('pt-wg-mecus').className = 'wg-btn';
+      document.getElementById('pt-manual').innerHTML = '';
+      clearPhotos('etna-prev');
+      var prev = document.getElementById('etna-prev'); if (prev) prev.innerHTML = '';
+    },
+    appliquer: function(p) {
+      if (p.wg) setPtWG(p.wg);
+      if (p.trait) setPtTrait(p.trait, p.traitLabel || '');
+      (p.manual || []).forEach(function(m){ prAjouterEmail('pt-manual', m); });
+    },
+    detail: function(p) { return p.traitLabel ? '🎨 ' + p.traitLabel : ''; },
+    aCompleter: function(p) { return p.trait ? '' : ' — choisis le traitement'; }
+  }
+};
+var _prListes = { eq: [], pt: [] };
+var _prActif = { eq: null, pt: null };   // pré-rempli chargé dans le formulaire (supprimé après envoi)
 
-async function eqChargerPreRemplis() {
+function prAjouterEmail(listId, mail) {
+  addManual(listId);
+  var ins = document.querySelectorAll('#' + listId + ' input');
+  ins[ins.length - 1].value = mail;
+}
+
+async function prCharger(form) {
   try {
     var r = await fetch(DB_API + '?table=eq_prerempli');
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    _eqPreRemplis = (await r.json()).map(function(x){ return Object.assign({ id: x.id }, x.data || {}); });
+    _prListes[form] = (await r.json())
+      .map(function(x){ return Object.assign({ id: x.id }, x.data || {}); })
+      .filter(function(x){ return (x.form || 'eq') === form; });
   } catch(e) { console.warn('pré-remplis err', e); }
-  eqAfficherPreRemplis();
+  prAfficher(form);
 }
 
-function eqAfficherPreRemplis() {
-  var box = document.getElementById('eq-prerempli-box');
-  var list = document.getElementById('eq-prerempli-list');
+function prAfficher(form) {
+  var box = document.getElementById(form + '-prerempli-box');
+  var list = document.getElementById(form + '-prerempli-list');
   if (!box || !list) return;
-  box.style.display = _eqPreRemplis.length ? '' : 'none';
-  document.getElementById('eq-prerempli-count').textContent = '(' + _eqPreRemplis.length + ')';
-  list.innerHTML = _eqPreRemplis.map(function(p) {
+  var items = _prListes[form];
+  box.style.display = items.length ? '' : 'none';
+  document.getElementById(form + '-prerempli-count').textContent = '(' + items.length + ')';
+  list.innerHTML = items.map(function(p) {
     var f = p.champs || {};
-    var actif = p.id === _eqPreRempliId;
+    var actif = p.id === _prActif[form];
+    var wo = f[form + '-wo'], detail = PR_FORMS[form].detail(p);
     return '<div style="display:flex;align-items:center;gap:8px;background:' + (actif ? '#E2EFDA' : '#fff') + ';border:1px solid ' + (actif ? '#A9D18E' : '#dde3ee') + ';border-radius:10px;padding:8px 10px">' +
-      '<div onclick="eqUtiliserPreRempli(\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
-        '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + blEsc(f['eq-tag'] || '--') +
+      '<div onclick="prUtiliser(\'' + form + '\',\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
+        '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + blEsc(f[form + '-tag'] || '--') +
           (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#888">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
         '<div style="font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-          blEsc([f['eq-wo'] ? 'WO ' + f['eq-wo'] : '', f['eq-wo-mtc'] ? 'MTC ' + f['eq-wo-mtc'] : '', f['eq-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
-        (p.statut ? '<div style="font-size:10px;color:#375623;font-weight:700">📍 ' + blEsc(EQ_STATUT_LABELS[p.statut] || p.statut) + '</div>' : '') +
+          blEsc([wo ? 'WO ' + wo : '', f['eq-wo-mtc'] ? 'MTC ' + f['eq-wo-mtc'] : '', f[form + '-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
+        (detail ? '<div style="font-size:10px;color:#375623;font-weight:700">' + blEsc(detail) + '</div>' : '') +
       '</div>' +
-      '<button onclick="eqSupprimerPreRempli(\'' + p.id + '\')" title="Supprimer" style="background:none;border:none;color:#C00000;font-size:16px;cursor:pointer;padding:4px">✕</button>' +
+      '<button onclick="prSupprimer(\'' + form + '\',\'' + p.id + '\')" title="Supprimer" style="background:none;border:none;color:#C00000;font-size:16px;cursor:pointer;padding:4px">✕</button>' +
     '</div>';
   }).join('');
 }
 
-function eqLireFormulaire() {
-  var champs = {};
-  EQ_PR_CHAMPS.forEach(function(id){ champs[id] = v(id); });
-  return {
-    champs: champs,
-    wg: (state.eq && state.eq.wg) || '',
-    statut: (state.eq && state.eq.statut) || '',
-    manual: getEmails('eq-manual'),
-    cc: getEmails('eq-cc')
-  };
-}
-
-async function eqEnregistrerPreRempli() {
+async function prEnregistrer(form) {
   if (checkConsultMode()) return;
-  var d = eqLireFormulaire();
-  if (!d.champs['eq-tag'] && !d.champs['eq-wo'] && !d.champs['eq-wo-mtc']) { alert('Renseigne au moins le TAG ou un WO.'); return; }
-  var id = _eqPreRempliId || ('pr' + Date.now());
-  d.creePar = getUserName();
-  d.date = new Date().toLocaleDateString('fr-FR');
+  var cfg = PR_FORMS[form];
+  var champs = {};
+  cfg.champs.forEach(function(id){ champs[id] = v(id); });
+  var cle = champs[form + '-tag'] || champs[form + '-wo'] || champs['eq-wo-mtc'];
+  if (!cle) { alert('Renseigne au moins le TAG ou le WO.'); return; }
+  var d = Object.assign({ form: form, champs: champs, creePar: getUserName(), date: new Date().toLocaleDateString('fr-FR') }, cfg.lire());
+  var id = _prActif[form] || ('pr' + Date.now());
   try {
     var r = await fetch(DB_API + '?table=eq_prerempli', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -5361,54 +5412,54 @@ async function eqEnregistrerPreRempli() {
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
   } catch(e) { alert('Enregistrement impossible. Vérifiez la connexion.'); return; }
-  eqViderFormulaire();
-  await eqChargerPreRemplis();
+  prVider(form);
+  await prCharger(form);
   window.scrollTo(0, 0);
-  alert('Pré-rempli enregistré : ' + (d.champs['eq-tag'] || d.champs['eq-wo'] || d.champs['eq-wo-mtc']) + '.\nIl apparaît en haut de « Équipement terminé » sur tous les appareils.');
+  alert('Pré-rempli enregistré : ' + cle + '.\nIl apparaît en haut du formulaire sur tous les appareils.');
 }
 
-function eqViderFormulaire() {
-  resetForm(EQ_PR_CHAMPS, [], 'eq');
-  ['chaud','repar','elins','mecus'].forEach(function(w){ var el = document.getElementById('eq-wg-' + w); if (el) el.className = 'wg-btn'; });
-  _eqPreRempliId = null;
-  var actif = document.getElementById('eq-prerempli-actif'); if (actif) actif.style.display = 'none';
+function prVider(form) {
+  PR_FORMS[form].vider();
+  _prActif[form] = null;
+  var actif = document.getElementById(form + '-prerempli-actif'); if (actif) actif.style.display = 'none';
 }
 
-function eqUtiliserPreRempli(id) {
-  var p = _eqPreRemplis.find(function(x){ return x.id === id; });
+function prUtiliser(form, id) {
+  var p = _prListes[form].find(function(x){ return x.id === id; });
   if (!p) return;
-  eqViderFormulaire();
-  EQ_PR_CHAMPS.forEach(function(fid){ var el = document.getElementById(fid); if (el) el.value = (p.champs || {})[fid] || ''; });
-  if (p.wg) setWG('eq', p.wg);
-  if (p.statut) setEqStatut(p.statut);
-  (p.manual || []).forEach(function(m){ addManual('eq-manual'); var ins = document.querySelectorAll('#eq-manual input'); ins[ins.length - 1].value = m; });
-  (p.cc || []).forEach(function(m){ addManual('eq-cc'); var ins = document.querySelectorAll('#eq-cc input'); ins[ins.length - 1].value = m; });
-  _eqPreRempliId = id;
-  var actif = document.getElementById('eq-prerempli-actif');
+  prVider(form);
+  PR_FORMS[form].champs.forEach(function(fid) {
+    var el = document.getElementById(fid), val = (p.champs || {})[fid];
+    if (el && val != null && val !== '') el.value = val;
+  });
+  PR_FORMS[form].appliquer(p);
+  _prActif[form] = id;
+  var actif = document.getElementById(form + '-prerempli-actif');
   if (actif) {
-    actif.textContent = '✅ Pré-rempli chargé : ' + ((p.champs || {})['eq-tag'] || '--') + (p.statut ? '' : ' — choisis le dépôt') + ', ajoute la photo puis envoie. Il sera retiré de la liste après envoi.';
+    actif.textContent = '✅ Pré-rempli chargé : ' + ((p.champs || {})[form + '-tag'] || '--') + PR_FORMS[form].aCompleter(p) +
+      ', ajoute la photo puis envoie. Il sera retiré de la liste après envoi.';
     actif.style.display = '';
   }
-  eqAfficherPreRemplis();
+  prAfficher(form);
 }
 
-async function eqSupprimerPreRempli(id) {
+async function prSupprimer(form, id) {
   if (checkConsultMode()) return;
   if (!confirm('Supprimer ce pré-rempli ?')) return;
   try { await fetch(DB_API + '?table=eq_prerempli&id=' + encodeURIComponent(id), { method: 'DELETE' }); } catch(e) {}
-  if (_eqPreRempliId === id) eqViderFormulaire();
-  _eqPreRemplis = _eqPreRemplis.filter(function(x){ return x.id !== id; });
-  eqAfficherPreRemplis();
+  if (_prActif[form] === id) prVider(form);
+  _prListes[form] = _prListes[form].filter(function(x){ return x.id !== id; });
+  prAfficher(form);
 }
 
 // Appelée après l'envoi du mail : le pré-rempli utilisé n'est plus à faire
-function eqPreRempliEnvoye() {
-  var id = _eqPreRempliId;
-  _eqPreRempliId = null;
-  var actif = document.getElementById('eq-prerempli-actif'); if (actif) actif.style.display = 'none';
+function prEnvoye(form) {
+  var id = _prActif[form];
+  _prActif[form] = null;
+  var actif = document.getElementById(form + '-prerempli-actif'); if (actif) actif.style.display = 'none';
   if (!id) return;
-  _eqPreRemplis = _eqPreRemplis.filter(function(x){ return x.id !== id; });
-  eqAfficherPreRemplis();
+  _prListes[form] = _prListes[form].filter(function(x){ return x.id !== id; });
+  prAfficher(form);
   fetch(DB_API + '?table=eq_prerempli&id=' + encodeURIComponent(id), { method: 'DELETE' }).catch(function(){});
 }
 
