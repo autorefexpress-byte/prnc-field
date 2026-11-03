@@ -191,7 +191,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-pane.active{display:block;}
 </style>
 <!-- Librairie Excel (880 Ko) : chargée sans bloquer l'affichage de l'app, utilisée seulement aux imports / exports -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 var _LOC_LIST = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone depart ETNA', 'Zone planifier P17'];
 function _locOpts(curVal) {
@@ -4960,13 +4960,30 @@ async function trpEnregistrer() {
   if (_trpUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
   var e = trpLireFormulaire();
   if (!e.date) { alert('La date du transport est obligatoire.'); return; }
-  var btn = document.getElementById('trp-save-btn');
-  btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
-  try { await trpSauver(e); }
-  catch(err) { alert('Enregistrement impossible. Vérifiez la connexion.'); return; }
-  finally { btn.disabled = false; btn.textContent = 'Enregistrer'; }
+  // Affichage immédiat, envoi au serveur en arrière-plan ; en cas d'échec on rouvre le formulaire rempli
+  var avant = _trpListe.slice();
+  _trpListe = _trpListe.filter(function(x){ return x.id !== e.id; }).concat([e]);
   trpFermer();
   trpChoisirJour(e.date);
+  try { await trpSauver(e); }
+  catch(err) {
+    _trpListe = avant;
+    trpRendre();
+    alert('Enregistrement impossible (connexion ?). Le bordereau n\'a pas été enregistré : le formulaire est rouvert pour réessayer.');
+    trpOuvrirAvec(e);
+  }
+}
+
+// Rouvre le formulaire avec un bordereau non enregistré
+function trpOuvrirAvec(e) {
+  trpOuvrir(null);
+  _trpEditId = e.id;
+  [['trp-ref','ref'],['trp-date','date'],['trp-heure','heure'],['trp-statut','statut'],['trp-chargement','chargement'],
+   ['trp-livrer','livrerA'],['trp-demandeur','demandeur'],['trp-destinataire','destinataire'],['trp-comm','comm']].forEach(function(c){
+    document.getElementById(c[0]).value = e[c[1]] || '';
+  });
+  _trpPhotos = (e.photos || []).slice();
+  trpAfficherPhotos();
 }
 
 async function trpDupliquer(id) {
@@ -6546,6 +6563,13 @@ updateStats().then(function() {
 })();
 
 initPIN();
+
+// Cache hors ligne (sw.js) : l'app s'ouvre même avec un réseau faible ou coupé
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(e) { console.warn('SW err', e); });
+  });
+}
 (function() {
   const m = document.getElementById('rp-mois');
   const now = new Date();
