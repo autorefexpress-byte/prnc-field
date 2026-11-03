@@ -13,100 +13,110 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 // ── INIT TABLES (une seule fois au démarrage) ──────────
 let _tablesReady = false;
-async function ensureTables() {
-  if (_tablesReady) return;
+// Toutes les créations / mises à jour de tables partent en une seule requête (transaction) :
+// une par une, c'était ~27 allers-retours vers Neon à chaque démarrage à froid de la fonction.
+// La promesse est partagée pour ne pas lancer deux fois l'init (au chargement + 1re requête).
+let _tablesPromise = null;
+function ensureTables() {
+  if (_tablesReady) return Promise.resolve();
+  if (!_tablesPromise) _tablesPromise = initTables().finally(() => { _tablesPromise = null; });
+  return _tablesPromise;
+}
+async function initTables() {
+  const q = [];
   try {
-    await sql`CREATE TABLE IF NOT EXISTS wo_en_g (
+    q.push(sql`CREATE TABLE IF NOT EXISTS wo_en_g (
       id SERIAL PRIMARY KEY, wo TEXT UNIQUE, wr TEXT, tag TEXT,
       description TEXT, wg TEXT, date_signalement TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`ALTER TABLE wo_en_g ADD COLUMN IF NOT EXISTS wr TEXT`;
+    )`);
+    q.push(sql`ALTER TABLE wo_en_g ADD COLUMN IF NOT EXISTS wr TEXT`);
 
-    await sql`CREATE TABLE IF NOT EXISTS planning (
+    q.push(sql`CREATE TABLE IF NOT EXISTS planning (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
       ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
       jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
       photos JSONB DEFAULT '[]', remarque TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`;
-    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`;
-    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wo_usine TEXT`;
-    await sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wso TEXT`;
-    await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`;
-    await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`;
-    await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`;
+    )`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wo_usine TEXT`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wso TEXT`);
+    q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`);
+    q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`);
+    q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`);
 
     // Bordereaux de transport (onglet Transport, calendrier)
-    await sql`CREATE TABLE IF NOT EXISTS bordereau_transport (
+    q.push(sql`CREATE TABLE IF NOT EXISTS bordereau_transport (
       id TEXT PRIMARY KEY, date TEXT, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
+    )`);
 
     // Pré-remplis « Équipement terminé » préparés sur ordinateur, envoyés depuis le téléphone
-    await sql`CREATE TABLE IF NOT EXISTS eq_prerempli (
+    q.push(sql`CREATE TABLE IF NOT EXISTS eq_prerempli (
       id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`;
-    await sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`;
+    )`);
+    q.push(sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_wo_semaine_idx ON planning(wo, semaine)`);
+    q.push(sql`CREATE TABLE IF NOT EXISTS planning_config (key TEXT PRIMARY KEY, value TEXT)`);
 
     // ── Planning Atelier MCCHAUD (table séparée, même schéma) ──
-    await sql`CREATE TABLE IF NOT EXISTS planning_mcchaud (
+    q.push(sql`CREATE TABLE IF NOT EXISTS planning_mcchaud (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
       ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
       jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
       photos JSONB DEFAULT '[]', remarque TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcchaud_wo_semaine_idx ON planning_mcchaud(wo, semaine)`;
+    )`);
+    q.push(sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcchaud_wo_semaine_idx ON planning_mcchaud(wo, semaine)`);
     // ── Planning Atelier MCELINS (table séparée, même schéma) ──
-    await sql`CREATE TABLE IF NOT EXISTS planning_mcelins (
+    q.push(sql`CREATE TABLE IF NOT EXISTS planning_mcelins (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
       ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
       jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
       photos JSONB DEFAULT '[]', remarque TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcelins_wo_semaine_idx ON planning_mcelins(wo, semaine)`;
+    )`);
+    q.push(sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcelins_wo_semaine_idx ON planning_mcelins(wo, semaine)`);
 
     // ── Planning Atelier MCMECUS (table séparée, même schéma) ──
     // categorie ('meca'/'usinage') distingue les 2 fichiers Excel importés pour ce workgroup
-    await sql`CREATE TABLE IF NOT EXISTS planning_mcmecus (
+    q.push(sql`CREATE TABLE IF NOT EXISTS planning_mcmecus (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
       ressource TEXT, commentaire TEXT, taches JSONB DEFAULT '[]',
       jours JSONB DEFAULT '[]', statut TEXT DEFAULT 'PLANIFIE', semaine TEXT,
       photos JSONB DEFAULT '[]', remarque TEXT, categorie TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`ALTER TABLE planning_mcmecus ADD COLUMN IF NOT EXISTS categorie TEXT`;
-    await sql`DROP INDEX IF EXISTS planning_mcmecus_wo_semaine_idx`;
-    await sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcmecus_wo_semaine_cat_idx ON planning_mcmecus(wo, semaine, categorie)`;
+    )`);
+    q.push(sql`ALTER TABLE planning_mcmecus ADD COLUMN IF NOT EXISTS categorie TEXT`);
+    q.push(sql`DROP INDEX IF EXISTS planning_mcmecus_wo_semaine_idx`);
+    q.push(sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcmecus_wo_semaine_cat_idx ON planning_mcmecus(wo, semaine, categorie)`);
 
-    await sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
+    q.push(sql`CREATE TABLE IF NOT EXISTS loc_mouvements (
       id SERIAL PRIMARY KEY, tag TEXT, wg TEXT, ancien_loc TEXT, nouveau_loc TEXT,
       record_id TEXT, fait BOOLEAN DEFAULT false, date_mouv TIMESTAMPTZ DEFAULT NOW()
-    )`;
+    )`);
 
-    await sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
+    q.push(sql`CREATE TABLE IF NOT EXISTS callidus_prnc (
       id TEXT PRIMARY KEY, wo TEXT, tag TEXT, serie TEXT, qty TEXT,
       remarques TEXT, photos JSONB DEFAULT '[]',
       statut TEXT DEFAULT 'Envoyé', date TEXT, created_at TIMESTAMP DEFAULT NOW()
-    )`;
+    )`);
 
-    await sql`CREATE TABLE IF NOT EXISTS nc (
+    q.push(sql`CREATE TABLE IF NOT EXISTS nc (
       id TEXT PRIMARY KEY, numero TEXT, wg TEXT, semaine TEXT, ir TEXT, wo TEXT, tag TEXT,
       date_recep TEXT, date_retour TEXT, controle_par TEXT, types JSONB DEFAULT '[]',
       cmd JSONB DEFAULT '{}', rec JSONB DEFAULT '{}', remarques TEXT,
       statut TEXT DEFAULT 'Ouvert', mois TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
+    )`);
 
-    await sql`CREATE TABLE IF NOT EXISTS bl (
+    q.push(sql`CREATE TABLE IF NOT EXISTS bl (
       id TEXT PRIMARY KEY, date_livraison TEXT, preparateur TEXT, livreur TEXT,
       lieu TEXT, lignes JSONB DEFAULT '[]', photos JSONB DEFAULT '[]',
       remarques TEXT, saisi_par TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
-    )`;
-    await sql`ALTER TABLE bl ADD COLUMN IF NOT EXISTS reception JSONB`;
+    )`);
+    q.push(sql`ALTER TABLE bl ADD COLUMN IF NOT EXISTS reception JSONB`);
 
+    await sql.transaction(q);
     _tablesReady = true;
   } catch(e) {
     console.error('ensureTables err:', e);
