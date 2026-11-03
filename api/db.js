@@ -38,6 +38,11 @@ async function ensureTables() {
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`;
     await sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`;
 
+    // Bordereaux de transport (onglet Transport, calendrier)
+    await sql`CREATE TABLE IF NOT EXISTS bordereau_transport (
+      id TEXT PRIMARY KEY, date TEXT, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`;
+
     // Pré-remplis « Équipement terminé » préparés sur ordinateur, envoyés depuis le téléphone
     await sql`CREATE TABLE IF NOT EXISTS eq_prerempli (
       id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
@@ -624,6 +629,33 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown nc request' });
+    }
+
+    // ── BORDEREAUX DE TRANSPORT ──
+    if (table === 'bordereau_transport') {
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM bordereau_transport ORDER BY date ASC, created_at ASC`);
+      if (method === 'POST') {
+        const d = req.body || {};
+        if (!d.id || !d.date) return res.status(400).json({ error: 'id ou date manquant' });
+        const old = await sql`SELECT data FROM bordereau_transport WHERE id=${d.id}`;
+        await sql`INSERT INTO bordereau_transport (id, date, data) VALUES (${d.id}, ${d.date}, ${JSON.stringify(d.data || {})}::jsonb)
+          ON CONFLICT (id) DO UPDATE SET date = EXCLUDED.date, data = EXCLUDED.data`;
+        // Supprimer sur Cloudinary les photos retirées du bordereau
+        if (old.length) {
+          const kept = new Set((d.data && d.data.photos) || []);
+          const removed = ((old[0].data && old[0].data.photos) || []).filter(u => !kept.has(u));
+          if (removed.length) await deleteCloudinaryPhotos(removed);
+        }
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        const old = await sql`SELECT data FROM bordereau_transport WHERE id=${id}`;
+        await sql`DELETE FROM bordereau_transport WHERE id=${id}`;
+        const photos = (old.length && old[0].data && old[0].data.photos) || [];
+        if (photos.length) await deleteCloudinaryPhotos(photos);
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown bordereau_transport request' });
     }
 
     // ── PRÉ-REMPLIS ÉQUIPEMENT TERMINÉ ──
