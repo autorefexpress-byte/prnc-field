@@ -220,6 +220,37 @@ function _locChange(selId, inpId) {
   else { i.style.display='none'; i.value=s.value; }
 }
 </script>
+<style>
+/* ── Onglet Transport (calendrier des bordereaux) ── */
+.trp-card{background:#fff;border-radius:14px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.trp-nav{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px}
+.trp-nav h2{margin:0;font-size:16px;color:#1F3864;text-transform:capitalize;flex:1;text-align:center}
+.trp-nav button{border:1px solid #d0d7e2;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit}
+.trp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.trp-dow{font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0;text-transform:uppercase}
+.trp-day{min-height:58px;border:1px solid #e3e8ef;border-radius:8px;padding:3px;cursor:pointer;background:#fff;overflow:hidden}
+.trp-day.other{background:#f7f8fa;color:#aab2bf}
+.trp-day.today .trp-num{background:#2E75B6;color:#fff}
+.trp-day.sel{outline:2px solid #E65100;border-color:#E65100}
+.trp-num{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:700}
+.trp-chip{display:block;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trp-more{font-size:9px;color:var(--muted);margin-top:1px}
+.trp-s-prevu{background:#dbeafe;color:#1d4ed8}.trp-s-route{background:#ffedd5;color:#c2410c}
+.trp-s-recu{background:#dcfce7;color:#166534}.trp-s-retard{background:#fee2e2;color:#b91c1c}
+.trp-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:10px}
+.trp-legend span{padding:2px 8px;border-radius:999px;font-weight:700}
+.trp-entry{border:1px solid #e3e8ef;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:12px}
+.trp-entry .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.trp-entry .meta{color:#475066;margin-top:3px;line-height:1.5}
+.trp-entry .acts button{border:none;background:none;cursor:pointer;color:#2E75B6;font-weight:700;font-size:11px;padding:4px 8px 0 0;font-family:inherit}
+.trp-entry .acts button.del{color:#C00000}
+.trp-empty{color:var(--muted);font-size:12px;padding:6px 0}
+#trp-modal{position:fixed;inset:0;background:rgba(12,28,61,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;z-index:1000}
+#trp-modal.open{display:flex}
+#trp-modal .sheet{background:#F4F6FA;border-radius:16px;max-width:620px;width:100%;padding:16px;display:flex;flex-direction:column;gap:11px}
+.trp-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.trp-row2.large{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 
@@ -407,6 +438,11 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
       <div class="card-lbl">Eqt à nettoyer</div>
       <div class="card-sub">Demande de nettoyage</div>
+    </div>
+    <div class="action-card" onclick="show('s-transport')">
+      <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128666;</div>
+      <div class="card-lbl">Transport</div>
+      <div class="card-sub" id="home-sub-trp">Calendrier des bordereaux</div>
     </div>
 
   </div>
@@ -1052,6 +1088,85 @@ function _locChange(selId, inpId) {
   </div>
 </div>
 
+<!-- ═══════════════ TRANSPORT (calendrier des bordereaux) ═══════════════ -->
+<div class="screen" id="s-transport">
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">&#8592;</div>
+    <div class="form-title">Transport</div>
+    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128666;</div>
+  </div>
+  <div class="form-body">
+    <div class="trp-card">
+      <div class="trp-nav">
+        <button onclick="trpMois(-1)" aria-label="Mois précédent">◀</button>
+        <h2 id="trp-titre"></h2>
+        <button onclick="trpMois(1)" aria-label="Mois suivant">▶</button>
+      </div>
+      <div class="trp-grid" id="trp-grid"></div>
+      <div class="trp-legend">
+        <span class="trp-s-prevu">Prévu</span><span class="trp-s-route">En route</span>
+        <span class="trp-s-recu">Livré</span><span class="trp-s-retard">Retard / Annulé</span>
+        <button onclick="trpAujourdhui()" style="margin-left:auto;border:1px solid #d0d7e2;background:#fff;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit">Aujourd'hui</button>
+      </div>
+    </div>
+
+    <div class="trp-card">
+      <div id="trp-jour-titre" style="font-weight:800;color:#1F3864;font-size:14px;text-transform:capitalize"></div>
+      <div id="trp-jour-sub" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+      <div id="trp-jour-liste"></div>
+      <button class="send-btn" style="background:#E65100;color:#fff" onclick="trpOuvrir(null)">＋ Nouveau bordereau</button>
+    </div>
+
+    <div class="trp-card">
+      <div style="font-weight:800;color:#b91c1c;font-size:14px">⚠️ Transports en retard <span id="trp-retard-n"></span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Date dépassée et non livrés, ou statut « Retard / Annulé »</div>
+      <div id="trp-retard-liste"></div>
+    </div>
+
+    <button onclick="trpExportCsv()" style="width:100%;padding:12px;background:#fff;color:#375623;border:1.5px solid #375623;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">📥 Exporter CSV</button>
+  </div>
+</div>
+
+<!-- Formulaire bordereau de transport -->
+<div id="trp-modal" onclick="if(event.target===this)trpFermer()">
+  <div class="sheet">
+    <div>
+      <div style="font-size:17px;font-weight:800;color:#1F3864">BORDEREAU DE TRANSPORT</div>
+      <div style="font-size:11px;color:var(--muted)">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>
+    </div>
+    <div class="field-grp" style="margin:0"><div class="field-lbl">N° référence transport</div><input class="fi" id="trp-ref" placeholder="Ex : IR M38826"></div>
+    <div class="trp-row2">
+      <div class="field-grp" style="margin:0"><div class="field-lbl"><span class="req">*</span> Date du transport</div><input class="fi" type="date" id="trp-date"></div>
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Heure camion</div><input class="fi" id="trp-heure" placeholder="Ex : 08H"></div>
+    </div>
+    <div class="field-grp" style="margin:0"><div class="field-lbl">Statut</div>
+      <select class="fi" id="trp-statut"><option value="prevu">Prévu</option><option value="route">En route</option><option value="recu">Livré</option><option value="retard">Retard / Annulé</option></select></div>
+    <div class="trp-row2 large">
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Lieu de chargement</div><input class="fi" id="trp-chargement" list="trp-dl-lieux"></div>
+      <div class="field-grp" style="margin:0"><div class="field-lbl">À livrer chez / vers</div><input class="fi" id="trp-livrer" list="trp-dl-lieux" placeholder="Ex : CALLIDUS NC NORMANDIE"></div>
+    </div>
+    <div class="trp-row2 large">
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Demandeur</div><input class="fi" id="trp-demandeur" list="trp-dl-noms" placeholder="Nom, prénom"></div>
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Destinataire</div><input class="fi" id="trp-destinataire" list="trp-dl-noms" placeholder="Nom, prénom"></div>
+    </div>
+    <div class="field-grp" style="margin:0"><div class="field-lbl">Commentaires</div><textarea class="fi" id="trp-comm" style="height:100px"></textarea></div>
+    <div class="field-grp" style="margin:0"><div class="field-lbl">Photos</div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">
+        &#128247; Prendre / ajouter des photos
+        <input type="file" accept="image/*" multiple style="display:none" onchange="trpAjouterPhotos(this)">
+      </label>
+      <div id="trp-photos" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" onclick="trpFermer()" style="flex:1;padding:12px;background:#fff;border:1px solid #d0d7e2;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer">Annuler</button>
+      <button type="button" onclick="trpImprimer(trpLireFormulaire())" style="flex:1;padding:12px;background:#fff;border:1px solid #d0d7e2;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer">🖨 Imprimer / PDF</button>
+      <button type="button" id="trp-save-btn" onclick="trpEnregistrer()" style="flex:2;padding:12px;background:#E65100;color:#fff;border:none;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<datalist id="trp-dl-noms"></datalist>
+<datalist id="trp-dl-lieux"></datalist>
+
 <!-- ═══════════════ ENVOI CALLIDUS ═══════════════ -->
 <div class="screen" id="s-envoi-callidus">
   <div class="form-header">
@@ -1483,7 +1598,7 @@ const state = {
   selectedCC: { pl: new Set(), ar: new Set(), eq: new Set() }
 };
 
-const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi','s-bl','s-bl-nouveau','s-bl-detail'];
+const SCREENS = ['s-home','s-arrive','s-equip','s-peinture','s-eqt-nettoyer','s-usage','s-hist','s-hist-wo','s-rapport','s-success','s-relances','s-transport','s-envoi-callidus','s-callidus-suivi','s-callidus-update','s-callidus-prestataire','s-scanner','s-callidus-prnc','s-planning','s-planning-mcchaud','s-planning-mcelins','s-planning-mcmecus','s-nc','s-nc-nouveau','s-nc-detail','s-kpi','s-bl','s-bl-nouveau','s-bl-detail'];
 const NAV = {'s-home':'nav-home','s-arrive':'nav-arrive','s-equip':'nav-equip','s-hist':'nav-hist'};
 
 function show(id) {
@@ -1500,6 +1615,7 @@ function show(id) {
   if (id === 's-usage')    setTimeout(initSignatureCanvas, 50);
 
   if (id === 's-equip') prCharger('eq');
+  if (id === 's-transport') trpCharger();
   if (id === 's-peinture') prCharger('pt');
 
   if (id === 's-hist') {
@@ -1535,6 +1651,7 @@ function show(id) {
     }, 80);
     setTimeout(function() { checkRelances(); }, 300);
     prCompterAccueil();
+    trpCharger();   // compte les transports en retard pour la carte de l'accueil
   }
   if (id === 's-rapport')   setTimeout(previewRapport, 50);
   if (id === 's-nc-nouveau') {
@@ -4703,6 +4820,235 @@ function prefillRetourEtna(wo, tag, wr, wg, woUsine) {
 }
 
 var _equip_photos = [];
+
+// ══ TRANSPORT : calendrier des bordereaux (table bordereau_transport) ══
+var TRP_CONTACTS = ['PREVOT Stéphane','ROSA ASIK Emmanuel','POTOMAK Sérah','TUATAANE Soana','WILFRID Bernard','Canales Nicolas','Claudia LAI'];
+var TRP_LIEUX = ['MAINTENANCE CENTRALE','USINE HPAL','MAGASIN','CALLIDUS NC NORMANDIE','P17','P02','SPEED SERVICE','AMC','TOTAL SEAL'];
+var TRP_STATUTS = { prevu: 'Prévu', route: 'En route', recu: 'Livré', retard: 'Retard / Annulé' };
+var _trpListe = [];          // bordereaux { id, date (aaaa-mm-jj), ref, heure, statut, chargement, livrerA, demandeur, destinataire, comm, photos }
+var _trpVue = new Date(); _trpVue.setDate(1);
+var _trpJour = trpIso(new Date());
+var _trpEditId = null, _trpPhotos = [], _trpUploads = 0;
+
+function trpIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function trpFr(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+function trpDuJour(iso) { return _trpListe.filter(function(e){ return e.date === iso; }); }
+
+async function trpCharger() {
+  document.getElementById('trp-dl-noms').innerHTML = TRP_CONTACTS.map(function(n){ return '<option value="' + blEsc(n) + '">'; }).join('');
+  document.getElementById('trp-dl-lieux').innerHTML = TRP_LIEUX.map(function(n){ return '<option value="' + blEsc(n) + '">'; }).join('');
+  trpRendre();
+  try {
+    var r = await fetch(DB_API + '?table=bordereau_transport');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _trpListe = (await r.json()).map(function(x){ return Object.assign({}, x.data || {}, { id: x.id, date: x.date }); });
+  } catch(e) { console.warn('transport err', e); }
+  trpRendre();
+}
+
+function trpRendre() { trpRendreCalendrier(); trpRendreJour(); trpRendreRetards(); }
+
+function trpRendreCalendrier() {
+  document.getElementById('trp-titre').textContent = _trpVue.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  var html = ['lu','ma','me','je','ve','sa','di'].map(function(d){ return '<div class="trp-dow">' + d + '</div>'; }).join('');
+  var debut = new Date(_trpVue.getFullYear(), _trpVue.getMonth(), 1);
+  debut.setDate(1 - ((debut.getDay() + 6) % 7));
+  var auj = trpIso(new Date());
+  for (var i = 0; i < 42; i++) {
+    var d = new Date(debut); d.setDate(debut.getDate() + i);
+    var k = trpIso(d), items = trpDuJour(k);
+    var cls = 'trp-day' + (d.getMonth() !== _trpVue.getMonth() ? ' other' : '') + (k === auj ? ' today' : '') + (k === _trpJour ? ' sel' : '');
+    html += '<div class="' + cls + '" onclick="trpChoisirJour(\'' + k + '\')"><span class="trp-num">' + d.getDate() + '</span>' +
+      items.slice(0, 2).map(function(e){ return '<span class="trp-chip trp-s-' + e.statut + '">' + blEsc(e.ref || 'Sans réf.') + '</span>'; }).join('') +
+      (items.length > 2 ? '<div class="trp-more">+' + (items.length - 2) + '</div>' : '') + '</div>';
+  }
+  document.getElementById('trp-grid').innerHTML = html;
+}
+
+function trpCarte(e, retard) {
+  return '<div class="trp-entry"' + (retard ? ' style="border-color:#fecaca;background:#fff7f7"' : '') + '>' +
+    '<div class="top"><b>' + blEsc(e.ref || 'Sans référence') + '</b>' +
+      '<span class="trp-chip trp-s-' + (retard ? 'retard' : e.statut) + '" style="margin:0">' + blEsc(retard ? trpRetardTxt(e) : TRP_STATUTS[e.statut]) + '</span></div>' +
+    '<div class="meta">' +
+      (retard ? trpFr(e.date) + (e.livrerA ? ' → ' + blEsc(e.livrerA) : '') :
+        (e.chargement ? blEsc(e.chargement) + ' → ' : '') + blEsc(e.livrerA || '') +
+        (e.heure ? '<br>🕗 ' + blEsc(e.heure) : '') +
+        (e.demandeur ? '<br>Demandeur : ' + blEsc(e.demandeur) : '') +
+        ((e.photos || []).length ? '<br>📷 ' + e.photos.length + ' photo(s)' : '')) +
+      (e.comm ? '<br>📝 ' + blEsc(e.comm.slice(0, 120)) : '') +
+    '</div><div class="acts">' +
+      (retard
+        ? '<button onclick="trpChoisirJour(\'' + e.date + '\')">Voir</button><button onclick="trpMarquerLivre(\'' + e.id + '\')">✔ Marquer livré</button>'
+        : '<button onclick="trpOuvrir(\'' + e.id + '\')">Ouvrir / modifier</button><button onclick="trpDupliquer(\'' + e.id + '\')">Dupliquer</button>' +
+          '<button onclick="trpImprimer(trpTrouver(\'' + e.id + '\'))">Imprimer</button><button class="del" onclick="trpSupprimer(\'' + e.id + '\')">Supprimer</button>') +
+    '</div></div>';
+}
+
+function trpRendreJour() {
+  document.getElementById('trp-jour-titre').textContent = new Date(_trpJour + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  var items = trpDuJour(_trpJour);
+  document.getElementById('trp-jour-sub').textContent = items.length ? items.length + ' bordereau(x) ce jour' : 'Aucun transport prévu';
+  document.getElementById('trp-jour-liste').innerHTML = items.length ? items.map(function(e){ return trpCarte(e, false); }).join('')
+    : '<div class="trp-empty">Appuyez sur « Nouveau bordereau » pour saisir un transport ce jour-là.</div>';
+}
+
+function trpEstEnRetard(e, auj) { return e.statut === 'retard' || (e.date < auj && e.statut !== 'recu'); }
+function trpRetardTxt(e) {
+  var j = Math.round((new Date(trpIso(new Date())) - new Date(e.date)) / 864e5);
+  return j > 0 ? j + ' j de retard' : TRP_STATUTS[e.statut];
+}
+
+function trpRendreRetards() {
+  var auj = trpIso(new Date());
+  var L = _trpListe.filter(function(e){ return trpEstEnRetard(e, auj); }).sort(function(a, b){ return a.date < b.date ? -1 : 1; });
+  document.getElementById('trp-retard-n').textContent = L.length ? '(' + L.length + ')' : '';
+  document.getElementById('trp-retard-liste').innerHTML = L.length ? L.map(function(e){ return trpCarte(e, true); }).join('')
+    : '<div class="trp-empty">Aucun transport en retard 👍</div>';
+  var sub = document.getElementById('home-sub-trp');
+  if (sub) {
+    sub.textContent = L.length ? '⚠️ ' + L.length + ' en retard' : 'Calendrier des bordereaux';
+    sub.style.color = L.length ? '#b91c1c' : ''; sub.style.fontWeight = L.length ? '700' : '';
+  }
+}
+
+function trpChoisirJour(k) {
+  _trpJour = k;
+  var d = new Date(k + 'T00:00:00');
+  _trpVue = new Date(d.getFullYear(), d.getMonth(), 1);
+  trpRendre();
+}
+function trpMois(delta) { _trpVue = new Date(_trpVue.getFullYear(), _trpVue.getMonth() + delta, 1); trpRendreCalendrier(); }
+function trpAujourdhui() { trpChoisirJour(trpIso(new Date())); }
+function trpTrouver(id) { return _trpListe.find(function(e){ return e.id === id; }); }
+
+// ── Formulaire ──
+function trpOuvrir(id) {
+  if (id === null && checkConsultMode()) return;
+  var e = id ? trpTrouver(id) : null;
+  _trpEditId = e ? e.id : null;
+  var set = function(fid, val){ document.getElementById(fid).value = val || ''; };
+  set('trp-ref', e && e.ref); set('trp-date', e ? e.date : _trpJour); set('trp-heure', e && e.heure);
+  set('trp-statut', e ? e.statut : 'prevu'); set('trp-chargement', e ? e.chargement : 'MAINTENANCE CENTRALE');
+  set('trp-livrer', e && e.livrerA); set('trp-demandeur', e && e.demandeur); set('trp-destinataire', e && e.destinataire);
+  set('trp-comm', e && e.comm);
+  _trpPhotos = e && e.photos ? e.photos.slice() : [];
+  trpAfficherPhotos();
+  document.getElementById('trp-modal').classList.add('open');
+}
+function trpFermer() { document.getElementById('trp-modal').classList.remove('open'); }
+
+function trpLireFormulaire() {
+  var g = function(fid){ return document.getElementById(fid).value.trim(); };
+  return { id: _trpEditId || ('trp' + Date.now() + Math.random().toString(36).slice(2, 6)),
+    date: g('trp-date'), ref: g('trp-ref'), heure: g('trp-heure'), statut: g('trp-statut') || 'prevu',
+    chargement: g('trp-chargement'), livrerA: g('trp-livrer'), demandeur: g('trp-demandeur'), destinataire: g('trp-destinataire'),
+    comm: g('trp-comm'), photos: _trpPhotos.slice() };
+}
+
+async function trpSauver(e) {
+  var data = Object.assign({}, e); delete data.id; delete data.date;
+  var r = await fetch(DB_API + '?table=bordereau_transport', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: e.id, date: e.date, data: data })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  _trpListe = _trpListe.filter(function(x){ return x.id !== e.id; }).concat([e]);
+}
+
+async function trpEnregistrer() {
+  if (checkConsultMode()) return;
+  if (_trpUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
+  var e = trpLireFormulaire();
+  if (!e.date) { alert('La date du transport est obligatoire.'); return; }
+  var btn = document.getElementById('trp-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
+  try { await trpSauver(e); }
+  catch(err) { alert('Enregistrement impossible. Vérifiez la connexion.'); return; }
+  finally { btn.disabled = false; btn.textContent = 'Enregistrer'; }
+  trpFermer();
+  trpChoisirJour(e.date);
+}
+
+async function trpDupliquer(id) {
+  if (checkConsultMode()) return;
+  var e = trpTrouver(id); if (!e) return;
+  var c = Object.assign({}, e, { id: 'trp' + Date.now() + Math.random().toString(36).slice(2, 6), statut: 'prevu', photos: (e.photos || []).slice() });
+  try { await trpSauver(c); } catch(err) { alert('Duplication impossible. Vérifiez la connexion.'); return; }
+  trpRendre();
+}
+
+async function trpSupprimer(id) {
+  if (checkConsultMode()) return;
+  if (!confirm('Supprimer ce bordereau et ses photos ?')) return;
+  try {
+    var r = await fetch(DB_API + '?table=bordereau_transport&id=' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch(err) { alert('Suppression impossible. Vérifiez la connexion.'); return; }
+  _trpListe = _trpListe.filter(function(x){ return x.id !== id; });
+  trpRendre();
+}
+
+async function trpMarquerLivre(id) {
+  if (checkConsultMode()) return;
+  var e = trpTrouver(id); if (!e) return;
+  try { await trpSauver(Object.assign({}, e, { statut: 'recu' })); } catch(err) { alert('Mise à jour impossible. Vérifiez la connexion.'); return; }
+  trpRendre();
+}
+
+// ── Photos (Cloudinary) ──
+function trpAfficherPhotos() {
+  document.getElementById('trp-photos').innerHTML = _trpPhotos.map(function(u, i) {
+    return '<div style="position:relative"><img src="' + blEsc(u) + '" onclick="viewPhotoFullEtna(_trpPhotos,' + i + ')" style="height:80px;border-radius:8px;border:1px solid #e3e8ef;cursor:zoom-in">' +
+      '<button type="button" onclick="_trpPhotos.splice(' + i + ',1);trpAfficherPhotos()" style="position:absolute;top:2px;right:2px;border:none;background:#C00000;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px">✕</button></div>';
+  }).join('') + (_trpUploads ? '<div style="height:80px;width:80px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center">⏳</div>' : '');
+}
+
+async function trpAjouterPhotos(input) {
+  var files = Array.from(input.files || []);
+  input.value = '';
+  for (var f of files) {
+    _trpUploads++; trpAfficherPhotos();
+    var url = await uploadToCloudinary(await compressImage(f, 1200, 0.75));
+    _trpUploads--;
+    if (url) _trpPhotos.push(url); else alert('Une photo n\'a pas pu être envoyée.');
+    trpAfficherPhotos();
+  }
+}
+
+// ── Impression du bordereau (nouvelle fenêtre) ──
+function trpImprimer(e) {
+  if (!e) return;
+  var w = window.open('', '_blank');
+  if (!w) { alert('Autorisez les fenêtres pop-up pour imprimer.'); return; }
+  var x = blEsc;
+  w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Bordereau ' + x(e.ref || '') + '</title><style>' +
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:16px}h1{font-size:18px;text-align:center;margin:0 0 6px}' +
+    '.box{border:1px solid #444;padding:6px 8px;margin-bottom:8px}.t{display:block;background:#e5e9f0;margin:-6px -8px 4px;padding:3px 8px;font-weight:bold}' +
+    '.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}img{max-width:48%;max-height:260px;margin:2px}</style></head><body>' +
+    '<h1>BORDEREAU DE TRANSPORT ' + (e.date || '').slice(0, 4) + '</h1>' +
+    '<div style="text-align:center;margin-bottom:8px">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>' +
+    '<div class="box"><b>N° DE RÉFÉRENCE TRANSPORT :</b> ' + x(e.ref) + '</div>' +
+    '<div class="g2"><div class="box"><span class="t">Demandeur</span>' + x(e.demandeur) + '</div><div class="box"><span class="t">Destinataire</span>' + x(e.destinataire) + '</div></div>' +
+    '<div class="box"><b>LIEU DE CHARGEMENT :</b> ' + x(e.chargement) + ' &nbsp; <b>À LIVRER CHEZ / VERS :</b> ' + x(e.livrerA) +
+      ' &nbsp; <b>DATE DU TRANSPORT :</b> ' + trpFr(e.date) + ' &nbsp; <b>HEURE DE PRÉSENTATION DU CAMION :</b> ' + x(e.heure) + '</div>' +
+    '<div class="box"><span class="t">Commentaires</span>' + x(e.comm).replace(/\n/g, '<br>') + '</div>' +
+    (e.photos || []).map(function(u){ return '<img src="' + x(u) + '">'; }).join('') +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>');
+  w.document.close();
+}
+
+function trpExportCsv() {
+  var q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+  var rows = [['Date','Réf transport','Heure','Statut','Chargement','À livrer chez','Demandeur','Destinataire','Commentaires','Nb photos'].map(q).join(';')];
+  _trpListe.slice().sort(function(a, b){ return a.date < b.date ? -1 : 1; }).forEach(function(e) {
+    rows.push([trpFr(e.date), e.ref, e.heure, TRP_STATUTS[e.statut], e.chargement, e.livrerA, e.demandeur, e.destinataire, e.comm, (e.photos || []).length].map(q).join(';'));
+  });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + rows.join('\n')], { type: 'text/csv' }));
+  a.download = 'transports_' + trpIso(new Date()) + '.csv';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
 
 // ── Pré-remplis « Équipement terminé » et « Demande ETNA » ──
 // Préparés sur ordinateur (stockés en base pour être vus sur le téléphone),
