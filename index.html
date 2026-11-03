@@ -4453,6 +4453,11 @@ function cloudThumb(url, w, h) {
   if (!url) return url;
   return url.replace('/upload/', '/upload/w_' + (w||400) + ',h_' + (h||300) + ',c_fill,q_auto,f_auto/');
 }
+// Version allégée sans recadrage (largeur max) : pour les aperçus qui gardent les proportions
+function cloudReduit(url, w) {
+  if (!url) return url;
+  return url.replace('/upload/', '/upload/w_' + (w||600) + ',c_limit,q_auto,f_auto/');
+}
 
 
 
@@ -5015,7 +5020,7 @@ async function trpMarquerLivre(id) {
 // ── Photos (Cloudinary) ──
 function trpAfficherPhotos() {
   document.getElementById('trp-photos').innerHTML = _trpPhotos.map(function(u, i) {
-    return '<div style="position:relative"><img src="' + blEsc(u) + '" onclick="viewPhotoFullEtna(_trpPhotos,' + i + ')" style="height:80px;border-radius:8px;border:1px solid #e3e8ef;cursor:zoom-in">' +
+    return '<div style="position:relative"><img src="' + blEsc(cloudReduit(u, 320)) + '" onclick="viewPhotoFullEtna(_trpPhotos,' + i + ')" style="height:80px;border-radius:8px;border:1px solid #e3e8ef;cursor:zoom-in">' +
       '<button type="button" onclick="_trpPhotos.splice(' + i + ',1);trpAfficherPhotos()" style="position:absolute;top:2px;right:2px;border:none;background:#C00000;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px">✕</button></div>';
   }).join('') + (_trpUploads ? '<div style="height:80px;width:80px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center">⏳</div>' : '');
 }
@@ -5481,7 +5486,7 @@ function viewRecord(id) {
           if (!wrap) {
             // Zone vide — reconstruire
             photoDiv.innerHTML = '<div data-photo-wrap style="display:flex;flex-wrap:wrap;gap:8px">' +
-              newUrls.map(function(p,i){ return '<div style="position:relative"><img src="' + p + '" loading="lazy" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer" onclick="viewImg(this.src)"></div>'; }).join('') +
+              newUrls.map(function(p,i){ return '<div style="position:relative"><img src="' + cloudThumb(p, 200, 200) + '" data-full="' + p + '" loading="lazy" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer" onclick="viewImg(this.dataset.full)"></div>'; }).join('') +
             '</div>';
           } else {
             newUrls.forEach(function(p){ 
@@ -5935,7 +5940,7 @@ async function ouvrirHistoriqueTag(tag) {
     html += '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">📷 PHOTOS (' + photos.length + ')</div>';
     html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">';
     photos.forEach(function(url) {
-      html += '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:1px solid #e0e0e0" onclick="window.open(this.src,\'_blank\')">'; 
+      html += '<img src="' + cloudThumb(url, 200, 200) + '" data-full="' + url + '" loading="lazy" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:1px solid #e0e0e0" onclick="window.open(this.dataset.full,\'_blank\')">'; 
     });
     html += '</div></div>';
   }
@@ -5977,7 +5982,7 @@ async function ouvrirHistoriqueTag(tag) {
       if (rPhotos.length > 0) {
         html += '<div style="display:flex;gap:4px;margin-top:6px;overflow-x:auto">';
         rPhotos.slice(0, 5).forEach(function(url) {
-          html += '<img src="' + url + '" onclick="window.open(this.src,\'_blank\')" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
+          html += '<img src="' + cloudThumb(url, 120, 120) + '" data-full="' + url + '" loading="lazy" onclick="window.open(this.dataset.full,\'_blank\')" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
         });
         if (rPhotos.length > 5) html += '<div style="width:48px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888">+' + (rPhotos.length-5) + '</div>';
         html += '</div>';
@@ -6098,7 +6103,7 @@ function ouvrirFicheCallidus(id) {
   // Construire le contenu complet UNE SEULE FOIS (style P17)
   var photosHtml = photos.map(function(p, i) {
     return '<div style="position:relative" id="cp-photo-wrap-' + i + '">'
-      + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+      + '<img src="' + cloudThumb(p, 200, 200) + '" data-full="' + p + '" onclick="viewImg(this.dataset.full)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
       + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
       + '</div>';
   }).join('');
@@ -6220,7 +6225,7 @@ async function cpFicheSupprimerPhoto(idx) {
     window._etnaPhotosMap[pid] = photos;
     preview.innerHTML = photos.map(function(p, i) {
       return '<div style="position:relative">'
-        + '<img src="' + cloudThumb(p, 200, 200) + '" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
+        + '<img src="' + cloudThumb(p, 200, 200) + '" data-full="' + p + '" onclick="viewImg(this.dataset.full)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid #CE93D8;cursor:pointer">'
         + '<button onclick="cpFicheSupprimerPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;background:#C00;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;font-weight:700">✕</button>'
         + '</div>';
     }).join('');
@@ -6799,7 +6804,7 @@ function renderRelanceCard(r, urgent) {
       (photos.length > 0 ?
         '<div style="display:flex;gap:6px;overflow-x:auto;padding:6px 0;margin-bottom:6px">' +
           photos.map(function(url, i) {
-            return '<img src="' + url + '" onclick="viewPhotoByKey(\'' + _pidR + '\',' + i + ')" ' +
+            return '<img src="' + cloudThumb(url, 200, 200) + '" loading="lazy" onclick="viewPhotoByKey(\'' + _pidR + '\',' + i + ')" ' +
               'style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:2px solid #e0e0e0">';
           }).join('') +
         '</div>'
@@ -7690,7 +7695,7 @@ function planIndicateursHtml(item) {
 function planPhotosHtml(wo, photos, plan, categorie) {
   return (photos || []).filter(Boolean).map(function(p, i) {
     return '<div style="position:relative;width:72px;height:72px">'
-      + '<img src="' + p + '" loading="lazy" onclick="viewImg(this.src)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">'
+      + '<img src="' + cloudThumb(p, 200, 200) + '" data-full="' + p + '" loading="lazy" onclick="viewImg(this.dataset.full)" style="width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #e0e4ea">'
       + '<button type="button" title="Supprimer la photo" aria-label="Supprimer la photo" data-wo="' + wo + '" data-i="' + i + '" data-plan="' + (plan || '') + '" data-cat="' + (categorie || '') + '" '
       + 'onclick="event.stopPropagation();supprimerPhotoPlanning(this.dataset.wo, +this.dataset.i, this.dataset.plan, this.dataset.cat)" '
       + 'style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:#e74c3c;color:#fff;font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0">✕</button>'
@@ -9500,7 +9505,7 @@ async function renderBL(force) {
       return '<span style="display:inline-block;background:' + (hits.length ? '#FFF3C4' : '#F0F4FF') + ';color:#1F3864;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;margin:2px 4px 0 0">' + blEsc(blNormBds(l.bds) || '--') + '</span>';
     }).join('') + ((hits.length ? hits : lignes).length > 4 ? '<span style="font-size:11px;color:#888">+' + ((hits.length ? hits : lignes).length - 4) + '</span>' : '');
     var thumb = b.photos && b.photos[0]
-      ? '<img src="' + blEsc(b.photos[0]) + '" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)">'
+      ? '<img src="' + blEsc(cloudThumb(b.photos[0], 120, 120)) + '" alt="" loading="lazy" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)">'
       : '<div style="width:56px;height:56px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">📄</div>';
     return '<div data-blid="' + blEsc(b.id) + '" onclick="ouvrirDetailBL(this.dataset.blid)" style="background:#fff;border-radius:14px;padding:12px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);cursor:pointer;display:flex;gap:12px;align-items:center">' +
       thumb +
@@ -9574,7 +9579,7 @@ function blRenderPhotos() {
   if (lire) lire.style.display = _blPhotos.length && !_blUploads ? 'block' : 'none';
   var prev = document.getElementById('bl-photos-preview');
   prev.innerHTML = _blPhotos.map(function(u, i) {
-    return '<div class="photo-thumb"><img src="' + blEsc(u) + '" alt="Photo ' + (i+1) + '">' +
+    return '<div class="photo-thumb"><img src="' + blEsc(cloudThumb(u, 200, 200)) + '" alt="Photo ' + (i+1) + '">' +
       '<div class="photo-thumb-del" onclick="blRetirerPhoto(' + i + ')">×</div></div>';
   }).join('') + (_blUploads ? '<div style="width:72px;height:72px;border-radius:8px;background:#F0F4FF;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1F3864;text-align:center">Envoi…</div>' : '');
 }
@@ -9888,7 +9893,7 @@ async function ouvrirDetailBL(id) {
     '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin:4px 2px 6px">📷 Bon de livraison (' + b.photos.length + ' photo' + (b.photos.length > 1 ? 's' : '') + ') — touchez pour agrandir</div>' +
     '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch">' +
       b.photos.map(function(u) {
-        return '<a href="' + blEsc(u) + '" target="_blank" rel="noopener"><img src="' + blEsc(u) + '" alt="Photo du bon de livraison" style="height:180px;border-radius:10px;border:1px solid var(--border)"></a>';
+        return '<a href="' + blEsc(u) + '" target="_blank" rel="noopener"><img src="' + blEsc(cloudReduit(u, 700)) + '" alt="Photo du bon de livraison" loading="lazy" style="height:180px;border-radius:10px;border:1px solid var(--border)"></a>';
       }).join('') +
     '</div>'
     ) : '') +
