@@ -1,9 +1,11 @@
-const CACHE = 'prnc-v37';
+const CACHE = 'prnc-v38';
 const FILES = [
   './',
   './index.html',
   './qrcode.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+  // Mise en cache dès l'installation : sinon la librairie Excel est retéléchargée à chaque ouverture
+  // (un <script> d'un autre domaine donne une réponse opaque, que le gestionnaire fetch ne garde pas)
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
 self.addEventListener('install', e => {

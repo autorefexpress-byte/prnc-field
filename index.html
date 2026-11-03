@@ -190,8 +190,8 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-pane{display:none;}
 .cp-pane.active{display:block;}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Librairie Excel (880 Ko) : chargée sans bloquer l'affichage de l'app, utilisée seulement aux imports / exports -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 var _LOC_LIST = ['A-cal', 'Atelier P17', 'CLN', 'Dalle de lavage', 'Devant MCCHAUD', 'Devant P50', 'Etagere Callidus P17', 'ETNA', 'Parking P02', 'R10', 'R9', 'Retour demandeur', 'Retour magasin', 'Zone A1', 'Zone départ Callidus', 'Zone fer', 'Zone fin de travaux P17', 'Zone depart ETNA', 'Zone planifier P17'];
 function _locOpts(curVal) {
@@ -6487,20 +6487,6 @@ updateStats().then(function() {
   checkRelances();
 });
 
-// Précharger Callidus 2s après démarrage
-setTimeout(function() {
-  if (typeof DB_API !== 'undefined') {
-    fetch(DB_API + '?table=callidus_prnc').then(function(r){ return r.json(); }).then(function(data){
-      if (Array.isArray(data)) {
-        data.forEach(function(r){
-          if (typeof r.photos === 'string') { try { r.photos = JSON.parse(r.photos); } catch(e) { r.photos = []; } }
-          if (!Array.isArray(r.photos)) r.photos = [];
-        });
-        _cpCache = data;
-      }
-    }).catch(function(){});
-  }
-}, 2000);
 (async function() {
   const params = new URLSearchParams(window.location.search);
   const sigId  = params.get('sig');
