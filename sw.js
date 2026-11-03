@@ -1,10 +1,9 @@
 // Cache hors ligne de l'app : elle s'ouvre même avec un réseau faible ou coupé.
-// - Page de l'app : réseau d'abord (toujours la dernière version), copie du téléphone
-//   si le réseau ne répond pas à temps ou est coupé.
+// - Page de l'app : copie du téléphone d'abord (ouverture instantanée), mise à jour en arrière-plan
+//   et bandeau « Nouvelle version disponible » quand elle a changé.
 // - Librairie Excel (URL versionnée, ne change jamais) et qrcode.js : copie du téléphone d'abord.
 // - API (/api/) et envois (POST, PATCH…) : jamais mis en cache, toujours le réseau.
-const CACHE = 'prnc-v40';
-const DELAI_RESEAU = 4000;   // au-delà, on ouvre la copie du téléphone (la mise à jour continue en fond)
+const CACHE = 'prnc-v41';
 const PAGE = './index.html';
 const FILES = [PAGE, './qrcode.js'];
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
@@ -28,25 +27,24 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Réseau d'abord avec délai : la réponse du réseau met aussi la copie à jour, même si elle arrive après le délai
-function pageReseauDabord(request) {
-  const reseau = fetch(request).then(res => {
-    if (res && res.ok) {
-      const copie = res.clone();
-      caches.open(CACHE).then(c => c.put(PAGE, copie));
+// Page de l'app : la copie du téléphone s'ouvre tout de suite (instantané même en 4G faible),
+// la version en ligne est téléchargée en arrière-plan. Si elle a changé, la copie est remplacée
+// et la page affiche « Nouvelle version disponible » : un appui recharge.
+// Sans copie (toute première ouverture) : le réseau.
+function pageCopieDabord(e) {
+  const majEnFond = fetch(e.request, { cache: 'no-cache' }).then(async res => {
+    if (!res || !res.ok) return;
+    const cache = await caches.open(CACHE);
+    const ancienne = await cache.match(PAGE);
+    const nouveau = await res.clone().text();
+    await cache.put(PAGE, res);
+    if (ancienne && (await ancienne.text()) !== nouveau) {
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach(c => c.postMessage('prnc-maj-dispo'));
     }
-    return res;
-  });
-  return new Promise(resolve => {
-    let fini = false;
-    const servir = r => { if (!fini) { fini = true; resolve(r); } };
-    // Réseau trop lent : la copie du téléphone si elle existe, sinon on continue d'attendre le réseau
-    const timer = setTimeout(() => caches.match(PAGE).then(c => { if (c) servir(c); }), DELAI_RESEAU);
-    reseau.then(
-      res => { clearTimeout(timer); if (res.ok) servir(res); else caches.match(PAGE).then(c => servir(c || res)); },
-      () => { clearTimeout(timer); caches.match(PAGE).then(c => servir(c || Response.error())); }
-    );
-  });
+  }).catch(() => {});
+  e.waitUntil(majEnFond);
+  return caches.match(PAGE).then(copie => copie || fetch(e.request));
 }
 
 self.addEventListener('fetch', e => {
@@ -57,7 +55,7 @@ self.addEventListener('fetch', e => {
 
   // Ouverture de l'app (page HTML)
   if (req.mode === 'navigate' && url.origin === self.location.origin) {
-    e.respondWith(pageReseauDabord(req));
+    e.respondWith(pageCopieDabord(e));
     return;
   }
 
