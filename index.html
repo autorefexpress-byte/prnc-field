@@ -2934,7 +2934,57 @@ function outboxAjouter(url, opts) {
   outboxToast('📴 Pas de réseau : la saisie est gardée dans le téléphone et sera envoyée automatiquement.', '#5b4a00', '#FFF3C4');
 }
 
+// ── Lectures avec réseau lent ou coupé ────────────────────────────────────
+// Chaque réponse de /api/db (GET) est gardée dans le téléphone. Si le réseau ne répond
+// pas en DONNEES_DELAI ms, ou est coupé, l'écran reçoit la dernière copie connue ;
+// la réponse du réseau, si elle arrive ensuite, met la copie à jour pour la fois suivante.
+var DONNEES_CACHE = 'prnc-donnees';
+var DONNEES_DELAI = 5000;
+var _copieToastVu = false;
+function _estLectureDB(url, opts) {
+  var methode = String((opts && opts.method) || 'GET').toUpperCase();
+  if (methode !== 'GET') return false;
+  var u = typeof url === 'string' ? url : (url && url.url) || '';
+  if (u.indexOf(location.origin) === 0) u = u.slice(location.origin.length);
+  return u.indexOf(DB_API) === 0;
+}
+function _copieDonnees(url) {
+  if (!window.caches) return Promise.resolve(null);
+  return caches.open(DONNEES_CACHE).then(function(c){ return c.match(url); }).catch(function(){ return null; });
+}
+function _signalerCopie() {
+  if (_copieToastVu) return;
+  _copieToastVu = true;
+  outboxToast('📶 Réseau lent : dernières données enregistrées affichées. Elles se mettront à jour au prochain affichage.', '#1F3864', '#E3ECF8');
+  setTimeout(function(){ _copieToastVu = false; }, 60000);
+}
+function _lectureDB(url, opts) {
+  var cle = typeof url === 'string' ? url : url.url;
+  var reseau = _fetchReseau(url, opts).then(function(res) {
+    if (res && res.ok && window.caches) {
+      var copie = res.clone();
+      caches.open(DONNEES_CACHE).then(function(c){ return c.put(cle, copie); }).catch(function(){});
+    }
+    return res;
+  });
+  return new Promise(function(resolve, reject) {
+    var fini = false;
+    function servir(r) { if (!fini) { fini = true; resolve(r); } }
+    var timer = setTimeout(function() {
+      _copieDonnees(cle).then(function(c) { if (c) { _signalerCopie(); servir(c); } });
+    }, DONNEES_DELAI);
+    reseau.then(function(res) { clearTimeout(timer); servir(res); }, function(err) {
+      clearTimeout(timer);
+      _copieDonnees(cle).then(function(c) {
+        if (c) { _signalerCopie(); servir(c); }
+        else if (!fini) { fini = true; reject(err); }
+      });
+    });
+  });
+}
+
 window.fetch = async function(url, opts) {
+  if (_estLectureDB(url, opts || {})) return _lectureDB(url, opts);
   if (!_estEcritureDB(url, opts || {})) return _fetchReseau(url, opts);
   // Des saisies attendent déjà : la nouvelle passe derrière pour garder l'ordre
   if (outboxLire().length) { outboxAjouter(url, opts); outboxVider(); return _reponseEnAttente(); }

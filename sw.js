@@ -3,7 +3,7 @@
 //   et bandeau « Nouvelle version disponible » quand elle a changé.
 // - Librairie Excel (URL versionnée, ne change jamais) et qrcode.js : copie du téléphone d'abord.
 // - API (/api/) et envois (POST, PATCH…) : jamais mis en cache, toujours le réseau.
-const CACHE = 'prnc-v42';
+const CACHE = 'prnc-v43';
 const PAGE = './index.html';
 const FILES = [PAGE, './qrcode.js'];
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
@@ -22,7 +22,8 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      // prnc-donnees : copie des données de l'app (gérée par la page), à ne pas effacer
+      Promise.all(keys.filter(k => k !== CACHE && k !== 'prnc-donnees').map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
