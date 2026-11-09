@@ -237,6 +237,7 @@ function _locChange(selId, inpId) {
 .trp-more{font-size:9px;color:var(--muted);margin-top:1px}
 .trp-s-prevu{background:#dbeafe;color:#1d4ed8}.trp-s-route{background:#ffedd5;color:#c2410c}
 .trp-s-recu{background:#dcfce7;color:#166534}.trp-s-retard{background:#fee2e2;color:#b91c1c}
+.trp-s-effectue{background:#dcfce7;color:#166534}.trp-s-non_effectue{background:#fee2e2;color:#b91c1c}.trp-s-reporte{background:#ede9fe;color:#6d28d9}
 .trp-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:10px}
 .trp-legend span{padding:2px 8px;border-radius:999px;font-weight:700}
 .trp-entry{border:1px solid #e3e8ef;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:12px}
@@ -1105,7 +1106,7 @@ function _locChange(selId, inpId) {
       <div class="trp-grid" id="trp-grid"></div>
       <div class="trp-legend">
         <span class="trp-s-prevu">Prévu</span><span class="trp-s-route">En route</span>
-        <span class="trp-s-recu">Livré</span><span class="trp-s-retard">Retard / Annulé</span>
+        <span class="trp-s-recu">Livré / Effectué</span><span class="trp-s-retard">Retard / Non effectué</span><span class="trp-s-reporte">Reporté</span>
         <button onclick="trpAujourdhui()" style="margin-left:auto;border:1px solid #d0d7e2;background:#fff;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit">Aujourd'hui</button>
       </div>
     </div>
@@ -1114,12 +1115,15 @@ function _locChange(selId, inpId) {
       <div id="trp-jour-titre" style="font-weight:800;color:#1F3864;font-size:14px;text-transform:capitalize"></div>
       <div id="trp-jour-sub" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
       <div id="trp-jour-liste"></div>
-      <button class="send-btn" style="background:#E65100;color:#fff" onclick="trpOuvrir(null)">＋ Nouveau bordereau</button>
+      <div style="display:flex;gap:8px">
+        <button class="send-btn" style="background:#E65100;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'externe')">＋ Transport externe</button>
+        <button class="send-btn" style="background:#1F3864;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'intrasite')">＋ Intrasite usine</button>
+      </div>
     </div>
 
     <div class="trp-card">
       <div style="font-weight:800;color:#b91c1c;font-size:14px">⚠️ Transports en retard <span id="trp-retard-n"></span></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Date dépassée et non livrés, ou statut « Retard / Annulé »</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Date dépassée et non livrés / non effectués, ou statut « Retard / Annulé » / « Non effectué »</div>
       <div id="trp-retard-liste"></div>
     </div>
 
@@ -1131,16 +1135,26 @@ function _locChange(selId, inpId) {
 <div id="trp-modal" onclick="if(event.target===this)trpFermer()">
   <div class="sheet">
     <div>
-      <div style="font-size:17px;font-weight:800;color:#1F3864">BORDEREAU DE TRANSPORT</div>
-      <div style="font-size:11px;color:var(--muted)">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>
+      <div id="trp-form-titre" style="font-size:17px;font-weight:800;color:#1F3864">BORDEREAU DE TRANSPORT</div>
+      <div id="trp-form-sous-titre" style="font-size:11px;color:var(--muted)">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>
     </div>
-    <div class="field-grp" style="margin:0"><div class="field-lbl">N° référence transport</div><input class="fi" id="trp-ref" placeholder="Ex : IR M38826"></div>
+    <!-- Transport externe -->
+    <div class="field-grp trp-ext" style="margin:0"><div class="field-lbl">N° référence transport</div><input class="fi" id="trp-ref" placeholder="Ex : IR M38826"></div>
+    <!-- Intrasite usine -->
+    <div class="trp-row2 trp-int">
+      <div class="field-grp" style="margin:0"><div class="field-lbl"><span class="req">*</span> WO</div><input class="fi" id="trp-wo" placeholder="Ex : 876230" inputmode="numeric"></div>
+      <div class="field-grp" style="margin:0"><div class="field-lbl">TAG</div><input class="fi" id="trp-tag" placeholder="Ex : 220-PPD-204"></div>
+    </div>
     <div class="trp-row2">
       <div class="field-grp" style="margin:0"><div class="field-lbl"><span class="req">*</span> Date du transport</div><input class="fi" type="date" id="trp-date"></div>
       <div class="field-grp" style="margin:0"><div class="field-lbl">Heure camion</div><input class="fi" id="trp-heure" placeholder="Ex : 08H"></div>
     </div>
+    <div class="trp-row2 trp-int">
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Durée de l'intervention</div><input class="fi" id="trp-duree" placeholder="Ex : 2H, 1/2 journée"></div>
+      <div class="field-grp" style="margin:0"><div class="field-lbl">Type de camion</div><input class="fi" id="trp-camion" list="trp-dl-camions" placeholder="Ex : Camion grue"></div>
+    </div>
     <div class="field-grp" style="margin:0"><div class="field-lbl">Statut</div>
-      <select class="fi" id="trp-statut"><option value="prevu">Prévu</option><option value="route">En route</option><option value="recu">Livré</option><option value="retard">Retard / Annulé</option></select></div>
+      <select class="fi" id="trp-statut"></select></div>
     <div class="trp-row2 large">
       <div class="field-grp" style="margin:0"><div class="field-lbl">Lieu de chargement</div><input class="fi" id="trp-chargement" list="trp-dl-lieux"></div>
       <div class="field-grp" style="margin:0"><div class="field-lbl">À livrer chez / vers</div><input class="fi" id="trp-livrer" list="trp-dl-lieux" placeholder="Ex : CALLIDUS NC NORMANDIE"></div>
@@ -1166,6 +1180,7 @@ function _locChange(selId, inpId) {
 </div>
 <datalist id="trp-dl-noms"></datalist>
 <datalist id="trp-dl-lieux"></datalist>
+<datalist id="trp-dl-camions"></datalist>
 
 <!-- ═══════════════ ENVOI CALLIDUS ═══════════════ -->
 <div class="screen" id="s-envoi-callidus">
@@ -4879,8 +4894,18 @@ var _equip_photos = [];
 // ══ TRANSPORT : calendrier des bordereaux (table bordereau_transport) ══
 var TRP_CONTACTS = ['PREVOT Stéphane','ROSA ASIK Emmanuel','POTOMAK Sérah','TUATAANE Soana','WILFRID Bernard','Canales Nicolas','Claudia LAI'];
 var TRP_LIEUX = ['MAINTENANCE CENTRALE','USINE HPAL','MAGASIN','CALLIDUS NC NORMANDIE','P17','P02','SPEED SERVICE','AMC','TOTAL SEAL'];
-var TRP_STATUTS = { prevu: 'Prévu', route: 'En route', recu: 'Livré', retard: 'Retard / Annulé' };
-var _trpListe = [];          // bordereaux { id, date (aaaa-mm-jj), ref, heure, statut, chargement, livrerA, demandeur, destinataire, comm, photos }
+var TRP_CAMIONS = ['Camion grue','Camion plateau','Porte-char','Semi-remorque','Camion benne','Ampliroll','Chariot élévateur','Manitou'];
+var TRP_STATUTS = { prevu: 'Prévu', route: 'En route', recu: 'Livré', retard: 'Retard / Annulé',
+                    effectue: 'Effectué', non_effectue: 'Non effectué', reporte: 'Reporté' };
+// Deux types de bordereaux : transport externe (défaut, anciens bordereaux) et intrasite usine
+var TRP_STATUTS_PAR_TYPE = { externe: ['prevu','route','recu','retard'], intrasite: ['prevu','effectue','non_effectue','reporte'] };
+var _trpListe = [];          // bordereaux { id, date (aaaa-mm-jj), type, ref | wo, tag, duree, camion, heure, statut, chargement, livrerA, demandeur, destinataire, comm, photos }
+var _trpType = 'externe';
+function trpTypeDe(e) { return (e && e.type) || 'externe'; }
+function trpTitre(e) {
+  if (trpTypeDe(e) === 'intrasite') return '🏭 ' + ([e.wo ? 'WO ' + e.wo : '', e.tag || ''].filter(Boolean).join(' · ') || 'Intrasite');
+  return e.ref || 'Sans réf.';
+}
 var _trpVue = new Date(); _trpVue.setDate(1);
 var _trpJour = trpIso(new Date());
 var _trpEditId = null, _trpPhotos = [], _trpUploads = 0;
@@ -4892,6 +4917,7 @@ function trpDuJour(iso) { return _trpListe.filter(function(e){ return e.date ===
 async function trpCharger() {
   document.getElementById('trp-dl-noms').innerHTML = TRP_CONTACTS.map(function(n){ return '<option value="' + blEsc(n) + '">'; }).join('');
   document.getElementById('trp-dl-lieux').innerHTML = TRP_LIEUX.map(function(n){ return '<option value="' + blEsc(n) + '">'; }).join('');
+  document.getElementById('trp-dl-camions').innerHTML = TRP_CAMIONS.map(function(n){ return '<option value="' + blEsc(n) + '">'; }).join('');
   trpRendre();
   try {
     var r = await fetch(DB_API + '?table=bordereau_transport');
@@ -4914,26 +4940,33 @@ function trpRendreCalendrier() {
     var k = trpIso(d), items = trpDuJour(k);
     var cls = 'trp-day' + (d.getMonth() !== _trpVue.getMonth() ? ' other' : '') + (k === auj ? ' today' : '') + (k === _trpJour ? ' sel' : '');
     html += '<div class="' + cls + '" onclick="trpChoisirJour(\'' + k + '\')"><span class="trp-num">' + d.getDate() + '</span>' +
-      items.slice(0, 2).map(function(e){ return '<span class="trp-chip trp-s-' + e.statut + '">' + blEsc(e.ref || 'Sans réf.') + '</span>'; }).join('') +
+      items.slice(0, 2).map(function(e){ return '<span class="trp-chip trp-s-' + e.statut + '">' + blEsc(trpTitre(e)) + '</span>'; }).join('') +
       (items.length > 2 ? '<div class="trp-more">+' + (items.length - 2) + '</div>' : '') + '</div>';
   }
   document.getElementById('trp-grid').innerHTML = html;
 }
 
+// Lignes d'information d'une carte (sans lignes vides)
+function trpLignes(e, retard) {
+  var trajet = [e.chargement, e.livrerA].filter(Boolean).map(blEsc).join(' → ');
+  var L = retard ? [trpFr(e.date) + (e.livrerA ? ' → ' + blEsc(e.livrerA) : '')] : [
+    trajet,
+    e.camion ? '🚛 ' + blEsc(e.camion) : '',
+    (e.heure || e.duree) ? '🕗 ' + blEsc([e.heure, e.duree ? 'durée ' + e.duree : ''].filter(Boolean).join(' · ')) : '',
+    e.demandeur ? 'Demandeur : ' + blEsc(e.demandeur) : '',
+    (e.photos || []).length ? '📷 ' + e.photos.length + ' photo(s)' : ''
+  ];
+  if (e.comm) L.push('📝 ' + blEsc(e.comm.slice(0, 120)));
+  return L.filter(Boolean);
+}
+
 function trpCarte(e, retard) {
   return '<div class="trp-entry"' + (retard ? ' style="border-color:#fecaca;background:#fff7f7"' : '') + '>' +
-    '<div class="top"><b>' + blEsc(e.ref || 'Sans référence') + '</b>' +
+    '<div class="top"><b>' + blEsc(trpTitre(e)) + '</b>' +
       '<span class="trp-chip trp-s-' + (retard ? 'retard' : e.statut) + '" style="margin:0">' + blEsc(retard ? trpRetardTxt(e) : TRP_STATUTS[e.statut]) + '</span></div>' +
-    '<div class="meta">' +
-      (retard ? trpFr(e.date) + (e.livrerA ? ' → ' + blEsc(e.livrerA) : '') :
-        (e.chargement ? blEsc(e.chargement) + ' → ' : '') + blEsc(e.livrerA || '') +
-        (e.heure ? '<br>🕗 ' + blEsc(e.heure) : '') +
-        (e.demandeur ? '<br>Demandeur : ' + blEsc(e.demandeur) : '') +
-        ((e.photos || []).length ? '<br>📷 ' + e.photos.length + ' photo(s)' : '')) +
-      (e.comm ? '<br>📝 ' + blEsc(e.comm.slice(0, 120)) : '') +
-    '</div><div class="acts">' +
+    '<div class="meta">' + trpLignes(e, retard).join('<br>') + '</div><div class="acts">' +
       (retard
-        ? '<button onclick="trpChoisirJour(\'' + e.date + '\')">Voir</button><button onclick="trpMarquerLivre(\'' + e.id + '\')">✔ Marquer livré</button>'
+        ? '<button onclick="trpChoisirJour(\'' + e.date + '\')">Voir</button><button onclick="trpMarquerLivre(\'' + e.id + '\')">✔ Marquer ' + (trpTypeDe(e) === 'intrasite' ? 'effectué' : 'livré') + '</button>'
         : '<button onclick="trpOuvrir(\'' + e.id + '\')">Ouvrir / modifier</button><button onclick="trpDupliquer(\'' + e.id + '\')">Dupliquer</button>' +
           '<button onclick="trpImprimer(trpTrouver(\'' + e.id + '\'))">Imprimer</button><button class="del" onclick="trpSupprimer(\'' + e.id + '\')">Supprimer</button>') +
     '</div></div>';
@@ -4947,7 +4980,10 @@ function trpRendreJour() {
     : '<div class="trp-empty">Appuyez sur « Nouveau bordereau » pour saisir un transport ce jour-là.</div>';
 }
 
-function trpEstEnRetard(e, auj) { return e.statut === 'retard' || (e.date < auj && e.statut !== 'recu'); }
+function trpEstEnRetard(e, auj) {
+  if (trpTypeDe(e) === 'intrasite') return e.statut === 'non_effectue' || (e.date < auj && e.statut === 'prevu');
+  return e.statut === 'retard' || (e.date < auj && e.statut !== 'recu');
+}
 function trpRetardTxt(e) {
   var j = Math.round((new Date(trpIso(new Date())) - new Date(e.date)) / 864e5);
   return j > 0 ? j + ' j de retard' : TRP_STATUTS[e.statut];
@@ -4977,12 +5013,27 @@ function trpAujourdhui() { trpChoisirJour(trpIso(new Date())); }
 function trpTrouver(id) { return _trpListe.find(function(e){ return e.id === id; }); }
 
 // ── Formulaire ──
-function trpOuvrir(id) {
+// Adapte le formulaire au type de bordereau (champs, statuts, titre)
+function trpAppliquerType(type) {
+  _trpType = type === 'intrasite' ? 'intrasite' : 'externe';
+  var intra = _trpType === 'intrasite';
+  document.querySelectorAll('#trp-modal .trp-ext').forEach(function(el){ el.style.display = intra ? 'none' : ''; });
+  document.querySelectorAll('#trp-modal .trp-int').forEach(function(el){ el.style.display = intra ? '' : 'none'; });
+  document.getElementById('trp-form-titre').textContent = intra ? 'BORDEREAU INTRASITE USINE' : 'BORDEREAU DE TRANSPORT';
+  document.getElementById('trp-form-sous-titre').textContent = intra ? 'Transport interne à l\'usine' : 'CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com';
+  document.getElementById('trp-statut').innerHTML = TRP_STATUTS_PAR_TYPE[_trpType].map(function(k){
+    return '<option value="' + k + '">' + TRP_STATUTS[k] + '</option>';
+  }).join('');
+}
+
+function trpOuvrir(id, type) {
   if (id === null && checkConsultMode()) return;
   var e = id ? trpTrouver(id) : null;
   _trpEditId = e ? e.id : null;
+  trpAppliquerType(e ? trpTypeDe(e) : type);
   var set = function(fid, val){ document.getElementById(fid).value = val || ''; };
   set('trp-ref', e && e.ref); set('trp-date', e ? e.date : _trpJour); set('trp-heure', e && e.heure);
+  set('trp-wo', e && e.wo); set('trp-tag', e && e.tag); set('trp-duree', e && e.duree); set('trp-camion', e && e.camion);
   set('trp-statut', e ? e.statut : 'prevu'); set('trp-chargement', e ? e.chargement : 'MAINTENANCE CENTRALE');
   set('trp-livrer', e && e.livrerA); set('trp-demandeur', e && e.demandeur); set('trp-destinataire', e && e.destinataire);
   set('trp-comm', e && e.comm);
@@ -4994,8 +5045,11 @@ function trpFermer() { document.getElementById('trp-modal').classList.remove('op
 
 function trpLireFormulaire() {
   var g = function(fid){ return document.getElementById(fid).value.trim(); };
+  var intra = _trpType === 'intrasite';
   return { id: _trpEditId || ('trp' + Date.now() + Math.random().toString(36).slice(2, 6)),
-    date: g('trp-date'), ref: g('trp-ref'), heure: g('trp-heure'), statut: g('trp-statut') || 'prevu',
+    type: _trpType, date: g('trp-date'), heure: g('trp-heure'), statut: g('trp-statut') || 'prevu',
+    ref: intra ? '' : g('trp-ref'),
+    wo: intra ? g('trp-wo') : '', tag: intra ? g('trp-tag') : '', duree: intra ? g('trp-duree') : '', camion: intra ? g('trp-camion') : '',
     chargement: g('trp-chargement'), livrerA: g('trp-livrer'), demandeur: g('trp-demandeur'), destinataire: g('trp-destinataire'),
     comm: g('trp-comm'), photos: _trpPhotos.slice() };
 }
@@ -5015,6 +5069,7 @@ async function trpEnregistrer() {
   if (_trpUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
   var e = trpLireFormulaire();
   if (!e.date) { alert('La date du transport est obligatoire.'); return; }
+  if (e.type === 'intrasite' && !e.wo) { alert('Le WO est obligatoire pour un bordereau intrasite.'); return; }
   // Affichage immédiat, envoi au serveur en arrière-plan ; en cas d'échec on rouvre le formulaire rempli
   var avant = _trpListe.slice();
   _trpListe = _trpListe.filter(function(x){ return x.id !== e.id; }).concat([e]);
@@ -5031,9 +5086,10 @@ async function trpEnregistrer() {
 
 // Rouvre le formulaire avec un bordereau non enregistré
 function trpOuvrirAvec(e) {
-  trpOuvrir(null);
+  trpOuvrir(null, trpTypeDe(e));
   _trpEditId = e.id;
   [['trp-ref','ref'],['trp-date','date'],['trp-heure','heure'],['trp-statut','statut'],['trp-chargement','chargement'],
+   ['trp-wo','wo'],['trp-tag','tag'],['trp-duree','duree'],['trp-camion','camion'],
    ['trp-livrer','livrerA'],['trp-demandeur','demandeur'],['trp-destinataire','destinataire'],['trp-comm','comm']].forEach(function(c){
     document.getElementById(c[0]).value = e[c[1]] || '';
   });
@@ -5063,7 +5119,7 @@ async function trpSupprimer(id) {
 async function trpMarquerLivre(id) {
   if (checkConsultMode()) return;
   var e = trpTrouver(id); if (!e) return;
-  try { await trpSauver(Object.assign({}, e, { statut: 'recu' })); } catch(err) { alert('Mise à jour impossible. Vérifiez la connexion.'); return; }
+  try { await trpSauver(Object.assign({}, e, { statut: trpTypeDe(e) === 'intrasite' ? 'effectue' : 'recu' })); } catch(err) { alert('Mise à jour impossible. Vérifiez la connexion.'); return; }
   trpRendre();
 }
 
@@ -5093,13 +5149,18 @@ function trpImprimer(e) {
   var w = window.open('', '_blank');
   if (!w) { alert('Autorisez les fenêtres pop-up pour imprimer.'); return; }
   var x = blEsc;
-  w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Bordereau ' + x(e.ref || '') + '</title><style>' +
+  w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Bordereau ' + x(trpTitre(e)) + '</title><style>' +
     'body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:16px}h1{font-size:18px;text-align:center;margin:0 0 6px}' +
     '.box{border:1px solid #444;padding:6px 8px;margin-bottom:8px}.t{display:block;background:#e5e9f0;margin:-6px -8px 4px;padding:3px 8px;font-weight:bold}' +
     '.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}img{max-width:48%;max-height:260px;margin:2px}</style></head><body>' +
-    '<h1>BORDEREAU DE TRANSPORT ' + (e.date || '').slice(0, 4) + '</h1>' +
-    '<div style="text-align:center;margin-bottom:8px">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>' +
-    '<div class="box"><b>N° DE RÉFÉRENCE TRANSPORT :</b> ' + x(e.ref) + '</div>' +
+    (trpTypeDe(e) === 'intrasite'
+      ? '<h1>BORDEREAU INTRASITE USINE ' + (e.date || '').slice(0, 4) + '</h1>' +
+        '<div class="g2"><div class="box"><b>WO :</b> ' + x(e.wo) + '</div><div class="box"><b>TAG :</b> ' + x(e.tag) + '</div></div>' +
+        '<div class="g2"><div class="box"><b>DURÉE DE L\'INTERVENTION :</b> ' + x(e.duree) + '</div><div class="box"><b>TYPE DE CAMION :</b> ' + x(e.camion) + '</div></div>' +
+        '<div class="box"><b>STATUT :</b> ' + x(TRP_STATUTS[e.statut] || '') + '</div>'
+      : '<h1>BORDEREAU DE TRANSPORT ' + (e.date || '').slice(0, 4) + '</h1>' +
+        '<div style="text-align:center;margin-bottom:8px">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>' +
+        '<div class="box"><b>N° DE RÉFÉRENCE TRANSPORT :</b> ' + x(e.ref) + '</div>') +
     '<div class="g2"><div class="box"><span class="t">Demandeur</span>' + x(e.demandeur) + '</div><div class="box"><span class="t">Destinataire</span>' + x(e.destinataire) + '</div></div>' +
     '<div class="box"><b>LIEU DE CHARGEMENT :</b> ' + x(e.chargement) + ' &nbsp; <b>À LIVRER CHEZ / VERS :</b> ' + x(e.livrerA) +
       ' &nbsp; <b>DATE DU TRANSPORT :</b> ' + trpFr(e.date) + ' &nbsp; <b>HEURE DE PRÉSENTATION DU CAMION :</b> ' + x(e.heure) + '</div>' +
@@ -5111,9 +5172,10 @@ function trpImprimer(e) {
 
 function trpExportCsv() {
   var q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
-  var rows = [['Date','Réf transport','Heure','Statut','Chargement','À livrer chez','Demandeur','Destinataire','Commentaires','Nb photos'].map(q).join(';')];
+  var rows = [['Date','Type','Réf transport','WO','TAG','Heure','Durée','Type de camion','Statut','Chargement','À livrer chez','Demandeur','Destinataire','Commentaires','Nb photos'].map(q).join(';')];
   _trpListe.slice().sort(function(a, b){ return a.date < b.date ? -1 : 1; }).forEach(function(e) {
-    rows.push([trpFr(e.date), e.ref, e.heure, TRP_STATUTS[e.statut], e.chargement, e.livrerA, e.demandeur, e.destinataire, e.comm, (e.photos || []).length].map(q).join(';'));
+    rows.push([trpFr(e.date), trpTypeDe(e) === 'intrasite' ? 'Intrasite usine' : 'Transport externe', e.ref, e.wo, e.tag, e.heure, e.duree, e.camion,
+      TRP_STATUTS[e.statut], e.chargement, e.livrerA, e.demandeur, e.destinataire, e.comm, (e.photos || []).length].map(q).join(';'));
   });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿' + rows.join('\n')], { type: 'text/csv' }));
