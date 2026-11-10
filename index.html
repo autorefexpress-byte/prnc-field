@@ -5161,7 +5161,6 @@ function trpMailOrdonnanceur(id) {
     e.destinataire ? 'Destinataire : ' + e.destinataire : null,
     'Statut       : ' + (TRP_STATUTS[e.statut] || ''),
     e.comm ? '\nCommentaires : ' + e.comm : null,
-    (e.photos || []).length ? '\nPhotos :\n' + e.photos.join('\n') : null,
     '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50'
   ].filter(function(l){ return l !== null; });
   window.location.href = 'mailto:' + mailListe(TRP_ORDO_TO) +
