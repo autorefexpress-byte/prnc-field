@@ -1145,6 +1145,7 @@ function _locChange(selId, inpId) {
       <div class="field-grp" style="margin:0"><div class="field-lbl"><span class="req">*</span> WO</div><input class="fi" id="trp-wo" placeholder="Ex : 876230" inputmode="numeric"></div>
       <div class="field-grp" style="margin:0"><div class="field-lbl">TAG</div><input class="fi" id="trp-tag" placeholder="Ex : 220-PPD-204"></div>
     </div>
+    <div class="field-grp trp-int" style="margin:0"><div class="field-lbl">Tâche</div><input class="fi" id="trp-tache" placeholder="Ex : Levage pompe, déplacement vanne vers atelier…"></div>
     <div class="trp-row2">
       <div class="field-grp" style="margin:0"><div class="field-lbl"><span class="req">*</span> Date du transport</div><input class="fi" type="date" id="trp-date"></div>
       <div class="field-grp" style="margin:0"><div class="field-lbl">Heure camion</div><input class="fi" id="trp-heure" placeholder="Ex : 08H"></div>
@@ -4950,6 +4951,7 @@ function trpRendreCalendrier() {
 function trpLignes(e, retard) {
   var trajet = [e.chargement, e.livrerA].filter(Boolean).map(blEsc).join(' → ');
   var L = retard ? [trpFr(e.date) + (e.livrerA ? ' → ' + blEsc(e.livrerA) : '')] : [
+    e.tache ? '🔧 ' + blEsc(e.tache) : '',
     trajet,
     e.camion ? '🚛 ' + blEsc(e.camion) : '',
     (e.heure || e.duree) ? '🕗 ' + blEsc([e.heure, e.duree ? 'durée ' + e.duree : ''].filter(Boolean).join(' · ')) : '',
@@ -5033,7 +5035,7 @@ function trpOuvrir(id, type) {
   trpAppliquerType(e ? trpTypeDe(e) : type);
   var set = function(fid, val){ document.getElementById(fid).value = val || ''; };
   set('trp-ref', e && e.ref); set('trp-date', e ? e.date : _trpJour); set('trp-heure', e && e.heure);
-  set('trp-wo', e && e.wo); set('trp-tag', e && e.tag); set('trp-duree', e && e.duree); set('trp-camion', e && e.camion);
+  set('trp-wo', e && e.wo); set('trp-tag', e && e.tag); set('trp-tache', e && e.tache); set('trp-duree', e && e.duree); set('trp-camion', e && e.camion);
   set('trp-statut', e ? e.statut : 'prevu'); set('trp-chargement', e ? e.chargement : 'MAINTENANCE CENTRALE');
   set('trp-livrer', e && e.livrerA); set('trp-demandeur', e && e.demandeur); set('trp-destinataire', e && e.destinataire);
   set('trp-comm', e && e.comm);
@@ -5049,7 +5051,7 @@ function trpLireFormulaire() {
   return { id: _trpEditId || ('trp' + Date.now() + Math.random().toString(36).slice(2, 6)),
     type: _trpType, date: g('trp-date'), heure: g('trp-heure'), statut: g('trp-statut') || 'prevu',
     ref: intra ? '' : g('trp-ref'),
-    wo: intra ? g('trp-wo') : '', tag: intra ? g('trp-tag') : '', duree: intra ? g('trp-duree') : '', camion: intra ? g('trp-camion') : '',
+    wo: intra ? g('trp-wo') : '', tag: intra ? g('trp-tag') : '', tache: intra ? g('trp-tache') : '', duree: intra ? g('trp-duree') : '', camion: intra ? g('trp-camion') : '',
     chargement: g('trp-chargement'), livrerA: g('trp-livrer'), demandeur: g('trp-demandeur'), destinataire: g('trp-destinataire'),
     comm: g('trp-comm'), photos: _trpPhotos.slice() };
 }
@@ -5089,7 +5091,7 @@ function trpOuvrirAvec(e) {
   trpOuvrir(null, trpTypeDe(e));
   _trpEditId = e.id;
   [['trp-ref','ref'],['trp-date','date'],['trp-heure','heure'],['trp-statut','statut'],['trp-chargement','chargement'],
-   ['trp-wo','wo'],['trp-tag','tag'],['trp-duree','duree'],['trp-camion','camion'],
+   ['trp-wo','wo'],['trp-tag','tag'],['trp-tache','tache'],['trp-duree','duree'],['trp-camion','camion'],
    ['trp-livrer','livrerA'],['trp-demandeur','demandeur'],['trp-destinataire','destinataire'],['trp-comm','comm']].forEach(function(c){
     document.getElementById(c[0]).value = e[c[1]] || '';
   });
@@ -5156,6 +5158,7 @@ function trpImprimer(e) {
     (trpTypeDe(e) === 'intrasite'
       ? '<h1>BORDEREAU INTRASITE USINE ' + (e.date || '').slice(0, 4) + '</h1>' +
         '<div class="g2"><div class="box"><b>WO :</b> ' + x(e.wo) + '</div><div class="box"><b>TAG :</b> ' + x(e.tag) + '</div></div>' +
+        '<div class="box"><b>TÂCHE :</b> ' + x(e.tache) + '</div>' +
         '<div class="g2"><div class="box"><b>DURÉE DE L\'INTERVENTION :</b> ' + x(e.duree) + '</div><div class="box"><b>TYPE DE CAMION :</b> ' + x(e.camion) + '</div></div>' +
         '<div class="box"><b>STATUT :</b> ' + x(TRP_STATUTS[e.statut] || '') + '</div>'
       : '<h1>BORDEREAU DE TRANSPORT ' + (e.date || '').slice(0, 4) + '</h1>' +
@@ -5172,9 +5175,9 @@ function trpImprimer(e) {
 
 function trpExportCsv() {
   var q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
-  var rows = [['Date','Type','Réf transport','WO','TAG','Heure','Durée','Type de camion','Statut','Chargement','À livrer chez','Demandeur','Destinataire','Commentaires','Nb photos'].map(q).join(';')];
+  var rows = [['Date','Type','Réf transport','WO','TAG','Tâche','Heure','Durée','Type de camion','Statut','Chargement','À livrer chez','Demandeur','Destinataire','Commentaires','Nb photos'].map(q).join(';')];
   _trpListe.slice().sort(function(a, b){ return a.date < b.date ? -1 : 1; }).forEach(function(e) {
-    rows.push([trpFr(e.date), trpTypeDe(e) === 'intrasite' ? 'Intrasite usine' : 'Transport externe', e.ref, e.wo, e.tag, e.heure, e.duree, e.camion,
+    rows.push([trpFr(e.date), trpTypeDe(e) === 'intrasite' ? 'Intrasite usine' : 'Transport externe', e.ref, e.wo, e.tag, e.tache, e.heure, e.duree, e.camion,
       TRP_STATUTS[e.statut], e.chargement, e.livrerA, e.demandeur, e.destinataire, e.comm, (e.photos || []).length].map(q).join(';'));
   });
   var a = document.createElement('a');
