@@ -3,7 +3,7 @@
 //   et bandeau « Nouvelle version disponible » quand elle a changé.
 // - Librairie Excel (URL versionnée, ne change jamais) et qrcode.js : copie du téléphone d'abord.
 // - API (/api/) et envois (POST, PATCH…) : jamais mis en cache, toujours le réseau.
-const CACHE = 'prnc-v45';
+const CACHE = 'prnc-v46';
 const PAGE = './index.html';
 const FILES = [PAGE, './qrcode.js'];
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
