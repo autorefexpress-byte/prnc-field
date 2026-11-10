@@ -1115,6 +1115,7 @@ function _locChange(selId, inpId) {
       <div id="trp-jour-titre" style="font-weight:800;color:#1F3864;font-size:14px;text-transform:capitalize"></div>
       <div id="trp-jour-sub" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
       <div id="trp-jour-liste"></div>
+      <div id="trp-jour-mail"></div>
       <div style="display:flex;gap:8px">
         <button class="send-btn" style="background:#E65100;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'externe')">＋ Transport externe</button>
         <button class="send-btn" style="background:#1F3864;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'intrasite')">＋ Intrasite usine</button>
@@ -4992,6 +4993,11 @@ function trpRendreJour() {
   document.getElementById('trp-jour-sub').textContent = items.length ? items.length + ' bordereau(x) ce jour' : 'Aucun transport prévu';
   document.getElementById('trp-jour-liste').innerHTML = items.length ? items.map(function(e){ return trpCarte(e, false); }).join('')
     : '<div class="trp-empty">Appuyez sur « Nouveau bordereau » pour saisir un transport ce jour-là.</div>';
+  var nIntra = items.filter(function(e){ return trpTypeDe(e) === 'intrasite'; }).length;
+  document.getElementById('trp-jour-mail').innerHTML = nIntra
+    ? '<button onclick="trpMailOrdonnanceurJour()" style="width:100%;margin-bottom:8px;padding:12px;background:#E1F5EE;color:#0F6E56;border:1.5px solid #0F6E56;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">📧 Mail ordonnanceur : ' +
+      nIntra + ' transport' + (nIntra > 1 ? 's' : '') + ' intrasite du jour</button>'
+    : '';
 }
 
 function trpEstEnRetard(e, auj) {
@@ -5142,29 +5148,59 @@ var TRP_ORDO_TO = 'yannick.tein.EXT@pronyresources.com';
 var TRP_ORDO_CC = ['pascal.bafue@pronyresources.com'];
 var TRP_ORDO_CC_WG = { MCCHAUD: 'abel.vendegou@pronyresources.com', MCREPAR: 'regis.eurimindia@pronyresources.com' };
 
+// Copie : Pascal + le chef d'atelier de chaque workgroup concerné
+function trpCopieOrdo(liste) {
+  var cc = TRP_ORDO_CC.slice();
+  liste.forEach(function(e){ var m = TRP_ORDO_CC_WG[e.wg]; if (m && cc.indexOf(m) < 0) cc.push(m); });
+  return cc;
+}
+function trpEnvoyerMailOrdo(liste, sujet, intro, corps) {
+  var lignes = ['Bonjour,', '', intro, ''].concat(corps, ['', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50']);
+  window.location.href = 'mailto:' + mailListe(TRP_ORDO_TO) +
+    '?cc=' + mailListe(trpCopieOrdo(liste)) + '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(lignes.join('\n'));
+}
+
+// Mail groupé : tous les transports intrasite du jour sélectionné
+function trpMailOrdonnanceurJour() {
+  var liste = trpDuJour(_trpJour).filter(function(e){ return trpTypeDe(e) === 'intrasite'; })
+    .sort(function(a, b){ return (a.heure || '').localeCompare(b.heure || ''); });
+  if (!liste.length) return;
+  var n = liste.length;
+  var corps = [];
+  liste.forEach(function(e, i) {
+    corps.push((i ? '\n' : '') + (i + 1) + '. WO ' + (e.wo || '--') + (e.tag ? ' - ' + e.tag : ''));
+    trpLignesMail(e, true).forEach(function(l){ corps.push('   ' + l); });
+  });
+  trpEnvoyerMailOrdo(liste,
+    '[Transport intrasite] Demandes du ' + trpFr(_trpJour) + ' (' + n + ' transport' + (n > 1 ? 's' : '') + ')',
+    'Merci de planifier ' + (n > 1 ? 'les ' + n + ' transports intrasite suivants' : 'le transport intrasite suivant') + ' pour le ' + trpFr(_trpJour) + ' :',
+    corps);
+}
+
 function trpMailOrdonnanceur(id) {
   var e = trpTrouver(id); if (!e) return;
-  var cc = TRP_ORDO_CC.concat(TRP_ORDO_CC_WG[e.wg] ? [TRP_ORDO_CC_WG[e.wg]] : []);
-  var sujet = '[Transport intrasite] WO ' + (e.wo || '--') + (e.tag ? ' - ' + e.tag : '') + ' - ' + trpFr(e.date) + (e.wg ? ' - ' + e.wg : '');
-  var lignes = [
-    'Bonjour,', '',
-    'Merci de planifier le transport intrasite suivant :', '',
-    'WO           : ' + (e.wo || '--'),
-    e.tag ? 'TAG          : ' + e.tag : null,
+  trpEnvoyerMailOrdo([e],
+    '[Transport intrasite] WO ' + (e.wo || '--') + (e.tag ? ' - ' + e.tag : '') + ' - ' + trpFr(e.date) + (e.wg ? ' - ' + e.wg : ''),
+    'Merci de planifier le transport intrasite suivant :',
+    trpLignesMail(e, false));
+}
+
+// Détail d'un transport pour le mail ; dansJour : sans WO / TAG / date (déjà en titre ou en objet)
+function trpLignesMail(e, dansJour) {
+  return [
+    dansJour ? null : 'WO           : ' + (e.wo || '--'),
+    !dansJour && e.tag ? 'TAG          : ' + e.tag : null,
     (e.tacheNum || e.tache) ? 'Tâche OT     : ' + trpTache(e) : null,
     e.wg ? 'Workgroup    : ' + e.wg : null,
-    'Date         : ' + trpFr(e.date) + (e.heure ? ' à ' + e.heure : ''),
+    dansJour ? (e.heure ? 'Heure camion : ' + e.heure : null) : 'Date         : ' + trpFr(e.date) + (e.heure ? ' à ' + e.heure : ''),
     e.duree ? 'Durée        : ' + e.duree : null,
     e.camion ? 'Type camion  : ' + e.camion : null,
     (e.chargement || e.livrerA) ? 'Trajet       : ' + [e.chargement, e.livrerA].filter(Boolean).join(' → ') : null,
     e.demandeur ? 'Demandeur    : ' + e.demandeur : null,
     e.destinataire ? 'Destinataire : ' + e.destinataire : null,
     'Statut       : ' + (TRP_STATUTS[e.statut] || ''),
-    e.comm ? '\nCommentaires : ' + e.comm : null,
-    '', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50'
+    e.comm ? (dansJour ? 'Commentaires : ' : '\nCommentaires : ') + e.comm : null
   ].filter(function(l){ return l !== null; });
-  window.location.href = 'mailto:' + mailListe(TRP_ORDO_TO) +
-    '?cc=' + mailListe(cc) + '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(lignes.join('\n'));
 }
 
 // ── Photos (Cloudinary) ──
