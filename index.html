@@ -5155,7 +5155,7 @@ function trpCopieOrdo(liste) {
   return cc;
 }
 function trpEnvoyerMailOrdo(liste, sujet, intro, corps) {
-  var lignes = ['Bonjour,', '', intro, ''].concat(corps, ['', 'Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50']);
+  var lignes = ['Bonjour,', '', intro, ''].concat(corps, ['Cordialement,', getUserName(), 'Préposé aux pièces | PRNC - Maintenance Centrale P50']);
   window.location.href = 'mailto:' + mailListe(TRP_ORDO_TO) +
     '?cc=' + mailListe(trpCopieOrdo(liste)) + '&subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(lignes.join('\n'));
 }
@@ -5167,13 +5167,11 @@ function trpMailOrdonnanceurJour() {
   if (!liste.length) return;
   var n = liste.length;
   var corps = [];
-  liste.forEach(function(e, i) {
-    corps.push((i ? '\n' : '') + (i + 1) + '. WO ' + (e.wo || '--') + (e.tag ? ' - ' + e.tag : ''));
-    trpLignesMail(e, true).forEach(function(l){ corps.push('   ' + l); });
-  });
+  liste.forEach(function(e, i) { corps = corps.concat(trpBlocMail(e, (i + 1) + ') ', false), ['']); });
   trpEnvoyerMailOrdo(liste,
     '[Transport intrasite] Demandes du ' + trpFr(_trpJour) + ' (' + n + ' transport' + (n > 1 ? 's' : '') + ')',
-    'Merci de planifier ' + (n > 1 ? 'les ' + n + ' transports intrasite suivants' : 'le transport intrasite suivant') + ' pour le ' + trpFr(_trpJour) + ' :',
+    'Merci de planifier ' + (n > 1 ? 'les ' + n + ' transports intrasite suivants' : 'le transport intrasite suivant') +
+      ' pour le ' + trpJourLong(_trpJour) + ' :',
     corps);
 }
 
@@ -5182,25 +5180,32 @@ function trpMailOrdonnanceur(id) {
   trpEnvoyerMailOrdo([e],
     '[Transport intrasite] WO ' + (e.wo || '--') + (e.tag ? ' - ' + e.tag : '') + ' - ' + trpFr(e.date) + (e.wg ? ' - ' + e.wg : ''),
     'Merci de planifier le transport intrasite suivant :',
-    trpLignesMail(e, false));
+    trpBlocMail(e, '', true).concat(['']));
 }
 
-// Détail d'un transport pour le mail ; dansJour : sans WO / TAG / date (déjà en titre ou en objet)
-function trpLignesMail(e, dansJour) {
-  return [
-    dansJour ? null : 'WO           : ' + (e.wo || '--'),
-    !dansJour && e.tag ? 'TAG          : ' + e.tag : null,
-    (e.tacheNum || e.tache) ? 'Tâche OT     : ' + trpTache(e) : null,
-    e.wg ? 'Workgroup    : ' + e.wg : null,
-    dansJour ? (e.heure ? 'Heure camion : ' + e.heure : null) : 'Date         : ' + trpFr(e.date) + (e.heure ? ' à ' + e.heure : ''),
-    e.duree ? 'Durée        : ' + e.duree : null,
-    e.camion ? 'Type camion  : ' + e.camion : null,
-    (e.chargement || e.livrerA) ? 'Trajet       : ' + [e.chargement, e.livrerA].filter(Boolean).join(' → ') : null,
-    e.demandeur ? 'Demandeur    : ' + e.demandeur : null,
-    e.destinataire ? 'Destinataire : ' + e.destinataire : null,
-    'Statut       : ' + (TRP_STATUTS[e.statut] || ''),
-    e.comm ? (dansJour ? 'Commentaires : ' : '\nCommentaires : ') + e.comm : null
-  ].filter(function(l){ return l !== null; });
+// « jeudi 19/11/2026 »
+function trpJourLong(iso) {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long' }) + ' ' + trpFr(iso);
+}
+
+// Un transport dans le mail : titre encadré puis puces « • Libellé : valeur ».
+// Pas d'alignement par espaces (illisible dans Outlook, police proportionnelle) ;
+// statut indiqué seulement s'il n'est pas « Prévu ».
+var TRP_SEP_MAIL = '────────────────────────────';
+function trpBlocMail(e, numero, avecDate) {
+  var titre = numero + 'WO ' + (e.wo || '--') + (e.tag ? '  |  TAG ' + e.tag : '') + (e.wg ? '  |  ' + e.wg : '');
+  var horaire = [e.heure, e.duree ? 'durée ' + e.duree : ''].filter(Boolean).join(' (') + (e.heure && e.duree ? ')' : '');
+  return [TRP_SEP_MAIL, titre, TRP_SEP_MAIL].concat([
+    avecDate ? '• Date : ' + trpJourLong(e.date) : null,
+    (e.tacheNum || e.tache) ? '• Tâche OT : ' + trpTache(e) : null,
+    horaire ? '• Horaire : ' + horaire : null,
+    e.camion ? '• Camion : ' + e.camion : null,
+    (e.chargement || e.livrerA) ? '• Trajet : ' + [e.chargement, e.livrerA].filter(Boolean).join(' → ') : null,
+    e.demandeur ? '• Demandeur : ' + e.demandeur : null,
+    e.destinataire ? '• Destinataire : ' + e.destinataire : null,
+    e.statut && e.statut !== 'prevu' ? '• Statut : ' + (TRP_STATUTS[e.statut] || e.statut) : null,
+    e.comm ? '• Commentaire : ' + e.comm : null
+  ].filter(function(l){ return l !== null; }));
 }
 
 // ── Photos (Cloudinary) ──
