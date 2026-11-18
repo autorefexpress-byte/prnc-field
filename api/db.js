@@ -43,6 +43,8 @@ async function initTables() {
     q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS remarque TEXT`);
     q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wo_usine TEXT`);
     q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS wso TEXT`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS stt_wo TEXT`);
+    q.push(sql`ALTER TABLE planning ADD COLUMN IF NOT EXISTS type_wo TEXT`);
     q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS wso TEXT`);
     q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS recovered_at TIMESTAMPTZ`);
     q.push(sql`ALTER TABLE historique ADD COLUMN IF NOT EXISTS archive BOOLEAN DEFAULT false`);
@@ -68,6 +70,8 @@ async function initTables() {
       created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
     )`);
     q.push(sql`CREATE UNIQUE INDEX IF NOT EXISTS planning_mcchaud_wo_semaine_idx ON planning_mcchaud(wo, semaine)`);
+    q.push(sql`ALTER TABLE planning_mcchaud ADD COLUMN IF NOT EXISTS stt_wo TEXT`);
+    q.push(sql`ALTER TABLE planning_mcchaud ADD COLUMN IF NOT EXISTS type_wo TEXT`);
     // ── Planning Atelier MCELINS (table séparée, même schéma) ──
     q.push(sql`CREATE TABLE IF NOT EXISTS planning_mcelins (
       id SERIAL PRIMARY KEY, wo TEXT, wr TEXT, tag TEXT, description_wo TEXT,
@@ -182,9 +186,10 @@ async function handlePlanningP17(req, res, id, method) {
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
       if (d.first !== false) await sql`DELETE FROM planning WHERE semaine=${d.semaine}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,photos)
+        await sql`INSERT INTO planning (wo,wr,tag,description_wo,ressource,commentaire,stt_wo,type_wo,taches,jours,statut,semaine,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
+                  ${item.sttWo||null},${item.typeWo||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
                   ${item.statut||'PLANIFIE'},${d.semaine},
@@ -267,9 +272,10 @@ async function handlePlanningMCCHAUD(req, res, id, method) {
     if (d.bulk && Array.isArray(d.items) && d.semaine) {
       if (d.first !== false) await sql`DELETE FROM planning_mcchaud WHERE semaine=${d.semaine}`;
       for (const item of d.items) {
-        await sql`INSERT INTO planning_mcchaud (wo,wr,tag,description_wo,ressource,commentaire,taches,jours,statut,semaine,photos)
+        await sql`INSERT INTO planning_mcchaud (wo,wr,tag,description_wo,ressource,commentaire,stt_wo,type_wo,taches,jours,statut,semaine,photos)
           VALUES (${item.wo||null},${item.wr||null},${item.tag||null},${item.desc||null},
                   ${item.ressource||null},${item.commentaire||null},
+                  ${item.sttWo||null},${item.typeWo||null},
                   ${JSON.stringify(item.taches||[])}::jsonb,
                   ${JSON.stringify(item.jours||[])}::jsonb,
                   ${item.statut||'PLANIFIE'},${d.semaine},

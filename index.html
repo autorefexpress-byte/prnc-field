@@ -7408,6 +7408,7 @@ async function chargerPlanningNeon(semaine) {
           _photos: r.photos||[],
           _remarque: r.remarque||'',
           woUsine: r.wo_usine||'', wso: r.wso||'',
+          sttWo: r.stt_wo||'', typeWo: r.type_wo||'',
         };
       });
       var lbl = document.getElementById('planning-semaine-lbl');
@@ -7431,6 +7432,31 @@ function _renderSemainesSelector() {
   sel.style.display = _planningSemanines.length > 1 ? 'block' : 'none';
 }
 
+
+// ── STT WO / TYPE WO (colonnes du planning Excel, repérées par leur en-tête) ──
+function _planHeaderNorm(h) {
+  return (h == null ? '' : h).toString().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+function _planSttTypeCols(headerRow) {
+  var cols = { stt: -1, type: -1 };
+  (headerRow || []).forEach(function(h, i) {
+    var n = _planHeaderNorm(h);
+    if (cols.stt < 0 && /^(STT|STATUT) ?WO$/.test(n)) cols.stt = i;
+    else if (cols.type < 0 && /^TYPE ?WO$/.test(n)) cols.type = i;
+  });
+  return cols;
+}
+function _planCell(row, i) { return i >= 0 && row[i] != null ? row[i].toString().trim().toUpperCase() : ''; }
+// Couleurs reprises du planning Excel
+var _PLAN_STT_COUL  = { PI: ['#FDE2E2','#C00000'], G: ['#FDE2E2','#C00000'], OD: ['#E2EFDA','#375623'] };
+var _PLAN_TYPE_COUL = { 'PC-USINE': ['#FDE2E2','#C00000'], SDMEC1: ['#FDE2E2','#C00000'], MCCHAUD: ['#E2EFDA','#375623'] };
+function _planSttTypeHtml(item) {
+  function badge(lbl, val, coul) {
+    var c = coul[val] || ['#F2F2F2','#404040'];
+    return '<span title="'+lbl+'" style="background:'+c[0]+';color:'+c[1]+';border:1px solid '+c[1]+'33;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;white-space:nowrap">'+lbl+' '+val+'</span>';
+  }
+  return (item.sttWo ? badge('STT', item.sttWo, _PLAN_STT_COUL) : '') + (item.typeWo ? badge('TYPE', item.typeWo, _PLAN_TYPE_COUL) : '');
+}
 
 function importPlanningExcel(input) {
   var file = input.files[0]; if (!file) return;
@@ -7465,6 +7491,7 @@ function importPlanningExcel(input) {
         } else { jours.push(nom); }
       }
 
+      var sttType = _planSttTypeCols(headerRow);
       var woDict = {};
       var saved = {};
       try { saved = JSON.parse(localStorage.getItem('planning-statuts')||'{}'); } catch(ex){}
@@ -7488,9 +7515,12 @@ function importPlanningExcel(input) {
           woDict[wo] = {
             wo:wo, wr:wr, tag:tag, desc:descWO,
             ressource:ressource, commentaire:commentaire,
+            sttWo:_planCell(row, sttType.stt), typeWo:_planCell(row, sttType.type),
             taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
           };
         }
+        if (!woDict[wo].sttWo) woDict[wo].sttWo = _planCell(row, sttType.stt);
+        if (!woDict[wo].typeWo) woDict[wo].typeWo = _planCell(row, sttType.type);
         if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
         joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
         if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
@@ -7551,6 +7581,8 @@ function _renderPlanningList() {
         || (i.tag||'').toLowerCase().includes(searchVal)
         || (i.desc||'').toLowerCase().includes(searchVal)
         || (i.ressource||'').toLowerCase().includes(searchVal)
+        || (i.sttWo||'').toLowerCase().includes(searchVal)
+        || (i.typeWo||'').toLowerCase().includes(searchVal)
         || (i.semaine||'').toLowerCase().includes(searchVal);
   });
   if (!data.length) {
@@ -7570,6 +7602,7 @@ function _renderPlanningList() {
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
             +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(woVal||'—')+'</span>'
             +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
+            +_planSttTypeHtml(item)
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceP17(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
@@ -8380,6 +8413,7 @@ function creerPlanningAtelier(cfg) {
             _photos: r.photos||[],
             _remarque: r.remarque||'',
             woUsine: r.wo_usine||'', wso: r.wso||'',
+            sttWo: r.stt_wo||'', typeWo: r.type_wo||'',
           };
           if (cat) item.categorie = r.categorie||'';
           return item;
@@ -8477,6 +8511,7 @@ function creerPlanningAtelier(cfg) {
           } else { jours.push(nom); }
         }
 
+        var sttType = _planSttTypeCols(headerRow);
         var woDict = {};
         var saved = {};
         try { saved = JSON.parse(localStorage.getItem(cfg.cleStatuts)||'{}'); } catch(ex){}
@@ -8501,10 +8536,13 @@ function creerPlanningAtelier(cfg) {
             woDict[wo] = {
               wo:wo, wr:wr, tag:tag, desc:descWO,
               ressource:ressource, commentaire:commentaire,
+              sttWo:_planCell(row, sttType.stt), typeWo:_planCell(row, sttType.type),
               taches:[], jours:[], statut:saved[wo]||'PLANIFIE',
             };
             if (cat) woDict[wo].categorie = categorie;
           }
+          if (!woDict[wo].sttWo) woDict[wo].sttWo = _planCell(row, sttType.stt);
+          if (!woDict[wo].typeWo) woDict[wo].typeWo = _planCell(row, sttType.type);
           if (descTache) woDict[wo].taches.push({desc:descTache, jours:joursTache});
           joursTache.forEach(function(j){ if(woDict[wo].jours.indexOf(j)<0) woDict[wo].jours.push(j); });
           if (commentaire && !woDict[wo].commentaire) woDict[wo].commentaire = commentaire;
@@ -8565,6 +8603,8 @@ function creerPlanningAtelier(cfg) {
           || (i.tag||'').toLowerCase().includes(searchVal)
           || (i.desc||'').toLowerCase().includes(searchVal)
           || (i.ressource||'').toLowerCase().includes(searchVal)
+          || (i.sttWo||'').toLowerCase().includes(searchVal)
+          || (i.typeWo||'').toLowerCase().includes(searchVal)
           || (i.semaine||'').toLowerCase().includes(searchVal);
     });
     if (!data.length) {
@@ -8588,6 +8628,7 @@ function creerPlanningAtelier(cfg) {
             +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
               +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(item.wo||'—')+'</span>'
               +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
+              +_planSttTypeHtml(item)
               +catBadge
               +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
               +(item.ressource?'<span onclick="event.stopPropagation();'+fn('notifierRessource')+'(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:'+CL+';color:'+C+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
