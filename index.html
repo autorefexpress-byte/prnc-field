@@ -7583,6 +7583,7 @@ function _renderPlanningList() {
         || (i.ressource||'').toLowerCase().includes(searchVal)
         || (i.sttWo||'').toLowerCase().includes(searchVal)
         || (i.typeWo||'').toLowerCase().includes(searchVal)
+        || (i._remarque||'').toLowerCase().includes(searchVal)
         || (i.semaine||'').toLowerCase().includes(searchVal);
   });
   if (!data.length) {
@@ -7608,6 +7609,7 @@ function _renderPlanningList() {
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +planRemarqueHtml(item)
           +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
           +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
               +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
@@ -7920,6 +7922,14 @@ function planIndicateursHtml(item) {
   if (nb) h += '<span title="' + nb + ' photo' + (nb > 1 ? 's' : '') + '" style="background:#E3F2FD;color:#1565C0;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">📷 ' + nb + '</span>';
   if (rem) h += '<span title="Remarque : ' + rem.replace(/"/g, '&quot;').replace(/</g, '&lt;').slice(0, 120) + '" style="background:#FFF3E0;color:#E65100;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">💬</span>';
   return h ? '<div style="display:flex;gap:4px">' + h + '</div>' : '';
+}
+
+// Remarque affichée directement sur la carte (évite d'ouvrir le WO)
+function planRemarqueHtml(item) {
+  var rem = String(item._remarque || item.remarque || '').trim();
+  if (!rem) return '';
+  rem = rem.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '<div style="margin-top:5px;background:#FFF8E1;border-left:3px solid #E65100;border-radius:6px;padding:4px 8px;font-size:11px;color:#5D4037;white-space:pre-wrap;word-break:break-word">💬 ' + rem + '</div>';
 }
 
 // Vignettes des photos d'un WO du planning, avec bouton de suppression
@@ -8605,6 +8615,7 @@ function creerPlanningAtelier(cfg) {
           || (i.ressource||'').toLowerCase().includes(searchVal)
           || (i.sttWo||'').toLowerCase().includes(searchVal)
           || (i.typeWo||'').toLowerCase().includes(searchVal)
+          || (i._remarque||'').toLowerCase().includes(searchVal)
           || (i.semaine||'').toLowerCase().includes(searchVal);
     });
     if (!data.length) {
@@ -8635,6 +8646,7 @@ function creerPlanningAtelier(cfg) {
             +'</div>'
             +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
             +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+            +planRemarqueHtml(item)
             +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
             +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:'+C+';font-weight:700;margin-top:2px">'
                 +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
