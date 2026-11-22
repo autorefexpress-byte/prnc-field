@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1F3864">
+<meta name="theme-color" content="#B61134">
 <title>PRNC Field</title>
 <link rel="manifest" href="manifest.json">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
- --navy:#1F3864;--navy2:#2E75B6;--blue:#2E75B6;--lblue:#BDD7EE;--llblue:#DEEAF1;
+ --navy:#B61134;--navy2:#830050;--blue:#830050;--lblue:#F2C6D0;--llblue:#FBEAEE;
  --green:#375623;--lgreen:#E2EFDA;--orange:#C55A11;--lorange:#FCE4D6;
  --purple:#7030A0;--lpurple:#EDE7F6;--teal:#0F6E56;--lteal:#E1F5EE;
  --red:#E24B4A;--lred:#FCEBEB;--grey:#F2F2F2;--border:#e0e0e0;--white:#fff;
@@ -36,7 +36,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .home-hero{background:linear-gradient(160deg,var(--navy) 60%,var(--navy2));padding:20px 16px 18px;color:#fff}
 .home-greeting{font-size:12px;opacity:.7;margin-bottom:2px}
 .home-name{font-size:22px;font-weight:700}
-.home-name span{color:#7EC8FF}
+.home-name span{color:#FFD9C2}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:8px 4px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .stat-num{font-size:20px;font-weight:700;line-height:1}
@@ -163,14 +163,14 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .nav-lbl{font-size:8px;font-weight:600;color:var(--muted);letter-spacing:.2px}
 .nav-item.on .nav-lbl{color:var(--navy)}
 hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
-.numpad-btn{background:#fff;border:1.5px solid #dde3f0;border-radius:10px;padding:14px;font-size:20px;font-weight:700;color:#1F3864;cursor:pointer;text-align:center}
+.numpad-btn{background:#fff;border:1.5px solid #dde3f0;border-radius:10px;padding:14px;font-size:20px;font-weight:700;color:#B61134;cursor:pointer;text-align:center}
 .numpad-overlay{position:fixed;bottom:0;left:0;right:0;z-index:9500;background:rgba(0,0,0,.4);display:none;align-items:flex-end}
 .numpad-overlay.open{display:flex}
 .numpad-box{width:100%;background:#f2f2f7;border-radius:20px 20px 0 0;padding:12px;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
-.numpad-display{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:10px;font-size:22px;font-weight:700;color:#1F3864;min-height:50px;text-align:right;word-break:break-all;border:2px solid #2E75B6}
+.numpad-display{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:10px;font-size:22px;font-weight:700;color:#B61134;min-height:50px;text-align:right;word-break:break-all;border:2px solid #830050}
 .numpad-label{font-size:11px;color:#888;margin-bottom:6px;text-align:center;font-weight:600;letter-spacing:.5px}
 .numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
-.numpad-key{background:#fff;border:none;border-radius:12px;padding:16px 8px;font-size:22px;font-weight:600;color:#1F3864;cursor:pointer;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,.1);transition:transform .1s,background .1s;text-align:center}
+.numpad-key{background:#fff;border:none;border-radius:12px;padding:16px 8px;font-size:22px;font-weight:600;color:#B61134;cursor:pointer;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,.1);transition:transform .1s,background .1s;text-align:center}
 .numpad-key:active{transform:scale(.92);background:#e8e8e8}
 .numpad-key.key-del{background:#FCE4D6;color:#C55A11}
 .numpad-key.key-ok{background:#1F4E79;color:#fff;font-size:16px}
@@ -224,13 +224,13 @@ function _locChange(selId, inpId) {
 /* ── Onglet Transport (calendrier des bordereaux) ── */
 .trp-card{background:#fff;border-radius:14px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
 .trp-nav{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px}
-.trp-nav h2{margin:0;font-size:16px;color:#1F3864;text-transform:capitalize;flex:1;text-align:center}
-.trp-nav button{border:1px solid #d0d7e2;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit}
+.trp-nav h2{margin:0;font-size:16px;color:#B61134;text-transform:capitalize;flex:1;text-align:center}
+.trp-nav button{border:1px solid #d0d7e2;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;color:#B61134;cursor:pointer;font-family:inherit}
 .trp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .trp-dow{font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0;text-transform:uppercase}
 .trp-day{min-height:58px;border:1px solid #e3e8ef;border-radius:8px;padding:3px;cursor:pointer;background:#fff;overflow:hidden}
 .trp-day.other{background:#f7f8fa;color:#aab2bf}
-.trp-day.today .trp-num{background:#2E75B6;color:#fff}
+.trp-day.today .trp-num{background:#830050;color:#fff}
 .trp-day.sel{outline:2px solid #E65100;border-color:#E65100}
 .trp-num{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:700}
 .trp-chip{display:block;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -243,14 +243,14 @@ function _locChange(selId, inpId) {
 .trp-entry{border:1px solid #e3e8ef;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:12px}
 .trp-entry .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .trp-entry .meta{color:#475066;margin-top:3px;line-height:1.5}
-.trp-entry .acts button{border:none;background:none;cursor:pointer;color:#2E75B6;font-weight:700;font-size:11px;padding:4px 8px 0 0;font-family:inherit}
+.trp-entry .acts button{border:none;background:none;cursor:pointer;color:#830050;font-weight:700;font-size:11px;padding:4px 8px 0 0;font-family:inherit}
 .trp-entry .acts button.del{color:#C00000}
 .trp-empty{color:var(--muted);font-size:12px;padding:6px 0}
 #trp-modal{position:fixed;inset:0;background:rgba(12,28,61,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;z-index:1000}
 #trp-modal.open{display:flex}
 #trp-modal .sheet{background:#F4F6FA;border-radius:16px;max-width:620px;width:100%;padding:16px;display:flex;flex-direction:column;gap:11px}
 .trp-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.trp-sec{font-size:12px;font-weight:800;color:#1F3864;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #1F3864;padding-bottom:4px;margin-top:6px}
+.trp-sec{font-size:12px;font-weight:800;color:#B61134;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #B61134;padding-bottom:4px;margin-top:6px}
 @media(max-width:560px){.trp-row2.large{grid-template-columns:1fr}}
 </style>
 </head>
@@ -271,18 +271,22 @@ function _locChange(selId, inpId) {
 </div>
 
 <!-- ═══════════════ PIN LOCK ═══════════════ -->
-<div id="pin-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--navy);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+<div id="pin-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,var(--navy) 55%,var(--navy2));z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <!-- Logo Prony Resources (issu du modèle PowerPoint PRNC) -->
+  <div style="background:#fff;border-radius:14px;padding:8px 14px;box-shadow:0 4px 14px rgba(0,0,0,.18)">
+    <img src="logo-prnc.png" alt="Prony Resources" style="height:56px;display:block">
+  </div>
   <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:1px">PRNC Field</div>
 
   <!-- Sélection du mode -->
   <div id="pin-mode-select" style="margin:4px 0;width:240px">
     <select id="pin-mode-dropdown" onchange="selectPinMode(this.value)"
       style="width:100%;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.3);font-family:inherit;-webkit-appearance:none;text-align:center">
-      <option value="prepose" style="background:#1F3864;color:#fff">&#9881; Préposé aux pièces</option>
-      <option value="atelier"    style="background:#1F3864;color:#fff">&#128295; Mcrepar — Atelier P17</option>
-      <option value="atelier-mc" style="background:#1F3864;color:#fff">&#128293; Mcchaud — Atelier MCCHAUD</option>
-      <option value="atelier-mcel" style="background:#1F3864;color:#fff">&#9889; Mcelins — Atelier MCELINS</option>
-      <option value="atelier-mcmec" style="background:#1F3864;color:#fff">&#9881; Mcmecus — Atelier MCMECUS</option>
+      <option value="prepose" style="background:#B61134;color:#fff">&#9881; Préposé aux pièces</option>
+      <option value="atelier"    style="background:#B61134;color:#fff">&#128295; Mcrepar — Atelier P17</option>
+      <option value="atelier-mc" style="background:#B61134;color:#fff">&#128293; Mcchaud — Atelier MCCHAUD</option>
+      <option value="atelier-mcel" style="background:#B61134;color:#fff">&#9889; Mcelins — Atelier MCELINS</option>
+      <option value="atelier-mcmec" style="background:#B61134;color:#fff">&#9881; Mcmecus — Atelier MCMECUS</option>
     </select>
   </div>
 
@@ -336,14 +340,14 @@ function _locChange(selId, inpId) {
 </div>
 
 <!-- Bandeau mode Callidus -->
-<div id="callidus-banner" style="display:none;background:#1F3864;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+<div id="callidus-banner" style="display:none;background:#B61134;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
   &#128295; MODE CALLIDUS — Prestataire Réparation
 </div>
 
 
 
 <!-- Bandeau mode consultation -->
-<div id="consult-banner" style="display:none;background:#2E75B6;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
+<div id="consult-banner" style="display:none;background:#830050;color:#fff;text-align:center;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.5px;position:sticky;top:56px;z-index:99">
   &#128296; MODE STT — Superviseur Travaux Terrain
 </div>
 
@@ -398,7 +402,7 @@ function _locChange(selId, inpId) {
       </label>
     </div>
     <div class="action-card" style="border:1.5px solid #1F4E79;position:relative" onclick="ouvrirPlanningAccueilMCEL()">
-      <div class="card-icon" style="background:#DEEAF1;color:#1F4E79">📅</div>
+      <div class="card-icon" style="background:#FBEAEE;color:#1F4E79">📅</div>
       <div class="card-lbl">Planning Atelier MCELINS</div>
       <div class="card-sub" id="planning-card-sub-mcel">Voir les WO</div>
       <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#1F4E79;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
@@ -442,7 +446,7 @@ function _locChange(selId, inpId) {
       <div class="card-sub">Demande de nettoyage</div>
     </div>
     <div class="action-card" onclick="show('s-transport')">
-      <div class="card-icon" style="background:#DEEAF1;color:#1F3864">&#128666;</div>
+      <div class="card-icon" style="background:#FBEAEE;color:#B61134">&#128666;</div>
       <div class="card-lbl">Transport</div>
       <div class="card-sub" id="home-sub-trp">Calendrier des bordereaux</div>
     </div>
@@ -450,7 +454,7 @@ function _locChange(selId, inpId) {
   </div>
 
   <!-- Bouton Scanner QR -->
-  <button onclick="ouvrirScannerQR()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#1F3864,#2E75B6);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(31,56,100,.3);margin-bottom:12px">
+  <button onclick="ouvrirScannerQR()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#B61134,#830050);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(31,56,100,.3);margin-bottom:12px">
     <span style="font-size:22px">&#128247;</span>
     <span>Scanner un QR Code &eacute;quipement</span>
   </button>
@@ -502,7 +506,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">←</div>
     <div class="form-title">Équipement arrivé</div>
-    <label style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px" title="Importer WO en G">
+    <label style="background:#FBEAEE;color:#B61134;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px" title="Importer WO en G">
       📥 WO en G
       <input type="file" accept=".xlsx,.xls" onchange="_importerWOenG(this)" style="display:none">
     </label>
@@ -525,7 +529,7 @@ function _locChange(selId, inpId) {
     <div>
     <input class="fi" type="text" id="ar-wr" placeholder="Ex : 118466 ou tapez pour chercher..."
       autocomplete="off" oninput="_filtrerWOGWR(this.value)" inputmode="numeric">
-    <div id="ar-wr-list" style="display:none;background:#fff;border:1.5px solid #2E75B6;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
+    <div id="ar-wr-list" style="display:none;background:#fff;border:1.5px solid #830050;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
   </div>
 </div>
     <div class="field-grp"><div class="field-lbl"><span class="req">*</span> Date réception</div><input class="fi" type="date" id="ar-date"></div>
@@ -534,7 +538,7 @@ function _locChange(selId, inpId) {
     <div>
     <input class="fi" type="text" id="ar-tag" placeholder="Ex : 220-X-00315 ou tapez pour chercher..."
       autocomplete="off" oninput="_filtrerWOGTag(this.value)" >
-    <div id="ar-tag-list" style="display:none;background:#fff;border:1.5px solid #2E75B6;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
+    <div id="ar-tag-list" style="display:none;background:#fff;border:1.5px solid #830050;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
   </div>
 </div>
 
@@ -560,7 +564,7 @@ function _locChange(selId, inpId) {
     <div>
     <input class="fi" type="text" id="ar-wo" placeholder="Ex : 837669 ou tapez pour chercher..."
       autocomplete="off" oninput="_filtrerWOGWO(this.value)" inputmode="numeric">
-    <div id="ar-wo-list" style="display:none;background:#fff;border:1.5px solid #2E75B6;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
+    <div id="ar-wo-list" style="display:none;background:#fff;border:1.5px solid #830050;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:-2px"></div>
   </div>
 </div>
 
@@ -631,7 +635,7 @@ function _locChange(selId, inpId) {
 
     <!-- Pré-remplis préparés à l'avance (ordinateur) -->
     <div id="eq-prerempli-box" style="display:none;background:#F0F4FF;border:1px solid #C9D6EE;border-radius:12px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#1F3864;margin-bottom:6px">📋 Pré-remplis <span id="eq-prerempli-count" style="color:#888;font-weight:600"></span></div>
+      <div style="font-size:12px;font-weight:700;color:#B61134;margin-bottom:6px">📋 Pré-remplis <span id="eq-prerempli-count" style="color:#888;font-weight:600"></span></div>
       <div id="eq-prerempli-list" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div id="eq-prerempli-actif" style="display:none;background:#E2EFDA;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:600"></div>
@@ -692,7 +696,7 @@ function _locChange(selId, inpId) {
     <!-- Zone photos -->
     <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:11px;color:#888">(optionnel)</span></div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#F0F4FF;color:#B61134;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
         &#128247; Prendre / Ajouter une photo
         <input type="file" accept="image/*" capture="environment" id="eq-photo-input" style="display:none" onchange="ajouterPhotoEquip(this)">
       </label>
@@ -702,7 +706,7 @@ function _locChange(selId, inpId) {
     <div class="field-grp">
       </div>
     </div>
-    <button type="button" onclick="prEnregistrer('eq')" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#1F3864;border:1.5px solid #1F3864;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
+    <button type="button" onclick="prEnregistrer('eq')" style="width:100%;margin-bottom:10px;padding:13px;background:#fff;color:#B61134;border:1.5px solid #B61134;border-radius:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">💾 Enregistrer en pré-rempli</button>
     <button class="send-btn btn-green" onclick="sendEquip()">&#9989; Envoyer le mail</button>
   </div>
 </div>
@@ -875,8 +879,8 @@ function _locChange(selId, inpId) {
     <div style="background:#EDE7F6;color:#7030A0;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCCHAUD : <span id="cnt-chaud">0</span></div>
     <div style="background:#FCE4D6;color:#C55A11;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCREPAR : <span id="cnt-repar">0</span></div>
     <div style="background:#E1F5EE;color:#0F6E56;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STROB : <span id="cnt-strob">0</span></div>
-    <div style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STCHAUD : <span id="cnt-stchaud">0</span></div>
-    <div style="background:#DEEAF1;color:#1F4E79;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCELINS : <span id="cnt-elins">0</span></div>
+    <div style="background:#FBEAEE;color:#B61134;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">STCHAUD : <span id="cnt-stchaud">0</span></div>
+    <div style="background:#FBEAEE;color:#1F4E79;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCELINS : <span id="cnt-elins">0</span></div>
     <div style="background:#E2EFDA;color:#375623;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">MCMECUS : <span id="cnt-mecus">0</span></div>
     <div style="background:#f0f0f0;color:#555;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap">Total : <span id="cnt-total">0</span></div>
   </div>
@@ -1095,7 +1099,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">&#8592;</div>
     <div class="form-title">Transport</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128666;</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">&#128666;</div>
   </div>
   <div class="form-body">
     <div class="trp-card">
@@ -1108,18 +1112,18 @@ function _locChange(selId, inpId) {
       <div class="trp-legend">
         <span class="trp-s-prevu">Prévu</span><span class="trp-s-route">En route</span>
         <span class="trp-s-recu">Livré / Effectué</span><span class="trp-s-retard">Retard / Non effectué</span><span class="trp-s-reporte">Reporté</span>
-        <button onclick="trpAujourdhui()" style="margin-left:auto;border:1px solid #d0d7e2;background:#fff;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit">Aujourd'hui</button>
+        <button onclick="trpAujourdhui()" style="margin-left:auto;border:1px solid #d0d7e2;background:#fff;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:700;color:#B61134;cursor:pointer;font-family:inherit">Aujourd'hui</button>
       </div>
     </div>
 
     <div class="trp-card">
-      <div id="trp-jour-titre" style="font-weight:800;color:#1F3864;font-size:14px;text-transform:capitalize"></div>
+      <div id="trp-jour-titre" style="font-weight:800;color:#B61134;font-size:14px;text-transform:capitalize"></div>
       <div id="trp-jour-sub" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
       <div id="trp-jour-liste"></div>
       <div id="trp-jour-mail"></div>
       <div style="display:flex;gap:8px">
         <button class="send-btn" style="background:#E65100;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'externe')">＋ Transport externe</button>
-        <button class="send-btn" style="background:#1F3864;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'intrasite')">＋ Intrasite usine</button>
+        <button class="send-btn" style="background:#B61134;color:#fff;flex:1;font-size:13px" onclick="trpOuvrir(null,'intrasite')">＋ Intrasite usine</button>
       </div>
     </div>
 
@@ -1137,7 +1141,7 @@ function _locChange(selId, inpId) {
 <div id="trp-modal" onclick="if(event.target===this)trpFermer()">
   <div class="sheet">
     <div>
-      <div id="trp-form-titre" style="font-size:17px;font-weight:800;color:#1F3864">BORDEREAU DE TRANSPORT</div>
+      <div id="trp-form-titre" style="font-size:17px;font-weight:800;color:#B61134">BORDEREAU DE TRANSPORT</div>
       <div id="trp-form-sous-titre" style="font-size:11px;color:var(--muted)">CONTACT TRANSPORT : prnc-transportlocal@pronyresources.com</div>
     </div>
     <!-- ── Transport externe ── -->
@@ -1227,12 +1231,12 @@ function _locChange(selId, inpId) {
 
       <div class="trp-sec">Texte à copier dans le work order</div>
       <textarea class="fi" id="trpi-out" readonly style="height:300px;font-family:Consolas,monospace;font-size:12px;line-height:1.45;background:#F7F9FC"></textarea>
-      <button type="button" onclick="trpCopierTexteWO()" id="trpi-copier" style="padding:11px;background:#1F3864;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">📋 Copier le texte</button>
+      <button type="button" onclick="trpCopierTexteWO()" id="trpi-copier" style="padding:11px;background:#B61134;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">📋 Copier le texte</button>
     </div>
 
     <div class="field-grp" style="margin:0"><div class="field-lbl">Commentaires</div><textarea class="fi" id="trp-comm" style="height:100px"></textarea></div>
     <div class="field-grp" style="margin:0"><div class="field-lbl">Photos</div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:#F0F4FF;color:#B61134;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">
         &#128247; Prendre / ajouter des photos
         <input type="file" accept="image/*" multiple style="display:none" onchange="trpAjouterPhotos(this)">
       </label>
@@ -1254,7 +1258,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">&#8592;</div>
     <div class="form-title">Envoi Callidus</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128228;</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">&#128228;</div>
   </div>
   <div class="form-body">
 
@@ -1279,7 +1283,7 @@ function _locChange(selId, inpId) {
     <div class="field-grp">
       <div class="field-lbl"><span class="req">*</span> Équipements à envoyer</div>
       <div id="cal-eqt-list" style="display:flex;flex-direction:column;gap:10px"></div>
-      <button onclick="addCallidusEqt()" style="margin-top:8px;width:100%;padding:11px;background:#DEEAF1;color:#1F3864;border:1.5px dashed #1F3864;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">+ Ajouter un équipement</button>
+      <button onclick="addCallidusEqt()" style="margin-top:8px;width:100%;padding:11px;background:#FBEAEE;color:#B61134;border:1.5px dashed #B61134;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">+ Ajouter un équipement</button>
     </div>
 
     <!-- Remarques -->
@@ -1288,7 +1292,7 @@ function _locChange(selId, inpId) {
       <textarea class="fi" id="cal-rem" style="height:72px" placeholder="Ex : Priorité urgente, attention contamination..."></textarea>
     </div>
 
-    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="sendEnvoiCallidus()">&#128228; Envoyer la notification Callidus</button>
+    <button class="send-btn" style="background:#B61134;color:#fff" onclick="sendEnvoiCallidus()">&#128228; Envoyer la notification Callidus</button>
   </div>
 </div>
 
@@ -1297,7 +1301,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">&#8592;</div>
     <div class="form-title">Travaux Callidus</div>
-    <label style="background:#DEEAF1;color:#1F3864;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px">Import
+    <label style="background:#FBEAEE;color:#B61134;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px">Import
       <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
     </label>
   </div>
@@ -1313,7 +1317,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show(_isCallidusMode ? 's-callidus-prestataire' : 's-callidus-suivi')">&#8592;</div>
     <div class="form-title">Mise à jour Callidus</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128295;</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">&#128295;</div>
   </div>
   <div class="form-body">
     <div id="cal-update-info" style="background:var(--llblue);border-radius:10px;padding:12px 14px;font-size:12px;line-height:2"></div>
@@ -1343,13 +1347,13 @@ function _locChange(selId, inpId) {
       </div>
     </div>
 
-    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="saveCallidusUpdate()">&#128295; Enregistrer la mise à jour</button>
+    <button class="send-btn" style="background:#B61134;color:#fff" onclick="saveCallidusUpdate()">&#128295; Enregistrer la mise à jour</button>
   </div>
 </div>
 
 <!-- ═══════════════ ACCUEIL CALLIDUS PRESTATAIRE ═══════════════ -->
 <div class="screen" id="s-callidus-prestataire">
-  <div style="background:linear-gradient(160deg,#1F3864,#2E75B6);padding:20px 16px 18px;color:#fff">
+  <div style="background:linear-gradient(160deg,#B61134,#830050);padding:20px 16px 18px;color:#fff">
     <div style="font-size:12px;opacity:.7;margin-bottom:4px">Mode prestataire</div>
     <div style="font-size:20px;font-weight:700">&#128295; Callidus — Réparation</div>
     <div style="font-size:12px;opacity:.7;margin-top:4px">Mettez à jour l'avancement de vos travaux</div>
@@ -1376,14 +1380,14 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="fermerScannerQR()">&#8592;</div>
     <div class="form-title">Scanner QR Code</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128247;</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">&#128247;</div>
   </div>
   <div style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px">
     <div style="font-size:13px;color:var(--muted);text-align:center">
       Pointe la caméra vers le QR code de l'équipement
     </div>
     <!-- Zone caméra -->
-    <div id="qr-reader" style="width:100%;max-width:320px;border-radius:16px;overflow:hidden;border:3px solid #1F3864;min-height:80px">
+    <div id="qr-reader" style="width:100%;max-width:320px;border-radius:16px;overflow:hidden;border:3px solid #B61134;min-height:80px">
       <video id="qr-video" style="width:100%;display:none;border-radius:13px" playsinline muted></video>
     </div>
     <!-- Résultat -->
@@ -1399,7 +1403,7 @@ function _locChange(selId, inpId) {
   <div class="form-header">
     <div class="back-btn" onclick="show('s-home')">&#8592;</div>
     <div class="form-title">Crédit Magasin</div>
-    <div class="form-badge" style="background:#DEEAF1;color:#1F3864">&#128230;</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">&#128230;</div>
   </div>
   <div class="form-body">
 
@@ -1456,7 +1460,7 @@ function _locChange(selId, inpId) {
       <div class="field-lbl">Photo</div>
     </div>
 
-    <button class="send-btn" style="background:#1F3864;color:#fff" onclick="sendCreditMagasin()">&#128228; Notifier le magasin</button>
+    <button class="send-btn" style="background:#B61134;color:#fff" onclick="sendCreditMagasin()">&#128228; Notifier le magasin</button>
   </div>
 </div>
 
@@ -2595,11 +2599,11 @@ function buildEtiquetteSVG(d, width) {
   const W = width || 400;
   const H = Math.round(W * 0.62);   // ratio étiquette ~A6 paysage
 
-  const WG_BG   = {chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', elins:'#DEEAF1', mecus:'#E2EFDA'};
+  const WG_BG   = {chaud:'#EDE7F6', repar:'#FCE4D6', strob:'#E1F5EE', elins:'#FBEAEE', mecus:'#E2EFDA'};
   const WG_FG   = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
-  const bg      = WG_BG[d.wg] || '#DEEAF1';
-  const fg      = WG_FG[d.wg] || '#1F3864';
-  const urgBg   = d.isUrg ? '#E24B4A' : '#1F3864';
+  const bg      = WG_BG[d.wg] || '#FBEAEE';
+  const fg      = WG_FG[d.wg] || '#B61134';
+  const urgBg   = d.isUrg ? '#E24B4A' : '#B61134';
   const urgTxt  = d.isUrg ? 'URGENCE' : 'EN ATTENTE DIAG.';
 
   const appBase = window.location.href.split('?')[0];
@@ -2723,7 +2727,7 @@ function imprimerEtiquette() {
   const svg = buildEtiquetteSVG(_etiqData, 560);
   const wg = _etiqData.wg;
   const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
-  const fg = WG_FG[wg] || '#1F3864';
+  const fg = WG_FG[wg] || '#B61134';
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -2801,7 +2805,7 @@ function afficherEtiquetteURL(params) {
     isUrg    : params.get('urg') === '1'
   };
   const WG_FG = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
-  const fg = WG_FG[d.wg] || '#1F3864';
+  const fg = WG_FG[d.wg] || '#B61134';
   const svg = buildEtiquetteSVG(d, 560);
 
   const html = `<!DOCTYPE html>
@@ -2868,7 +2872,7 @@ function initSignatureCanvas() {
 
   _sigCtx = canvas.getContext('2d');
   _sigCtx.scale(dpr, dpr);
-  _sigCtx.strokeStyle = '#1F3864';
+  _sigCtx.strokeStyle = '#B61134';
   _sigCtx.lineWidth   = 2.5;
   _sigCtx.lineCap     = 'round';
   _sigCtx.lineJoin    = 'round';
@@ -3037,7 +3041,7 @@ function _copieDonnees(url) {
 function _signalerCopie() {
   if (_copieToastVu) return;
   _copieToastVu = true;
-  outboxToast('📶 Réseau lent : dernières données enregistrées affichées. Elles se mettront à jour au prochain affichage.', '#1F3864', '#E3ECF8');
+  outboxToast('📶 Réseau lent : dernières données enregistrées affichées. Elles se mettront à jour au prochain affichage.', '#B61134', '#E3ECF8');
   setTimeout(function(){ _copieToastVu = false; }, 60000);
 }
 function _lectureDB(url, opts) {
@@ -3282,12 +3286,12 @@ const TYPE_COLORS = {
   ARRIVEE   : {bg:'#EDE7F6',fg:'#7030A0',icon:'IN'},
   TERMINE   : {bg:'#E2EFDA',fg:'#375623',icon:'OUT'},
   USAGE     : {bg:'#FCEBEB',fg:'#E24B4A',icon:'USE'},
-  TRANSPORT : {bg:'#DEEAF1',fg:'#1F3864',icon:'TRP'},
+  TRANSPORT : {bg:'#FBEAEE',fg:'#B61134',icon:'TRP'},
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
   ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'},
   PLANNING   : {bg:'#FFF3E0',fg:'#C55A11',icon:'P17'},
   PLANNING_MCCHAUD : {bg:'#EDE7F6',fg:'#7030A0',icon:'MCC'},
-  PLANNING_MCELINS : {bg:'#DEEAF1',fg:'#1F4E79',icon:'MCE'},
+  PLANNING_MCELINS : {bg:'#FBEAEE',fg:'#1F4E79',icon:'MCE'},
   PLANNING_MCMECUS : {bg:'#E2EFDA',fg:'#375623',icon:'MCM'}
 };
 
@@ -3409,7 +3413,7 @@ async function renderHist() {
             '<button onclick="archiverRecord(\'' + r.id + '\',' + !r.archive + ')" title="' + (r.archive ? 'Désarchiver' : 'Archiver (reste dans les KPI)') + '" style="background:#ECEFF1;color:#455A64;border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">' + (r.archive ? '&#8617;' : '&#128451;') + '</button>' +
             '<button onclick="deleteRecord(\'' + r.id + '\')" style="background:var(--lred);color:var(--red);border:none;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:5px">&#128465;</button>' +
             (r.wo ? '<button onclick="cloturerWO(\'' + r.wo + '\',\'' + r.tag + '\',\'' + r.wg + '\',\'' + r.date + '\')" style="background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px" title="Cl&#244;turer WO">&#10003;</button>' : '') +
-            ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wo-usine="' + (r.woUsine||'') + '" data-wr="' + (r.wr||'') + '" data-sc="' + (r.sc||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" data-desc="' + ((r.desc||'').replace(/"/g,"'")) + '" onclick="ouvrirP99(this)" style="background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
+            ((r.type==='TERMINE' && (r.wg==='MCREPAR' || r.wg==='STROB')) ? '<button data-id="' + r.id + '" data-tag="' + (r.tag||'') + '" data-wo="' + (r.wo||'') + '" data-wo-usine="' + (r.woUsine||'') + '" data-wr="' + (r.wr||'') + '" data-sc="' + (r.sc||'') + '" data-wg="' + (r.wg||'') + '" data-mail="' + (r.emailDemandeur||'') + '" data-desc="' + ((r.desc||'').replace(/"/g,"'")) + '" onclick="ouvrirP99(this)" style="background:#FBEAEE;color:#B61134;border:1px solid #90CAF9;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:5px">&#128230; P99</button>' : '')
         }
       </div>
     </div>`;
@@ -3524,11 +3528,11 @@ function renderPlanifier() {
   }
 
   var wgConfig = {
-    'MCREPAR':  { color:'#1F3864', bg:'#DEEAF1', icon:'🔧' },
+    'MCREPAR':  { color:'#B61134', bg:'#FBEAEE', icon:'🔧' },
     'MCCHAUD':  { color:'#C55A11', bg:'#FCE4D6', icon:'🔥' },
     'STROB':    { color:'#7030A0', bg:'#EDE7F6', icon:'⚡' },
     'STCHAUD':  { color:'#375623', bg:'#E2EFDA', icon:'🌡️' },
-    'MCELINS':  { color:'#1F4E79', bg:'#DEEAF1', icon:'⚡' },
+    'MCELINS':  { color:'#1F4E79', bg:'#FBEAEE', icon:'⚡' },
     'MCMECUS':  { color:'#375623', bg:'#E2EFDA', icon:'⚙️' },
   };
 
@@ -3812,7 +3816,7 @@ async function genererRapportPDF() {
   const lignes = filtered.map(r =>
     `<tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px;font-size:11px">${r.date||''}</td>
-      <td style="padding:6px 8px;font-size:11px"><span style="background:${r.type==='ARRIVEE'?'#EDE7F6':r.type==='TERMINE'?'#E2EFDA':r.type==='USAGE'?'#FCEBEB':'#DEEAF1'};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600">${r.type}</span></td>
+      <td style="padding:6px 8px;font-size:11px"><span style="background:${r.type==='ARRIVEE'?'#EDE7F6':r.type==='TERMINE'?'#E2EFDA':r.type==='USAGE'?'#FCEBEB':'#FBEAEE'};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600">${r.type}</span></td>
       <td style="padding:6px 8px;font-size:11px;font-weight:600">${r.tag||'--'}</td>
       <td style="padding:6px 8px;font-size:11px">${r.wo||r.woMtc||'--'}</td>
       <td style="padding:6px 8px;font-size:11px">${r.wg||'--'}</td>
@@ -3824,14 +3828,14 @@ async function genererRapportPDF() {
   <title>Rapport PRNC ${moisNoms[mois]} ${annee}</title>
   <style>
     body{font-family:Arial,sans-serif;margin:20px;color:#1a1a1a}
-    h1{font-size:20px;color:#1F3864;border-bottom:3px solid #1F3864;padding-bottom:8px}
-    h2{font-size:14px;color:#1F3864;margin-top:20px}
+    h1{font-size:20px;color:#B61134;border-bottom:3px solid #B61134;padding-bottom:8px}
+    h2{font-size:14px;color:#B61134;margin-top:20px}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
     .stat{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center}
-    .stat-n{font-size:28px;font-weight:700;color:#1F3864}
+    .stat-n{font-size:28px;font-weight:700;color:#B61134}
     .stat-l{font-size:11px;color:#666;margin-top:2px}
     table{width:100%;border-collapse:collapse;margin-top:10px}
-    th{background:#1F3864;color:#fff;padding:8px;font-size:11px;text-align:left}
+    th{background:#B61134;color:#fff;padding:8px;font-size:11px;text-align:left}
     tr:nth-child(even){background:#f9f9f9}
     .footer{margin-top:30px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px}
     @media print{body{margin:10px}.no-print{display:none}}
@@ -3839,7 +3843,7 @@ async function genererRapportPDF() {
 </head>
   <body>
   <div class="no-print" style="margin-bottom:16px">
-    <button onclick="window.print()" style="background:#1F3864;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">Imprimer / PDF</button>
+    <button onclick="window.print()" style="background:#B61134;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:8px">Imprimer / PDF</button>
     <button onclick="window.close()" style="background:#f2f2f2;border:1px solid #ccc;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">Fermer</button>
   </div>
   <h1>Rapport Mensuel -- ${moisNoms[mois]} ${annee}</h1>
@@ -3863,7 +3867,7 @@ async function genererRapportPDF() {
 <div id="contact-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="if(event.target===this)hideContactPicker()">
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
     <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:#1F3864">Choisir un destinataire</div>
+      <div style="font-size:14px;font-weight:700;color:#B61134">Choisir un destinataire</div>
       <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
     </div>
     <div style="padding:10px 14px 6px">
@@ -4148,7 +4152,7 @@ function setCallidusStatut(s) {
     var el = document.getElementById('cal-st-' + k);
     if (!el) return;
     el.className = 'type-btn' + (k === s ? ' on' : '');
-    el.style.borderColor = k === s ? '#1F3864' : '';
+    el.style.borderColor = k === s ? '#B61134' : '';
   });
 }
 
@@ -4174,7 +4178,7 @@ function openCallidusUpdate(id) {
       info.innerHTML = '<strong>TAG :</strong> ' + (r.tag||'--') + '<br>' +
         '<strong>WO :</strong> ' + (r.wo||'--') + '<br>' +
         '<strong>WR :</strong> ' + (r.wr||'--') + '<br>' +
-        (r.callidusStatut ? '<strong>Statut actuel :</strong> <span style="color:#1F3864;font-weight:700">' + r.callidusStatut + '</span>' : '');
+        (r.callidusStatut ? '<strong>Statut actuel :</strong> <span style="color:#B61134;font-weight:700">' + r.callidusStatut + '</span>' : '');
     }
     if (r.callidusStatut) {
       var key = Object.keys(CALLIDUS_STATUT_LABELS).find(function(k){ return CALLIDUS_STATUT_LABELS[k] === r.callidusStatut; });
@@ -4229,7 +4233,7 @@ function addCallidusEqt() {
   card.style.cssText = 'background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;position:relative';
   card.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '<span style="font-size:12px;font-weight:700;color:#1F3864">Équipement ' + (idx+1) + '</span>' +
+      '<span style="font-size:12px;font-weight:700;color:#B61134">Équipement ' + (idx+1) + '</span>' +
       '<span onclick="removeCalEqt(' + idx + ')" style="color:var(--red);font-size:18px;cursor:pointer">&times;</span>' +
     '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:8px">' +
@@ -4326,8 +4330,8 @@ async function renderCallidusSuivi() {
   list.innerHTML=calRecs.map(function(r){
     var done=r.callidusStatut&&(r.callidusStatut.includes('Livr')||r.callidusStatut.includes('Termin'));
     var statut=r.callidusStatut||'En attente';
-    var statColor=done?'#375623':(r.callidusStatut?'#1F3864':'#888');
-    var statBg=done?'#E2EFDA':(r.callidusStatut?'#DEEAF1':'#f0f0f0');
+    var statColor=done?'#375623':(r.callidusStatut?'#B61134':'#888');
+    var statBg=done?'#E2EFDA':(r.callidusStatut?'#FBEAEE':'#f0f0f0');
     var photos=(r.photos||[]).filter(Boolean);
     var pid='cp_'+r.id;
     window._etnaPhotosMap=window._etnaPhotosMap||{};
@@ -4338,12 +4342,12 @@ async function renderCallidusSuivi() {
         +' onclick="viewPhotoByKey(\''+pid+'\',0)"'
         +' style="width:100%;height:140px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
         +'<span style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.55);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700">'+photos.length+' photo(s)</span></div>')
-      :'<div style="width:100%;height:60px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:24px">&#128295;</div>';
-    return '<div style="background:#fff;border-radius:12px;border:2px solid '+(done?'#375623':'#1F3864')+';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">'
+      :'<div style="width:100%;height:60px;background:linear-gradient(135deg,#FBEAEE,#F2C6D0);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:24px">&#128295;</div>';
+    return '<div style="background:#fff;border-radius:12px;border:2px solid '+(done?'#375623':'#B61134')+';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">'
       +thumb
       +'<div style="padding:12px 14px">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-          +'<span style="font-size:15px;font-weight:700;color:#1F3864">'+(r.tag||'--')+'</span>'
+          +'<span style="font-size:15px;font-weight:700;color:#B61134">'+(r.tag||'--')+'</span>'
           +'<span style="background:'+statBg+';color:'+statColor+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">'+statut+'</span>'
         +'</div>'
         +'<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">'
@@ -4358,7 +4362,7 @@ async function renderCallidusSuivi() {
             +'&#128247; Photo'
             +'<input type="file" accept="image/*" multiple style="display:none" onchange="_ajouterPhotoCallidus(\''+r.id+'\',this)">'
           +'</label>'
-          +'<button onclick="openCallidusUpdate(\''+r.id+'\')" style="flex:2;background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:10px;padding:9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#9881; Mettre a jour</button>'
+          +'<button onclick="openCallidusUpdate(\''+r.id+'\')" style="flex:2;background:#FBEAEE;color:#B61134;border:1.5px solid #B61134;border-radius:10px;padding:9px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">&#9881; Mettre a jour</button>'
           +'<button onclick="supprimerCallidus(\''+r.id+'\')" style="background:#fff;color:#C00;border:1.5px solid #C00;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;cursor:pointer">&#128465;</button>'
         +'</div>'
         +(r.callidusCommentaire?'<div style="font-size:10px;color:#555;background:#fffde7;border-radius:6px;padding:6px 8px;border-left:3px solid #FFC107">'+r.callidusCommentaire+'</div>':'')
@@ -4389,13 +4393,13 @@ async function renderCallidusPrestataire() {
     window._etnaPhotosMap[_cpidP] = photos;
     var photoHtml = photos.length > 0
       ? '<img src="' + cloudThumb(photos[0],600,260) + '" loading="lazy" onclick="viewPhotoByKey(' + _cpidP + ',0)" style="width:100%;height:130px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
-      : '<div style="width:100%;height:60px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
-    return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#1F3864') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:' + (done?.75:1) + '">' +
+      : '<div style="width:100%;height:60px;background:linear-gradient(135deg,#FBEAEE,#F2C6D0);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128295;</div>';
+    return '<div style="background:#fff;border-radius:12px;border:2px solid ' + (done?'#375623':'#B61134') + ';overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);opacity:' + (done?.75:1) + '">' +
       photoHtml +
       '<div style="padding:12px 14px">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-          '<div style="font-size:15px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
-          '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (done?'#E2EFDA':'#DEEAF1') + ';color:' + (done?'#375623':'#1F3864') + '">' + statut + '</span>' +
+          '<div style="font-size:15px;font-weight:700;color:#B61134">' + (r.tag||'--') + '</div>' +
+          '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (done?'#E2EFDA':'#FBEAEE') + ';color:' + (done?'#375623':'#B61134') + '">' + statut + '</span>' +
         '</div>' +
         '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
           (r.wo ? '<div><span style="color:#888;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
@@ -4403,8 +4407,8 @@ async function renderCallidusPrestataire() {
           (r.desc ? '<div><span style="color:#888;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
         '</div>' +
         (r.callidusDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.callidusDateRetour + '</div>' : '') +
-        (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #1F3864;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
-        '<button onclick="openCallidusUpdate(' + r.id + ')" style="width:100%;padding:12px;background:' + (done?'#375623':'#1F3864') + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">' + (done?'&#9989; Modifier':'&#128295; Mettre à jour') + '</button>' +
+        (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #B61134;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
+        '<button onclick="openCallidusUpdate(' + r.id + ')" style="width:100%;padding:12px;background:' + (done?'#375623':'#B61134') + ';color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">' + (done?'&#9989; Modifier':'&#128295; Mettre à jour') + '</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -4540,7 +4544,7 @@ function afficherFallbackCamera() {
   zone.innerHTML =
     '<div style="padding:20px;text-align:center">' +
       '<div style="font-size:13px;color:#555;margin-bottom:16px">Prends en photo le QR code :</div>' +
-      '<label style="display:inline-block;padding:14px 24px;background:#1F3864;color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">' +
+      '<label style="display:inline-block;padding:14px 24px;background:#B61134;color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">' +
         '&#128247; Ouvrir la caméra' +
         '' +
       '</label>' +
@@ -4611,13 +4615,13 @@ async function ouvrirFicheQR(id) {
   if (photos.length) window._etnaPhotosMap[_pid] = photos;
 
   var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', MCELINS:'#1F4E79', MCMECUS:'#375623' };
-  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', MCELINS:'#FBEAEE', MCMECUS:'#E2EFDA' };
 
   if (content) content.innerHTML =
     (photos.length ? '<img src="' + cloudThumb(photos[0],600,400) + '" loading="lazy" onclick="viewPhotoByKey(' + _pid + ',0)" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;cursor:pointer">' : '') +
     '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-        '<div style="font-size:20px;font-weight:700;color:#1F3864">' + (r.tag||'--') + '</div>' +
+        '<div style="font-size:20px;font-weight:700;color:#B61134">' + (r.tag||'--') + '</div>' +
         (r.wg ? '<span style="background:' + (wgBgs[r.wg]||'#f0f0f0') + ';color:' + (wgColors[r.wg]||'#333') + ';padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">' + r.wg + '</span>' : '') +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">' +
@@ -5488,7 +5492,7 @@ function prAfficher(form) {
     var detail = PR_FORMS[form].detail(p);
     return '<div style="display:flex;align-items:center;gap:8px;background:' + (actif ? '#E2EFDA' : '#fff') + ';border:1px solid ' + (actif ? '#A9D18E' : '#dde3ee') + ';border-radius:10px;padding:8px 10px">' +
       '<div onclick="prUtiliser(\'' + form + '\',\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
-        '<div style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">' + blEsc(f[form + '-tag'] || '--') +
+        '<div style="font-size:13px;font-weight:800;color:#B61134;font-family:monospace">' + blEsc(f[form + '-tag'] || '--') +
           (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#888">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
         '<div style="font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
           blEsc([woUsine ? 'WO ' + woUsine : '', woMtc ? 'MTC ' + woMtc : '', f[form + '-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
@@ -5734,7 +5738,7 @@ function viewRecord(id) {
     const photosHtml = `<div data-photos-zone style="padding:10px 0 4px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div data-photos-lbl style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">📷 Photos${photos.length ? ' (' + photos.length + ')' : ''}</div>
-        <label style="background:#1F3864;color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
+        <label style="background:#B61134;color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
           + Ajouter
           <input type="file" accept="image/*" multiple style="display:none" onchange="addPhotosToRecord('${r.id}',this)">
         </label>
@@ -6208,14 +6212,14 @@ async function ouvrirHistoriqueTag(tag) {
 
   var last = tagRecs[0] || {};
   var wgColors = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', STROB:'#0F6E56', STCHAUD:'#1F3864', MCELINS:'#1F4E79', MCMECUS:'#375623' };
-  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', STCHAUD:'#DEEAF1', MCELINS:'#DEEAF1', MCMECUS:'#E2EFDA' };
-  var wgColor  = wgColors[last.wg] || '#1F3864';
-  var wgBg     = wgBgs[last.wg]    || '#DEEAF1';
+  var wgBgs    = { MCCHAUD:'#EDE7F6', MCREPAR:'#FCE4D6', STROB:'#E1F5EE', STCHAUD:'#FBEAEE', MCELINS:'#FBEAEE', MCMECUS:'#E2EFDA' };
+  var wgColor  = wgColors[last.wg] || '#B61134';
+  var wgBg     = wgBgs[last.wg]    || '#FBEAEE';
 
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9000;display:flex;flex-direction:column;overflow:hidden';
 
-  var html = '<div style="background:#1F3864;color:#fff;padding:16px 14px;display:flex;align-items:center;gap:10px">' +
+  var html = '<div style="background:#B61134;color:#fff;padding:16px 14px;display:flex;align-items:center;gap:10px">' +
     '<div style="font-size:22px">📦</div>' +
     '<div style="flex:1">' +
       '<div style="font-weight:800;font-size:18px">' + tag + '</div>' +
@@ -6231,19 +6235,19 @@ async function ouvrirHistoriqueTag(tag) {
     if (!val) return '';
     return '<div style="background:#f8f9fa;border-radius:10px;padding:10px">' +
       '<div style="font-size:10px;color:#888;font-weight:600;margin-bottom:2px">' + icon + ' ' + label + '</div>' +
-      '<div style="font-size:14px;font-weight:800;color:' + (color||'#1F3864') + '">' + val + '</div>' +
+      '<div style="font-size:14px;font-weight:800;color:' + (color||'#B61134') + '">' + val + '</div>' +
     '</div>';
   }
 
-  html += infoBox('🔖', 'TAG', last.tag || tag, '#1F3864');
+  html += infoBox('🔖', 'TAG', last.tag || tag, '#B61134');
   html += infoBox('📋', 'WO', last.wo, '#375623');
   html += infoBox('🔧', 'WR', last.wr, '#C55A11');
   html += infoBox('📦', 'STOCK CODE', last.sc, '#7030A0');
   html += '</div>';
 
   if (last.statut || last.type) {
-    var typeColors = { ARRIVEE:'#1F3864', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' };
-    var typeBgs    = { ARRIVEE:'#DEEAF1', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' };
+    var typeColors = { ARRIVEE:'#B61134', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' };
+    var typeBgs    = { ARRIVEE:'#FBEAEE', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' };
     var tc = typeColors[last.type] || '#555';
     var tb = typeBgs[last.type]   || '#f0f0f0';
     html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
@@ -6279,8 +6283,8 @@ async function ouvrirHistoriqueTag(tag) {
     html += '<div style="text-align:center;padding:30px;color:#999">Aucune intervention trouvée</div>';
   } else {
     tagRecs.forEach(function(r) {
-      var tc = { ARRIVEE:'#1F3864', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' }[r.type] || '#555';
-      var tb = { ARRIVEE:'#DEEAF1', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' }[r.type] || '#f0f0f0';
+      var tc = { ARRIVEE:'#B61134', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' }[r.type] || '#555';
+      var tb = { ARRIVEE:'#FBEAEE', TERMINE:'#E2EFDA', RECUPERE:'#EDE7F6', PEINTURE:'#FCE4D6' }[r.type] || '#f0f0f0';
       var rPhotos = r.photos || [];
 
       html += '<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid ' + tc + ';box-shadow:0 1px 4px rgba(0,0,0,.06)">';
@@ -6848,18 +6852,18 @@ updateStats().then(function() {
         document.body.innerHTML = `
           <div style="margin:0;background:#f0f4f8;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;padding:16px;box-sizing:border-box">
             <div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.12);text-align:center">
-              <div style="background:#1F3864;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+              <div style="background:#B61134;color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:16px">
                 <div style="font-size:16px;font-weight:700">Signature -- Usage direct</div>
                 <div style="font-size:11px;opacity:.7;margin-top:3px">${d.wg || ''}</div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;text-align:left">
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">TAG</div>
-                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.tag||'--'}</div>
+                  <div style="font-size:13px;font-weight:700;color:#B61134">${d.tag||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">WO</div>
-                  <div style="font-size:13px;font-weight:700;color:#1F3864">${d.wo||'--'}</div>
+                  <div style="font-size:13px;font-weight:700;color:#B61134">${d.wo||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
                   <div style="font-size:10px;color:#888;font-weight:700">QTY</div>
@@ -6901,7 +6905,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     var b = document.createElement('div');
     b.id = 'maj-banner';
     b.textContent = '🔄 Nouvelle version disponible — toucher pour mettre à jour';
-    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:78px;z-index:100000;background:#1F3864;color:#fff;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer';
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:78px;z-index:100000;background:#B61134;color:#fff;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer';
     b.onclick = function() { location.reload(); };
     document.body.appendChild(b);
   });
@@ -7041,7 +7045,7 @@ function renderRelanceCard(r, urgent) {
   window._etnaPhotosMap[_pidR] = photos;
   var photoHtml = photos.length > 0
     ? '<img src="' + cloudThumb(photos[0],600,300) + '" loading="lazy" onclick="viewPhotoByKey(' + _pidR + ',0)" style="width:100%;height:150px;object-fit:cover;border-radius:10px 10px 0 0;display:block;cursor:pointer">'
-    : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#DEEAF1,#BDD7EE);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
+    : '<div style="width:100%;height:70px;background:linear-gradient(135deg,#FBEAEE,#F2C6D0);border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:28px">&#128230;</div>';
 
   var sujet = '[RELANCE] Equipement disponible -- ' + tag + (wo !== '--' ? ' -- WO ' + wo : '');
   // Construire un nom lisible (jamais afficher l'adresse email brute)
@@ -7098,7 +7102,7 @@ function renderRelanceCard(r, urgent) {
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
         '<div>' +
           '<div style="display:flex;align-items:center;gap:6px">' +
-            '<span style="font-size:16px;font-weight:700;color:#1F3864">' + tag + '</span>' +
+            '<span style="font-size:16px;font-weight:700;color:#B61134">' + tag + '</span>' +
           '</div>' +
           (wg ? '<span style="background:' + wgBg + ';color:' + wgColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">' + wg + '</span>' : '') +
         '</div>' +
@@ -7110,15 +7114,15 @@ function renderRelanceCard(r, urgent) {
         '<div><span style="color:#888;font-weight:700">Depuis &nbsp;&nbsp;</span>' + date + '</div>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
-        '<div style="width:32px;height:32px;border-radius:50%;background:#DEEAF1;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">&#128100;</div>' +
+        '<div style="width:32px;height:32px;border-radius:50%;background:#FBEAEE;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">&#128100;</div>' +
         '<div>' +
           '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Destinataire</div>' +
-          '<div style="font-size:13px;font-weight:600;color:#1F3864">' + dest + '</div>' +
+          '<div style="font-size:13px;font-weight:600;color:#B61134">' + dest + '</div>' +
           (emailDem ? '<div style="font-size:11px;color:#888">&#9993; ' + emailDem + '</div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:6px">' +
-        '<a href="' + mailTo + '" style="flex:1;background:#1F3864;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
+        '<a href="' + mailTo + '" style="flex:1;background:#B61134;color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">&#9993; Relancer</a>' +
         '<button onclick="marquerRecupere(this.dataset.rid,this)" data-rid="' + r.id + '" style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #375623;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">&#9989; Récupéré</button>' +
         '<button onclick="supprimerRelance(this.dataset.rid,this)" data-rid="' + r.id + '" style="background:#fff;color:#C00;border:1.5px solid #C00;padding:10px 12px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer" title="Supprimer">&#128465;</button>' +
       '</div>' +
@@ -7130,7 +7134,7 @@ function renderRelanceCard(r, urgent) {
           }).join('') +
         '</div>'
         : '') +
-      '<label id="relance-photo-btn-' + r.id + '" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#F0F4FF;color:#1F3864;border:1.5px solid #B0C4DE;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box">' +
+      '<label id="relance-photo-btn-' + r.id + '" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#F0F4FF;color:#B61134;border:1.5px solid #B0C4DE;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box">' +
         '&#128247; ' + (photos.length > 0 ? 'Ajouter une photo (' + photos.length + ')' : 'Ajouter une photo') +
         '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="ajouterPhotoRelance(this,\'' + r.id + '\')"/>' +
       '</label>' +
@@ -7383,8 +7387,8 @@ function renderContactPickerList(q) {
     var mailEsc = c.mail.replace(/"/g,'&quot;');
     html += '<div onclick="selectContact(&quot;' + mailEsc + '&quot;)" ' +
       'style="display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer;border-bottom:1px solid #f0f0f0">' +
-      '<div style="width:36px;height:36px;border-radius:50%;background:#1F3864;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + initials + '</div>' +
-      '<div><div style="font-size:13px;font-weight:600;color:#1F3864">' + c.name + '</div>' +
+      '<div style="width:36px;height:36px;border-radius:50%;background:#B61134;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + initials + '</div>' +
+      '<div><div style="font-size:13px;font-weight:600;color:#B61134">' + c.name + '</div>' +
       '<div style="font-size:11px;color:#888">' + c.mail + '</div></div>' +
       '</div>';
   });
@@ -7401,7 +7405,7 @@ function selectContact(mail) {
   }
   var div = document.createElement('div');
   div.className = 'manual-item';
-  div.innerHTML = '<input class="fi" type="email" value="' + mail + '" readonly style="background:#f5f7fa;color:#1F3864;font-weight:600">' +
+  div.innerHTML = '<input class="fi" type="email" value="' + mail + '" readonly style="background:#f5f7fa;color:#B61134;font-weight:600">' +
     '<div class="del-btn" onclick="this.parentNode.remove()">&times;</div>';
   listEl.appendChild(div);
   hideContactPicker();
@@ -7433,7 +7437,7 @@ var _allPlanningCache = null;
 var _semaineActive  = '';
 var _planningFilter = null;
 var _PSTAT = {
-  PLANIFIE:   {bg:'#DEEAF1',bd:'#1F3864',tx:'#1F3864',lb:'📅 Planifié'},
+  PLANIFIE:   {bg:'#FBEAEE',bd:'#B61134',tx:'#B61134',lb:'📅 Planifié'},
   EN_COURS:   {bg:'#FCE4D6',bd:'#C55A11',tx:'#C55A11',lb:'▶️ En cours'},
   ATT_PIECES: {bg:'#FFF8E1',bd:'#F57F17',tx:'#F57F17',lb:'⏳ Att. pièces'},
   TERMINE:    {bg:'#E2EFDA',bd:'#375623',tx:'#375623',lb:'✅ Terminé'},
@@ -7442,7 +7446,7 @@ var _TECH_COLORS = {
   TOPHER:{c:'#7030A0',bg:'#EDE7F6'},
   SONNY: {c:'#C55A11',bg:'#FCE4D6'},
   WILL:  {c:'#2d6a4f',bg:'#D8F3DC'},
-  'J-LUC':{c:'#1F3864',bg:'#DEEAF1'},
+  'J-LUC':{c:'#B61134',bg:'#FBEAEE'},
 };
 
 
@@ -7691,14 +7695,14 @@ function _renderPlanningList() {
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
-            +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(woVal||'—')+'</span>'
+            +'<span style="font-size:13px;font-weight:800;color:#B61134;font-family:monospace">WO '+(woVal||'—')+'</span>'
             +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
             +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
             +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceP17(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-          +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+          +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
           +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
               +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
               +(item.woUsine&&item.wso?' · ':'')
@@ -7811,7 +7815,7 @@ function ouvrirPlanningModal(wo, semaine) {
       + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
       + item.taches.map(function(t){
           return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
-            + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+            + '<span style="font-size:11px;color:#B61134">' + t.desc + '</span>'
             + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
           + '</div>';
         }).join('')
@@ -7857,7 +7861,7 @@ function ouvrirPlanningModal(wo, semaine) {
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
       + '<div>'
         + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
-        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+        + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#B61134;margin-top:6px">' + (item.tag || '—') + '</div>'
         + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
         + ((item.woUsine||item.wso) ? '<div style="font-size:11px;color:#7030A0;font-weight:700;margin-top:2px">'
             + (item.woUsine?'🏭 WO Usine '+item.woUsine:'')
@@ -7870,14 +7874,14 @@ function ouvrirPlanningModal(wo, semaine) {
     + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
     + (item.jours && item.jours.length
         ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-            + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+            + item.jours.map(function(j){ return '<span style="background:#FBEAEE;color:#B61134;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
           + '</div>' : '')
 
     + tachesHtml
     + '<div style="margin-bottom:12px">'
       + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
       + photosExistHtml
-      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+      + '<label style="display:inline-flex;align-items:center;gap:6px;background:#B61134;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
         + '📷 Ajouter photo(s)'
         + '<input type="file" accept="image/*" multiple onchange="ajouterPhotoPlanning(\'' + wo + '\',this)" style="display:none">'
       + '</label>'
@@ -7886,7 +7890,7 @@ function ouvrirPlanningModal(wo, semaine) {
     + '<div style="margin-bottom:12px">'
       + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
       + '<textarea id="planning-remarque-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
-      + '<button onclick="sauvegarderRemarquePlanning(\'' + wo + '\')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+      + '<button onclick="sauvegarderRemarquePlanning(\'' + wo + '\')" style="margin-top:6px;background:#B61134;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
     + '</div>'
     + (item.ressource ? '<button onclick="notifierRessourceP17(\'' + wo + '\')" style="display:inline-flex;align-items:center;gap:6px;background:#C55A11;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px">📧 Notifier ' + item.ressource + ' — matos dispo</button>' : '')
     + '<div style="display:flex;gap:8px">' + btns + '</div>';
@@ -7986,7 +7990,7 @@ function notifierRessourceP17(wo) {
   mailto(email, subject, body, P17_NOTIF_CC);
 
   var t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#B61134;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;white-space:nowrap';
   t.textContent = '📧 Email préparé pour ' + item.ressource;
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 3000);
@@ -8007,7 +8011,7 @@ function planIndicateursHtml(item) {
   var nb = (item._photos || []).filter(Boolean).length;
   var rem = String(item._remarque || item.remarque || '').trim();
   var h = '';
-  if (nb) h += '<span title="' + nb + ' photo' + (nb > 1 ? 's' : '') + '" style="background:#E3F2FD;color:#1565C0;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">📷 ' + nb + '</span>';
+  if (nb) h += '<span title="' + nb + ' photo' + (nb > 1 ? 's' : '') + '" style="background:#FBEAEE;color:#B61134;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">📷 ' + nb + '</span>';
   if (rem) h += '<span title="Remarque : ' + rem.replace(/"/g, '&quot;').replace(/</g, '&lt;').slice(0, 120) + '" style="background:#FFF3E0;color:#E65100;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">💬</span>';
   return h ? '<div style="display:flex;gap:4px">' + h + '</div>' : '';
 }
@@ -8137,7 +8141,7 @@ function _afficherListeWOGWR(items, list) {
     html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWR(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWR(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + displayWR + '</span>'
+        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#B61134">' + displayWR + '</span>'
         + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
@@ -8170,7 +8174,7 @@ function _afficherListeWOGTag(items, list) {
     html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGTag(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGTag(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + (w.tag||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#B61134">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
@@ -8299,7 +8303,7 @@ function _afficherListeWOGWO(items, list) {
     html += '<div data-wo="' + (w.wo||'') + '" onclick="_selectionnerWOGWO(this.dataset.wo)" ontouchstart="event.preventDefault();_selectionnerWOGWO(this.dataset.wo)"'
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#1F3864">' + (w.wo||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#B61134">' + (w.wo||'') + '</span>'
         + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.wr||'') + '</span>'
         + '<span style="font-family:monospace;font-size:11px;color:#555">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
@@ -8356,7 +8360,7 @@ async function _importerWOenG(input) {
       });
       var t = document.createElement('div');
       t.textContent = '⏳ Envoi de ' + items.length + ' WO vers Neon...';
-      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#B61134;color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999';
       document.body.appendChild(t);
       // Envoyer en lots de 50 pour éviter la limite Vercel
       var batchSize = 50;
@@ -8543,7 +8547,7 @@ function creerPlanningAtelier(cfg) {
     ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9500;display:flex;align-items:flex-end;justify-content:center';
     ov.innerHTML =
       '<div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:430px">' +
-        '<div style="font-size:14px;font-weight:700;color:#1F3864;margin-bottom:14px;text-align:center">Ce fichier est un planning de quel type ?</div>' +
+        '<div style="font-size:14px;font-weight:700;color:#B61134;margin-bottom:14px;text-align:center">Ce fichier est un planning de quel type ?</div>' +
         '<div style="display:flex;flex-direction:column;gap:10px">' +
           '<button id="btn-cat-meca" style="padding:14px;background:#375623;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">🔧 Mécanique</button>' +
           '<button id="btn-cat-usinage" style="padding:14px;background:#1F4E79;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">⚙️ Usinage</button>' +
@@ -8701,7 +8705,7 @@ function creerPlanningAtelier(cfg) {
       var searchActive = !!(el('planning-search-')||{value:''}).value;
       var catBadge = !cat ? ''
         : item.categorie === 'meca' ? '<span style="background:#E2EFDA;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">🔧 Mécanique</span>'
-        : item.categorie === 'usinage' ? '<span style="background:#DEEAF1;color:#1F4E79;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">⚙️ Usinage</span>' : '';
+        : item.categorie === 'usinage' ? '<span style="background:#FBEAEE;color:#1F4E79;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">⚙️ Usinage</span>' : '';
       var ouvrir = cat
         ? 'data-cat="'+(item.categorie||'')+'" onclick="'+fn('ouvrirPlanningModal')+'(this.dataset.wo,this.dataset.semaine,this.dataset.cat)"'
         : 'onclick="'+fn('ouvrirPlanningModal')+'(this.dataset.wo,this.dataset.semaine)"';
@@ -8709,7 +8713,7 @@ function creerPlanningAtelier(cfg) {
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
           +'<div style="min-width:0;flex:1">'
             +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">'
-              +'<span style="font-size:13px;font-weight:800;color:#1F3864;font-family:monospace">WO '+(item.wo||'—')+'</span>'
+              +'<span style="font-size:13px;font-weight:800;color:#B61134;font-family:monospace">WO '+(item.wo||'—')+'</span>'
               +(item.tag?'<span style="background:#eee;color:#555;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;font-family:monospace">'+item.tag+'</span>':'')
               +catBadge
               +(item.semaine&&searchActive?'<span style="background:#E8F5E9;color:#375623;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800">'+item.semaine+'</span>':'')
@@ -8717,7 +8721,7 @@ function creerPlanningAtelier(cfg) {
             +'</div>'
             +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
             +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
-            +(item._loc ? '<div style="font-size:10px;color:#1F3864;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
+            +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
             +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:'+C+';font-weight:700;margin-top:2px">'
                 +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
                 +(item.woUsine&&item.wso?' · ':'')
@@ -8849,7 +8853,7 @@ function creerPlanningAtelier(cfg) {
         + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
         + item.taches.map(function(t){
             return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
-              + '<span style="font-size:11px;color:#1F3864">' + t.desc + '</span>'
+              + '<span style="font-size:11px;color:#B61134">' + t.desc + '</span>'
               + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
             + '</div>';
           }).join('')
@@ -8899,7 +8903,7 @@ function creerPlanningAtelier(cfg) {
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
         + '<div>'
           + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
-          + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#1F3864;margin-top:6px">' + (item.tag || '—') + '</div>'
+          + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#B61134;margin-top:6px">' + (item.tag || '—') + '</div>'
           + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
         + '</div>'
         + '<button onclick="' + fn('fermerPlanningModal') + '()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
@@ -8908,14 +8912,14 @@ function creerPlanningAtelier(cfg) {
       + (item.desc ? '<div style="background:#f5f7fa;border-radius:8px;padding:10px;font-size:12px;color:#555;margin-bottom:10px">' + item.desc + '</div>' : '')
       + (item.jours && item.jours.length
           ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-              + item.jours.map(function(j){ return '<span style="background:#DEEAF1;color:#1F3864;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
+              + item.jours.map(function(j){ return '<span style="background:#FBEAEE;color:#B61134;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700">📅 ' + j + '</span>'; }).join('')
             + '</div>' : '')
 
       + tachesHtml
       + '<div style="margin-bottom:12px">'
         + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
         + photosExistHtml
-        + '<label style="display:inline-flex;align-items:center;gap:6px;background:#1F3864;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
+        + '<label style="display:inline-flex;align-items:center;gap:6px;background:#B61134;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
           + '📷 Ajouter photo(s)'
           + '<input type="file" accept="image/*" multiple onchange="' + fn('ajouterPhotoPlanning') + '(\'' + wo + '\',this' + argCat + ')" style="display:none">'
         + '</label>'
@@ -8924,7 +8928,7 @@ function creerPlanningAtelier(cfg) {
       + '<div style="margin-bottom:12px">'
         + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
         + '<textarea id="planning-remarque-' + id + '-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
-        + '<button onclick="' + fn('sauvegarderRemarquePlanning') + '(\'' + wo + '\'' + argCat + ')" style="margin-top:6px;background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
+        + '<button onclick="' + fn('sauvegarderRemarquePlanning') + '(\'' + wo + '\'' + argCat + ')" style="margin-top:6px;background:#B61134;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
       + '</div>'
       + '<div style="display:flex;gap:8px">' + btns + '</div>';
 
@@ -9138,7 +9142,7 @@ var PLANNINGS_ATELIER = [
   },
   {
     S: 'MCEL', id: 'mcel', table: 'planning_mcelins', ecran: 's-planning-mcelins', wg: 'MCELINS', photos: 'mcel',
-    couleur: '#1F4E79', couleurClair: '#DEEAF1',
+    couleur: '#1F4E79', couleurClair: '#FBEAEE',
     cleStatuts: 'planning-statuts-mcelins', cleContacts: 'prnc-contacts-mcel',
     contacts: [],   // TODO: contacts MCELINS à compléter
     surnoms: {},    // TODO: surnoms MCELINS à compléter
@@ -9606,8 +9610,8 @@ async function ouvrirDetailNC(id) {
   var isLivraison = (d.types||[]).indexOf('Erreur de livraison') !== -1;
 
   var itemsHtml = (d.types||[]).indexOf(NC_TYPE_NON_RECU) !== -1 ? '' : isLivraison ?
-    '<div style="background:#E3F2FD;border-radius:10px;padding:10px;margin-bottom:10px">' +
-      '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+    '<div style="background:#FBEAEE;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="font-size:10px;font-weight:700;color:#B61134;margin-bottom:4px">RECU</div>' +
       '<div style="font-size:11px">Emballage : ' + ((d.rec&&d.rec.emballage)||'--') + '</div>' +
       '<div style="font-size:11px">Destinataire : ' + ((d.rec&&d.rec.destinataire)||'--') + '</div>' +
       '<div style="font-size:11px">Qte reçue : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
@@ -9620,8 +9624,8 @@ async function ouvrirDetailNC(id) {
         '<div style="font-size:11px">Qte : ' + ((d.cmd&&d.cmd.qte)||'--') + '</div>' +
         '<div style="font-size:10px;color:#777">' + ((d.cmd&&d.cmd.desc)||'') + '</div>' +
       '</div>' +
-      '<div style="background:#E3F2FD;border-radius:10px;padding:10px">' +
-        '<div style="font-size:10px;font-weight:700;color:#1F3864;margin-bottom:4px">RECU</div>' +
+      '<div style="background:#FBEAEE;border-radius:10px;padding:10px">' +
+        '<div style="font-size:10px;font-weight:700;color:#B61134;margin-bottom:4px">RECU</div>' +
         '<div style="font-size:11px">S/C : ' + ((d.rec&&d.rec.sc)||'--') + '</div>' +
         '<div style="font-size:11px">P/N : ' + ((d.rec&&d.rec.pn)||'--') + '</div>' +
         '<div style="font-size:11px">Qte : ' + ((d.rec&&d.rec.qte)||'--') + '</div>' +
@@ -9823,7 +9827,7 @@ async function renderBL(force) {
     var lignes = b.lignes || [];
     var hits = q ? lignes.filter(function(l){ return (blNormBds(l.bds) + ' ' + (l.client||'') + ' ' + (l.wg||'')).toUpperCase().indexOf(q) >= 0; }) : [];
     var apercu = (hits.length ? hits : lignes).slice(0, 4).map(function(l) {
-      return '<span style="display:inline-block;background:' + (hits.length ? '#FFF3C4' : '#F0F4FF') + ';color:#1F3864;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;margin:2px 4px 0 0">' + blEsc(blNormBds(l.bds) || '--') + '</span>';
+      return '<span style="display:inline-block;background:' + (hits.length ? '#FFF3C4' : '#F0F4FF') + ';color:#B61134;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;margin:2px 4px 0 0">' + blEsc(blNormBds(l.bds) || '--') + '</span>';
     }).join('') + ((hits.length ? hits : lignes).length > 4 ? '<span style="font-size:11px;color:#888">+' + ((hits.length ? hits : lignes).length - 4) + '</span>' : '');
     var thumb = b.photos && b.photos[0]
       ? '<img src="' + blEsc(cloudThumb(b.photos[0], 120, 120)) + '" alt="" loading="lazy" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)">'
@@ -9832,7 +9836,7 @@ async function renderBL(force) {
       thumb +
       '<div style="flex:1;min-width:0">' +
         '<div style="display:flex;justify-content:space-between;gap:8px">' +
-          '<div style="font-weight:800;color:#1F3864;font-size:14px">' + blEsc(b.dateLivraison || '--') + '</div>' +
+          '<div style="font-weight:800;color:#B61134;font-size:14px">' + blEsc(b.dateLivraison || '--') + '</div>' +
           '<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">' + blBadgeReception(b) +
             '<div style="font-size:11px;font-weight:700;color:#0F6E56;background:#E1F5EE;border-radius:10px;padding:2px 8px;white-space:nowrap">' + lignes.length + ' ligne' + (lignes.length > 1 ? 's' : '') + '</div></div>' +
         '</div>' +
@@ -9902,7 +9906,7 @@ function blRenderPhotos() {
   prev.innerHTML = _blPhotos.map(function(u, i) {
     return '<div class="photo-thumb"><img src="' + blEsc(cloudThumb(u, 200, 200)) + '" alt="Photo ' + (i+1) + '">' +
       '<div class="photo-thumb-del" onclick="blRetirerPhoto(' + i + ')">×</div></div>';
-  }).join('') + (_blUploads ? '<div style="width:72px;height:72px;border-radius:8px;background:#F0F4FF;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1F3864;text-align:center">Envoi…</div>' : '');
+  }).join('') + (_blUploads ? '<div style="width:72px;height:72px;border-radius:8px;background:#F0F4FF;display:flex;align-items:center;justify-content:center;font-size:10px;color:#B61134;text-align:center">Envoi…</div>' : '');
 }
 
 function blRetirerPhoto(i) {
@@ -10203,7 +10207,7 @@ async function ouvrirDetailBL(id) {
   var lignes = b.lignes || [];
   var info = function(lbl, val) {
     return '<div style="flex:1 1 45%"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase">' + lbl + '</div>' +
-      '<div style="font-size:14px;font-weight:700;color:#1F3864">' + blEsc(val || '--') + '</div></div>';
+      '<div style="font-size:14px;font-weight:700;color:#B61134">' + blEsc(val || '--') + '</div></div>';
   };
   document.getElementById('bl-detail-content').innerHTML =
     '<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:10px">' +
@@ -10259,7 +10263,7 @@ function blBadgeReception(b) {
     else if (s.aVerifier) { t = '✅ Validé (' + s.ok + '/' + s.total + ')'; bg = '#E2EFDA'; fg = '#375623'; }
     else { t = '✅ Tout reçu'; bg = '#E2EFDA'; fg = '#375623'; }
   } else if (s.aVerifier < s.total) { t = '⏳ ' + (s.total - s.aVerifier) + '/' + s.total; bg = '#FFF8E1'; fg = '#9A6B00'; }
-  else { t = '📦 À réceptionner'; bg = '#F0F4FF'; fg = '#1F3864'; }
+  else { t = '📦 À réceptionner'; bg = '#F0F4FF'; fg = '#B61134'; }
   return '<div style="font-size:11px;font-weight:700;color:' + fg + ';background:' + bg + ';border-radius:10px;padding:2px 8px;white-space:nowrap">' + t + '</div>';
 }
 
@@ -10281,15 +10285,15 @@ function blHtmlReception(b) {
       '<div style="font-size:11px;color:#666;margin-top:2px">Validée le ' + blEsc(r.date || '--') + ' par ' + blEsc(r.par || '--') +
         (r.mailEnvoye ? ' · magasin prévenu' : '') + '</div>' +
       '<div style="display:flex;gap:8px;margin-top:10px">' +
-        '<button onclick="blAccuseReception()" style="' + btn + ';flex:2;background:#1F3864;color:#fff">📄 Accusé de réception</button>' +
-        '<button onclick="blMailReception()" style="' + btn + ';flex:1;background:#fff;color:#1F3864">📧 Mail</button>' +
-        '<button onclick="blModifierReception()" style="' + btn + ';flex:1;background:#fff;color:#1F3864">✏️ Corriger</button>' +
+        '<button onclick="blAccuseReception()" style="' + btn + ';flex:2;background:#B61134;color:#fff">📄 Accusé de réception</button>' +
+        '<button onclick="blMailReception()" style="' + btn + ';flex:1;background:#fff;color:#B61134">📧 Mail</button>' +
+        '<button onclick="blModifierReception()" style="' + btn + ';flex:1;background:#fff;color:#B61134">✏️ Corriger</button>' +
       '</div></div>';
   }
   var pct = Math.round((s.total - s.aVerifier) / s.total * 100);
   return '<div style="' + carte + ';background:#fff">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-      '<div style="font-weight:800;color:#1F3864;font-size:14px">📦 Réception</div>' +
+      '<div style="font-weight:800;color:#B61134;font-size:14px">📦 Réception</div>' +
       '<div style="font-size:12px;color:#555"><b>' + (s.total - s.aVerifier) + '/' + s.total + '</b> vérifiées</div>' +
     '</div>' +
     '<div style="background:#eee;border-radius:4px;height:6px;margin:8px 0 6px"><div style="width:' + pct + '%;height:6px;border-radius:4px;background:#375623"></div></div>' +
@@ -10314,7 +10318,7 @@ function blHtmlLignes(b) {
           '<button ' + (verrou ? 'disabled ' : 'onclick="blCycleRecu(' + i + ')" ') + 'title="' + st.lbl + '" aria-label="Ligne ' + (i+1) + ' : ' + st.lbl + '" ' +
             'style="width:34px;height:34px;border-radius:8px;border:1.5px solid ' + (l.recu ? st.fg : '#ccc') + ';background:' + st.bg + ';font-size:16px;cursor:' + (verrou ? 'default' : 'pointer') + ';padding:0">' + st.ico + '</button>' +
           '<div style="font-size:9px;color:#999">' + (i+1) + '</div></div>' +
-        '<div style="flex:1;min-width:0;font-weight:800;color:#1F3864;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) +
+        '<div style="flex:1;min-width:0;font-weight:800;color:#B61134;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) +
           (anomalie ? '<div style="font-size:10px;font-weight:700;color:' + st.fg + '">' + st.lbl +
             ' · <span onclick="blCreerNCDepuisLigne(' + i + ')" style="text-decoration:underline;cursor:pointer">➕ créer une NC</span></div>' : '') + '</div>' +
         '<div style="width:38px;flex-shrink:0;text-align:center">' + blEsc(l.qte || 1) + '</div>' +
@@ -10409,22 +10413,22 @@ function blAccuseReception(win) {
     '@page{size:A4;margin:12mm}*{box-sizing:border-box}' +
     'body{margin:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.page{max-width:820px;margin:0 auto;background:#fff;padding:26px 30px}' +
-    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#1F3864}' +
+    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#B61134}' +
     '.toolbar button,.toolbar a{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}' +
-    '.b1{background:#fff;color:#1F3864}.b2{background:#E65100;color:#fff}.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
-    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3864;padding-bottom:10px;margin-bottom:14px;gap:12px}' +
-    'h1{margin:0;font-size:21px;color:#1F3864}.sub{color:#5b6476;font-size:12px;margin-top:3px}.meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
+    '.b1{background:#fff;color:#B61134}.b2{background:#E65100;color:#fff}.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
+    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #B61134;padding-bottom:10px;margin-bottom:14px;gap:12px}' +
+    'h1{margin:0;font-size:21px;color:#B61134}.sub{color:#5b6476;font-size:12px;margin-top:3px}.meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
     '.verdict{border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:15px;font-weight:800}' +
     '.verdict.ok{background:#E2EFDA;color:#2E5A1C}.verdict.ko{background:#FDEBDD;color:#A33A00}' +
     '.tiles{display:flex;gap:10px;margin-bottom:14px}.tile{flex:1;border:1px solid #dde2ea;border-radius:10px;padding:10px;text-align:center}' +
     '.tile .n{font-size:24px;font-weight:800}.tile .l{font-size:11px;color:#5b6476;margin-top:2px}' +
-    'table{width:100%;border-collapse:collapse;font-size:11px}th{background:#1F3864;color:#fff;text-align:left;padding:6px 5px}' +
+    'table{width:100%;border-collapse:collapse;font-size:11px}th{background:#B61134;color:#fff;text-align:left;padding:6px 5px}' +
     'td{padding:5px;border-bottom:1px solid #e6e9ef}td.c,th.c{text-align:center}tr{break-inside:avoid}thead{display:table-header-group}' +
     'tr.r-ko td{background:#FDEBDD}tr.r-ab td{background:#FFF3E0}tr.r-nv td{background:#F4F5F8}' +
     '.st{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}' +
     '.st.ok{background:#E2EFDA;color:#2E5A1C}.st.ko{background:#F8D3C5;color:#A30000}.st.ab{background:#FFE0B2;color:#8A4500}.st.nv{background:#E6E9EF;color:#5b6476}' +
     '.sign{display:flex;gap:16px;margin-top:22px}.sign div{flex:1;border:1px solid #c9cfd9;border-radius:8px;padding:8px 10px;min-height:70px;font-size:11px;color:#5b6476}' +
-    '.sign b{display:block;color:#1F3864;font-size:12px;margin-bottom:4px}' +
+    '.sign b{display:block;color:#B61134;font-size:12px;margin-bottom:4px}' +
     'footer{margin-top:16px;padding-top:6px;border-top:1px solid #dde2ea;font-size:10px;color:#5b6476;display:flex;justify-content:space-between}' +
     '@media (max-width:640px){.page{padding:14px}.tiles{flex-wrap:wrap}.tile{flex:1 1 40%}header{flex-direction:column;align-items:flex-start}.meta{text-align:left}table{font-size:10px}}' +
     '@media print{body{background:#fff}.toolbar{display:none}.page{max-width:none;padding:0}}';
@@ -10435,7 +10439,7 @@ function blAccuseReception(win) {
       '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div></div>' +
     '<div class="page">' +
       '<header><div><h1>Accusé de réception</h1><div class="sub">Bon de livraison interne — PRNC Maintenance Centrale P50</div></div>' +
-        '<div class="meta"><b style="font-size:14px;color:#1F3864">BLI du ' + blEsc(b.dateLivraison || '--') + '</b><br>' +
+        '<div class="meta"><b style="font-size:14px;color:#B61134">BLI du ' + blEsc(b.dateLivraison || '--') + '</b><br>' +
         'Préparé par ' + blEsc(b.preparateur || '--') + (b.livreur ? ' · livré par ' + blEsc(b.livreur) : '') + '<br>Lieu : ' + blEsc(b.lieu || '--') + '<br>' +
         (b.reception ? 'Réceptionné le ' + blEsc(r.date) + (r.heure ? ' à ' + blEsc(r.heure) : '') + '<br>par ' + blEsc(r.par || '--') : 'Réception non encore validée') + '</div></header>' +
       '<div class="verdict ' + (ok ? 'ok' : 'ko') + '">' + (ok ? '✔ Tout a bien été reçu' : '⚠ Réception avec anomalies : ' +
@@ -10899,17 +10903,17 @@ function kpiMaxOffset(keys, periode) {
 }
 
 function kpiSelecteurHtml(selKey, maxOffset) {
-  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#1F3864;cursor:pointer;font-family:inherit';
+  var navBtn = 'width:40px;height:40px;border-radius:10px;border:1px solid #d0d7e2;background:#fff;font-size:16px;font-weight:700;color:#B61134;cursor:pointer;font-family:inherit';
   var navOff = 'width:40px;height:40px;border-radius:10px;border:1px solid #eee;background:#f7f7f7;font-size:16px;font-weight:700;color:#ccc;font-family:inherit';
   return '<div style="' + KPI_CARD + ';display:flex;align-items:center;gap:8px;padding:10px">' +
     (_kpiOffset < maxOffset
       ? '<button onclick="kpiNav(1)" style="' + navBtn + '" aria-label="Periode precedente">◀</button>'
       : '<button disabled style="' + navOff + '">◀</button>') +
     '<div style="flex:1;text-align:center">' +
-      '<div style="font-size:15px;font-weight:800;color:#1F3864">' + kpiPeriodLabel(selKey, _kpiPeriode) + '</div>' +
+      '<div style="font-size:15px;font-weight:800;color:#B61134">' + kpiPeriodLabel(selKey, _kpiPeriode) + '</div>' +
       (_kpiOffset === 0
         ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
-        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#2E75B6;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
+        : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#830050;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
     '</div>' +
     (_kpiOffset > 0
       ? '<button onclick="kpiNav(-1)" style="' + navBtn + '" aria-label="Periode suivante">▶</button>'
@@ -11013,11 +11017,11 @@ async function renderKPI() {
 
   // Arrivées
   html += '<div style="' + card + '">' +
-    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Equipements arrives</div>' +
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Equipements arrives</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:12px">' +
-      '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#1565C0">' + current.total + '</div>' +
-        '<div style="font-size:10px;color:#1565C0">' + periodeLabel + '</div>' +
+      '<div style="flex:1;background:#FBEAEE;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#B61134">' + current.total + '</div>' +
+        '<div style="font-size:10px;color:#B61134">' + periodeLabel + '</div>' +
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + prev.total + '</div>' +
@@ -11064,7 +11068,7 @@ async function renderKPI() {
       '</div>' +
     '</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:11px">' +
-      '<span style="background:#F0F4FF;color:#1F3864;border-radius:10px;padding:3px 8px;font-weight:700">' + cSel.bons + ' bon' + (cSel.bons > 1 ? 's' : '') + ' · ' + cSel.lignes + ' ligne' + (cSel.lignes > 1 ? 's' : '') + '</span>' +
+      '<span style="background:#F0F4FF;color:#B61134;border-radius:10px;padding:3px 8px;font-weight:700">' + cSel.bons + ' bon' + (cSel.bons > 1 ? 's' : '') + ' · ' + cSel.lignes + ' ligne' + (cSel.lignes > 1 ? 's' : '') + '</span>' +
       '<span style="background:#E2EFDA;color:#375623;border-radius:10px;padding:3px 8px;font-weight:700">✅ ' + cSel.colisOk + '/' + cSel.colis + ' colis receptionnes</span>' +
       (cSel.anomalies ? '<span style="background:#FCE4D6;color:#C00000;border-radius:10px;padding:3px 8px;font-weight:700">⚠️ ' + cSel.anomalies + ' anomalie' + (cSel.anomalies > 1 ? 's' : '') + '</span>' : '') +
       (cSel.aRecep ? '<span style="background:#FFF8E1;color:#9A6B00;border-radius:10px;padding:3px 8px;font-weight:700">⏳ ' + cSel.aRecep + ' bon' + (cSel.aRecep > 1 ? 's' : '') + ' a receptionner</span>' : '') +
@@ -11129,7 +11133,7 @@ async function renderKPI() {
   }).concat([1]));
 
   html += '<div style="' + card + '">' +
-    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Historique -- Arrivees par periode</div>';
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Historique -- Arrivees par periode</div>';
   html += histOffsets.map(function(o) {
     var p = kpiPeriodKey(kpiPeriodDate(o, periode), periode);
     var d = byPeriod[p] || emptyArr();
@@ -11143,11 +11147,11 @@ async function renderKPI() {
         (i < segs.length - 1 ? 'border-right:2px solid #fff;' : '') + '"></div>';
     }).join('');
     return '<div onclick="kpiGoTo(' + o + ')" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">' +
-      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#1F3864':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
+      '<div style="width:62px;flex-shrink:0;font-size:11px;' + (isSel?'font-weight:700;color:#B61134':'color:#555') + '">' + p + (isSel?' •':'') + '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:8px;height:8px">' +
         '<div style="display:flex;width:' + barPct + '%;height:8px;border-radius:8px;overflow:hidden">' + segsHtml + '</div>' +
       '</div>' +
-      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#1F3864">' + d.total + '</div>' +
+      '<div style="width:24px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:#B61134">' + d.total + '</div>' +
     '</div>';
   }).join('');
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
@@ -11289,11 +11293,11 @@ async function renderKPIEquip() {
   var parDest = {};
   sel.forEach(function(x){ parDest[x.dest] = (parDest[x.dest] || 0) + 1; });
   html += '<div style="' + KPI_CARD + '">' +
-    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">🚚 Équipements déposés (P99 / DL3)</div>' +
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">🚚 Équipements déposés (P99 / DL3)</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:12px">' +
-      '<div style="flex:1;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="font-size:28px;font-weight:800;color:#1565C0">' + sel.length + '</div>' +
-        '<div style="font-size:10px;color:#1565C0">' + periodeLabel + '</div>' +
+      '<div style="flex:1;background:#FBEAEE;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#B61134">' + sel.length + '</div>' +
+        '<div style="font-size:10px;color:#B61134">' + periodeLabel + '</div>' +
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + nPrev + '</div>' +
@@ -11312,7 +11316,7 @@ async function renderKPIEquip() {
   var parWG = {};
   sel.forEach(function(x){ var w = WG_ORDER.indexOf(x.r.wg) >= 0 ? x.r.wg : 'AUTRE'; parWG[w] = (parWG[w] || 0) + 1; });
   html += '<div style="' + KPI_CARD + '">' +
-    '<div style="font-weight:700;color:#1F3864;margin-bottom:10px">Par workgroup — ' + periodeLabel + '</div>' +
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Par workgroup — ' + periodeLabel + '</div>' +
     WG_ORDER.map(function(w){ return barre(w, parWG[w] || 0, sel.length, WG_COLORS[w]); }).join('') +
     (parWG.AUTRE ? barre('Sans workgroup', parWG.AUTRE, sel.length, '#888') : '') +
   '</div>';
@@ -11571,14 +11575,14 @@ async function genererRapportNC() {
     '*{box-sizing:border-box}' +
     'body{margin:0;background:#eef1f6;font-family:Arial,Helvetica,sans-serif;color:#1d2433;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.page{max-width:820px;margin:0 auto;background:#fff;padding:28px 30px}' +
-    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#1F3864}' +
+    '.toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 16px;background:#B61134}' +
     '.toolbar button,.toolbar a{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}' +
-    '.b1{background:#fff;color:#1F3864}.b2{background:#E65100;color:#fff}' +
+    '.b1{background:#fff;color:#B61134}.b2{background:#E65100;color:#fff}' +
     '.tip{width:100%;text-align:center;color:rgba(255,255,255,.8);font-size:11px}' +
-    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3864;padding-bottom:10px;margin-bottom:18px}' +
-    'header h1{margin:0;font-size:22px;color:#1F3864}header .sub{color:#5b6476;font-size:12px;margin-top:3px}' +
+    'header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #B61134;padding-bottom:10px;margin-bottom:18px}' +
+    'header h1{margin:0;font-size:22px;color:#B61134}header .sub{color:#5b6476;font-size:12px;margin-top:3px}' +
     'header .meta{text-align:right;font-size:11px;color:#5b6476;line-height:1.5}' +
-    'h2{font-size:14px;color:#1F3864;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #dde2ea}' +
+    'h2{font-size:14px;color:#B61134;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #dde2ea}' +
     '.tiles{display:flex;gap:10px}.tile{flex:1;border:1px solid #dde2ea;border-radius:10px;padding:12px;text-align:center}' +
     '.tile .n{font-size:26px;font-weight:800;color:#1d2433}.tile .l{font-size:11px;color:#5b6476;margin-top:2px}' +
     '.tile .l i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}' +
@@ -11596,7 +11600,7 @@ async function genererRapportNC() {
     '.htrack{flex:1;background:#f0f2f6;border-radius:4px;height:10px}.htrack div{height:10px;border-radius:0 4px 4px 0}' +
     '.hval{width:62px;flex-shrink:0;text-align:right;font-weight:700;font-size:12px}.hval span{font-weight:400;color:#5b6476;font-size:10px}' +
     '.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:10.5px}' +
-    'th{background:#1F3864;color:#fff;text-align:left;padding:6px 5px;font-weight:700}' +
+    'th{background:#B61134;color:#fff;text-align:left;padding:6px 5px;font-weight:700}' +
     'td{padding:6px 5px;border-bottom:1px solid #e6e9ef;vertical-align:top}td:first-child{white-space:nowrap}' +
     'tr:nth-child(even) td{background:#f8f9fb}tr.rem td{background:#fff;color:#5b6476;font-style:italic;padding-top:0}' +
     '.muted{color:#5b6476;font-size:9.5px}' +
@@ -11620,7 +11624,7 @@ async function genererRapportNC() {
     '<div class="page">' +
       '<header><div><h1>Rapport magasin : livraisons et non-conformites</h1>' +
         '<div class="sub">Receptions pieces — PRNC Maintenance Centrale P50</div></div>' +
-        '<div class="meta"><b style="font-size:14px;color:#1F3864">' + esc(titrePeriode) + '</b><br>' +
+        '<div class="meta"><b style="font-size:14px;color:#B61134">' + esc(titrePeriode) + '</b><br>' +
         'Edite le ' + dateEdition + (auteur ? '<br>par ' + esc(auteur) : '') + '<br>Destinataire : Magasin</div></header>' +
 
       '<h2>1. Synthese</h2>' +
@@ -11779,7 +11783,7 @@ async function rechercherArticle(sc, type) {
     return '<div data-type="' + type + '" data-sc="' + r.sc + '" onclick="selectionnerArticle(this.dataset.type,this.dataset.sc)" ' +
       'style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:12px" ' +
       'style="cursor:pointer;border-bottom:1px solid #f0f0f0;padding:10px 12px">' +
-      '<div style="font-weight:700;color:#1F3864">' + r.sc + ' — ' + (r.item||'') + '</div>' +
+      '<div style="font-weight:700;color:#B61134">' + r.sc + ' — ' + (r.item||'') + '</div>' +
       '<div style="color:#555;font-size:11px;margin-top:2px">' + (r.desc||'').slice(0,60) + '</div>' +
       (r.pn ? '<div style="color:#888;font-size:10px">P/N : ' + r.pn + '</div>' : '') +
     '</div>';
@@ -11812,7 +11816,7 @@ function selectionnerArticle(type, sc) {
 <div id="contact-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="if(event.target===this)hideContactPicker()">
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
     <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:#1F3864">Choisir un destinataire</div>
+      <div style="font-size:14px;font-weight:700;color:#B61134">Choisir un destinataire</div>
       <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
     </div>
     <div style="padding:10px 14px 6px">
@@ -11892,7 +11896,7 @@ function selectionnerArticle(type, sc) {
     <!-- Semaine auto -->
     <div class="field-grp">
       <div class="field-lbl">Semaine <span style="font-size:10px;color:var(--muted)">(calculée automatiquement)</span></div>
-      <input class="fi" type="text" id="nc-semaine" placeholder="S17" readonly style="background:#f5f5f5;color:#1F3864;font-weight:700">
+      <input class="fi" type="text" id="nc-semaine" placeholder="S17" readonly style="background:#f5f5f5;color:#B61134;font-weight:700">
     </div>
 
     <!-- IR/PR -->
@@ -12004,7 +12008,7 @@ function selectionnerArticle(type, sc) {
     <!-- Séparateur -->
     <div id="nc-rec-section">
     <div style="background:#f5f5f5;border-radius:10px;padding:10px 14px;margin-bottom:4px">
-      <div style="font-weight:700;font-size:12px;color:#1F3864">ITEM RÉCEPTIONNÉ</div>
+      <div style="font-weight:700;font-size:12px;color:#B61134">ITEM RÉCEPTIONNÉ</div>
     </div>
 
     <!-- Item reçu -->
@@ -12132,7 +12136,7 @@ function selectionnerArticle(type, sc) {
       </label>
       <div style="font-size:11px;color:var(--muted);margin-top:4px">Une photo par page, bien à plat et lisible : c'est votre preuve de livraison.</div>
       <div id="bl-photos-preview" class="photo-thumbs"></div>
-      <button type="button" id="bl-lire-btn" onclick="blLirePhoto()" style="display:none;margin-top:10px;width:100%;padding:12px;background:#1F3864;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✨ Lire la photo automatiquement</button>
+      <button type="button" id="bl-lire-btn" onclick="blLirePhoto()" style="display:none;margin-top:10px;width:100%;padding:12px;background:#B61134;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✨ Lire la photo automatiquement</button>
       <div id="bl-lire-msg" style="display:none;margin-top:8px;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:600"></div>
     </div>
 
@@ -12155,7 +12159,7 @@ function selectionnerArticle(type, sc) {
         <span style="font-weight:400;font-size:10px;color:var(--muted)">Optionnel : pour retrouver un N° BDS</span>
       </div>
       <div id="bl-lignes" style="margin-top:6px"></div>
-      <button type="button" onclick="blAjouterLigne()" style="width:100%;padding:11px;background:#F0F4FF;color:#1F3864;border:1.5px dashed #1F3864;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">➕ Ajouter une ligne</button>
+      <button type="button" onclick="blAjouterLigne()" style="width:100%;padding:11px;background:#F0F4FF;color:#B61134;border:1.5px dashed #B61134;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">➕ Ajouter une ligne</button>
     </div>
 
     <div class="field-grp"><div class="field-lbl">Remarques</div>
@@ -12179,7 +12183,7 @@ function selectionnerArticle(type, sc) {
     <div id="bl-detail-content"></div>
     <div style="display:flex;gap:8px">
       <button id="bl-excel-btn" onclick="blExporterExcel()" style="flex:1;background:#E2EFDA;color:#375623;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 Excel</button>
-      <button onclick="modifierBL()" style="flex:1;background:#F0F4FF;color:#1F3864;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✏️ Modifier</button>
+      <button onclick="modifierBL()" style="flex:1;background:#F0F4FF;color:#B61134;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✏️ Modifier</button>
       <button onclick="supprimerBL()" style="flex:1;background:#FCE4D6;color:#C00000;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🗑 Supprimer</button>
     </div>
   </div>
@@ -12187,7 +12191,7 @@ function selectionnerArticle(type, sc) {
 
 <!-- ═══════════════ KPI ═══════════════ -->
 <div class="screen" id="s-kpi">
-  <div class="form-header" style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;border-bottom:none">
+  <div class="form-header" style="background:linear-gradient(135deg,#B61134,#830050);color:#fff;border-bottom:none">
     <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
     <div style="flex:1">
       <div class="form-title" style="color:#fff;font-size:17px">📊 KPI</div>
@@ -12243,8 +12247,8 @@ function selectionnerArticle(type, sc) {
       <button class="numpad-btn" onclick="numpadDel()">&#9003;</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <button class="numpad-btn" style="background:#e8eaf6;color:#1F3864" onclick="numpadClear()">Effacer</button>
-      <button class="numpad-btn" style="background:#1F3864;color:#fff" onclick="numpadOk()">&#10003; OK</button>
+      <button class="numpad-btn" style="background:#e8eaf6;color:#B61134" onclick="numpadClear()">Effacer</button>
+      <button class="numpad-btn" style="background:#B61134;color:#fff" onclick="numpadOk()">&#10003; OK</button>
     </div>
   </div>
 </div>
@@ -12325,8 +12329,8 @@ function selectionnerArticle(type, sc) {
       <span onclick="document.getElementById('planning-search').value='';_onPlanningSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
-      <button onclick="filtrerPlanning('PLANIFIE')" id="pfbtn-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanning('PLANIFIE')" id="pfbtn-PLANIFIE" style="background:#FBEAEE;color:#B61134;border:1.5px solid #B61134;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
       <button onclick="filtrerPlanning('EN_COURS')" id="pfbtn-EN_COURS" style="background:#FCE4D6;color:#C55A11;border:1.5px solid #C55A11;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
       <button onclick="filtrerPlanning('ATT_PIECES')" id="pfbtn-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
       <button onclick="filtrerPlanning('TERMINE')" id="pfbtn-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
@@ -12369,8 +12373,8 @@ function selectionnerArticle(type, sc) {
       <span onclick="document.getElementById('planning-search-mc').value='';_onPlanningSearchMC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mc" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      <button onclick="filtrerPlanningMC(null)" id="pfbtn-mc-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
-      <button onclick="filtrerPlanningMC('PLANIFIE')" id="pfbtn-mc-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMC(null)" id="pfbtn-mc-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMC('PLANIFIE')" id="pfbtn-mc-PLANIFIE" style="background:#FBEAEE;color:#B61134;border:1.5px solid #B61134;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
       <button onclick="filtrerPlanningMC('EN_COURS')" id="pfbtn-mc-EN_COURS" style="background:#EDE7F6;color:#7030A0;border:1.5px solid #7030A0;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
       <button onclick="filtrerPlanningMC('ATT_PIECES')" id="pfbtn-mc-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
       <button onclick="filtrerPlanningMC('TERMINE')" id="pfbtn-mc-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
@@ -12412,9 +12416,9 @@ function selectionnerArticle(type, sc) {
       <span onclick="document.getElementById('planning-search-mcel').value='';_onPlanningSearchMCEL('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mcel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      <button onclick="filtrerPlanningMCEL(null)" id="pfbtn-mcel-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
-      <button onclick="filtrerPlanningMCEL('PLANIFIE')" id="pfbtn-mcel-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
-      <button onclick="filtrerPlanningMCEL('EN_COURS')" id="pfbtn-mcel-EN_COURS" style="background:#DEEAF1;color:#1F4E79;border:1.5px solid #1F4E79;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
+      <button onclick="filtrerPlanningMCEL(null)" id="pfbtn-mcel-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMCEL('PLANIFIE')" id="pfbtn-mcel-PLANIFIE" style="background:#FBEAEE;color:#B61134;border:1.5px solid #B61134;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMCEL('EN_COURS')" id="pfbtn-mcel-EN_COURS" style="background:#FBEAEE;color:#1F4E79;border:1.5px solid #1F4E79;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
       <button onclick="filtrerPlanningMCEL('ATT_PIECES')" id="pfbtn-mcel-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
       <button onclick="filtrerPlanningMCEL('TERMINE')" id="pfbtn-mcel-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
     </div>
@@ -12457,8 +12461,8 @@ function selectionnerArticle(type, sc) {
       <span onclick="document.getElementById('planning-search-mcmec').value='';_onPlanningSearchMCMEC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mcmec" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-      <button onclick="filtrerPlanningMCMEC(null)" id="pfbtn-mcmec-all" style="background:#1F3864;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
-      <button onclick="filtrerPlanningMCMEC('PLANIFIE')" id="pfbtn-mcmec-PLANIFIE" style="background:#DEEAF1;color:#1F3864;border:1.5px solid #1F3864;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
+      <button onclick="filtrerPlanningMCMEC(null)" id="pfbtn-mcmec-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
+      <button onclick="filtrerPlanningMCMEC('PLANIFIE')" id="pfbtn-mcmec-PLANIFIE" style="background:#FBEAEE;color:#B61134;border:1.5px solid #B61134;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">📅 Planifié</button>
       <button onclick="filtrerPlanningMCMEC('EN_COURS')" id="pfbtn-mcmec-EN_COURS" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">▶️ En cours</button>
       <button onclick="filtrerPlanningMCMEC('ATT_PIECES')" id="pfbtn-mcmec-ATT_PIECES" style="background:#FFF8E1;color:#F57F17;border:1.5px solid #F57F17;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">⏳ Att. pièces</button>
       <button onclick="filtrerPlanningMCMEC('TERMINE')" id="pfbtn-mcmec-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
