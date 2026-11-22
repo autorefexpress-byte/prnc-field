@@ -10926,7 +10926,7 @@ var _kpiOnglet = 'magasin';
 function setKpiOnglet(o) {
   _kpiOnglet = o;
   _kpiOffset = 0;
-  ['magasin','equip'].forEach(function(k) {
+  ['magasin','equip','transport'].forEach(function(k) {
     var el = document.getElementById('kpi-tab-' + k);
     if (el) el.className = 'type-btn' + (k === o ? ' on' : '');
   });
@@ -10937,6 +10937,7 @@ function setKpiOnglet(o) {
 
 async function renderKPI() {
   if (_kpiOnglet === 'equip') return renderKPIEquip();
+  if (_kpiOnglet === 'transport') return renderKPITransport();
   var content = document.getElementById('kpi-content');
   if (!content) return;
   content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
@@ -11359,6 +11360,139 @@ async function renderKPIEquip() {
         (attente.length > 10 ? '<div style="font-size:10px;color:#999;margin-top:4px">… et ' + (attente.length - 10) + ' autre(s), voir Relances</div>' : '')
       : '<div style="font-size:12px;color:#375623">Aucun équipement en attente de récupération. ✔</div>') +
   '</div>';
+
+  content.innerHTML = html;
+}
+
+// ══ KPI TRANSPORTS (bordereaux de l'onglet Transport) ══
+async function renderKPITransport() {
+  var content = document.getElementById('kpi-content');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+
+  var liste = [];
+  try {
+    var r = await fetch(DB_API + '?table=bordereau_transport');
+    if (r.ok) liste = (await r.json()).map(function(x){ return Object.assign({}, x.data || {}, { id: x.id, date: x.date }); });
+  } catch(e) { console.warn('KPI transport err', e); }
+
+  var periode = _kpiPeriode;
+  var auj = trpIso(new Date());
+  var byPeriod = {};
+  liste.forEach(function(e) {
+    var d = e.date ? new Date(e.date + 'T00:00:00') : null;
+    var k = d && kpiPeriodKey(d, periode);
+    if (k) (byPeriod[k] = byPeriod[k] || []).push(e);
+  });
+  var maxOffset = kpiMaxOffset(Object.keys(byPeriod), periode);
+  if (_kpiOffset > maxOffset) _kpiOffset = maxOffset;
+  var selKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset, periode), periode);
+  var prevKey = kpiPeriodKey(kpiPeriodDate(_kpiOffset + 1, periode), periode);
+  var sel = byPeriod[selKey] || [];
+  var nPrev = (byPeriod[prevKey] || []).length;
+  var diff = sel.length - nPrev;
+  var periodeLabel = _kpiOffset === 0
+    ? (periode === 'semaine' ? 'Cette semaine' : periode === 'mois' ? 'Ce mois' : 'Ce trimestre')
+    : kpiPeriodLabel(selKey, periode);
+
+  function barre(label, val, total, color) {
+    var pct = total > 0 ? Math.round(val / total * 100) : 0;
+    return '<div style="margin-bottom:6px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+        '<span style="font-size:12px;font-weight:700;color:' + color + '">' + blEsc(label) + '</span>' +
+        '<span style="font-size:12px">' + val + ' (' + pct + '%)</span>' +
+      '</div>' +
+      '<div style="background:#e0e0e0;border-radius:4px;height:8px">' +
+        '<div style="background:' + color + ';width:' + pct + '%;height:8px;border-radius:4px"></div>' +
+      '</div></div>';
+  }
+  function compter(arr, cle) {
+    var m = {};
+    arr.forEach(function(e){ var v = (e[cle] || '').trim(); if (v) m[v] = (m[v] || 0) + 1; });
+    return Object.keys(m).map(function(k){ return [k, m[k]]; }).sort(function(a, b){ return b[1] - a[1]; });
+  }
+
+  var ext = sel.filter(function(e){ return trpTypeDe(e) !== 'intrasite'; });
+  var intra = sel.filter(function(e){ return trpTypeDe(e) === 'intrasite'; });
+  // Réalisés : livrés (externe) ou effectués (intrasite), parmi les transports dont la date est passée ou du jour
+  var echus = sel.filter(function(e){ return e.date <= auj; });
+  var realises = echus.filter(function(e){ return e.statut === 'recu' || e.statut === 'effectue'; }).length;
+  var tauxReal = echus.length ? Math.round(realises / echus.length * 100) : null;
+  var retardsEnCours = liste.filter(function(e){ return trpEstEnRetard(e, auj); }).length;
+
+  var html = kpiSelecteurHtml(selKey, maxOffset);
+
+  // Vue d'ensemble
+  html += '<div style="' + KPI_CARD + '">' +
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">🚚 Bordereaux de transport</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="flex:1;background:#FBEAEE;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#B61134">' + sel.length + '</div>' +
+        '<div style="font-size:10px;color:#B61134">' + periodeLabel + '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:28px;font-weight:800;color:#555">' + nPrev + '</div>' +
+        '<div style="font-size:10px;color:#888">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
+      '</div>' +
+      '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
+        '<div style="font-size:24px;font-weight:800;color:#555">' + (diff > 0 ? '+' : '') + diff + '</div>' +
+        '<div style="font-size:10px;color:#888">Évolution</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="flex:1;background:#E2EFDA;border-radius:10px;padding:10px;text-align:center">' +
+        '<div style="font-size:22px;font-weight:800;color:#375623">' + (tauxReal == null ? '--' : tauxReal + ' %') + '</div>' +
+        '<div style="font-size:10px;color:#375623">Réalisés (' + realises + '/' + echus.length + ' échus)</div>' +
+      '</div>' +
+      '<div style="flex:1;background:' + (retardsEnCours ? '#fee2e2' : '#f5f5f5') + ';border-radius:10px;padding:10px;text-align:center">' +
+        '<div style="font-size:22px;font-weight:800;color:' + (retardsEnCours ? '#b91c1c' : '#555') + '">' + retardsEnCours + '</div>' +
+        '<div style="font-size:10px;color:' + (retardsEnCours ? '#b91c1c' : '#888') + '">En retard (toutes périodes)</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PAR TYPE</div>' +
+    barre('🏭 Intrasite usine', intra.length, sel.length, '#830050') +
+    barre('🚛 Transport externe', ext.length, sel.length, '#FF8500') +
+  '</div>';
+
+  // Statuts
+  var st = function(arr, k){ return arr.filter(function(e){ return e.statut === k; }).length; };
+  html += '<div style="' + KPI_CARD + '">' +
+    '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Statuts — ' + periodeLabel + '</div>' +
+    (intra.length ? '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">INTRASITE USINE (' + intra.length + ')</div>' +
+      barre('Effectué', st(intra, 'effectue'), intra.length, '#166534') +
+      barre('Prévu', st(intra, 'prevu'), intra.length, '#1d4ed8') +
+      barre('Reporté', st(intra, 'reporte'), intra.length, '#6d28d9') +
+      barre('Non effectué', st(intra, 'non_effectue'), intra.length, '#b91c1c') : '') +
+    (ext.length ? '<div style="font-size:11px;font-weight:700;color:#888;margin:8px 0 6px">TRANSPORT EXTERNE (' + ext.length + ')</div>' +
+      barre('Livré', st(ext, 'recu'), ext.length, '#166534') +
+      barre('En route', st(ext, 'route'), ext.length, '#c2410c') +
+      barre('Prévu', st(ext, 'prevu'), ext.length, '#1d4ed8') +
+      barre('Retard / Annulé', st(ext, 'retard'), ext.length, '#b91c1c') : '') +
+    (sel.length ? '' : '<div style="font-size:12px;color:#888">Aucun bordereau sur la période.</div>') +
+  '</div>';
+
+  // Intrasite : par workgroup et par camion
+  if (intra.length) {
+    var WGC = { MCCHAUD:'#7030A0', MCREPAR:'#C55A11', MCELINS:'#1F4E79', MCMECUS:'#375623' };
+    var parWG = compter(intra, 'wg');
+    var sansWG = intra.length - parWG.reduce(function(t, x){ return t + x[1]; }, 0);
+    html += '<div style="' + KPI_CARD + '">' +
+      '<div style="font-weight:700;color:#B61134;margin-bottom:10px">🏭 Intrasite par workgroup</div>' +
+      parWG.map(function(x){ return barre(x[0], x[1], intra.length, WGC[x[0]] || '#888'); }).join('') +
+      (sansWG ? barre('Sans workgroup', sansWG, intra.length, '#aaa') : '') +
+      (compter(intra, 'camion').length ? '<div style="font-size:11px;font-weight:700;color:#888;margin:8px 0 6px">PAR CAMION</div>' +
+        compter(intra, 'camion').slice(0, 5).map(function(x){ return barre(x[0], x[1], intra.length, '#830050'); }).join('') : '') +
+    '</div>';
+  }
+
+  // Destinations les plus fréquentes
+  var dest = compter(sel, 'livrerA');
+  if (dest.length) {
+    html += '<div style="' + KPI_CARD + '">' +
+      '<div style="font-weight:700;color:#B61134;margin-bottom:10px">📍 Destinations les plus fréquentes</div>' +
+      dest.slice(0, 5).map(function(x){ return barre(x[0], x[1], sel.length, '#007B91'); }).join('') +
+    '</div>';
+  }
 
   content.innerHTML = html;
 }
@@ -12201,8 +12335,9 @@ function selectionnerArticle(type, sc) {
   <div class="form-body" style="padding:0">
     <!-- Onglets -->
     <div style="padding:10px 14px 0;background:#fff;display:flex;gap:6px">
-      <button onclick="setKpiOnglet('magasin')" id="kpi-tab-magasin" class="type-btn on" style="flex:1;font-size:12px">📦 Magasin</button>
-      <button onclick="setKpiOnglet('equip')" id="kpi-tab-equip" class="type-btn" style="flex:1;font-size:12px">🚚 Équipements P99 / DL3</button>
+      <button onclick="setKpiOnglet('magasin')" id="kpi-tab-magasin" class="type-btn on" style="flex:1;font-size:12px;padding-left:4px;padding-right:4px">📦 Magasin</button>
+      <button onclick="setKpiOnglet('equip')" id="kpi-tab-equip" class="type-btn" style="flex:1;font-size:12px;padding-left:4px;padding-right:4px">📍 P99 / DL3</button>
+      <button onclick="setKpiOnglet('transport')" id="kpi-tab-transport" class="type-btn" style="flex:1;font-size:12px;padding-left:4px;padding-right:4px">🚚 Transports</button>
     </div>
     <!-- Filtre période -->
     <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:6px">
