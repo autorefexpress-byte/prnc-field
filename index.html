@@ -7702,6 +7702,7 @@ function _renderPlanningList() {
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
           +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +planRemarqueHtml(item)
           +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
           +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
               +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
@@ -8006,14 +8007,21 @@ var PLAN_PHOTO_CFG = {
   mcmec: { table: 'planning_mcmecus',  zone: 'planning-photos-exist-mcmec-', item: function(wo, cat){ return _findPlanItemMCMEC(wo, cat); },                           semaine: function(){ return _semaineActiveMCMEC; }, cache: function(){ _allPlanningCacheMCMEC = null; }, render: function(){ _renderPlanningListMCMEC(); } }
 };
 
-// Pastilles 📷 / 💬 sur la carte d'un WO quand il a des photos ou une remarque
+// Pastille 📷 sur la carte d'un WO quand il a des photos
 function planIndicateursHtml(item) {
   var nb = (item._photos || []).filter(Boolean).length;
-  var rem = String(item._remarque || item.remarque || '').trim();
   var h = '';
   if (nb) h += '<span title="' + nb + ' photo' + (nb > 1 ? 's' : '') + '" style="background:#FBEAEE;color:#B61134;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">📷 ' + nb + '</span>';
-  if (rem) h += '<span title="Remarque : ' + rem.replace(/"/g, '&quot;').replace(/</g, '&lt;').slice(0, 120) + '" style="background:#FFF3E0;color:#E65100;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">💬</span>';
   return h ? '<div style="display:flex;gap:4px">' + h + '</div>' : '';
+}
+
+// Remarque du WO affichée sur sa carte (2 lignes au plus, le reste dans la fiche)
+function planRemarqueHtml(item) {
+  var rem = String(item._remarque || item.remarque || '').trim();
+  if (!rem) return '';
+  return '<div style="margin-top:4px;background:#FFF3E0;color:#9A3412;border-radius:6px;padding:4px 7px;font-size:11px;line-height:1.35;' +
+    'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line">💬 ' +
+    rem.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
 }
 
 // Vignettes des photos d'un WO du planning, avec bouton de suppression
@@ -8721,6 +8729,7 @@ function creerPlanningAtelier(cfg) {
             +'</div>'
             +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
             +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+            +planRemarqueHtml(item)
             +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
             +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:'+C+';font-weight:700;margin-top:2px">'
                 +(item.woUsine?'🏭 WO Usine '+item.woUsine:'')
