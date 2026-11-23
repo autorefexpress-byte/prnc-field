@@ -10453,7 +10453,7 @@ function blAccuseReception(win) {
     '<div class="page">' +
       '<header><div><h1>Accusé de réception</h1><div class="sub">Bon de livraison interne — PRNC Maintenance Centrale P50</div></div>' +
         '<div class="meta"><b style="font-size:14px;color:#B61134">BLI du ' + blEsc(b.dateLivraison || '--') + '</b><br>' +
-        'Préparé par ' + blEsc(b.preparateur || '--') + (b.livreur ? ' · livré par ' + blEsc(b.livreur) : '') + '<br>Lieu : ' + blEsc(b.lieu || '--') + '<br>' +
+        'Préparé par ' + blEsc(b.preparateur || '--') + '<br>Lieu : ' + blEsc(b.lieu || '--') + '<br>' +
         (b.reception ? 'Réceptionné le ' + blEsc(r.date) + (r.heure ? ' à ' + blEsc(r.heure) : '') + '<br>par ' + blEsc(r.par || '--') : 'Réception non encore validée') + '</div></header>' +
       '<div class="verdict ' + (ok ? 'ok' : 'ko') + '">' + (ok ? '✔ Tout a bien été reçu' : '⚠ Réception avec anomalies : ' +
         [s.manquant ? s.manquant + ' manquant' + (s.manquant > 1 ? 's' : '') : '', s.abime ? s.abime + ' abîmé' + (s.abime > 1 ? 's' : '') : '', s.aVerifier ? s.aVerifier + ' non vérifié' + (s.aVerifier > 1 ? 's' : '') : '']
