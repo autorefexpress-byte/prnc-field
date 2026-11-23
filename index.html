@@ -380,6 +380,44 @@ function _locChange(selId, inpId) {
 
   <hr class="sec" style="margin:0 0 4px">
   <div class="section-lbl">Actions rapides</div>
+  <!-- Section 1 : Flux équipements -->
+  <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
+  <div class="action-grid">
+
+    <div class="action-card" onclick="if(!checkConsultMode())show('s-equip')">
+      <div class="card-icon green">&#9989;</div>
+      <div class="card-lbl">Équipement terminé</div>
+      <div class="card-sub" id="home-sub-eq">Notifier le demandeur</div>
+    </div>
+    <div class="action-card" onclick="show('s-arrive')">
+      <div class="card-icon purple">&#128229;</div>
+      <div class="card-lbl">Équipement arrivé</div>
+      <div class="card-sub">Notifier à l'arrivée</div>
+    </div>
+    <div class="action-card" onclick="show('s-transport')">
+      <div class="card-icon" style="background:#FBEAEE;color:#B61134">&#128666;</div>
+      <div class="card-lbl">Transport</div>
+      <div class="card-sub" id="home-sub-trp">Calendrier des bordereaux</div>
+    </div>
+    <div class="action-card" onclick="show('s-peinture')">
+      <div class="card-icon orange">&#127912;</div>
+      <div class="card-lbl">Demande peinture</div>
+      <div class="card-sub" id="home-sub-pt">Envoi vers ETNA</div>
+    </div>
+    <div class="action-card" onclick="show('s-eqt-nettoyer')">
+      <div class="card-icon" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
+      <div class="card-lbl">Eqt à nettoyer</div>
+      <div class="card-sub">Demande de nettoyage</div>
+    </div>
+
+  </div>
+
+  <!-- Bouton Scanner QR -->
+  <button onclick="ouvrirScannerQR()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#B61134,#830050);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(31,56,100,.3);margin-bottom:12px">
+    <span style="font-size:22px">&#128247;</span>
+    <span>Scanner un QR Code &eacute;quipement</span>
+  </button>
+
   <!-- Section 0 : Planning Atelier -->
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Planning Atelier</div>
   <div class="action-grid">
@@ -420,44 +458,6 @@ function _locChange(selId, inpId) {
       </label>
     </div>
   </div>
-
-  <!-- Section 1 : Flux équipements -->
-  <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px">Flux équipements</div>
-  <div class="action-grid">
-
-    <div class="action-card" onclick="if(!checkConsultMode())show('s-equip')">
-      <div class="card-icon green">&#9989;</div>
-      <div class="card-lbl">Équipement terminé</div>
-      <div class="card-sub" id="home-sub-eq">Notifier le demandeur</div>
-    </div>
-    <div class="action-card" onclick="show('s-arrive')">
-      <div class="card-icon purple">&#128229;</div>
-      <div class="card-lbl">Équipement arrivé</div>
-      <div class="card-sub">Notifier à l'arrivée</div>
-    </div>
-    <div class="action-card" onclick="show('s-peinture')">
-      <div class="card-icon orange">&#127912;</div>
-      <div class="card-lbl">Demande peinture</div>
-      <div class="card-sub" id="home-sub-pt">Envoi vers ETNA</div>
-    </div>
-    <div class="action-card" onclick="show('s-eqt-nettoyer')">
-      <div class="card-icon" style="background:var(--lteal);color:var(--teal)">&#129529;</div>
-      <div class="card-lbl">Eqt à nettoyer</div>
-      <div class="card-sub">Demande de nettoyage</div>
-    </div>
-    <div class="action-card" onclick="show('s-transport')">
-      <div class="card-icon" style="background:#FBEAEE;color:#B61134">&#128666;</div>
-      <div class="card-lbl">Transport</div>
-      <div class="card-sub" id="home-sub-trp">Calendrier des bordereaux</div>
-    </div>
-
-  </div>
-
-  <!-- Bouton Scanner QR -->
-  <button onclick="ouvrirScannerQR()" style="width:100%;padding:14px 16px;background:linear-gradient(135deg,#B61134,#830050);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(31,56,100,.3);margin-bottom:12px">
-    <span style="font-size:22px">&#128247;</span>
-    <span>Scanner un QR Code &eacute;quipement</span>
-  </button>
 
   <!-- Section 2 : Gestion des flux -->
   <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 6px">Gestion des flux</div>
@@ -2149,11 +2149,12 @@ function renderUserName() {
     localStorage.setItem('prnc-user-name-asked', '1');
     setUserName();
   }
-  var name = localStorage.getItem(USER_NAME_KEY) || 'Préposé aux pièces';
+  var name = (localStorage.getItem(USER_NAME_KEY) || '').trim();
   var homeEl = document.getElementById('home-user-name');
-  if (homeEl) homeEl.textContent = name;
+  if (homeEl) homeEl.textContent = name || 'Touchez ici pour indiquer votre nom ✎';
+  if (homeEl) homeEl.style.fontSize = name ? '' : '16px';
   var topbarEl = document.getElementById('topbar-user-name');
-  if (topbarEl) topbarEl.textContent = name;
+  if (topbarEl) topbarEl.textContent = name || 'Indiquer mon nom ✎';
 }
 
 // Séparateur d'adresses dans un lien mailto : l'app Outlook du téléphone attend des virgules
@@ -11975,27 +11976,25 @@ function selectionnerArticle(type, sc) {
 
 <!-- ═══════════════ NON-CONFORMITÉS ═══════════════ -->
 <div class="screen" id="s-nc">
-  <div class="form-header" style="background:linear-gradient(135deg,#C00000,#FF0000);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">⚠️ Non-Conformités</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Rapports NC — Magasin</div>
-    </div>
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">←</div>
+    <div class="form-title">⚠️ Non-conformités</div>
+    <div class="form-badge" style="background:#FDECEA;color:#C62828">Magasin</div>
   </div>
   <div class="form-body" style="padding:0">
     <!-- Stats -->
-    <div style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#C00000,#FF0000)">
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="nc-count-mois" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📅 Ce mois</div>
+    <div style="display:flex;gap:8px;padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)">
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-mois" style="font-size:24px;font-weight:800;color:#C62828">0</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">📅 Ce mois</div>
       </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="nc-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📋 Total</div>
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-total" style="font-size:24px;font-weight:800;color:#C62828">0</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">📋 Total</div>
       </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="nc-count-ouvert" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">🔓 Ouverts</div>
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div id="nc-count-ouvert" style="font-size:24px;font-weight:800;color:#C62828">0</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">🔓 Ouverts</div>
       </div>
     </div>
     <!-- Recherche + bouton -->
@@ -12228,22 +12227,20 @@ function selectionnerArticle(type, sc) {
 
 <!-- ═══════════════ BONS DE LIVRAISON ═══════════════ -->
 <div class="screen" id="s-bl">
-  <div class="form-header" style="background:linear-gradient(135deg,#0F6E56,#1A9C7A);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">📑 Bons de livraison</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Archive des BL du magasin</div>
-    </div>
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">←</div>
+    <div class="form-title">📑 Bons de livraison</div>
+    <div class="form-badge" style="background:#E1F5EE;color:#0F6E56">Archive BL</div>
   </div>
   <div class="form-body" style="padding:0">
-    <div style="display:flex;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#0F6E56,#1A9C7A)">
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bl-count-total" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📑 BL archivés</div>
+    <div style="display:flex;gap:8px;padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)">
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div id="bl-count-total" style="font-size:24px;font-weight:800;color:#0F6E56">0</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">📑 BL archivés</div>
       </div>
-      <div style="flex:1;background:rgba(255,255,255,.15);border-radius:12px;padding:12px;text-align:center">
-        <div id="bl-count-lignes" style="font-size:24px;font-weight:800;color:#fff">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">📦 Lignes ce mois</div>
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div id="bl-count-lignes" style="font-size:24px;font-weight:800;color:#0F6E56">0</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">📦 Lignes ce mois</div>
       </div>
     </div>
     <div style="padding:10px 14px;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:8px">
@@ -12334,12 +12331,10 @@ function selectionnerArticle(type, sc) {
 
 <!-- ═══════════════ KPI ═══════════════ -->
 <div class="screen" id="s-kpi">
-  <div class="form-header" style="background:linear-gradient(135deg,#B61134,#830050);color:#fff;border-bottom:none">
-    <div class="back-btn" onclick="show('s-home')" style="color:#fff;background:rgba(255,255,255,.15)">←</div>
-    <div style="flex:1">
-      <div class="form-title" style="color:#fff;font-size:17px">📊 KPI</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.75)">Indicateurs de performance</div>
-    </div>
+  <div class="form-header">
+    <div class="back-btn" onclick="show('s-home')">←</div>
+    <div class="form-title">📊 KPI</div>
+    <div class="form-badge" style="background:#FBEAEE;color:#B61134">Indicateurs</div>
   </div>
   <div class="form-body" style="padding:0">
     <!-- Onglets -->
