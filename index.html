@@ -15,7 +15,7 @@
  --navy:#B61134;--navy2:#830050;--blue:#830050;--lblue:#F2C6D0;--llblue:#FBEAEE;
  --green:#375623;--lgreen:#E2EFDA;--orange:#C55A11;--lorange:#FCE4D6;
  --purple:#7030A0;--lpurple:#EDE7F6;--teal:#0F6E56;--lteal:#E1F5EE;
- --red:#E24B4A;--lred:#FCEBEB;--grey:#F2F2F2;--border:#e0e0e0;--white:#fff;
+ --red:#C62828;--lred:#FCEBEB;--grey:#F2F2F2;--border:#e0e0e0;--white:#fff;
  --text:#1a1a1a;--muted:#666;--bg:#f7f8fa;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;position:relative}
@@ -42,7 +42,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat-num{font-size:20px;font-weight:700;line-height:1}
 .stat-num.orange{color:var(--orange)}.stat-num.green{color:var(--green)}
 .stat-num.purple{color:var(--purple)}.stat-num.teal{color:var(--teal)}
-.stat-label{font-size:10px;color:var(--muted);margin-top:3px}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:3px}
 .section-lbl{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:12px 16px 6px}
 .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
 .action-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 12px;cursor:pointer;transition:transform .12s,box-shadow .12s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.06)}
@@ -53,11 +53,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-icon.navy{background:var(--llblue)}.card-icon.red{background:var(--lred)}
 .card-lbl{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
 .card-sub{font-size:11px;color:var(--muted);margin-top:3px}
-.card-new{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;color:#fff}
+.card-new{position:absolute;top:8px;right:8px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;color:#fff}
 .form-header{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:90}
-.back-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--grey);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;color:var(--text)}
+.back-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--grey);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;color:var(--text)}
 .form-title{font-size:15px;font-weight:600;color:var(--text)}
-.form-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;margin-left:auto;white-space:nowrap}
+.form-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;margin-left:auto;white-space:nowrap}
 .badge-teal{background:var(--lteal);color:var(--teal)}
 .badge-purple{background:var(--lpurple);color:var(--purple)}
 .badge-green{background:var(--lgreen);color:var(--green)}
@@ -75,8 +75,8 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .wg-grp{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
 .wg-btn{padding:9px 3px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
 .wg-icon{font-size:15px;margin-bottom:2px}
-.wg-lbl{font-size:10.5px;font-weight:700;color:var(--text)}
-.wg-sub{font-size:8px;color:var(--muted);margin-top:1px}
+.wg-lbl{font-size:11.5px;font-weight:700;color:var(--text)}
+.wg-sub{font-size:10px;line-height:1.2;color:var(--muted);margin-top:1px}
 .wg-btn.on-chaud{border-color:var(--orange);background:var(--lorange)}.wg-btn.on-chaud .wg-lbl{color:var(--orange)}
 .wg-btn.on-repar{border-color:var(--blue);background:var(--lblue)}.wg-btn.on-repar .wg-lbl{color:var(--navy2)}
 .wg-btn.on-strob{border-color:var(--purple);background:var(--lpurple)}.wg-btn.on-strob .wg-lbl{color:var(--purple)}
@@ -86,7 +86,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .statut-btn{padding:12px 8px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
 .statut-icon{font-size:20px;margin-bottom:4px}
 .statut-lbl{font-size:13px;font-weight:600;color:var(--text)}
-.statut-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.statut-sub{font-size:11px;color:var(--muted);margin-top:2px}
 .statut-btn.on-diag{border-color:var(--blue);background:var(--llblue)}.statut-btn.on-diag .statut-lbl{color:var(--navy2)}
 .statut-btn.on-urg{border-color:var(--red);background:var(--lred)}.statut-btn.on-urg .statut-lbl{color:var(--red)}.statut-btn.on-etna{border-color:var(--orange);background:var(--lorange)}.statut-btn.on-etna .statut-lbl{color:var(--orange)}
 .sem-grp{display:flex;flex-wrap:wrap;gap:6px}
@@ -99,21 +99,21 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .stt-btn.on-r{border-color:var(--green);background:var(--lgreen);color:var(--green)}
 .stt-btn.on-pr{border-color:var(--purple);background:var(--lpurple);color:var(--purple)}
 .stt-btn.on-g{border-color:var(--teal);background:var(--lteal);color:var(--teal)}
-.stt-btn.on-d{border-color:#888;background:var(--grey);color:#555}
+.stt-btn.on-d{border-color:#666;background:var(--grey);color:#555}
 .stt-btn.on-bc{border-color:var(--red);background:var(--lred);color:var(--red)}
 .type-grp{display:flex;flex-wrap:wrap;gap:6px}
-.type-btn{padding:7px 10px;border:2px solid var(--border);border-radius:20px;background:var(--grey);cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);transition:all .15s}
+.type-btn{min-height:44px;padding:10px 14px;display:inline-flex;align-items:center;justify-content:center;text-align:center;border:2px solid var(--border);border-radius:22px;background:var(--grey);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);transition:all .15s}
 .type-btn.on{border-color:var(--navy);background:var(--llblue);color:var(--navy)}
 .kit-grp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .kit-btn{padding:12px 8px;border:2px solid var(--border);border-radius:12px;background:var(--grey);cursor:pointer;text-align:center;transition:all .15s}
 .kit-icon{font-size:20px;margin-bottom:4px}
 .kit-lbl{font-size:13px;font-weight:600;color:var(--text)}
-.kit-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.kit-sub{font-size:11px;color:var(--muted);margin-top:2px}
 .kit-btn.on-oui{border-color:var(--green);background:var(--lgreen)}.kit-btn.on-oui .kit-lbl{color:var(--green)}
 .kit-btn.on-non{border-color:var(--red);background:var(--lred)}.kit-btn.on-non .kit-lbl{color:var(--red)}
 .contacts-box{background:var(--white);border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
 .contacts-hdr{padding:9px 13px;font-size:11px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.contacts-hint{font-size:10px;font-weight:400;font-style:italic}
+.contacts-hint{font-size:11px;font-weight:400;font-style:italic}
 .contact-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--white);transition:background .12s}
 .contact-row:last-child{border-bottom:none}
 .contact-row:active{background:var(--grey)}
@@ -128,7 +128,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .c-info{flex:1;min-width:0}
 .c-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c-mail{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-self{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:var(--lgreen);color:var(--green);flex-shrink:0}
+.c-self{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:10px;background:var(--lgreen);color:var(--green);flex-shrink:0}
 .add-manual{display:flex;align-items:center;gap:7px;padding:9px 12px;border:1.5px dashed var(--border);border-radius:10px;cursor:pointer;font-size:12px;color:var(--muted);background:var(--white);margin-top:4px;transition:border-color .15s}
 .add-manual:active{border-color:var(--navy2)}
 .manual-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
@@ -143,7 +143,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .btn-green{background:var(--green);color:#fff}
 .btn-orange{background:var(--orange);color:#fff}
 .btn-navy{background:var(--navy);color:#fff}
-.dest-badge{display:none;margin-left:7px;background:var(--teal);color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.dest-badge{display:none;margin-left:7px;background:var(--teal);color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
 .success-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:14px;min-height:400px}
 .succ-icon{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px}
 .si-teal{background:var(--lteal);border:2px solid var(--teal)}
@@ -160,7 +160,7 @@ textarea.fi{resize:none;height:68px;line-height:1.5}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 0;opacity:.4;transition:opacity .15s}
 .nav-item.on{opacity:1}
 .nav-icon{font-size:15px;line-height:1}
-.nav-lbl{font-size:8px;font-weight:600;color:var(--muted);letter-spacing:.2px}
+.nav-lbl{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.2px}
 .nav-item.on .nav-lbl{color:var(--navy)}
 hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .numpad-btn{background:#fff;border:1.5px solid #dde3f0;border-radius:10px;padding:14px;font-size:20px;font-weight:700;color:#B61134;cursor:pointer;text-align:center}
@@ -168,7 +168,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .numpad-overlay.open{display:flex}
 .numpad-box{width:100%;background:#f2f2f7;border-radius:20px 20px 0 0;padding:12px;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
 .numpad-display{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:10px;font-size:22px;font-weight:700;color:#B61134;min-height:50px;text-align:right;word-break:break-all;border:2px solid #830050}
-.numpad-label{font-size:11px;color:#888;margin-bottom:6px;text-align:center;font-weight:600;letter-spacing:.5px}
+.numpad-label{font-size:11px;color:#666;margin-bottom:6px;text-align:center;font-weight:600;letter-spacing:.5px}
 .numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .numpad-key{background:#fff;border:none;border-radius:12px;padding:16px 8px;font-size:22px;font-weight:600;color:#B61134;cursor:pointer;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,.1);transition:transform .1s,background .1s;text-align:center}
 .numpad-key:active{transform:scale(.92);background:#e8e8e8}
@@ -185,7 +185,7 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .photo-thumb img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border)}
 .photo-thumb-del{position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;cursor:pointer;font-weight:700}
 .photo-btn{display:inline-block;background:var(--navy2);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;margin-top:4px}
-.cp-tab{flex:1;padding:10px 4px 8px;border:none;background:none;font-family:inherit;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:3px solid transparent;transition:all .2s;}
+.cp-tab{flex:1;padding:10px 4px 8px;border:none;background:none;font-family:inherit;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:3px solid transparent;transition:all .2s;}
 .cp-tab.active{color:#7030A0;border-bottom-color:#7030A0;}
 .cp-pane{display:none;}
 .cp-pane.active{display:block;}
@@ -227,18 +227,18 @@ function _locChange(selId, inpId) {
 .trp-nav h2{margin:0;font-size:16px;color:#B61134;text-transform:capitalize;flex:1;text-align:center}
 .trp-nav button{border:1px solid #d0d7e2;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;color:#B61134;cursor:pointer;font-family:inherit}
 .trp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
-.trp-dow{font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0;text-transform:uppercase}
+.trp-dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0;text-transform:uppercase}
 .trp-day{min-height:58px;border:1px solid #e3e8ef;border-radius:8px;padding:3px;cursor:pointer;background:#fff;overflow:hidden}
 .trp-day.other{background:#f7f8fa;color:#aab2bf}
 .trp-day.today .trp-num{background:#830050;color:#fff}
 .trp-day.sel{outline:2px solid #E65100;border-color:#E65100}
 .trp-num{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:700}
-.trp-chip{display:block;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trp-more{font-size:9px;color:var(--muted);margin-top:1px}
+.trp-chip{display:block;font-size:10px;font-weight:700;padding:1px 4px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trp-more{font-size:10px;color:var(--muted);margin-top:1px}
 .trp-s-prevu{background:#dbeafe;color:#1d4ed8}.trp-s-route{background:#ffedd5;color:#c2410c}
 .trp-s-recu{background:#dcfce7;color:#166534}.trp-s-retard{background:#fee2e2;color:#b91c1c}
 .trp-s-effectue{background:#dcfce7;color:#166534}.trp-s-non_effectue{background:#fee2e2;color:#b91c1c}.trp-s-reporte{background:#ede9fe;color:#6d28d9}
-.trp-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:10px}
+.trp-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:11px}
 .trp-legend span{padding:2px 8px;border-radius:999px;font-weight:700}
 .trp-entry{border:1px solid #e3e8ef;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:12px}
 .trp-entry .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
@@ -387,7 +387,7 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:#FCE4D6;color:#C55A11">📅</div>
       <div class="card-lbl">Planning Atelier MCREPAR</div>
       <div class="card-sub" id="planning-card-sub">Voir les WO</div>
-      <label id="planning-import-label" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#C55A11;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+      <label id="planning-import-label" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;margin-top:8px;min-height:36px;background:#C55A11;color:#fff;border-radius:9px;padding:0 12px;font-size:11.5px;font-weight:700;cursor:pointer;position:relative;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
       </label>
@@ -396,7 +396,7 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:#EDE7F6;color:#7030A0">📅</div>
       <div class="card-lbl">Planning Atelier MCCHAUD</div>
       <div class="card-sub" id="planning-card-sub-mc">Voir les WO</div>
-      <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+      <label id="planning-import-label-mc" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;margin-top:8px;min-height:36px;background:#7030A0;color:#fff;border-radius:9px;padding:0 12px;font-size:11.5px;font-weight:700;cursor:pointer;position:relative;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
       </label>
@@ -405,7 +405,7 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:#FBEAEE;color:#1F4E79">📅</div>
       <div class="card-lbl">Planning Atelier MCELINS</div>
       <div class="card-sub" id="planning-card-sub-mcel">Voir les WO</div>
-      <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#1F4E79;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+      <label id="planning-import-label-mcel" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;margin-top:8px;min-height:36px;background:#1F4E79;color:#fff;border-radius:9px;padding:0 12px;font-size:11.5px;font-weight:700;cursor:pointer;position:relative;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
       </label>
@@ -414,7 +414,7 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:#E2EFDA;color:#375623">📅</div>
       <div class="card-lbl">Planning Atelier MCMECUS</div>
       <div class="card-sub" id="planning-card-sub-mcmec">Voir les WO</div>
-      <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#375623;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+      <label id="planning-import-label-mcmec" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;margin-top:8px;min-height:36px;background:#375623;color:#fff;border-radius:9px;padding:0 12px;font-size:11.5px;font-weight:700;cursor:pointer;position:relative;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="_demanderCategorieMCMEC(this)" style="display:none">
       </label>
@@ -476,7 +476,7 @@ function _locChange(selId, inpId) {
       <div class="card-icon" style="background:#EDE7F6;color:#7030A0">🔧</div>
       <div class="card-lbl">Callidus PRNC</div>
       <div class="card-sub" id="cp-card-sub">Vannes chez Callidus</div>
-      <label onclick="event.stopPropagation()" style="position:absolute;bottom:8px;right:8px;background:#7030A0;color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;cursor:pointer;z-index:2">
+      <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;margin-top:8px;min-height:36px;background:#7030A0;color:#fff;border-radius:9px;padding:0 12px;font-size:11.5px;font-weight:700;cursor:pointer;position:relative;z-index:2">
         ↑ Importer
         <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
       </label>
@@ -635,7 +635,7 @@ function _locChange(selId, inpId) {
 
     <!-- Pré-remplis préparés à l'avance (ordinateur) -->
     <div id="eq-prerempli-box" style="display:none;background:#F0F4FF;border:1px solid #C9D6EE;border-radius:12px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#B61134;margin-bottom:6px">📋 Pré-remplis <span id="eq-prerempli-count" style="color:#888;font-weight:600"></span></div>
+      <div style="font-size:12px;font-weight:700;color:#B61134;margin-bottom:6px">📋 Pré-remplis <span id="eq-prerempli-count" style="color:#666;font-weight:600"></span></div>
       <div id="eq-prerempli-list" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div id="eq-prerempli-actif" style="display:none;background:#E2EFDA;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:600"></div>
@@ -695,7 +695,7 @@ function _locChange(selId, inpId) {
 
     <!-- Zone photos -->
     <div class="field-grp">
-      <div class="field-lbl">Photos <span style="font-size:11px;color:#888">(optionnel)</span></div>
+      <div class="field-lbl">Photos <span style="font-size:11px;color:#666">(optionnel)</span></div>
       <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#F0F4FF;color:#B61134;border:1.5px dashed #B0C4DE;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
         &#128247; Prendre / Ajouter une photo
         <input type="file" accept="image/*" capture="environment" id="eq-photo-input" style="display:none" onchange="ajouterPhotoEquip(this)">
@@ -722,7 +722,7 @@ function _locChange(selId, inpId) {
 
     <!-- Pré-remplis préparés à l'avance (ordinateur) -->
     <div id="pt-prerempli-box" style="display:none;background:#FFF4EC;border:1px solid #F4C7A6;border-radius:12px;padding:10px 12px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#C55A11;margin-bottom:6px">📋 Pré-remplis <span id="pt-prerempli-count" style="color:#888;font-weight:600"></span></div>
+      <div style="font-size:12px;font-weight:700;color:#C55A11;margin-bottom:6px">📋 Pré-remplis <span id="pt-prerempli-count" style="color:#666;font-weight:600"></span></div>
       <div id="pt-prerempli-list" style="display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div id="pt-prerempli-actif" style="display:none;background:#E2EFDA;color:#375623;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:600"></div>
@@ -1019,7 +1019,7 @@ function _locChange(selId, inpId) {
       autocomplete="off" value=""
       oninput="debounceRenderHist()"
       style="width:100%;padding:10px 14px;font-size:14px;border-radius:10px;border:1.5px solid var(--border)">
-    <button onclick="clearHistSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:#888;padding:4px">&#10005;</button>
+    <button onclick="clearHistSearch()" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;color:#666;width:44px;height:44px" aria-label="Effacer la recherche">&#10005;</button>
   </div>
   </div>
   <!-- Filtre + actions -->
@@ -2603,7 +2603,7 @@ function buildEtiquetteSVG(d, width) {
   const WG_FG   = {chaud:'#7030A0', repar:'#C55A11', strob:'#0F6E56', elins:'#1F4E79', mecus:'#375623'};
   const bg      = WG_BG[d.wg] || '#FBEAEE';
   const fg      = WG_FG[d.wg] || '#B61134';
-  const urgBg   = d.isUrg ? '#E24B4A' : '#B61134';
+  const urgBg   = d.isUrg ? '#C62828' : '#B61134';
   const urgTxt  = d.isUrg ? 'URGENCE' : 'EN ATTENTE DIAG.';
 
   const appBase = window.location.href.split('?')[0];
@@ -2712,7 +2712,7 @@ function buildEtiquetteSVG(d, width) {
       x="${infoW + pad*2 + pad}" y="${lineH + Math.round((H - lineH - qrSize)/2)}"
       width="${qrSize}" height="${qrSize}"/>
     <text x="${infoW + pad*2 + pad + Math.round(qrSize/2)}" y="${H - Math.round(pad*0.5)}"
-      font-family="Arial,sans-serif" font-size="${Math.round(fs*0.8)}" fill="#999"
+      font-family="Arial,sans-serif" font-size="${Math.round(fs*0.8)}" fill="#6E6E6E"
       text-anchor="middle">Scanne pour détails<\/text>
 
     <!-- Bordure extérieure -->
@@ -2742,7 +2742,7 @@ function imprimerEtiquette() {
   .no-print { text-align: center; margin-top: 16px; }
   .btn { background: ${fg}; color: #fff; border: none; padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin: 4px; }
   .btn-sec { background: #f2f2f2; color: #333; border: 1px solid #ccc; }
-  .info { font-size: 11px; color: #999; margin-top: 8px; }
+  .info { font-size: 11px; color: #6E6E6E; margin-top: 8px; }
   @media print { .no-print { display: none !important; } body { justify-content: flex-start; } }
 <\/style>
 <\/head>
@@ -2819,7 +2819,7 @@ function afficherEtiquetteURL(params) {
   .no-print { text-align: center; margin-top: 14px; }
   .btn { background: ${fg}; color: #fff; border: none; padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin: 4px; }
   .btn-sec { background: #f2f2f2; color: #333; border: 1px solid #ccc; }
-  .info { font-size: 11px; color: #999; margin-top: 8px; }
+  .info { font-size: 11px; color: #6E6E6E; margin-top: 8px; }
   @media print { .no-print { display: none !important; } }
 <\/style><\/head>
 <body>
@@ -3285,7 +3285,7 @@ async function clearHist() {
 const TYPE_COLORS = {
   ARRIVEE   : {bg:'#EDE7F6',fg:'#7030A0',icon:'IN'},
   TERMINE   : {bg:'#E2EFDA',fg:'#375623',icon:'OUT'},
-  USAGE     : {bg:'#FCEBEB',fg:'#E24B4A',icon:'USE'},
+  USAGE     : {bg:'#FCEBEB',fg:'#C62828',icon:'USE'},
   TRANSPORT : {bg:'#FBEAEE',fg:'#B61134',icon:'TRP'},
   PEINTURE  : {bg:'#FCE4D6',fg:'#C55A11',icon:'PNT'},
   ATT_PIECES : {bg:'#FFF8E1',fg:'#F57F17',icon:'⏳'},
@@ -3837,7 +3837,7 @@ async function genererRapportPDF() {
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th{background:#B61134;color:#fff;padding:8px;font-size:11px;text-align:left}
     tr:nth-child(even){background:#f9f9f9}
-    .footer{margin-top:30px;font-size:10px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:10px}
+    .footer{margin-top:30px;font-size:10px;color:#6E6E6E;text-align:center;border-top:1px solid #eee;padding-top:10px}
     @media print{body{margin:10px}.no-print{display:none}}
   </style>
 </head>
@@ -3868,7 +3868,7 @@ async function genererRapportPDF() {
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
     <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:14px;font-weight:700;color:#B61134">Choisir un destinataire</div>
-      <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
+      <div onclick="hideContactPicker()" style="font-size:20px;color:#767676;cursor:pointer;padding:0 4px">&times;</div>
     </div>
     <div style="padding:10px 14px 6px">
       <input id="contact-picker-search" type="text" placeholder="Rechercher..." oninput="filterContactPicker()"
@@ -4081,7 +4081,7 @@ function activerModeAtelierMC() {
   show('s-planning-mcchaud');
   var iz = document.getElementById('planning-import-zone-mc');
   var plist = document.getElementById('planning-list-mc');
-  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#767676;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
   chargerPlanningNeonMC().then(function() {
     if (iz) iz.style.display = _planningDataMC.length ? 'none' : 'block';
     _renderPlanningListMC();
@@ -4102,7 +4102,7 @@ function activerModeAtelierMCEL() {
   show('s-planning-mcelins');
   var iz = document.getElementById('planning-import-zone-mcel');
   var plist = document.getElementById('planning-list-mcel');
-  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#767676;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
   chargerPlanningNeonMCEL().then(function() {
     if (iz) iz.style.display = _planningDataMCEL.length ? 'none' : 'block';
     _renderPlanningListMCEL();
@@ -4124,7 +4124,7 @@ function activerModeAtelierMCMEC() {
   show('s-planning-mcmecus');
   var iz = document.getElementById('planning-import-zone-mcmec');
   var plist = document.getElementById('planning-list-mcmec');
-  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#767676;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
   chargerPlanningNeonMCMEC().then(function() {
     if (iz) iz.style.display = _planningDataMCMEC.length ? 'none' : 'block';
     _renderPlanningListMCMEC();
@@ -4330,7 +4330,7 @@ async function renderCallidusSuivi() {
   list.innerHTML=calRecs.map(function(r){
     var done=r.callidusStatut&&(r.callidusStatut.includes('Livr')||r.callidusStatut.includes('Termin'));
     var statut=r.callidusStatut||'En attente';
-    var statColor=done?'#375623':(r.callidusStatut?'#B61134':'#888');
+    var statColor=done?'#375623':(r.callidusStatut?'#B61134':'#666');
     var statBg=done?'#E2EFDA':(r.callidusStatut?'#FBEAEE':'#f0f0f0');
     var photos=(r.photos||[]).filter(Boolean);
     var pid='cp_'+r.id;
@@ -4351,11 +4351,11 @@ async function renderCallidusSuivi() {
           +'<span style="background:'+statBg+';color:'+statColor+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">'+statut+'</span>'
         +'</div>'
         +'<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">'
-          +(r.wo?'<div><span style="color:#888;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')
-          +(r.serie?'<div><span style="color:#888;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')
-          +(r.sc?'<div><span style="color:#888;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.sc+'</strong></div>':'')
-          +(r.date?'<div><span style="color:#888;font-weight:700">Date&nbsp;</span>'+r.date+'</div>':'')
-          +(r.remarques?'<div><span style="color:#888;font-weight:700">Lieu&nbsp;&nbsp;</span>'+r.remarques+'</div>':'')
+          +(r.wo?'<div><span style="color:#666;font-weight:700">WO&nbsp;&nbsp;&nbsp;</span><strong>'+r.wo+'</strong></div>':'')
+          +(r.serie?'<div><span style="color:#666;font-weight:700">BDS&nbsp;&nbsp;</span><strong>'+r.serie+'</strong></div>':'')
+          +(r.sc?'<div><span style="color:#666;font-weight:700">S/C&nbsp;&nbsp;</span><strong>'+r.sc+'</strong></div>':'')
+          +(r.date?'<div><span style="color:#666;font-weight:700">Date&nbsp;</span>'+r.date+'</div>':'')
+          +(r.remarques?'<div><span style="color:#666;font-weight:700">Lieu&nbsp;&nbsp;</span>'+r.remarques+'</div>':'')
         +'</div>'
         +'<div style="display:flex;gap:6px;margin-bottom:6px">'
           +'<label style="flex:1;background:#E8F5E9;color:#375623;border:1.5px solid #A5D6A7;border-radius:10px;padding:9px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">'
@@ -4402,9 +4402,9 @@ async function renderCallidusPrestataire() {
           '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:' + (done?'#E2EFDA':'#FBEAEE') + ';color:' + (done?'#375623':'#B61134') + '">' + statut + '</span>' +
         '</div>' +
         '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:2">' +
-          (r.wo ? '<div><span style="color:#888;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
-          (r.wr ? '<div><span style="color:#888;font-weight:700">WR</span> <strong>' + r.wr + '</strong></div>' : '') +
-          (r.desc ? '<div><span style="color:#888;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
+          (r.wo ? '<div><span style="color:#666;font-weight:700">WO</span> <strong>' + r.wo + '</strong></div>' : '') +
+          (r.wr ? '<div><span style="color:#666;font-weight:700">WR</span> <strong>' + r.wr + '</strong></div>' : '') +
+          (r.desc ? '<div><span style="color:#666;font-weight:700">Travaux</span> ' + r.desc + '</div>' : '') +
         '</div>' +
         (r.callidusDateRetour ? '<div style="font-size:12px;color:var(--navy2);font-weight:600;margin-bottom:6px">&#128197; Retour prévu : ' + r.callidusDateRetour + '</div>' : '') +
         (r.callidusCommentaire ? '<div style="background:#f0f4ff;border-left:3px solid #B61134;padding:7px 10px;border-radius:0 8px 8px 0;font-size:11px;font-style:italic;margin-bottom:8px">' + r.callidusCommentaire + '</div>' : '') +
@@ -4625,14 +4625,14 @@ async function ouvrirFicheQR(id) {
         (r.wg ? '<span style="background:' + (wgBgs[r.wg]||'#f0f0f0') + ';color:' + (wgColors[r.wg]||'#333') + ';padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">' + r.wg + '</span>' : '') +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">' +
-        (r.wo     ? '<div><span style="color:#888;font-weight:700">WO MTC</span><br><strong>' + r.wo + '</strong></div>' : '') +
-        (r.woUsine? '<div><span style="color:#888;font-weight:700">WO Usine</span><br><strong>' + r.woUsine + '</strong></div>' : '') +
-        (r.wr     ? '<div><span style="color:#888;font-weight:700">WR</span><br><strong>' + r.wr + '</strong></div>' : '') +
-        (r.sc     ? '<div><span style="color:#888;font-weight:700">Stock Code</span><br><strong>' + r.sc + '</strong></div>' : '') +
-        (r.loc    ? '<div><span style="color:#888;font-weight:700">Localisation</span><br><strong>' + r.loc + '</strong></div>' : '') +
-        (r.date   ? '<div><span style="color:#888;font-weight:700">Date</span><br>' + r.date + '</div>' : '') +
+        (r.wo     ? '<div><span style="color:#666;font-weight:700">WO MTC</span><br><strong>' + r.wo + '</strong></div>' : '') +
+        (r.woUsine? '<div><span style="color:#666;font-weight:700">WO Usine</span><br><strong>' + r.woUsine + '</strong></div>' : '') +
+        (r.wr     ? '<div><span style="color:#666;font-weight:700">WR</span><br><strong>' + r.wr + '</strong></div>' : '') +
+        (r.sc     ? '<div><span style="color:#666;font-weight:700">Stock Code</span><br><strong>' + r.sc + '</strong></div>' : '') +
+        (r.loc    ? '<div><span style="color:#666;font-weight:700">Localisation</span><br><strong>' + r.loc + '</strong></div>' : '') +
+        (r.date   ? '<div><span style="color:#666;font-weight:700">Date</span><br>' + r.date + '</div>' : '') +
       '</div>' +
-      (r.statut ? '<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:8px 12px;font-size:12px"><span style="color:#888;font-weight:700">Statut :</span> <strong>' + r.statut + '</strong></div>' : '') +
+      (r.statut ? '<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:8px 12px;font-size:12px"><span style="color:#666;font-weight:700">Statut :</span> <strong>' + r.statut + '</strong></div>' : '') +
       (r.desc   ? '<div style="margin-top:8px;font-size:11px;color:#555;font-style:italic">' + r.desc + '</div>' : '') +
     '</div>';
 }
@@ -4917,7 +4917,7 @@ function buildWorkflowArriveeHtml(r) {
     html += '<div style="width:26px;height:26px;border-radius:50%;background:' + (s.done?s.color:'#E0E0E0') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">' + s.num + '</div>';
     html += '<div style="flex:1">';
     html += '<div style="font-size:12px;font-weight:700;color:' + (s.done?s.color:'#555') + '">' + (s.done?'&#9989; ':'&#9633; ') + s.label + '</div>';
-    if (s.done && s.date) html += '<div style="font-size:10px;color:#888;margin-top:2px">' + s.date + '</div>';
+    if (s.done && s.date) html += '<div style="font-size:10px;color:#666;margin-top:2px">' + s.date + '</div>';
     html += '</div>';
     if (!s.done && s.action) {
       var rid = r.id || '';
@@ -5493,7 +5493,7 @@ function prAfficher(form) {
     return '<div style="display:flex;align-items:center;gap:8px;background:' + (actif ? '#E2EFDA' : '#fff') + ';border:1px solid ' + (actif ? '#A9D18E' : '#dde3ee') + ';border-radius:10px;padding:8px 10px">' +
       '<div onclick="prUtiliser(\'' + form + '\',\'' + p.id + '\')" style="flex:1;min-width:0;cursor:pointer">' +
         '<div style="font-size:13px;font-weight:800;color:#B61134;font-family:monospace">' + blEsc(f[form + '-tag'] || '--') +
-          (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#888">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
+          (p.wg ? ' <span style="font-size:10px;font-family:inherit;color:#666">' + blEsc(WG_LABELS[p.wg] || p.wg) + '</span>' : '') + '</div>' +
         '<div style="font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
           blEsc([woUsine ? 'WO ' + woUsine : '', woMtc ? 'MTC ' + woMtc : '', f[form + '-desc'] || ''].filter(Boolean).join(' · ')) + '</div>' +
         (detail ? '<div style="font-size:10px;color:#375623;font-weight:700">' + blEsc(detail) + '</div>' : '') +
@@ -5576,7 +5576,7 @@ async function ajouterPhotoEquip(input) {
   var preview = document.getElementById('eq-photos-preview');
   
   var loadDiv = document.createElement('div');
-  loadDiv.style.cssText = 'width:72px;height:72px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888';
+  loadDiv.style.cssText = 'width:72px;height:72px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666';
   loadDiv.textContent = '⏳';
   if (preview) preview.appendChild(loadDiv);
 
@@ -6234,7 +6234,7 @@ async function ouvrirHistoriqueTag(tag) {
   function infoBox(icon, label, val, color) {
     if (!val) return '';
     return '<div style="background:#f8f9fa;border-radius:10px;padding:10px">' +
-      '<div style="font-size:10px;color:#888;font-weight:600;margin-bottom:2px">' + icon + ' ' + label + '</div>' +
+      '<div style="font-size:10px;color:#666;font-weight:600;margin-bottom:2px">' + icon + ' ' + label + '</div>' +
       '<div style="font-size:14px;font-weight:800;color:' + (color||'#B61134') + '">' + val + '</div>' +
     '</div>';
   }
@@ -6254,7 +6254,7 @@ async function ouvrirHistoriqueTag(tag) {
     if (last.wg) html += '<span style="background:' + wgBg + ';color:' + wgColor + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + last.wg + '</span>';
     if (last.type) html += '<span style="background:' + tb + ';color:' + tc + ';border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">' + last.type + '</span>';
     if (last.statut) html += '<span style="background:#FFF3E0;color:#E65100;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600">' + last.statut + '</span>';
-    if (last.date) html += '<span style="font-size:11px;color:#888">' + last.date + '</span>';
+    if (last.date) html += '<span style="font-size:11px;color:#666">' + last.date + '</span>';
     html += '</div>';
   }
   html += '</div>';
@@ -6262,7 +6262,7 @@ async function ouvrirHistoriqueTag(tag) {
   var photos = last.photos || [];
   if (photos.length > 0) {
     html += '<div style="background:#fff;padding:10px 14px;border-bottom:1px solid #e0e0e0">';
-    html += '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">📷 PHOTOS (' + photos.length + ')</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:8px">📷 PHOTOS (' + photos.length + ')</div>';
     html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">';
     photos.forEach(function(url) {
       html += '<img src="' + cloudThumb(url, 200, 200) + '" data-full="' + url + '" loading="lazy" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;border:1px solid #e0e0e0" onclick="window.open(this.dataset.full,\'_blank\')">'; 
@@ -6280,7 +6280,7 @@ async function ouvrirHistoriqueTag(tag) {
   html += '<div style="font-weight:700;color:#555;font-size:11px;margin-bottom:8px;text-transform:uppercase">Historique — ' + tagRecs.length + ' intervention(s)</div>';
 
   if (!tagRecs.length) {
-    html += '<div style="text-align:center;padding:30px;color:#999">Aucune intervention trouvée</div>';
+    html += '<div style="text-align:center;padding:30px;color:#6E6E6E">Aucune intervention trouvée</div>';
   } else {
     tagRecs.forEach(function(r) {
       var tc = { ARRIVEE:'#B61134', TERMINE:'#375623', RECUPERE:'#7030A0', PEINTURE:'#C55A11' }[r.type] || '#555';
@@ -6291,7 +6291,7 @@ async function ouvrirHistoriqueTag(tag) {
       
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
       html += '<span style="background:' + tb + ';color:' + tc + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (r.type||'--') + '</span>';
-      html += '<span style="font-size:11px;color:#888">' + (r.date||'--') + (r.heure ? ' ' + r.heure : '') + '</span>';
+      html += '<span style="font-size:11px;color:#666">' + (r.date||'--') + (r.heure ? ' ' + r.heure : '') + '</span>';
       html += '</div>';
 
       var infos = [];
@@ -6300,7 +6300,7 @@ async function ouvrirHistoriqueTag(tag) {
       if (r.wg) infos.push(r.wg);
       if (infos.length) html += '<div style="font-size:12px;color:#555;margin-bottom:4px">' + infos.join(' · ') + '</div>';
 
-      if (r.statut) html += '<div style="font-size:11px;color:#888;margin-bottom:4px">📌 ' + r.statut + '</div>';
+      if (r.statut) html += '<div style="font-size:11px;color:#666;margin-bottom:4px">📌 ' + r.statut + '</div>';
       
       if (r.description) html += '<div style="font-size:11px;color:#666;margin-bottom:4px">' + r.description + '</div>';
 
@@ -6309,7 +6309,7 @@ async function ouvrirHistoriqueTag(tag) {
         rPhotos.slice(0, 5).forEach(function(url) {
           html += '<img src="' + cloudThumb(url, 120, 120) + '" data-full="' + url + '" loading="lazy" onclick="window.open(this.dataset.full,\'_blank\')" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0">';
         });
-        if (rPhotos.length > 5) html += '<div style="width:48px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888">+' + (rPhotos.length-5) + '</div>';
+        if (rPhotos.length > 5) html += '<div style="width:48px;height:48px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666">+' + (rPhotos.length-5) + '</div>';
         html += '</div>';
       }
 
@@ -6696,7 +6696,7 @@ async function _importerBordereauCallidus(input) {
 async function renderCallidusPrnc(forceRefresh) {
   var list = document.getElementById('cp-list-content');
   if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">⏳ Chargement...</div>';
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:#767676">⏳ Chargement...</div>';
 
   if (!_cpCache || forceRefresh) {
     var resp = await fetch(DB_API + '?table=callidus_prnc').catch(function() { return null; });
@@ -6755,7 +6755,7 @@ async function renderCallidusPrnc(forceRefresh) {
   }
 
   if (!recs.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne trouvée</div></div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#767676"><div style="font-size:36px">🔧</div><div style="margin-top:10px;font-size:13px">Aucune vanne trouvée</div></div>';
     return;
   }
 
@@ -6780,7 +6780,7 @@ async function renderCallidusPrnc(forceRefresh) {
         + '<div style="padding:10px 12px">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
             + '<span style="font-size:13px;font-weight:800;color:#7030A0">' + (r.tag || '--') + '</span>'
-            + '<span style="font-size:10px;color:#888">' + (r.date || '') + '</span>'
+            + '<span style="font-size:10px;color:#666">' + (r.date || '') + '</span>'
           + '</div>'
           + (r.wo || meta.wr || r.qty || r.serie
             ? '<div style="background:#F3E5F5;border-radius:7px;padding:6px 9px;font-size:10px;line-height:1.8;margin-bottom:7px">'
@@ -6790,7 +6790,7 @@ async function renderCallidusPrnc(forceRefresh) {
               + (r.serie ? '<div><span style="color:#7030A0;font-weight:700">IR BDS/SN&nbsp;</span><strong>' + r.serie  + '</strong></div>' : '')
               + '</div>'
             : '')
-          + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#666">'
             + '<span>' + (photos.length ? '📷 ' + photos.length + ' photo' + (photos.length > 1 ? 's' : '') : '📷 Aucune photo') + '</span>'
             + '<span style="color:#7030A0;font-weight:700">Voir fiche →</span>'
           + '</div>'
@@ -6801,7 +6801,7 @@ async function renderCallidusPrnc(forceRefresh) {
     return '<div style="margin-bottom:16px">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
         + '<div style="background:#7030A0;color:#fff;border-radius:8px;padding:3px 12px;font-size:13px;font-weight:800">' + sem + '</div>'
-        + '<div style="font-size:11px;color:#888;flex:1">' + items.length + ' vanne' + (items.length > 1 ? 's' : '') + '</div>'
+        + '<div style="font-size:11px;color:#666;flex:1">' + items.length + ' vanne' + (items.length > 1 ? 's' : '') + '</div>'
         + '<button onclick="event.stopPropagation();cpSupprimerSemaine(\'' + sem + '\')" style="background:#FFF2F2;color:#C00;border:1.5px solid #FFCDD2;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">🗑️ Supprimer</button>'
       + '</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + cards + '</div>'
@@ -6858,19 +6858,19 @@ updateStats().then(function() {
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;text-align:left">
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
-                  <div style="font-size:10px;color:#888;font-weight:700">TAG</div>
+                  <div style="font-size:10px;color:#666;font-weight:700">TAG</div>
                   <div style="font-size:13px;font-weight:700;color:#B61134">${d.tag||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
-                  <div style="font-size:10px;color:#888;font-weight:700">WO</div>
+                  <div style="font-size:10px;color:#666;font-weight:700">WO</div>
                   <div style="font-size:13px;font-weight:700;color:#B61134">${d.wo||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
-                  <div style="font-size:10px;color:#888;font-weight:700">QTY</div>
+                  <div style="font-size:10px;color:#666;font-weight:700">QTY</div>
                   <div style="font-size:13px;font-weight:700;color:#C00000">${d.qty||'--'}</div>
                 </div>
                 <div style="background:#f8f9fa;border-radius:8px;padding:8px">
-                  <div style="font-size:10px;color:#888;font-weight:700">Shutdown</div>
+                  <div style="font-size:10px;color:#666;font-weight:700">Shutdown</div>
                   <div style="font-size:12px;font-weight:700;color:#555">${d.shutdown||'--'}</div>
                 </div>
               </div>
@@ -6887,7 +6887,7 @@ updateStats().then(function() {
         return; // Ne pas lancer l'app
       }
     } catch(e) {}
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;color:#888;font-size:14px">Signature introuvable ou expirée</div>';
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial;color:#666;font-size:14px">Signature introuvable ou expirée</div>';
     return;
   }
 })();
@@ -6937,7 +6937,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
 async function renderRelances() {
   var list = document.getElementById('relances-list');
   if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa">&#9203; Chargement...</div>';
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#767676">&#9203; Chargement...</div>';
   var now = new Date();
   try {
     // Forcer rechargement frais depuis Neon (ignorer le cache)
@@ -6967,7 +6967,7 @@ async function renderRelances() {
     }
 
     if (!records.length) {
-      list.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px;margin-bottom:8px">&#9989;</div>Aucune relance en attente</div>';
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#767676"><div style="font-size:36px;margin-bottom:8px">&#9989;</div>Aucune relance en attente</div>';
       updateRelanceBadge(0);
       return;
     }
@@ -6985,7 +6985,7 @@ async function renderRelances() {
       urgents.forEach(function(r){ html += renderRelanceCard(r, true); });
     }
     if (recents.length) {
-      html += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:12px 0 4px;margin-top:4px">&#9203; En attente recente (&lt; 3 jours) &mdash; ' + recents.length + '</div>';
+      html += '<div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;padding:12px 0 4px;margin-top:4px">&#9203; En attente recente (&lt; 3 jours) &mdash; ' + recents.length + '</div>';
       recents.forEach(function(r){ html += renderRelanceCard(r, false); });
     }
     var wgMap = { MCCHAUD:0, MCREPAR:0, STROB:0, STCHAUD:0, MCELINS:0, MCMECUS:0 };
@@ -7035,7 +7035,7 @@ function renderRelanceCard(r, urgent) {
   var borderColor = urgent ? '#C55A11' : '#b0bec5';
   var joursBadge  = urgent
     ? '<span style="background:#FCE4D6;color:#C55A11;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + jours + ' jour' + (jours>1?'s':'') + ' &#9888;</span>'
-    : '<span style="background:#f0f0f0;color:#888;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + jours + ' jour' + (jours>1?'s':'') + '</span>';
+    : '<span style="background:#f0f0f0;color:#666;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">' + jours + ' jour' + (jours>1?'s':'') + '</span>';
 
   var wgColor = wg==='MCCHAUD' ? '#7030A0' : wg==='MCREPAR' ? '#C55A11' : '#0F6E56';
   var wgBg    = wg==='MCCHAUD' ? '#EDE7F6' : wg==='MCREPAR' ? '#FCE4D6' : '#E1F5EE';
@@ -7109,16 +7109,16 @@ function renderRelanceCard(r, urgent) {
         joursBadge +
       '</div>' +
       '<div style="background:#f8f9fa;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:11px;line-height:2">' +
-        '<div><span style="color:#888;font-weight:700">WO MTC &nbsp;</span><strong>' + wo + '</strong></div>' +
-        (woUsine ? '<div><span style="color:#888;font-weight:700">WO Usine</span><strong>' + woUsine + '</strong></div>' : '') +
-        '<div><span style="color:#888;font-weight:700">Depuis &nbsp;&nbsp;</span>' + date + '</div>' +
+        '<div><span style="color:#666;font-weight:700">WO MTC &nbsp;</span><strong>' + wo + '</strong></div>' +
+        (woUsine ? '<div><span style="color:#666;font-weight:700">WO Usine</span><strong>' + woUsine + '</strong></div>' : '') +
+        '<div><span style="color:#666;font-weight:700">Depuis &nbsp;&nbsp;</span>' + date + '</div>' +
       '</div>' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
         '<div style="width:32px;height:32px;border-radius:50%;background:#FBEAEE;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">&#128100;</div>' +
         '<div>' +
-          '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase">Destinataire</div>' +
+          '<div style="font-size:10px;color:#666;font-weight:700;text-transform:uppercase">Destinataire</div>' +
           '<div style="font-size:13px;font-weight:600;color:#B61134">' + dest + '</div>' +
-          (emailDem ? '<div style="font-size:11px;color:#888">&#9993; ' + emailDem + '</div>' : '') +
+          (emailDem ? '<div style="font-size:11px;color:#666">&#9993; ' + emailDem + '</div>' : '') +
         '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:6px">' +
@@ -7378,7 +7378,7 @@ function renderContactPickerList(q) {
     return c.name.toLowerCase().includes(q) || c.mail.toLowerCase().includes(q);
   });
   if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">Aucun contact</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#767676;font-size:13px">Aucun contact</div>';
     return;
   }
   var html = '';
@@ -7389,7 +7389,7 @@ function renderContactPickerList(q) {
       'style="display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer;border-bottom:1px solid #f0f0f0">' +
       '<div style="width:36px;height:36px;border-radius:50%;background:#B61134;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + initials + '</div>' +
       '<div><div style="font-size:13px;font-weight:600;color:#B61134">' + c.name + '</div>' +
-      '<div style="font-size:11px;color:#888">' + c.mail + '</div></div>' +
+      '<div style="font-size:11px;color:#666">' + c.mail + '</div></div>' +
       '</div>';
   });
   list.innerHTML = html;
@@ -7476,7 +7476,7 @@ function ouvrirPlanningAccueil() {
   show('s-planning');
   var iz = document.getElementById('planning-import-zone');
   var plist = document.getElementById('planning-list');
-  if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+  if (plist) plist.innerHTML = '<div style="text-align:center;color:#767676;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
   chargerPlanningNeon().then(function() {
     // Préposé : montrer zone import si pas de données
     if (iz) iz.style.display = _planningData.length ? 'none' : 'block';
@@ -7649,7 +7649,7 @@ function renderPlanning() {
   if (!list) return;
   // Si pas de données, charger depuis Neon
   if (!_planningData.length) {
-    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px">⏳ Chargement...</div>';
     chargerPlanningNeon().then(function(){ _renderPlanningList(); });
     return;
   }
@@ -7660,7 +7660,7 @@ function renderPlanning() {
 function changerSemainePlanning(semaine) {
   _planningData = [];
   var list = document.getElementById('planning-list');
-  if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+  if (list) list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px">⏳ Chargement...</div>';
   chargerPlanningNeon(semaine).then(function(){ _renderPlanningList(); });
 }
 
@@ -7681,7 +7681,7 @@ function _renderPlanningList() {
         || (i.semaine||'').toLowerCase().includes(searchVal);
   });
   if (!data.length) {
-    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
+    list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px;font-size:12px">Aucun WO'+(_planningFilter?' pour ce statut':'')+'</div>';
     return;
   }
   list.innerHTML = data.map(function(item) {
@@ -7701,7 +7701,7 @@ function _renderPlanningList() {
             +(item.ressource?'<span onclick="event.stopPropagation();notifierRessourceP17(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:#FCE4D6;color:#C55A11;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
           +'</div>'
           +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
-          +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+          +'<div style="font-size:10px;color:#767676">📅 '+joursStr+'</div>'
           +planRemarqueHtml(item)
           +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
           +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:#7030A0;font-weight:700;margin-top:2px">'
@@ -7738,7 +7738,7 @@ async function _onPlanningSearch(val) {
   if (!val) { _renderPlanningList(); return; }
   if (!_allPlanningCache) {
     var list=document.getElementById('planning-list');
-    if(list) list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px">Chargement...</div>';
+    if(list) list.innerHTML='<div style="text-align:center;color:#767676;padding:30px">Chargement...</div>';
     try {
       var resp=await fetch(DB_API+'?table=planning');
       var data=await resp.json();
@@ -7813,11 +7813,11 @@ function ouvrirPlanningModal(wo, semaine) {
   var tachesHtml = '';
   if (item.taches && item.taches.length) {
     tachesHtml = '<div style="margin-bottom:12px">'
-      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
+      + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
       + item.taches.map(function(t){
           return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
             + '<span style="font-size:11px;color:#B61134">' + t.desc + '</span>'
-            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+            + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#666">' + t.jours.join(' ') + '</span>' : '')
           + '</div>';
         }).join('')
     + '</div>';
@@ -7863,7 +7863,7 @@ function ouvrirPlanningModal(wo, semaine) {
       + '<div>'
         + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
         + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#B61134;margin-top:6px">' + (item.tag || '—') + '</div>'
-        + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+        + '<div style="font-size:11px;color:#666">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
         + ((item.woUsine||item.wso) ? '<div style="font-size:11px;color:#7030A0;font-weight:700;margin-top:2px">'
             + (item.woUsine?'🏭 WO Usine '+item.woUsine:'')
             + (item.woUsine&&item.wso?' · ':'')
@@ -7880,7 +7880,7 @@ function ouvrirPlanningModal(wo, semaine) {
 
     + tachesHtml
     + '<div style="margin-bottom:12px">'
-      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+      + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
       + photosExistHtml
       + '<label style="display:inline-flex;align-items:center;gap:6px;background:#B61134;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
         + '📷 Ajouter photo(s)'
@@ -7889,7 +7889,7 @@ function ouvrirPlanningModal(wo, semaine) {
       + '<div id="planning-photos-preview-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
     + '</div>'
     + '<div style="margin-bottom:12px">'
-      + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+      + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
       + '<textarea id="planning-remarque-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
       + '<button onclick="sauvegarderRemarquePlanning(\'' + wo + '\')" style="margin-top:6px;background:#B61134;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
     + '</div>'
@@ -8072,7 +8072,7 @@ async function ajouterPhotoPlanning(wo, input) {
   if(!item) return;
   if(!item._photos) item._photos=[];
   var loadDiv=document.createElement('div');
-  loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+  loadDiv.style.cssText='font-size:11px;color:#666;padding:4px 0';
   loadDiv.textContent='Upload en cours...';
   if(preview) preview.appendChild(loadDiv);
   var placeholders=[];
@@ -8150,7 +8150,7 @@ function _afficherListeWOGWR(items, list) {
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#B61134">' + displayWR + '</span>'
-        + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.tag||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:11px;color:#666">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
       + '<div style="font-size:10px;color:#666">' + (w.desc||'').slice(0,50) + '</div>'
@@ -8186,8 +8186,8 @@ function _afficherListeWOGTag(items, list) {
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
-        + '<span style="font-family:monospace;font-size:10px;color:#888">WO ' + (w.wo||'') + '</span>'
-        + '<span style="font-size:10px;color:#aaa">·</span>'
+        + '<span style="font-family:monospace;font-size:10px;color:#666">WO ' + (w.wo||'') + '</span>'
+        + '<span style="font-size:10px;color:#767676">·</span>'
         + '<span style="font-size:10px;color:#666">' + (w.desc||'').slice(0,45) + '</span>'
       + '</div>'
       + '</div>';
@@ -8312,7 +8312,7 @@ function _afficherListeWOGWO(items, list) {
       + ' style="padding:10px 12px;border-bottom:1px solid #f0f2f5;cursor:pointer;background:#fff">'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
         + '<span style="font-family:monospace;font-size:12px;font-weight:800;color:#B61134">' + (w.wo||'') + '</span>'
-        + '<span style="font-family:monospace;font-size:11px;color:#888">' + (w.wr||'') + '</span>'
+        + '<span style="font-family:monospace;font-size:11px;color:#666">' + (w.wr||'') + '</span>'
         + '<span style="font-family:monospace;font-size:11px;color:#555">' + (w.tag||'') + '</span>'
         + '<span style="background:' + c + '33;color:' + c + ';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">' + (w.wg||'') + '</span>'
       + '</div>'
@@ -8452,7 +8452,7 @@ function creerPlanningAtelier(cfg) {
     show(cfg.ecran);
     var iz = el('planning-import-zone-');
     var plist = el('planning-list-');
-    if (plist) plist.innerHTML = '<div style="text-align:center;color:#aaa;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
+    if (plist) plist.innerHTML = '<div style="text-align:center;color:#767676;padding:40px"><div style="font-size:24px">⏳</div><div style="margin-top:8px">Chargement...</div></div>';
     g('chargerPlanningNeon')().then(function() {
       // Préposé : montrer zone import si pas de données
       if (iz) iz.style.display = get('planningData').length ? 'none' : 'block';
@@ -8544,7 +8544,7 @@ function creerPlanningAtelier(cfg) {
   function changerSemainePlanning(semaine) {
     set('planningData', []);
     var list = el('planning-list-');
-    if (list) list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+    if (list) list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px">⏳ Chargement...</div>';
     g('chargerPlanningNeon')(semaine).then(function(){ g('_renderPlanningList')(); });
   }
 
@@ -8678,7 +8678,7 @@ function creerPlanningAtelier(cfg) {
     if (!list) return;
     // Si pas de données, charger depuis Neon
     if (!get('planningData').length) {
-      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px">⏳ Chargement...</div>';
+      list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px">⏳ Chargement...</div>';
       g('chargerPlanningNeon')().then(function(){ g('_renderPlanningList')(); });
       return;
     }
@@ -8703,7 +8703,7 @@ function creerPlanningAtelier(cfg) {
           || (i.semaine||'').toLowerCase().includes(searchVal);
     });
     if (!data.length) {
-      list.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;font-size:12px">Aucun WO'+(filtre?' pour ce statut':'')+'</div>';
+      list.innerHTML = '<div style="text-align:center;color:#767676;padding:30px;font-size:12px">Aucun WO'+(filtre?' pour ce statut':'')+'</div>';
       return;
     }
     list.innerHTML = data.map(function(item) {
@@ -8728,7 +8728,7 @@ function creerPlanningAtelier(cfg) {
               +(item.ressource?'<span onclick="event.stopPropagation();'+fn('notifierRessource')+'(\''+woSafe+'\')" title="Notifier '+item.ressource+' par mail" style="background:'+CL+';color:'+C+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px">'+item.ressource+' 📧</span>':'')
             +'</div>'
             +'<div style="font-size:11px;color:#555;font-weight:600;margin-bottom:2px">'+(item.desc||'')+'</div>'
-            +'<div style="font-size:10px;color:#aaa">📅 '+joursStr+'</div>'
+            +'<div style="font-size:10px;color:#767676">📅 '+joursStr+'</div>'
             +planRemarqueHtml(item)
             +(item._loc ? '<div style="font-size:10px;color:#B61134;font-weight:700;margin-top:2px">📍 '+item._loc+'</div>' : '')
             +((item.woUsine||item.wso) ? '<div style="font-size:10px;color:'+C+';font-weight:700;margin-top:2px">'
@@ -8766,7 +8766,7 @@ function creerPlanningAtelier(cfg) {
     if (!val) { g('_renderPlanningList')(); return; }
     if (!get('allPlanningCache')) {
       var list=el('planning-list-');
-      if(list) list.innerHTML='<div style="text-align:center;color:#aaa;padding:30px">Chargement...</div>';
+      if(list) list.innerHTML='<div style="text-align:center;color:#767676;padding:30px">Chargement...</div>';
       try {
         var resp=await fetch(DB_API+'?table='+T);
         var data=await resp.json();
@@ -8859,11 +8859,11 @@ function creerPlanningAtelier(cfg) {
     var tachesHtml = '';
     if (item.taches && item.taches.length) {
       tachesHtml = '<div style="margin-bottom:12px">'
-        + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
+        + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">Tâches (' + item.taches.length + ')</div>'
         + item.taches.map(function(t){
             return '<div style="background:#f5f7fa;border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between">'
               + '<span style="font-size:11px;color:#B61134">' + t.desc + '</span>'
-              + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#888">' + t.jours.join(' ') + '</span>' : '')
+              + (t.jours && t.jours.length ? '<span style="font-size:9px;color:#666">' + t.jours.join(' ') + '</span>' : '')
             + '</div>';
           }).join('')
       + '</div>';
@@ -8913,7 +8913,7 @@ function creerPlanningAtelier(cfg) {
         + '<div>'
           + '<span style="background:' + s.bg + ';color:' + s.tx + ';border:1.5px solid ' + s.bd + ';border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800">' + s.lb + '</span>'
           + '<div style="font-size:18px;font-weight:800;font-family:monospace;color:#B61134;margin-top:6px">' + (item.tag || '—') + '</div>'
-          + '<div style="font-size:11px;color:#888">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
+          + '<div style="font-size:11px;color:#666">WO ' + item.wo + (item.wr ? ' · WR ' + item.wr : '') + (item.ressource ? ' · ' + item.ressource : '') + '</div>'
         + '</div>'
         + '<button onclick="' + fn('fermerPlanningModal') + '()" style="background:#f0f2f5;border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">✕</button>'
       + '</div>'
@@ -8926,7 +8926,7 @@ function creerPlanningAtelier(cfg) {
 
       + tachesHtml
       + '<div style="margin-bottom:12px">'
-        + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
+        + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">📷 Photos</div>'
         + photosExistHtml
         + '<label style="display:inline-flex;align-items:center;gap:6px;background:#B61134;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">'
           + '📷 Ajouter photo(s)'
@@ -8935,7 +8935,7 @@ function creerPlanningAtelier(cfg) {
         + '<div id="planning-photos-preview-' + id + '-' + wo + '" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>'
       + '</div>'
       + '<div style="margin-bottom:12px">'
-        + '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
+        + '<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;margin-bottom:6px">💬 Remarque</div>'
         + '<textarea id="planning-remarque-' + id + '-' + wo + '" placeholder="Ajouter une remarque..." style="width:100%;padding:10px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box" rows="3">' + (item._remarque || '') + '</textarea>'
         + '<button onclick="' + fn('sauvegarderRemarquePlanning') + '(\'' + wo + '\'' + argCat + ')" style="margin-top:6px;background:#B61134;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">💾 Sauvegarder</button>'
       + '</div>'
@@ -9039,7 +9039,7 @@ function creerPlanningAtelier(cfg) {
     if(!item) return;
     if(!item._photos) item._photos=[];
     var loadDiv=document.createElement('div');
-    loadDiv.style.cssText='font-size:11px;color:#888;padding:4px 0';
+    loadDiv.style.cssText='font-size:11px;color:#666;padding:4px 0';
     loadDiv.textContent='Upload en cours...';
     if(preview) preview.appendChild(loadDiv);
     var placeholders=[];
@@ -9583,7 +9583,7 @@ async function renderNC() {
   });
 
   if (!filtered.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:#999">Aucun rapport NC</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#6E6E6E">Aucun rapport NC</div>';
     return;
   }
 
@@ -9600,7 +9600,7 @@ async function renderNC() {
         '<div style="background:' + wgColor + ';color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">' + (d.wg||'--') + '</div>' +
         '<div style="font-size:12px;color:#555">IR : ' + (d.ir||'--') + (d.wo ? ' · WO : ' + d.wo : '') + '</div>' +
       '</div>' +
-      '<div style="font-size:11px;color:#888">' + (d.semaine||'') + ' · ' + (d.dateRecep||'--') + '</div>' +
+      '<div style="font-size:11px;color:#666">' + (d.semaine||'') + ' · ' + (d.dateRecep||'--') + '</div>' +
     '</div>';
   }).join('');
 }
@@ -9658,7 +9658,7 @@ async function ouvrirDetailNC(id) {
     '</div>' +
     '<div id="nc-bl-link"></div>' +
     '<div style="margin-bottom:10px">' +
-      '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">TYPE NC</div>' +
+      '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:4px">TYPE NC</div>' +
       (d.types||[]).map(function(t){ return '<div style="padding:4px 0;font-size:12px">• ' + t + '</div>'; }).join('') +
     '</div>' +
     itemsHtml +
@@ -9807,7 +9807,7 @@ async function ouvrirBL() {
 async function renderBL(force) {
   var listEl = document.getElementById('bl-list');
   if (!listEl) return;
-  if (force || !_blCache) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+  if (force || !_blCache) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#666">Chargement...</div>';
   var data = await blLoad(force);
   var q = blNormBds((document.getElementById('bl-search') || {value:''}).value);
 
@@ -9827,7 +9827,7 @@ async function renderBL(force) {
   }
 
   if (!rows.length) {
-    listEl.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#888;font-size:13px">' +
+    listEl.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#666;font-size:13px">' +
       (q ? 'Aucun bon de livraison ne contient « ' + blEsc(q) + ' ».' : 'Aucun bon de livraison archivé.<br>Appuyez sur ➕ Nouveau pour photographier le premier.') + '</div>';
     return;
   }
@@ -9837,7 +9837,7 @@ async function renderBL(force) {
     var hits = q ? lignes.filter(function(l){ return (blNormBds(l.bds) + ' ' + (l.client||'') + ' ' + (l.wg||'')).toUpperCase().indexOf(q) >= 0; }) : [];
     var apercu = (hits.length ? hits : lignes).slice(0, 4).map(function(l) {
       return '<span style="display:inline-block;background:' + (hits.length ? '#FFF3C4' : '#F0F4FF') + ';color:#B61134;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;margin:2px 4px 0 0">' + blEsc(blNormBds(l.bds) || '--') + '</span>';
-    }).join('') + ((hits.length ? hits : lignes).length > 4 ? '<span style="font-size:11px;color:#888">+' + ((hits.length ? hits : lignes).length - 4) + '</span>' : '');
+    }).join('') + ((hits.length ? hits : lignes).length > 4 ? '<span style="font-size:11px;color:#666">+' + ((hits.length ? hits : lignes).length - 4) + '</span>' : '');
     var thumb = b.photos && b.photos[0]
       ? '<img src="' + blEsc(cloudThumb(b.photos[0], 120, 120)) + '" alt="" loading="lazy" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)">'
       : '<div style="width:56px;height:56px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">📄</div>';
@@ -10233,13 +10233,13 @@ async function ouvrirDetailBL(id) {
     ) : '') +
     blHtmlReception(b) + blHtmlLignes(b) +
     (b.remarques ? '<div style="background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:12px;margin-bottom:10px">💬 ' + blEsc(b.remarques) + '</div>' : '') +
-    '<div style="font-size:10px;color:#999;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
+    '<div style="font-size:10px;color:#6E6E6E;text-align:center;margin-bottom:8px">Saisi par ' + blEsc(b.saisiPar || '--') + '</div>';
   show('s-bl-detail');
 }
 
 // ── Réception : vérifier chaque ligne puis prévenir le magasin ──
 var BL_RECU = {
-  '':       { ico: '⬜', lbl: 'À vérifier', bg: '#fff',    fg: '#888' },
+  '':       { ico: '⬜', lbl: 'À vérifier', bg: '#fff',    fg: '#666' },
   ok:       { ico: '✅', lbl: 'Reçu',       bg: '#E2EFDA', fg: '#375623' },
   manquant: { ico: '❌', lbl: 'Manquant',   bg: '#FCE4D6', fg: '#C00000' },
   abime:    { ico: '⚠️', lbl: 'Abîmé',      bg: '#FFF3E0', fg: '#E65100' }
@@ -10326,7 +10326,7 @@ function blHtmlLignes(b) {
         '<div style="width:44px;flex-shrink:0;text-align:center">' +
           '<button ' + (verrou ? 'disabled ' : 'onclick="blCycleRecu(' + i + ')" ') + 'title="' + st.lbl + '" aria-label="Ligne ' + (i+1) + ' : ' + st.lbl + '" ' +
             'style="width:34px;height:34px;border-radius:8px;border:1.5px solid ' + (l.recu ? st.fg : '#ccc') + ';background:' + st.bg + ';font-size:16px;cursor:' + (verrou ? 'default' : 'pointer') + ';padding:0">' + st.ico + '</button>' +
-          '<div style="font-size:9px;color:#999">' + (i+1) + '</div></div>' +
+          '<div style="font-size:9px;color:#6E6E6E">' + (i+1) + '</div></div>' +
         '<div style="flex:1;min-width:0;font-weight:800;color:#B61134;overflow-wrap:anywhere">' + blEsc(l.bds || '--') + blBadgeNC(l.bds) +
           (anomalie ? '<div style="font-size:10px;font-weight:700;color:' + st.fg + '">' + st.lbl +
             ' · <span onclick="blCreerNCDepuisLigne(' + i + ')" style="text-decoration:underline;cursor:pointer">➕ créer une NC</span></div>' : '') + '</div>' +
@@ -10334,7 +10334,7 @@ function blHtmlLignes(b) {
         '<div style="flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere">' + blEsc(l.client || '--') + '</div>' +
         '<div style="width:72px;flex-shrink:0;text-align:right;font-size:11px;font-weight:700;color:#555">' + blEsc(l.wg || '') + '</div>' +
       '</div>';
-    }).join('') : '<div style="padding:14px 0;color:#888;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
+    }).join('') : '<div style="padding:14px 0;color:#666;font-size:12px;text-align:center">Aucune ligne saisie (photo seule).</div>') +
   '</div>';
 }
 
@@ -10384,7 +10384,7 @@ async function blValiderReception() {
   var s = blStatsRecu(b.lignes || []);
   if (s.aVerifier && !confirm(s.aVerifier + ' ligne(s) ne sont pas vérifiées. Elles seront signalées « non vérifiées » au magasin. Continuer ?')) return;
   var w = window.open('', '_blank');   // ouverte pendant l'appui, sinon le navigateur bloque la fenêtre
-  if (w) w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Préparation de l\'accusé de réception…</p>');
+  if (w) w.document.write('<p style="font-family:Arial;padding:20px;color:#666">Préparation de l\'accusé de réception…</p>');
   b.reception = { date: new Date().toLocaleDateString('fr-FR'), heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), par: getUserName(), mailEnvoye: true };
   _blRecepEdit = false;
   await blSauverRecu(b, true);
@@ -10811,7 +10811,7 @@ async function blAfficherLienNC(ir) {
           '<div style="font-size:11px;color:#3c7d69;margin-top:2px">Bon préparé par ' + blEsc(t.bl.preparateur || '--') + ' — touchez pour voir la photo ›</div>' +
         '</div>';
       }).join('')
-    : '<div style="font-size:11px;color:#999;margin-bottom:10px">📑 Aucun bon de livraison archivé pour cet IR.</div>';
+    : '<div style="font-size:11px;color:#6E6E6E;margin-bottom:10px">📑 Aucun bon de livraison archivé pour cet IR.</div>';
 }
 
 async function supprimerBL() {
@@ -10921,7 +10921,7 @@ function kpiSelecteurHtml(selKey, maxOffset) {
     '<div style="flex:1;text-align:center">' +
       '<div style="font-size:15px;font-weight:800;color:#B61134">' + kpiPeriodLabel(selKey, _kpiPeriode) + '</div>' +
       (_kpiOffset === 0
-        ? '<div style="font-size:10px;color:#888">Periode en cours</div>'
+        ? '<div style="font-size:10px;color:#666">Periode en cours</div>'
         : '<div onclick="kpiGoTo(0)" style="font-size:11px;color:#830050;cursor:pointer;text-decoration:underline">Revenir a aujourd\'hui</div>') +
     '</div>' +
     (_kpiOffset > 0
@@ -10949,7 +10949,7 @@ async function renderKPI() {
   if (_kpiOnglet === 'transport') return renderKPITransport();
   var content = document.getElementById('kpi-content');
   if (!content) return;
-  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#666">Chargement...</div>';
 
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
@@ -11012,7 +11012,7 @@ async function renderKPI() {
 
   var diff = current.total - prev.total;
   var diffTxt = diff > 0 ? '+' + diff : String(diff);
-  var diffColor = diff > 0 ? '#C55A11' : diff < 0 ? '#375623' : '#888';
+  var diffColor = diff > 0 ? '#C55A11' : diff < 0 ? '#375623' : '#666';
   var isNow = _kpiOffset === 0;
   var periodeLabel = isNow
     ? (periode === 'semaine' ? 'Cette semaine' : periode === 'mois' ? 'Ce mois' : 'Ce trimestre')
@@ -11035,11 +11035,11 @@ async function renderKPI() {
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + prev.total + '</div>' +
-        '<div style="font-size:10px;color:#888">' + prevLabel + '</div>' +
+        '<div style="font-size:10px;color:#666">' + prevLabel + '</div>' +
       '</div>' +
       '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid ' + diffColor + '">' +
         '<div style="font-size:24px;font-weight:800;color:' + diffColor + '">' + diffTxt + '</div>' +
-        '<div style="font-size:10px;color:#888">Evolution</div>' +
+        '<div style="font-size:10px;color:#666">Evolution</div>' +
       '</div>' +
     '</div>' +
     WG_ORDER.map(function(wg) {
@@ -11070,11 +11070,11 @@ async function renderKPI() {
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + cPrev.colis + '</div>' +
-        '<div style="font-size:10px;color:#888">' + prevLabel + '</div>' +
+        '<div style="font-size:10px;color:#666">' + prevLabel + '</div>' +
       '</div>' +
       '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
         '<div style="font-size:24px;font-weight:800;color:#555">' + (cDiff > 0 ? '+' : '') + cDiff + '</div>' +
-        '<div style="font-size:10px;color:#888">Evolution</div>' +
+        '<div style="font-size:10px;color:#666">Evolution</div>' +
       '</div>' +
     '</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:11px">' +
@@ -11086,7 +11086,7 @@ async function renderKPI() {
     WG_ORDER.concat(['AUTRE']).filter(function(wg){ return wg !== 'AUTRE' || cSel.wg.AUTRE; }).map(function(wg) {
       var val = cSel.wg[wg] || 0;
       var pct = cSel.colis > 0 ? Math.round(val / cSel.colis * 100) : 0;
-      var col = WG_COLORS[wg] || '#888';
+      var col = WG_COLORS[wg] || '#666';
       return '<div style="margin-bottom:6px">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
           '<span style="font-size:12px;font-weight:700;color:' + col + '">' + (wg === 'AUTRE' ? 'Sans workgroup' : wg) + '</span>' +
@@ -11109,7 +11109,7 @@ async function renderKPI() {
   html += '<div style="' + card + '">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">' +
       '<div style="font-weight:700;color:#C00000">Non-Conformites — ' + periodeLabel + '</div>' +
-      '<div style="font-size:11px;color:#888">' + ncDiffTxt + ' vs ' + prevLabel + '</div>' +
+      '<div style="font-size:11px;color:#666">' + ncDiffTxt + ' vs ' + prevLabel + '</div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<div style="flex:1;background:#FCE4D6;border-radius:10px;padding:12px;text-align:center">' +
@@ -11192,7 +11192,7 @@ async function renderKPI() {
       '<div style="width:34px;flex-shrink:0;text-align:right;font-size:12px;font-weight:700;color:' + C_BL + '">' + c.colis + '</div>' +
     '</div>';
   }).join('');
-  html += '<div style="font-size:10px;color:#999;text-align:right;padding-top:6px;border-top:1px solid #f0f0f0">Colis = total des quantites des bons de livraison · touchez une ligne pour l\'afficher</div></div>';
+  html += '<div style="font-size:10px;color:#6E6E6E;text-align:right;padding-top:6px;border-top:1px solid #f0f0f0">Colis = total des quantites des bons de livraison · touchez une ligne pour l\'afficher</div></div>';
 
   // Historique NC -- total, traitées, ouvertes par période
   var maxNc = Math.max.apply(null, histOffsets.map(function(o){
@@ -11223,7 +11223,7 @@ async function renderKPI() {
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;padding-top:8px;border-top:1px solid #f0f0f0">' +
     '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#375623;display:inline-block"></span><span style="font-size:10px;color:#666">Traitees</span></div>' +
     '<div style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E65100;display:inline-block"></span><span style="font-size:10px;color:#666">Ouvertes</span></div>' +
-    '<div style="font-size:10px;color:#999;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
+    '<div style="font-size:10px;color:#6E6E6E;margin-left:auto">Touchez une ligne pour l\'afficher</div>' +
   '</div></div>';
 
   content.innerHTML = html;
@@ -11255,7 +11255,7 @@ function kpiEqDate(r) {
 async function renderKPIEquip() {
   var content = document.getElementById('kpi-content');
   if (!content) return;
-  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#666">Chargement...</div>';
 
   var records = [];
   try { records = await dbLoad(); } catch(e) {}
@@ -11311,14 +11311,14 @@ async function renderKPIEquip() {
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + nPrev + '</div>' +
-        '<div style="font-size:10px;color:#888">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
+        '<div style="font-size:10px;color:#666">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
       '</div>' +
       '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
         '<div style="font-size:24px;font-weight:800;color:#555">' + (diff > 0 ? '+' : '') + diff + '</div>' +
-        '<div style="font-size:10px;color:#888">Évolution</div>' +
+        '<div style="font-size:10px;color:#666">Évolution</div>' +
       '</div>' +
     '</div>' +
-    '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PAR DESTINATION</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:6px">PAR DESTINATION</div>' +
     KPI_EQ_DEST.map(function(g){ return barre(g.label, parDest[g.k] || 0, sel.length, g.color); }).join('') +
   '</div>';
 
@@ -11328,7 +11328,7 @@ async function renderKPIEquip() {
   html += '<div style="' + KPI_CARD + '">' +
     '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Par workgroup — ' + periodeLabel + '</div>' +
     WG_ORDER.map(function(w){ return barre(w, parWG[w] || 0, sel.length, WG_COLORS[w]); }).join('') +
-    (parWG.AUTRE ? barre('Sans workgroup', parWG.AUTRE, sel.length, '#888') : '') +
+    (parWG.AUTRE ? barre('Sans workgroup', parWG.AUTRE, sel.length, '#666') : '') +
   '</div>';
 
   // Suivi des retours demandeur DL3 : récupérés ou toujours en attente
@@ -11358,15 +11358,15 @@ async function renderKPIEquip() {
       '</div>' +
     '</div>' +
     (attente.length
-      ? '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">PLUS ANCIENS EN ATTENTE</div>' +
+      ? '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:4px">PLUS ANCIENS EN ATTENTE</div>' +
         attente.slice(0, 10).map(function(x){
           var j = Math.floor((now - x.d) / JOUR);
           return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:12px">' +
-            '<span><b>' + blEsc(x.r.tag || '--') + '</b>' + (x.r.wg ? ' <span style="color:' + (WG_COLORS[x.r.wg] || '#888') + ';font-size:10px;font-weight:700">' + blEsc(x.r.wg) + '</span>' : '') + '</span>' +
+            '<span><b>' + blEsc(x.r.tag || '--') + '</b>' + (x.r.wg ? ' <span style="color:' + (WG_COLORS[x.r.wg] || '#666') + ';font-size:10px;font-weight:700">' + blEsc(x.r.wg) + '</span>' : '') + '</span>' +
             '<span style="color:' + (j > 14 ? '#C00000' : '#555') + ';font-weight:700;white-space:nowrap">' + j + ' j</span>' +
           '</div>';
         }).join('') +
-        (attente.length > 10 ? '<div style="font-size:10px;color:#999;margin-top:4px">… et ' + (attente.length - 10) + ' autre(s), voir Relances</div>' : '')
+        (attente.length > 10 ? '<div style="font-size:10px;color:#6E6E6E;margin-top:4px">… et ' + (attente.length - 10) + ' autre(s), voir Relances</div>' : '')
       : '<div style="font-size:12px;color:#375623">Aucun équipement en attente de récupération. ✔</div>') +
   '</div>';
 
@@ -11377,7 +11377,7 @@ async function renderKPIEquip() {
 async function renderKPITransport() {
   var content = document.getElementById('kpi-content');
   if (!content) return;
-  content.innerHTML = '<div style="text-align:center;padding:20px;color:#888">Chargement...</div>';
+  content.innerHTML = '<div style="text-align:center;padding:20px;color:#666">Chargement...</div>';
 
   var liste = [];
   try {
@@ -11441,11 +11441,11 @@ async function renderKPITransport() {
       '</div>' +
       '<div style="flex:1;background:#f5f5f5;border-radius:10px;padding:12px;text-align:center">' +
         '<div style="font-size:28px;font-weight:800;color:#555">' + nPrev + '</div>' +
-        '<div style="font-size:10px;color:#888">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
+        '<div style="font-size:10px;color:#666">' + kpiPeriodLabel(prevKey, periode) + '</div>' +
       '</div>' +
       '<div style="flex:1;border-radius:10px;padding:12px;text-align:center;border:2px solid #ccc">' +
         '<div style="font-size:24px;font-weight:800;color:#555">' + (diff > 0 ? '+' : '') + diff + '</div>' +
-        '<div style="font-size:10px;color:#888">Évolution</div>' +
+        '<div style="font-size:10px;color:#666">Évolution</div>' +
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px">' +
@@ -11455,10 +11455,10 @@ async function renderKPITransport() {
       '</div>' +
       '<div style="flex:1;background:' + (retardsEnCours ? '#fee2e2' : '#f5f5f5') + ';border-radius:10px;padding:10px;text-align:center">' +
         '<div style="font-size:22px;font-weight:800;color:' + (retardsEnCours ? '#b91c1c' : '#555') + '">' + retardsEnCours + '</div>' +
-        '<div style="font-size:10px;color:' + (retardsEnCours ? '#b91c1c' : '#888') + '">En retard (toutes périodes)</div>' +
+        '<div style="font-size:10px;color:' + (retardsEnCours ? '#b91c1c' : '#666') + '">En retard (toutes périodes)</div>' +
       '</div>' +
     '</div>' +
-    '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">PAR TYPE</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:6px">PAR TYPE</div>' +
     barre('🏭 Intrasite usine', intra.length, sel.length, '#830050') +
     barre('🚛 Transport externe', ext.length, sel.length, '#FF8500') +
   '</div>';
@@ -11467,17 +11467,17 @@ async function renderKPITransport() {
   var st = function(arr, k){ return arr.filter(function(e){ return e.statut === k; }).length; };
   html += '<div style="' + KPI_CARD + '">' +
     '<div style="font-weight:700;color:#B61134;margin-bottom:10px">Statuts — ' + periodeLabel + '</div>' +
-    (intra.length ? '<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:6px">INTRASITE USINE (' + intra.length + ')</div>' +
+    (intra.length ? '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:6px">INTRASITE USINE (' + intra.length + ')</div>' +
       barre('Effectué', st(intra, 'effectue'), intra.length, '#166534') +
       barre('Prévu', st(intra, 'prevu'), intra.length, '#1d4ed8') +
       barre('Reporté', st(intra, 'reporte'), intra.length, '#6d28d9') +
       barre('Non effectué', st(intra, 'non_effectue'), intra.length, '#b91c1c') : '') +
-    (ext.length ? '<div style="font-size:11px;font-weight:700;color:#888;margin:8px 0 6px">TRANSPORT EXTERNE (' + ext.length + ')</div>' +
+    (ext.length ? '<div style="font-size:11px;font-weight:700;color:#666;margin:8px 0 6px">TRANSPORT EXTERNE (' + ext.length + ')</div>' +
       barre('Livré', st(ext, 'recu'), ext.length, '#166534') +
       barre('En route', st(ext, 'route'), ext.length, '#c2410c') +
       barre('Prévu', st(ext, 'prevu'), ext.length, '#1d4ed8') +
       barre('Retard / Annulé', st(ext, 'retard'), ext.length, '#b91c1c') : '') +
-    (sel.length ? '' : '<div style="font-size:12px;color:#888">Aucun bordereau sur la période.</div>') +
+    (sel.length ? '' : '<div style="font-size:12px;color:#666">Aucun bordereau sur la période.</div>') +
   '</div>';
 
   // Intrasite : par workgroup et par camion
@@ -11487,9 +11487,9 @@ async function renderKPITransport() {
     var sansWG = intra.length - parWG.reduce(function(t, x){ return t + x[1]; }, 0);
     html += '<div style="' + KPI_CARD + '">' +
       '<div style="font-weight:700;color:#B61134;margin-bottom:10px">🏭 Intrasite par workgroup</div>' +
-      parWG.map(function(x){ return barre(x[0], x[1], intra.length, WGC[x[0]] || '#888'); }).join('') +
-      (sansWG ? barre('Sans workgroup', sansWG, intra.length, '#aaa') : '') +
-      (compter(intra, 'camion').length ? '<div style="font-size:11px;font-weight:700;color:#888;margin:8px 0 6px">PAR CAMION</div>' +
+      parWG.map(function(x){ return barre(x[0], x[1], intra.length, WGC[x[0]] || '#666'); }).join('') +
+      (sansWG ? barre('Sans workgroup', sansWG, intra.length, '#767676') : '') +
+      (compter(intra, 'camion').length ? '<div style="font-size:11px;font-weight:700;color:#666;margin:8px 0 6px">PAR CAMION</div>' +
         compter(intra, 'camion').slice(0, 5).map(function(x){ return barre(x[0], x[1], intra.length, '#830050'); }).join('') : '') +
     '</div>';
   }
@@ -11511,7 +11511,7 @@ async function renderKPITransport() {
 async function genererRapportNC() {
   var w = window.open('', '_blank');
   if (!w) { alert('Autorisez les fenetres pop-up pour generer le rapport.'); return; }
-  w.document.write('<p style="font-family:Arial;padding:20px;color:#888">Generation du rapport...</p>');
+  w.document.write('<p style="font-family:Arial;padding:20px;color:#666">Generation du rapport...</p>');
 
   var ncData = await ncLoad();
   var blData = [];
@@ -11928,7 +11928,7 @@ async function rechercherArticle(sc, type) {
       'style="cursor:pointer;border-bottom:1px solid #f0f0f0;padding:10px 12px">' +
       '<div style="font-weight:700;color:#B61134">' + r.sc + ' — ' + (r.item||'') + '</div>' +
       '<div style="color:#555;font-size:11px;margin-top:2px">' + (r.desc||'').slice(0,60) + '</div>' +
-      (r.pn ? '<div style="color:#888;font-size:10px">P/N : ' + r.pn + '</div>' : '') +
+      (r.pn ? '<div style="color:#666;font-size:10px">P/N : ' + r.pn + '</div>' : '') +
     '</div>';
   }).join('');
 }
@@ -11960,7 +11960,7 @@ function selectionnerArticle(type, sc) {
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
     <div style="padding:14px 16px 10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:14px;font-weight:700;color:#B61134">Choisir un destinataire</div>
-      <div onclick="hideContactPicker()" style="font-size:20px;color:#aaa;cursor:pointer;padding:0 4px">&times;</div>
+      <div onclick="hideContactPicker()" style="font-size:20px;color:#767676;cursor:pointer;padding:0 4px">&times;</div>
     </div>
     <div style="padding:10px 14px 6px">
       <input id="contact-picker-search" type="text" placeholder="Rechercher..." oninput="filterContactPicker()"
@@ -12417,7 +12417,7 @@ function selectionnerArticle(type, sc) {
     <div id="cp-import-zone" style="display:none;background:#fff;border:2px dashed #7030A0;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#7030A0;margin-bottom:4px">Importer un bordereau Excel</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier bordereau vannes Callidus</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">Fichier bordereau vannes Callidus</div>
       <label style="background:#7030A0;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
         <input type="file" accept=".xlsx,.xls" onchange="_importerBordereauCallidus(this)" style="display:none">
@@ -12428,10 +12428,10 @@ function selectionnerArticle(type, sc) {
       <input type="text" id="cp-search" placeholder="🔍 Rechercher par TAG, WO, série..." autocomplete="off"
         oninput="renderCallidusPrnc()"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('cp-search').value='';renderCallidusPrnc()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">✕</span>
+      <span onclick="document.getElementById('cp-search').value='';renderCallidusPrnc()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#767676;font-size:16px">✕</span>
     </div>
     <div id="cp-list-content">
-      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+      <div style="text-align:center;color:#767676;font-size:13px;padding:40px 0">
         <div style="font-size:32px;margin-bottom:8px">🔧</div>
         Importez le bordereau Excel pour afficher les vannes
       </div>
@@ -12459,7 +12459,7 @@ function selectionnerArticle(type, sc) {
     <div id="planning-import-zone" style="display:none;background:#fff;border:2px dashed #C55A11;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#C55A11;margin-bottom:4px">Importer le planning Excel</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine P50</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">Fichier planning semaine P50</div>
       <label style="background:#C55A11;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcel(this)" style="display:none">
@@ -12470,7 +12470,7 @@ function selectionnerArticle(type, sc) {
       <input type="text" id="planning-search" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
         oninput="_onPlanningSearch(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #C55A11;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('planning-search').value='';_onPlanningSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+      <span onclick="document.getElementById('planning-search').value='';_onPlanningSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#767676;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanning(null)" id="pfbtn-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
@@ -12480,7 +12480,7 @@ function selectionnerArticle(type, sc) {
       <button onclick="filtrerPlanning('TERMINE')" id="pfbtn-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
     </div>
     <div id="planning-list">
-      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+      <div style="text-align:center;color:#767676;font-size:13px;padding:40px 0">
         <div style="font-size:32px;margin-bottom:8px">📋</div>
         Importez le planning Excel pour afficher les WO de la semaine
       </div>
@@ -12503,7 +12503,7 @@ function selectionnerArticle(type, sc) {
     <div id="planning-import-zone-mc" style="display:none;background:#fff;border:2px dashed #7030A0;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#7030A0;margin-bottom:4px">Importer le planning Excel</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCCHAUD</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">Fichier planning semaine MCCHAUD</div>
       <label style="background:#7030A0;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMC(this)" style="display:none">
@@ -12514,7 +12514,7 @@ function selectionnerArticle(type, sc) {
       <input type="text" id="planning-search-mc" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
         oninput="_onPlanningSearchMC(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #7030A0;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('planning-search-mc').value='';_onPlanningSearchMC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+      <span onclick="document.getElementById('planning-search-mc').value='';_onPlanningSearchMC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#767676;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mc" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanningMC(null)" id="pfbtn-mc-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
@@ -12524,7 +12524,7 @@ function selectionnerArticle(type, sc) {
       <button onclick="filtrerPlanningMC('TERMINE')" id="pfbtn-mc-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
     </div>
     <div id="planning-list-mc">
-      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+      <div style="text-align:center;color:#767676;font-size:13px;padding:40px 0">
         <div style="font-size:32px;margin-bottom:8px">📋</div>
         Importez le planning Excel pour afficher les WO de la semaine
       </div>
@@ -12546,7 +12546,7 @@ function selectionnerArticle(type, sc) {
     <div id="planning-import-zone-mcel" style="display:none;background:#fff;border:2px dashed #1F4E79;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#1F4E79;margin-bottom:4px">Importer le planning Excel</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCELINS</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">Fichier planning semaine MCELINS</div>
       <label style="background:#1F4E79;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
         <input type="file" accept=".xlsx,.xls" onchange="importPlanningExcelMCEL(this)" style="display:none">
@@ -12557,7 +12557,7 @@ function selectionnerArticle(type, sc) {
       <input type="text" id="planning-search-mcel" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
         oninput="_onPlanningSearchMCEL(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #1F4E79;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('planning-search-mcel').value='';_onPlanningSearchMCEL('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+      <span onclick="document.getElementById('planning-search-mcel').value='';_onPlanningSearchMCEL('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#767676;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mcel" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanningMCEL(null)" id="pfbtn-mcel-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
@@ -12567,7 +12567,7 @@ function selectionnerArticle(type, sc) {
       <button onclick="filtrerPlanningMCEL('TERMINE')" id="pfbtn-mcel-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
     </div>
     <div id="planning-list-mcel">
-      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+      <div style="text-align:center;color:#767676;font-size:13px;padding:40px 0">
         <div style="font-size:32px;margin-bottom:8px">📋</div>
         Importez le planning Excel pour afficher les WO de la semaine
       </div>
@@ -12591,7 +12591,7 @@ function selectionnerArticle(type, sc) {
     <div id="planning-import-zone-mcmec" style="display:none;background:#fff;border:2px dashed #375623;border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">
       <div style="font-size:24px;margin-bottom:6px">📥</div>
       <div style="font-size:13px;font-weight:700;color:#375623;margin-bottom:4px">Importer le planning Excel</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">Fichier planning semaine MCMECUS</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">Fichier planning semaine MCMECUS</div>
       <label style="background:#375623;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-block">
         📂 Choisir fichier
         <input type="file" accept=".xlsx,.xls" onchange="_demanderCategorieMCMEC(this)" style="display:none">
@@ -12602,7 +12602,7 @@ function selectionnerArticle(type, sc) {
       <input type="text" id="planning-search-mcmec" placeholder="&#128269; Rechercher dans tous les plannings..." autocomplete="off"
         oninput="_onPlanningSearchMCMEC(this.value)"
         style="width:100%;box-sizing:border-box;padding:10px 36px 10px 14px;border-radius:10px;border:1.5px solid #375623;font-size:13px;font-family:inherit;outline:none">
-      <span onclick="document.getElementById('planning-search-mcmec').value='';_onPlanningSearchMCMEC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#aaa;font-size:16px">&#x2715;</span>
+      <span onclick="document.getElementById('planning-search-mcmec').value='';_onPlanningSearchMCMEC('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#767676;font-size:16px">&#x2715;</span>
     </div>
     <div id="planning-filtres-mcmec" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button onclick="filtrerPlanningMCMEC(null)" id="pfbtn-mcmec-all" style="background:#B61134;color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">Tous</button>
@@ -12612,7 +12612,7 @@ function selectionnerArticle(type, sc) {
       <button onclick="filtrerPlanningMCMEC('TERMINE')" id="pfbtn-mcmec-TERMINE" style="background:#E2EFDA;color:#375623;border:1.5px solid #375623;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer">✅ Terminé</button>
     </div>
     <div id="planning-list-mcmec">
-      <div style="text-align:center;color:#aaa;font-size:13px;padding:40px 0">
+      <div style="text-align:center;color:#767676;font-size:13px;padding:40px 0">
         <div style="font-size:32px;margin-bottom:8px">📋</div>
         Importez le planning Excel pour afficher les WO de la semaine
       </div>
