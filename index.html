@@ -12530,6 +12530,26 @@ async function crBasculer(id) {
   var n = Object.assign({}, c, c.statut === 'recupere' ? { statut: 'a_recuperer', recupereLe: '' } : { statut: 'recupere', recupereLe: crIso(new Date()) });
   try { await crSauver(n); } catch(e) { alert('Mise à jour impossible. Vérifiez la connexion.'); return; }
   crRendre(); crMajAccueil();
+  if (n.statut === 'recupere') window.location.href = crUrlMailRecupere(n);   // confirmation au magasin, prête à envoyer
+}
+
+// Mail de confirmation au magasin quand il a récupéré le crédit
+function crUrlMailRecupere(c) {
+  var lignes = c.lignes || [];
+  var total = lignes.reduce(function(s, l){ return s + (parseFloat(l.qte) || 0); }, 0);
+  var num = c.numCredit ? ' N° ' + c.numCredit : '';
+  var sujet = 'Crédit' + num + ' récupéré par le magasin — ' + crDateFr(c.date);
+  var corps = ['Bonjour,', '',
+    'Je vous confirme que le crédit' + num + ' a bien été récupéré par le magasin à la Maintenance Centrale P50.', '',
+    'Date du crédit : ' + crDateFr(c.date),
+    'Date de récupération : ' + crDateFr(c.recupereLe), ''];
+  lignes.forEach(function(l, i){
+    corps.push('• Pièce ' + (i + 1) + ' : S/C ' + (l.sc || '--') + (l.pn ? ' — P/N ' + l.pn : '') + (l.qte ? ' — Qté ' + l.qte : ''));
+    if (l.desc) corps.push('   ' + l.desc);
+  });
+  if (total) corps.push('', 'Total : ' + total + ' unité' + (total > 1 ? 's' : ''));
+  corps.push('', 'Merci de bien vouloir procéder à la validation du crédit sur Ellipse.', '', 'Cordialement,', getUserName(), 'Préposé aux pièces — Maintenance Centrale P50');
+  return 'mailto:' + mailListe([MAIL_MAGASIN]) + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(corps.join('\n'));
 }
 
 async function crSupprimer(id) {
