@@ -12282,6 +12282,11 @@ function selectionnerArticle(type, sc) {
       <button type="button" onclick="crAjouterLigne()" style="margin-top:4px;width:100%;min-height:44px;background:#FBEAEE;color:#B61134;border:1.5px dashed #B61134;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">+ Ajouter une pièce</button>
     </div>
     <div class="field-grp">
+      <div class="field-lbl">N° de crédit Ellipse</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">Créez le crédit sur Ellipse avec les stock codes ci-dessus, puis notez ici son numéro.</div>
+      <input class="fi" type="text" id="crm-num" placeholder="Ex : CR123456" autocomplete="off" style="font-weight:700">
+    </div>
+    <div class="field-grp">
       <div class="field-lbl">Photos <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
       <div class="photo-zone" onclick="document.getElementById('crm-photo-input').click()">
         <input type="file" id="crm-photo-input" accept="image/*" multiple onchange="crAjouterPhotos(this)" style="display:none">
@@ -12339,7 +12344,7 @@ function crRendre() {
   document.getElementById('crm-count-mois').textContent = _crListe.filter(function(c){ return c.statut === 'recupere' && String(c.recupereLe || '').slice(0, 7) === mois; }).length;
   var items = _crListe.filter(function(c){
     if (!q) return true;
-    var txt = [crDateFr(c.date), c.remarque, c.par].concat((c.lignes || []).map(function(l){ return [l.sc, l.pn, l.desc].join(' '); })).join(' ').toLowerCase();
+    var txt = [crDateFr(c.date), c.numCredit, c.remarque, c.par].concat((c.lignes || []).map(function(l){ return [l.sc, l.pn, l.desc].join(' '); })).join(' ').toLowerCase();
     return txt.indexOf(q) >= 0;
   }).sort(function(a, b){
     var ra = a.statut === 'recupere' ? 1 : 0, rb = b.statut === 'recupere' ? 1 : 0;
@@ -12355,7 +12360,7 @@ function crRendre() {
     var qte = lignes.reduce(function(s, l){ return s + (parseFloat(l.qte) || 0); }, 0);
     return '<div style="background:#fff;border:1px solid var(--border);border-left:4px solid ' + (ok ? '#375623' : '#E65100') + ';border-radius:12px;padding:12px;margin-bottom:10px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
-        '<div style="font-weight:800;font-size:14px;color:#1d2433">📅 ' + crDateFr(c.date) + '</div>' +
+        '<div style="font-weight:800;font-size:14px;color:#1d2433">📅 ' + crDateFr(c.date) + (c.numCredit ? ' · <span style="color:#B61134">N° ' + blEsc(c.numCredit) + '</span>' : ' · <span style="color:#C62828;font-size:12px">N° crédit à saisir</span>') + '</div>' +
         '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;' + (ok ? 'background:#E2EFDA;color:#2E5A1C">✔ Récupéré' + (c.recupereLe ? ' le ' + crDateFr(c.recupereLe) : '') : 'background:#FFF3E0;color:#A33A00">📦 À récupérer') + '</span>' +
       '</div>' +
       '<div style="font-size:12px;color:var(--muted);margin:4px 0 6px">' + lignes.length + ' pièce' + (lignes.length > 1 ? 's' : '') + (qte ? ' · ' + qte + ' unité' + (qte > 1 ? 's' : '') : '') + ((c.photos || []).length ? ' · 📷 ' + c.photos.length : '') + '</div>' +
@@ -12394,6 +12399,7 @@ function crOuvrirForm(c) {
   document.getElementById('crm-form-titre').textContent = c.id ? 'Modifier le crédit' : 'Nouveau crédit';
   document.getElementById('crm-date').value = c.date || crIso(new Date());
   document.getElementById('crm-remarque').value = c.remarque || '';
+  document.getElementById('crm-num').value = c.numCredit || '';
   crRendreLignes(); crRendrePhotos();
   show('s-credit-nouveau');
 }
@@ -12493,11 +12499,13 @@ async function crValider() {
   var lignes = _crLignes.map(function(l){ return { sc: String(l.sc || '').trim(), pn: String(l.pn || '').trim(), desc: String(l.desc || '').trim(), qte: String(l.qte || '').trim() }; })
     .filter(function(l){ return l.sc || l.pn || l.desc; });
   if (!lignes.length) { alert('Indiquez au moins une pièce (stock code, P/N ou description).'); return; }
+  if (!document.getElementById('crm-num').value.trim() && !confirm('Le N° de crédit Ellipse n\'est pas renseigné. Continuer quand même ?\n(Vous pourrez l\'ajouter plus tard avec ✏️)')) return;
   var ancien = _crEditId ? crTrouver(_crEditId) : null;
   var c = Object.assign({}, ancien || {}, {
     id: _crEditId || ('cr' + Date.now() + Math.random().toString(36).slice(2, 6)),
     date: date, lignes: lignes, photos: _crPhotos.slice(),
     remarque: document.getElementById('crm-remarque').value.trim(),
+    numCredit: document.getElementById('crm-num').value.trim(),
     par: (ancien && ancien.par) || getUserName(),
     statut: (ancien && ancien.statut) || 'a_recuperer'
   });
@@ -12535,10 +12543,12 @@ async function crSupprimer(id) {
 // ── Mail d'information au magasin ──
 function crUrlMail(c) {
   var lignes = c.lignes || [];
-  var sujet = 'Crédit à récupérer à la Maintenance Centrale P50 — ' + crDateFr(c.date);
+  var sujet = 'Crédit' + (c.numCredit ? ' N° ' + c.numCredit : '') + ' à récupérer à la Maintenance Centrale P50 — ' + crDateFr(c.date);
   var corps = ['Bonjour,', '',
     'Pour information, des pièces en crédit sont à récupérer à la Maintenance Centrale P50.', '',
-    'Date : ' + crDateFr(c.date), ''];
+    'Date : ' + crDateFr(c.date)];
+  if (c.numCredit) corps.push('N° de crédit Ellipse : ' + c.numCredit);
+  corps.push('');
   lignes.forEach(function(l, i){
     corps.push('• Pièce ' + (i + 1) + ' : S/C ' + (l.sc || '--') + (l.pn ? ' — P/N ' + l.pn : '') + (l.qte ? ' — Qté ' + l.qte : ''));
     if (l.desc) corps.push('   ' + l.desc);
@@ -12581,13 +12591,13 @@ function crPdf(id, win) {
     // Marges dans la page elle-même : le PDF reste centré même si le téléphone imprime « sans marges »
     '@media print{body{background:#fff}.toolbar{display:none}.page{width:100%;max-width:none;margin:0;padding:2mm 13mm}header{flex-direction:row;align-items:flex-end}.meta{text-align:right}.photos img{width:calc(33.33% - 6px)}}';
   var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Crédit magasin — ' + blEsc(crDateFr(c.date)) + '</title><style>' + css + '</style></head><body>' +
+    '<title>Crédit magasin' + (c.numCredit ? ' ' + blEsc(c.numCredit) : '') + ' — ' + blEsc(crDateFr(c.date)) + '</title><style>' + css + '</style></head><body>' +
     '<div class="toolbar"><button class="b1" onclick="window.print()">🖨 Imprimer / PDF</button>' +
       '<a class="b2" href="' + blEsc(url) + '">📧 Envoyer au magasin</a>' +
       '<div class="tip">Enregistrez d\'abord en PDF, puis joignez-le au mail.</div></div>' +
     '<div class="page">' +
       '<header><div><h1>Crédit magasin</h1><div class="sub">Pièces à récupérer — PRNC Maintenance Centrale P50</div></div>' +
-        '<div class="meta"><b style="font-size:14px;color:#B61134">' + blEsc(crDateFr(c.date)) + '</b><br>Établi par ' + blEsc(c.par || getUserName()) + '<br>Lieu : Maintenance Centrale P50</div></header>' +
+        '<div class="meta"><b style="font-size:14px;color:#B61134">' + blEsc(crDateFr(c.date)) + '</b><br>' + (c.numCredit ? '<b style="font-size:13px;color:#1d2433">N° crédit Ellipse : ' + blEsc(c.numCredit) + '</b><br>' : '') + 'Établi par ' + blEsc(c.par || getUserName()) + '<br>Lieu : Maintenance Centrale P50</div></header>' +
       '<div class="info">📦 ' + lignes.length + ' pièce' + (lignes.length > 1 ? 's' : '') + ' en crédit à récupérer par le magasin à la Maintenance Centrale P50</div>' +
       '<table><thead><tr><th class="c">#</th><th>S/C (Stock Code)</th><th>P/N</th><th>Description</th><th class="c">Qté</th></tr></thead><tbody>' + rows +
         (total ? '<tr class="tot"><td></td><td colspan="3">Total</td><td class="c">' + total + '</td></tr>' : '') + '</tbody></table>' +
