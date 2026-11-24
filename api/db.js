@@ -52,6 +52,11 @@ async function initTables() {
       id TEXT PRIMARY KEY, date TEXT, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 
+    // Crédits magasin : pièces à récupérer à la Maintenance Centrale (onglet Crédits)
+    q.push(sql`CREATE TABLE IF NOT EXISTS credit_magasin (
+      id TEXT PRIMARY KEY, date TEXT, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
     // Pré-remplis « Équipement terminé » préparés sur ordinateur, envoyés depuis le téléphone
     q.push(sql`CREATE TABLE IF NOT EXISTS eq_prerempli (
       id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT NOW()
@@ -666,6 +671,33 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
       return res.status(400).json({ error: 'Unknown bordereau_transport request' });
+    }
+
+    // ── CRÉDITS MAGASIN ──
+    if (table === 'credit_magasin') {
+      if (method === 'GET') return res.status(200).json(await sql`SELECT * FROM credit_magasin ORDER BY date DESC, created_at DESC`);
+      if (method === 'POST') {
+        const d = req.body || {};
+        if (!d.id || !d.date) return res.status(400).json({ error: 'id ou date manquant' });
+        const old = await sql`SELECT data FROM credit_magasin WHERE id=${d.id}`;
+        await sql`INSERT INTO credit_magasin (id, date, data) VALUES (${d.id}, ${d.date}, ${JSON.stringify(d.data || {})}::jsonb)
+          ON CONFLICT (id) DO UPDATE SET date = EXCLUDED.date, data = EXCLUDED.data`;
+        // Supprimer sur Cloudinary les photos retirées du crédit
+        if (old.length) {
+          const kept = new Set((d.data && d.data.photos) || []);
+          const removed = ((old[0].data && old[0].data.photos) || []).filter(u => !kept.has(u));
+          if (removed.length) await deleteCloudinaryPhotos(removed);
+        }
+        return res.status(201).json({ ok: true });
+      }
+      if (method === 'DELETE' && id) {
+        const old = await sql`SELECT data FROM credit_magasin WHERE id=${id}`;
+        await sql`DELETE FROM credit_magasin WHERE id=${id}`;
+        const photos = (old.length && old[0].data && old[0].data.photos) || [];
+        if (photos.length) await deleteCloudinaryPhotos(photos);
+        return res.status(200).json({ ok: true });
+      }
+      return res.status(400).json({ error: 'Unknown credit_magasin request' });
     }
 
     // ── PRÉ-REMPLIS ÉQUIPEMENT TERMINÉ ──
