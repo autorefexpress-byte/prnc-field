@@ -12299,8 +12299,10 @@ function selectionnerArticle(type, sc) {
       <div class="field-lbl">Remarque <span style="font-size:10px;color:var(--muted)">(optionnel)</span></div>
       <textarea class="fi" id="crm-remarque" rows="2" placeholder="Ex : pièces déposées à côté du bureau, zone retour magasin"></textarea>
     </div>
-    <button class="send-btn" style="background:#B61134;color:#fff" onclick="crValider()">📄 Enregistrer, générer le PDF et prévenir le magasin</button>
-    <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">Le PDF s'ouvre : enregistrez-le, puis touchez « Envoyer au magasin » et joignez-le au mail.</div>
+    <button class="send-btn" style="background:#fff;color:#B61134;border:2px solid #B61134" onclick="crValider(false)">💾 Enregistrer</button>
+    <div style="font-size:11.5px;color:var(--muted);text-align:center;margin:6px 0 12px">Enregistre le crédit sans prévenir le magasin (pour saisir le N° Ellipse plus tard).</div>
+    <button class="send-btn" style="background:#B61134;color:#fff" onclick="crValider(true)">📄 Générer le PDF et prévenir le magasin</button>
+    <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px">Le crédit est aussi enregistré. Le PDF s'ouvre : enregistrez-le, puis touchez « Envoyer au magasin » et joignez-le au mail.</div>
   </div>
 </div>
 <script>
@@ -12491,7 +12493,7 @@ async function crSauver(c) {
   _crListe = _crListe.filter(function(x){ return x.id !== c.id; }).concat([c]);
 }
 
-async function crValider() {
+async function crValider(avecPdf) {
   if (checkConsultMode()) return;
   if (_crUploads) { alert('Patientez, une photo est encore en cours d\'envoi.'); return; }
   var date = document.getElementById('crm-date').value;
@@ -12499,7 +12501,7 @@ async function crValider() {
   var lignes = _crLignes.map(function(l){ return { sc: String(l.sc || '').trim(), pn: String(l.pn || '').trim(), desc: String(l.desc || '').trim(), qte: String(l.qte || '').trim() }; })
     .filter(function(l){ return l.sc || l.pn || l.desc; });
   if (!lignes.length) { alert('Indiquez au moins une pièce (stock code, P/N ou description).'); return; }
-  if (!document.getElementById('crm-num').value.trim() && !confirm('Le N° de crédit Ellipse n\'est pas renseigné. Continuer quand même ?\n(Vous pourrez l\'ajouter plus tard avec ✏️)')) return;
+  if (avecPdf && !document.getElementById('crm-num').value.trim() && !confirm('Le N° de crédit Ellipse n\'est pas renseigné. Continuer quand même ?\n(Vous pourrez l\'ajouter plus tard avec ✏️)')) return;
   var ancien = _crEditId ? crTrouver(_crEditId) : null;
   var c = Object.assign({}, ancien || {}, {
     id: _crEditId || ('cr' + Date.now() + Math.random().toString(36).slice(2, 6)),
@@ -12510,7 +12512,7 @@ async function crValider() {
     statut: (ancien && ancien.statut) || 'a_recuperer'
   });
   // La fenêtre du PDF doit s'ouvrir tout de suite (sinon le téléphone bloque la pop-up)
-  var w = window.open('', '_blank');
+  var w = avecPdf ? window.open('', '_blank') : null;
   try { await crSauver(c); }
   catch(e) {
     if (w) w.close();
@@ -12518,7 +12520,8 @@ async function crValider() {
     return;
   }
   show('s-credit'); crRendre(); crMajAccueil();
-  crPdf(c.id, w);
+  if (avecPdf) crPdf(c.id, w);
+  else outboxToast('💾 Crédit enregistré', '#2E5A1C', '#E2EFDA');
 }
 
 async function crBasculer(id) {
