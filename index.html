@@ -230,6 +230,21 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   #bl-list > div,#nc-list > div{margin-bottom:0 !important}
   #hist-list > div:only-child,#bl-list > div:only-child,#nc-list > div:only-child,#crm-list > div:only-child{grid-column:1 / -1}
   #bl-list > div:hover,#nc-list > div:hover{box-shadow:0 4px 14px rgba(0,0,0,.12) !important}
+  /* Étape 3 : plannings atelier, Transport, KPI */
+  .screen .topbar{margin-left:0}   /* barre propre aux plannings : reste dans sa colonne */
+  #s-planning,#s-planning-mcchaud,#s-planning-mcelins,#s-planning-mcmecus,#s-transport,#s-kpi{max-width:1280px}
+  #planning-list,#planning-list-mc,#planning-list-mcel,#planning-list-mcmec{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+  #planning-list > div,#planning-list-mc > div,#planning-list-mcel > div,#planning-list-mcmec > div{margin-bottom:0 !important}
+  #planning-list > div:only-child,#planning-list-mc > div:only-child,#planning-list-mcel > div:only-child,#planning-list-mcmec > div:only-child{grid-column:1 / -1}
+  /* Transport : calendrier à gauche, jour choisi et retards à droite */
+  #s-transport .form-body{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start;gap:14px}
+  #s-transport .form-body > .trp-card:first-child{grid-row:span 3}
+  #s-transport .form-body > button{grid-column:2}
+  #s-transport .trp-day{min-height:78px}
+  /* KPI : indicateurs sur 2 colonnes */
+  #kpi-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+  #kpi-content > *{margin-bottom:0 !important}
+  #kpi-content > :first-child,#kpi-content > :only-child{grid-column:1 / -1}
   /* Pavé numérique : fenêtre centrée au lieu de toute la largeur */
   .numpad-overlay{justify-content:center;top:0}
   .numpad-overlay > div{max-width:430px}
