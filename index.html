@@ -189,6 +189,44 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
 .cp-tab.active{color:#7030A0;border-bottom-color:#7030A0;}
 .cp-pane{display:none;}
 .cp-pane.active{display:block;}
+
+/* ══ Affichage ordinateur (écran de 1024 px et plus) ══
+   Sur téléphone rien ne change : tout est dans ce bloc @media. */
+@media (min-width:1024px){
+  body{max-width:none;padding-left:220px}
+  /* Barre rouge sur toute la largeur, menu à gauche dessous */
+  .topbar{margin-left:-220px;padding-left:28px;padding-right:28px}
+  .bottom-nav{left:0;top:0;bottom:0;transform:none;width:220px;max-width:none;flex-direction:column;justify-content:flex-start;gap:4px;padding:84px 12px 12px;border-top:none;border-right:1px solid var(--border);box-shadow:none;z-index:99}
+  .nav-item{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:12px;opacity:.75}
+  .nav-item:hover{background:var(--grey);opacity:1}
+  .nav-item.on{background:var(--llblue);opacity:1}
+  .nav-icon{font-size:20px}
+  .nav-lbl{font-size:14px;color:var(--text)}
+  /* Écrans : colonne centrée et confortable */
+  .screen{max-width:960px;margin:0 auto;padding-bottom:30px}
+  .action-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.1);transform:translateY(-1px)}
+  /* Accueil : large, 4 cartes par ligne */
+  #s-home{max-width:1280px;padding:0 32px 30px}
+  #s-home .home-hero{margin:0 -32px;padding:26px 32px;border-radius:0 0 20px 20px}
+  #s-home .home-name{font-size:26px}
+  #s-home .stats-row{padding:16px 0;gap:14px}
+  #s-home .stat-card{padding:14px 6px}
+  #s-home .stat-num{font-size:26px}
+  #s-home .stat-label{font-size:13px}
+  #s-home .section-lbl{padding:18px 0 6px}
+  #s-home .action-grid{grid-template-columns:repeat(4,1fr);gap:14px;padding:0 0 18px}
+  #s-home .action-card{padding:18px 16px}
+  #s-home .card-icon{width:40px;height:40px;font-size:19px}
+  #s-home .card-lbl{font-size:14.5px}
+  #s-home .card-sub{font-size:12px}
+  /* Crédits magasin : liste en 3 colonnes */
+  #s-credit{max-width:1280px}
+  #crm-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
+  #crm-list > div{margin-bottom:0 !important}
+  /* Pavé numérique : fenêtre centrée au lieu de toute la largeur */
+  .numpad-overlay{justify-content:center;top:0}
+  .numpad-overlay > div{max-width:430px}
+}
 </style>
 <!-- Librairie Excel (880 Ko) : chargée sans bloquer l'affichage de l'app, utilisée seulement aux imports / exports -->
 <script defer crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
