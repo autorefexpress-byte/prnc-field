@@ -223,6 +223,13 @@ hr.sec{border:none;border-top:1px solid var(--border);margin:2px 0}
   #s-credit{max-width:1280px}
   #crm-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
   #crm-list > div{margin-bottom:0 !important}
+  /* Étape 2 : Historique, Bons de livraison, Non-conformités en plusieurs colonnes */
+  #s-hist,#s-bl,#s-nc{max-width:1280px}
+  #hist-list{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;padding-bottom:30px !important;gap:12px !important}
+  #bl-list,#nc-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+  #bl-list > div,#nc-list > div{margin-bottom:0 !important}
+  #hist-list > div:only-child,#bl-list > div:only-child,#nc-list > div:only-child,#crm-list > div:only-child{grid-column:1 / -1}
+  #bl-list > div:hover,#nc-list > div:hover{box-shadow:0 4px 14px rgba(0,0,0,.12) !important}
   /* Pavé numérique : fenêtre centrée au lieu de toute la largeur */
   .numpad-overlay{justify-content:center;top:0}
   .numpad-overlay > div{max-width:430px}
